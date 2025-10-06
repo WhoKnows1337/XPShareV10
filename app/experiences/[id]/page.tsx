@@ -7,6 +7,8 @@ import { Calendar, MapPin, User } from 'lucide-react'
 import { SimilarExperiences } from '@/components/patterns/similar-experiences'
 import { CommentsSection } from '@/components/interactions/comments-section'
 import { UpvoteButton } from '@/components/interactions/upvote-button'
+import { ShareButton } from '@/components/interactions/share-button'
+import { ReportDialog } from '@/components/interactions/report-dialog'
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -115,13 +117,15 @@ export default async function ExperiencePage({ params }: { params: Promise<{ id:
         </Card>
       )}
 
-      {/* Upvote Button */}
-      <div className="mb-6">
+      {/* Actions Bar */}
+      <div className="mb-6 flex items-center gap-3">
         <UpvoteButton
           experienceId={experience.id}
           initialCount={experience.upvote_count || 0}
           currentUserId={user?.id}
         />
+        <ShareButton experienceId={experience.id} title={experience.title} />
+        <ReportDialog experienceId={experience.id} currentUserId={user?.id} />
       </div>
 
       {/* Comments Section */}

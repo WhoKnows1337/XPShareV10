@@ -12,30 +12,36 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Experience ID is required' }, { status: 400 })
     }
 
+    // Fetch comments
     const { data: comments, error } = await supabase
       .from('comments')
-      .select(`
-        id,
-        content,
-        created_at,
-        updated_at,
-        user_id,
-        user_profiles!comments_user_id_fkey (
-          id,
-          username,
-          display_name,
-          avatar_url
-        )
-      `)
+      .select('id, content, created_at, updated_at, user_id')
       .eq('experience_id', experienceId)
       .order('created_at', { ascending: true })
 
     if (error) {
-      console.error('Error fetching comments:', error)
+      console.error('Error fetching comments:', JSON.stringify(error, null, 2))
       return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 })
     }
 
-    return NextResponse.json({ comments: comments || [] })
+    if (!comments || comments.length === 0) {
+      return NextResponse.json({ comments: [] })
+    }
+
+    // Fetch user profiles for all comment authors
+    const userIds = [...new Set(comments.map((c) => c.user_id))]
+    const { data: profiles } = await supabase
+      .from('user_profiles')
+      .select('id, username, display_name, avatar_url')
+      .in('id', userIds)
+
+    // Merge profiles into comments
+    const commentsWithProfiles = comments.map((comment) => ({
+      ...comment,
+      user_profiles: profiles?.find((p) => p.id === comment.user_id) || null,
+    }))
+
+    return NextResponse.json({ comments: commentsWithProfiles })
   } catch (error) {
     console.error('Comments GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -78,27 +84,27 @@ export async function POST(request: Request) {
         user_id: user.id,
         content: content.trim(),
       })
-      .select(`
-        id,
-        content,
-        created_at,
-        updated_at,
-        user_id,
-        user_profiles!comments_user_id_fkey (
-          id,
-          username,
-          display_name,
-          avatar_url
-        )
-      `)
+      .select('id, content, created_at, updated_at, user_id')
       .single()
 
     if (error) {
-      console.error('Error creating comment:', error)
+      console.error('Error creating comment:', JSON.stringify(error, null, 2))
       return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 })
     }
 
-    return NextResponse.json({ comment }, { status: 201 })
+    // Fetch user profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('id, username, display_name, avatar_url')
+      .eq('id', user.id)
+      .single()
+
+    const commentWithProfile = {
+      ...comment,
+      user_profiles: profile,
+    }
+
+    return NextResponse.json({ comment: commentWithProfile }, { status: 201 })
   } catch (error) {
     console.error('Comments POST error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
