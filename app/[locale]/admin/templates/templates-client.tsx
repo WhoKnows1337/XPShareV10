@@ -82,6 +82,69 @@ export function TemplatesClient({ templates: initialTemplates, categories }: Tem
     }
   }
 
+  const handleDuplicate = async (template: QuestionTemplate) => {
+    try {
+      const res = await fetch('/api/admin/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${template.name} (Copy)`,
+          description: template.description,
+          category_id: template.category_id,
+          questions: template.questions,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to duplicate template')
+
+      toast({
+        title: 'Success',
+        description: 'Template duplicated successfully',
+      })
+
+      router.refresh()
+    } catch (error) {
+      console.error('Duplicate error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to duplicate template',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+
+      const res = await fetch('/api/admin/templates/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!res.ok) throw new Error('Failed to import template')
+
+      toast({
+        title: 'Success',
+        description: 'Template imported successfully',
+      })
+
+      router.refresh()
+    } catch (error) {
+      console.error('Import error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to import template. Check JSON format.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   const handleApply = async (templateId: string, categoryId: string) => {
     try {
       const res = await fetch(`/api/admin/templates/${templateId}/apply`, {
@@ -216,6 +279,7 @@ export function TemplatesClient({ templates: initialTemplates, categories }: Tem
             onEdit={() => handleEdit(template)}
             onDelete={() => handleDelete(template.id)}
             onApply={handleApply}
+            onDuplicate={() => handleDuplicate(template)}
           />
         ))}
       </div>
@@ -254,12 +318,14 @@ function TemplateCard({
   onEdit,
   onDelete,
   onApply,
+  onDuplicate,
 }: {
   template: QuestionTemplate
   categories: Category[]
   onEdit: () => void
   onDelete: () => void
   onApply: (templateId: string, categoryId: string) => void
+  onDuplicate?: () => void
 }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
 
@@ -317,6 +383,11 @@ function TemplateCard({
           <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
             Edit
           </Button>
+          {onDuplicate && (
+            <Button variant="outline" size="sm" onClick={onDuplicate}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="destructive"
             size="sm"

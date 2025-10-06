@@ -28,6 +28,7 @@ export function CategoryDetailClient({
   const [isCategoryEditorOpen, setIsCategoryEditorOpen] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<DynamicQuestion | null>(null)
+  const [showCategoryInfo, setShowCategoryInfo] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -210,11 +211,57 @@ export function CategoryDetailClient({
             </div>
           </div>
         </CardHeader>
-        {category.description && (
-          <CardContent>
-            <p className="text-muted-foreground">{category.description}</p>
-          </CardContent>
-        )}
+        <CardContent>
+          {category.description && (
+            <p className="text-muted-foreground mb-4">{category.description}</p>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCategoryInfo(!showCategoryInfo)}
+            className="mb-2"
+          >
+            {showCategoryInfo ? '▼' : '▶'} Kategorie-Info
+          </Button>
+
+          {showCategoryInfo && (
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-muted-foreground">• Slug:</span>{' '}
+                  <span className="font-medium">{category.slug}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">• Icon:</span>{' '}
+                  <span className="font-medium">{category.icon}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">• Status:</span>{' '}
+                  <Badge variant={category.is_active ? 'default' : 'secondary'} className="ml-2">
+                    {category.is_active ? '✅ Aktiv' : '⏸️ Inaktiv'}
+                  </Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">• Sort Order:</span>{' '}
+                  <span className="font-medium">{category.sort_order}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">• Erstellt:</span>{' '}
+                  <span className="font-medium">
+                    {new Date(category.created_at).toLocaleDateString('de-DE')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">• Letzte Änderung:</span>{' '}
+                  <span className="font-medium">
+                    {new Date(category.updated_at).toLocaleDateString('de-DE')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Preview Button */}

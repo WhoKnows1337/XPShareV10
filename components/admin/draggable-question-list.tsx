@@ -249,6 +249,34 @@ export function DraggableQuestionList({
               Set Required
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const selectedQuestions = questions.filter(q => selectedIds.has(q.id))
+                const blob = new Blob([JSON.stringify(selectedQuestions, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `questions-${new Date().toISOString()}.json`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+            >
+              Export JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                if (confirm('This will renumber all question priorities from 1, 2, 3... Continue?')) {
+                  const reorderedIds = questions.map(q => q.id)
+                  await onReorder(reorderedIds)
+                }
+              }}
+            >
+              Renumber Priorities
+            </Button>
+            <Button
               variant="destructive"
               size="sm"
               onClick={handleBulkDelete}

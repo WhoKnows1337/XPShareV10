@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { History, RefreshCw, FileText, FolderOpen } from 'lucide-react'
+import { History, RefreshCw, FileText, FolderOpen, Download } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface Change {
@@ -34,12 +34,28 @@ export function HistoryClient({ changes: initialChanges }: HistoryClientProps) {
   const [changes] = useState(initialChanges)
   const [filterType, setFilterType] = useState<string>('all')
   const [filterEntity, setFilterEntity] = useState<string>('all')
+  const [filterUser, setFilterUser] = useState<string>('all')
+  const [dateRange, setDateRange] = useState<string>('30')
 
   const filteredChanges = changes.filter((change) => {
     if (filterType !== 'all' && change.change_type !== filterType) return false
     if (filterEntity !== 'all' && change.entity_type !== filterEntity) return false
+    if (filterUser !== 'all' && change.changed_by !== filterUser) return false
+
+    // Date range filter
+    if (dateRange !== 'all') {
+      const daysAgo = parseInt(dateRange)
+      const changeDate = new Date(change.changed_at)
+      const cutoffDate = new Date()
+      cutoffDate.setDate(cutoffDate.getDate() - daysAgo)
+      if (changeDate < cutoffDate) return false
+    }
+
     return true
   })
+
+  // Get unique users for filter
+  const uniqueUsers = Array.from(new Set(changes.map(c => c.changed_by).filter(Boolean)))
 
   const getChangeIcon = (entityType: string) => {
     return entityType === 'category' ? (
@@ -72,10 +88,38 @@ export function HistoryClient({ changes: initialChanges }: HistoryClientProps) {
             View all changes to questions and categories
           </p>
         </div>
-        <Button variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const csv = [
+                ['Date', 'Type', 'Entity', 'Description', 'User'].join(','),
+                ...filteredChanges.map(c => [
+                  new Date(c.changed_at).toISOString(),
+                  c.change_type,
+                  c.entity_type,
+                  c.description?.replace(/,/g, ';') || '',
+                  c.changed_by || 'System'
+                ].join(','))
+              ].join('\n')
+
+              const blob = new Blob([csv], { type: 'text/csv' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `history-${new Date().toISOString()}.csv`
+              a.click()
+              URL.revokeObjectURL(url)
+            }}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -84,8 +128,8 @@ export function HistoryClient({ changes: initialChanges }: HistoryClientProps) {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
               <label className="text-sm font-medium mb-2 block">Entity Type</label>
               <Select value={filterEntity} onValueChange={setFilterEntity}>
                 <SelectTrigger>
@@ -109,6 +153,36 @@ export function HistoryClient({ changes: initialChanges }: HistoryClientProps) {
                   <SelectItem value="created">Created</SelectItem>
                   <SelectItem value="updated">Updated</SelectItem>
                   <SelectItem value="deleted">Deleted</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">User</label>
+              <Select value={filterUser} onValueChange={setFilterUser}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All users" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Users</SelectItem>
+                  {uniqueUsers.map(userId => (
+                    <SelectItem key={userId} value={userId || ''}>
+                      {userId || 'System'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Date Range</label>
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="7">Last 7 Days</SelectItem>
+                  <SelectItem value="30">Last 30 Days</SelectItem>
+                  <SelectItem value="90">Last 90 Days</SelectItem>
                 </SelectContent>
               </Select>
             </div>
