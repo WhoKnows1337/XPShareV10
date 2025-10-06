@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Calendar, MapPin, User } from 'lucide-react'
 import { SimilarExperiences } from '@/components/patterns/similar-experiences'
+import { CommentsSection } from '@/components/interactions/comments-section'
+import { UpvoteButton } from '@/components/interactions/upvote-button'
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -20,6 +22,10 @@ const categoryLabels: Record<string, string> = {
 export default async function ExperiencePage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
   const { id } = await params
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { data: experience, error } = await supabase
     .from('experiences')
@@ -108,6 +114,20 @@ export default async function ExperiencePage({ params }: { params: Promise<{ id:
           </CardContent>
         </Card>
       )}
+
+      {/* Upvote Button */}
+      <div className="mb-6">
+        <UpvoteButton
+          experienceId={experience.id}
+          initialCount={experience.upvote_count || 0}
+          currentUserId={user?.id}
+        />
+      </div>
+
+      {/* Comments Section */}
+      <div className="mb-6">
+        <CommentsSection experienceId={experience.id} currentUserId={user?.id} />
+      </div>
 
       {/* Similar Experiences */}
       <SimilarExperiences
