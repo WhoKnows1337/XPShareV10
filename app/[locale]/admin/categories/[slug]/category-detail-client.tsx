@@ -32,6 +32,7 @@ export function CategoryDetailClient({
   const [showCategoryInfo, setShowCategoryInfo] = useState(false)
   const [isApplyTemplateOpen, setIsApplyTemplateOpen] = useState(false)
   const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false)
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set())
   const router = useRouter()
   const { toast } = useToast()
 
@@ -65,8 +66,11 @@ export function CategoryDetailClient({
   }
 
   const handleEdit = (question: DynamicQuestion) => {
+    console.log('handleEdit called with question:', question)
+    console.log('Setting editingQuestion and isEditorOpen to true')
     setEditingQuestion(question)
     setIsEditorOpen(true)
+    console.log('States set - isEditorOpen should now be true')
   }
 
   const handleDelete = async (questionId: string) => {
@@ -128,8 +132,128 @@ export function CategoryDetailClient({
   }
 
   const handleAddQuestion = () => {
+    console.log('handleAddQuestion called')
     setEditingQuestion(null)
     setIsEditorOpen(true)
+    console.log('States set - isEditorOpen should now be true')
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedQuestions.size === questions.length) {
+      setSelectedQuestions(new Set())
+    } else {
+      setSelectedQuestions(new Set(questions.map(q => q.id)))
+    }
+  }
+
+  const toggleSelectQuestion = (questionId: string) => {
+    const newSelected = new Set(selectedQuestions)
+    if (newSelected.has(questionId)) {
+      newSelected.delete(questionId)
+    } else {
+      newSelected.add(questionId)
+    }
+    setSelectedQuestions(newSelected)
+  }
+
+  const handleBulkActivate = async () => {
+    if (selectedQuestions.size === 0) return
+
+    try {
+      const res = await fetch('/api/admin/questions/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'activate',
+          question_ids: Array.from(selectedQuestions),
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to activate questions')
+
+      toast({
+        title: 'Success',
+        description: `${selectedQuestions.size} question(s) activated`,
+      })
+
+      setSelectedQuestions(new Set())
+      router.refresh()
+    } catch (error) {
+      console.error('Bulk activate error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to activate questions',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleBulkDeactivate = async () => {
+    if (selectedQuestions.size === 0) return
+
+    try {
+      const res = await fetch('/api/admin/questions/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deactivate',
+          question_ids: Array.from(selectedQuestions),
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to deactivate questions')
+
+      toast({
+        title: 'Success',
+        description: `${selectedQuestions.size} question(s) deactivated`,
+      })
+
+      setSelectedQuestions(new Set())
+      router.refresh()
+    } catch (error) {
+      console.error('Bulk deactivate error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to deactivate questions',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedQuestions.size === 0) return
+
+    if (!confirm(`Are you sure you want to delete ${selectedQuestions.size} question(s)?`)) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/admin/questions/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete',
+          question_ids: Array.from(selectedQuestions),
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to delete questions')
+
+      toast({
+        title: 'Success',
+        description: `${selectedQuestions.size} question(s) deleted`,
+      })
+
+      setSelectedQuestions(new Set())
+      router.refresh()
+    } catch (error) {
+      console.error('Bulk delete error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to delete questions',
+        variant: 'destructive',
+      })
+    }
   }
 
   const handleSaveQuestion = async () => {
@@ -343,6 +467,44 @@ export function CategoryDetailClient({
         )}
       </div>
 
+      {/* Bulk Actions Toolbar */}
+      {questions.length > 0 && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedQuestions.size === questions.length && questions.length > 0}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium">
+                    {selectedQuestions.size === questions.length ? 'Deselect All' : 'Select All'}
+                    {selectedQuestions.size > 0 && ` (${selectedQuestions.size} selected)`}
+                  </span>
+                </label>
+              </div>
+
+              {selectedQuestions.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button onClick={handleBulkActivate} variant="outline" size="sm">
+                    Activate Selected
+                  </Button>
+                  <Button onClick={handleBulkDeactivate} variant="outline" size="sm">
+                    Deactivate Selected
+                  </Button>
+                  <Button onClick={handleBulkDelete} variant="destructive" size="sm">
+                    Delete Selected
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Questions List */}
       <DraggableQuestionList
         questions={questions}
@@ -352,6 +514,8 @@ export function CategoryDetailClient({
         onDelete={handleDelete}
         onToggleActive={handleToggleActive}
         onAddQuestion={handleAddQuestion}
+        selectedQuestions={selectedQuestions}
+        onToggleSelect={toggleSelectQuestion}
       />
 
       {/* Question Editor Dialog */}

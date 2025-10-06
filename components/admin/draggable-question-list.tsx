@@ -32,6 +32,8 @@ interface DraggableQuestionListProps {
   onDelete: (questionId: string) => void
   onToggleActive: (questionId: string, isActive: boolean) => void
   onAddQuestion: () => void
+  selectedQuestions?: Set<string>
+  onToggleSelect?: (questionId: string) => void
 }
 
 export function DraggableQuestionList({
@@ -42,9 +44,14 @@ export function DraggableQuestionList({
   onDelete,
   onToggleActive,
   onAddQuestion,
+  selectedQuestions: externalSelectedQuestions,
+  onToggleSelect: externalToggleSelect,
 }: DraggableQuestionListProps) {
   const [questions, setQuestions] = useState(initialQuestions)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [internalSelectedIds, setInternalSelectedIds] = useState<Set<string>>(new Set())
+
+  // Use external selection if provided, otherwise use internal
+  const selectedIds = externalSelectedQuestions ?? internalSelectedIds
   const [newTag, setNewTag] = useState('')
   const [showTagInput, setShowTagInput] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -84,20 +91,46 @@ export function DraggableQuestionList({
   }
 
   const handleSelectToggle = (questionId: string) => {
-    const newSelected = new Set(selectedIds)
-    if (newSelected.has(questionId)) {
-      newSelected.delete(questionId)
+    if (externalToggleSelect) {
+      // Use external toggle directly
+      externalToggleSelect(questionId)
     } else {
-      newSelected.add(questionId)
+      // Use internal state
+      const newSelected = new Set(selectedIds)
+      if (newSelected.has(questionId)) {
+        newSelected.delete(questionId)
+      } else {
+        newSelected.add(questionId)
+      }
+      setInternalSelectedIds(newSelected)
     }
-    setSelectedIds(newSelected)
   }
 
   const handleSelectAll = () => {
-    if (selectedIds.size === questions.length) {
-      setSelectedIds(new Set())
+    if (externalToggleSelect) {
+      // Toggle each question individually when using external control
+      if (selectedIds.size === questions.length) {
+        // Deselect all
+        questions.forEach(q => {
+          if (selectedIds.has(q.id)) {
+            externalToggleSelect(q.id)
+          }
+        })
+      } else {
+        // Select all
+        questions.forEach(q => {
+          if (!selectedIds.has(q.id)) {
+            externalToggleSelect(q.id)
+          }
+        })
+      }
     } else {
-      setSelectedIds(new Set(questions.map((q) => q.id)))
+      // Use internal state
+      if (selectedIds.size === questions.length) {
+        setInternalSelectedIds(new Set())
+      } else {
+        setInternalSelectedIds(new Set(questions.map((q) => q.id)))
+      }
     }
   }
 
@@ -122,7 +155,14 @@ export function DraggableQuestionList({
         description: `${operation} applied to ${count} question(s)`,
       })
 
-      setSelectedIds(new Set())
+      // Clear selection
+      if (externalToggleSelect) {
+        // Deselect all by calling toggle on each selected item
+        selectedIds.forEach(id => externalToggleSelect(id))
+      } else {
+        setInternalSelectedIds(new Set())
+      }
+
       setShowTagInput(false)
       setNewTag('')
       router.refresh()
@@ -201,7 +241,7 @@ export function DraggableQuestionList({
               {selectedIds.size === questions.length ? 'Deselect All' : 'Select All'}
             </Button>
           )}
-          <Button onClick={onAddQuestion} size="sm">
+          <Button onClick={() => { console.log('Add Question button clicked in DraggableQuestionList'); onAddQuestion(); }} size="sm">
             <Plus className="mr-2 h-4 w-4" />
             Add Question
           </Button>

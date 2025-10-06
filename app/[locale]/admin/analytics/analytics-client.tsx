@@ -30,6 +30,7 @@ interface AnalyticsClientProps {
 export function AnalyticsClient({ categories }: AnalyticsClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [data, setData] = useState<any>(null)
+  const [previousData, setPreviousData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
@@ -41,11 +42,34 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
         params.set('category_id', selectedCategory)
       }
 
+      // Current period (last 7 days)
+      const today = new Date()
+      const sevenDaysAgo = new Date(today)
+      sevenDaysAgo.setDate(today.getDate() - 7)
+      params.set('end_date', today.toISOString().split('T')[0])
+      params.set('start_date', sevenDaysAgo.toISOString().split('T')[0])
+
       const res = await fetch(`/api/admin/analytics?${params.toString()}`)
       if (!res.ok) throw new Error('Failed to fetch analytics')
 
       const data = await res.json()
       setData(data)
+
+      // Previous period (14 days ago to 7 days ago) for comparison
+      const previousParams = new URLSearchParams()
+      if (selectedCategory !== 'all') {
+        previousParams.set('category_id', selectedCategory)
+      }
+      const fourteenDaysAgo = new Date(today)
+      fourteenDaysAgo.setDate(today.getDate() - 14)
+      previousParams.set('end_date', sevenDaysAgo.toISOString().split('T')[0])
+      previousParams.set('start_date', fourteenDaysAgo.toISOString().split('T')[0])
+
+      const prevRes = await fetch(`/api/admin/analytics?${previousParams.toString()}`)
+      if (prevRes.ok) {
+        const previousData = await prevRes.json()
+        setPreviousData(previousData)
+      }
     } catch (error) {
       console.error('Analytics error:', error)
       toast({
@@ -61,6 +85,42 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
   useEffect(() => {
     fetchAnalytics()
   }, [selectedCategory])
+
+  // Calculate trend percentage
+  const calculateTrend = (current: number, previous: number) => {
+    if (!previous || previous === 0) return null
+    const change = ((current - previous) / previous) * 100
+    return {
+      percentage: Math.abs(change).toFixed(1),
+      isPositive: change >= 0,
+      change: change,
+    }
+  }
+
+  // Calculate previous period stats
+  const previousStats = previousData?.summary
+    ? {
+        totalShown: previousData.summary.reduce(
+          (acc: number, item: any) => acc + (item.total_shown || 0),
+          0
+        ),
+        totalAnswered: previousData.summary.reduce(
+          (acc: number, item: any) => acc + (item.total_answered || 0),
+          0
+        ),
+        totalSkipped: previousData.summary.reduce(
+          (acc: number, item: any) => acc + (item.total_skipped || 0),
+          0
+        ),
+        avgAnswerRate:
+          previousData.summary.length > 0
+            ? previousData.summary.reduce(
+                (acc: number, item: any) => acc + (item.answer_rate || 0),
+                0
+              ) / previousData.summary.length
+            : 0,
+      }
+    : null
 
   const handleExport = async (format: 'csv' | 'json') => {
     try {
@@ -221,6 +281,14 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalShown.toLocaleString()}</div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.totalShown, previousStats.totalShown)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% vs last week
+                  </p>
+                ) : null
+              })()}
             </CardContent>
           </Card>
 
@@ -233,6 +301,14 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
               <div className="text-2xl font-bold">
                 {stats.totalAnswered.toLocaleString()}
               </div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.totalAnswered, previousStats.totalAnswered)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% vs last week
+                  </p>
+                ) : null
+              })()}
             </CardContent>
           </Card>
 
@@ -245,6 +321,14 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
               <div className="text-2xl font-bold">
                 {stats.totalSkipped.toLocaleString()}
               </div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.totalSkipped, previousStats.totalSkipped)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-red-600' : 'text-green-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% vs last week
+                  </p>
+                ) : null
+              })()}
             </CardContent>
           </Card>
 
@@ -255,6 +339,14 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.avgAnswerRate.toFixed(1)}%</div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.avgAnswerRate, previousStats.avgAnswerRate)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% vs last week
+                  </p>
+                ) : null
+              })()}
             </CardContent>
           </Card>
         </div>

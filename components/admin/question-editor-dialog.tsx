@@ -25,7 +25,7 @@ import { QuestionPreview } from './question-preview'
 import { OptionsEditor } from './options-editor'
 import { ConditionalLogicBuilder } from './conditional-logic-builder'
 import { FollowUpBuilder } from './follow-up-builder'
-import { Save, X, ChevronDown, ChevronUp, Monitor, Smartphone } from 'lucide-react'
+import { Save, X, ChevronDown, ChevronUp, Monitor, Smartphone, Sparkles } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface QuestionEditorDialogProps {
@@ -70,6 +70,8 @@ export function QuestionEditorDialog({
   const [conditionalLogic, setConditionalLogic] = useState<any>({})
   const [followUpQuestion, setFollowUpQuestion] = useState<any>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [aiAdaptive, setAIAdaptive] = useState(false)
+  const [adaptiveConditions, setAdaptiveConditions] = useState<any>({})
 
   // Initialize form when question changes
   useEffect(() => {
@@ -84,6 +86,8 @@ export function QuestionEditorDialog({
       setIsActive(question.is_active)
       setConditionalLogic(question.conditional_logic || {})
       setFollowUpQuestion(question.follow_up_question || null)
+      setAIAdaptive((question as any).ai_adaptive || false)
+      setAdaptiveConditions((question as any).adaptive_conditions || {})
     } else {
       // Reset for new question
       setQuestionText('')
@@ -98,6 +102,8 @@ export function QuestionEditorDialog({
       setConditionalLogic({})
       setFollowUpQuestion(null)
       setShowAdvanced(false)
+      setAIAdaptive(false)
+      setAdaptiveConditions({})
     }
   }, [question])
 
@@ -158,6 +164,8 @@ export function QuestionEditorDialog({
         is_active: isActive,
         conditional_logic: conditionalLogic,
         follow_up_question: followUpQuestion,
+        ai_adaptive: aiAdaptive,
+        adaptive_conditions: adaptiveConditions,
       }
 
       const url = question
@@ -197,6 +205,8 @@ export function QuestionEditorDialog({
       setIsSaving(false)
     }
   }
+
+  console.log('QuestionEditorDialog render - open:', open, 'question:', question?.id)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -370,6 +380,59 @@ export function QuestionEditorDialog({
                     value={followUpQuestion}
                     onChange={setFollowUpQuestion}
                   />
+
+                  {/* AI-Adaptive Configuration */}
+                  <div className="rounded-lg border border-purple-200 p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-purple-600" />
+                        <Label className="text-base font-medium">AI-Adaptive Follow-Ups</Label>
+                      </div>
+                      <Switch checked={aiAdaptive} onCheckedChange={setAIAdaptive} />
+                    </div>
+
+                    {aiAdaptive && (
+                      <div className="space-y-4 pt-2">
+                        <p className="text-sm text-muted-foreground">
+                          Configure when AI should generate intelligent follow-up questions
+                        </p>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">Max Follow-Up Questions</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={3}
+                            value={adaptiveConditions.max_questions || 1}
+                            onChange={(e) =>
+                              setAdaptiveConditions({
+                                ...adaptiveConditions,
+                                max_questions: parseInt(e.target.value) || 1,
+                              })
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">Min Answer Length (optional)</Label>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 50 characters"
+                            value={adaptiveConditions.min_answer_length || ''}
+                            onChange={(e) =>
+                              setAdaptiveConditions({
+                                ...adaptiveConditions,
+                                min_answer_length: parseInt(e.target.value) || undefined,
+                              })
+                            }
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Only generate if answer is longer than this
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

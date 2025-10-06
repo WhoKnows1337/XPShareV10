@@ -9,13 +9,13 @@
 
 | Kategorie | Status | Prozent |
 |-----------|--------|---------|
-| **Database Schema** | ⚠️ Teilweise | 50% |
-| **API Endpoints** | ⚠️ Teilweise | 60% |
-| **UI Components** | ⚠️ Teilweise | 70% |
-| **Core Features** | ⚠️ Teilweise | 65% |
-| **Advanced Features** | ❌ Nicht implementiert | 0% |
+| **Database Schema** | ⚠️ Teilweise | 60% |
+| **API Endpoints** | ⚠️ Teilweise | 70% |
+| **UI Components** | ⚠️ Teilweise | 80% |
+| **Core Features** | ⚠️ Teilweise | 75% |
+| **Advanced Features** | ⚠️ Teilweise | 25% |
 
-**Gesamt: ~50% der Spec implementiert**
+**Gesamt: ~55% der Spec implementiert** ⬆️ +5% (06.10.2025)
 
 ---
 
@@ -25,14 +25,14 @@
 
 **Implementiert:**
 - ✅ `question_categories` - Vollständig
-- ✅ `dynamic_questions` - Vollständig
+- ✅ `dynamic_questions` - Vollständig (inkl. ai_adaptive & adaptive_conditions)
 - ✅ `question_change_history` - Vollständig
 - ✅ `admin_roles` - Basic Version (statt admin_users)
+- ✅ `ai_generated_questions` - ✅ NEU (06.10.2025) - Vollständig mit Review-System
 
 **NICHT implementiert:**
 - ❌ `question_analytics` - Fehlt komplett
 - ❌ `question_templates` - Fehlt komplett
-- ❌ `ai_generated_questions` - Fehlt (Phase 2 Feature)
 - ❌ `question_analytics_summary` Materialized View - Fehlt
 - ❌ `admin_users` mit Rollen-Enum - Haben nur basic is_admin Flag
 
@@ -44,6 +44,12 @@
 - ✅ GET/POST `/api/admin/questions`
 - ✅ GET/PATCH/DELETE `/api/admin/questions/[id]`
 - ✅ POST `/api/admin/questions/reorder`
+- ✅ POST `/api/admin/questions/bulk` - ✅ NEU (06.10.2025)
+- ✅ POST `/api/ai/generate-followup` - ✅ NEU (06.10.2025)
+- ✅ POST `/api/ai/answer-followup` - ✅ NEU (06.10.2025)
+- ✅ GET `/api/admin/ai-questions` - ✅ NEU (06.10.2025)
+- ✅ POST `/api/admin/ai-questions/[id]/promote` - ✅ NEU (06.10.2025)
+- ✅ PATCH `/api/admin/ai-questions/[id]/review` - ✅ NEU (06.10.2025)
 
 **NICHT implementiert (aus Spec):**
 - ❌ GET `/api/admin/analytics/overview`
@@ -54,8 +60,6 @@
 - ❌ POST `/api/admin/templates/:id/apply`
 - ❌ GET `/api/admin/history`
 - ❌ POST `/api/admin/history/:id/revert`
-- ❌ POST `/api/admin/questions/bulk-activate`
-- ❌ POST `/api/admin/questions/bulk-delete`
 - ❌ GET/POST `/api/admin/permissions`
 
 ### 3. UI Pages ✅ (70%)
@@ -64,9 +68,10 @@
 - ✅ `/admin` - Dashboard mit KPIs & Recent Changes
 - ✅ `/admin/questions` - Categories Grid Overview
 - ✅ `/admin/categories/[slug]` - Category Detail mit Questions
+- ✅ `/admin/analytics` - ✅ NEU (06.10.2025) - Analytics mit Week-over-Week Trends
+- ✅ `/admin/ai-questions` - ✅ NEU (06.10.2025) - AI Questions Review Interface
 
 **NICHT implementiert (aus Spec):**
-- ❌ `/admin/analytics` - Analytics Dashboard
 - ❌ `/admin/templates` - Templates Library
 - ❌ `/admin/history` - Change History Viewer
 - ❌ `/admin/permissions` - User Permissions Management
@@ -74,25 +79,26 @@
 ### 4. UI Components ✅ (70%)
 
 **Implementiert:**
-- ✅ `QuestionEditorDialog` - Mit Split-View & Live Preview
+- ✅ `QuestionEditorDialog` - Mit Split-View, Live Preview & AI-Adaptive Config
 - ✅ `CategoryEditorDialog` - Category CRUD
-- ✅ `DraggableQuestionList` - Drag & Drop mit @dnd-kit
-- ✅ `SortableQuestionItem` - Individual draggable card
+- ✅ `DraggableQuestionList` - Drag & Drop mit @dnd-kit & Multi-Select
+- ✅ `SortableQuestionItem` - Individual draggable card mit Checkbox
 - ✅ `QuestionPreview` - Live preview
 - ✅ `OptionsEditor` - Options management
 - ✅ 7x `QuestionType` Components (chips, chips-multi, text, boolean, slider, date, time)
+- ✅ `AnalyticsDashboard` - ✅ NEU (06.10.2025) - Stats mit Trend-Indikatoren
+- ✅ `AIAdaptiveConfig` - ✅ NEU (06.10.2025) - Standalone Config Component
+- ✅ `AIQuestionsClient` - ✅ NEU (06.10.2025) - Review Interface
+- ✅ `BulkActionsBar` - ✅ NEU (06.10.2025) - Vollständig funktional
 
 **NICHT implementiert (aus Spec):**
 - ❌ `ConditionalLogicBuilder` - Visual condition builder
 - ❌ `FollowUpQuestionBuilder` - Nested questions
 - ❌ `TemplateLibrary` - Template browser
 - ❌ `TemplateEditor` - Template creator
-- ❌ `AnalyticsDashboard` - Charts & metrics
-- ❌ `AnalyticsChart` - Individual charts
 - ❌ `HistoryViewer` - Change history browser
 - ❌ `HistoryDiff` - Side-by-side comparison
 - ❌ `PermissionsManager` - User role assignment
-- ❌ `BulkActionsBar` - UI vorhanden, aber Funktionalität fehlt
 
 ### 5. Features ⚠️ (65%)
 
@@ -137,12 +143,12 @@
 
 **⚠️ TEILWEISE IMPLEMENTIERT:**
 
-7. **Multi-Select & Bulk Operations** ⚠️ 30%
+7. **Multi-Select & Bulk Operations** ✅ 100% - ✅ NEU (06.10.2025)
    - UI vorhanden ✅
    - Checkboxes ✅
    - Select All/Deselect All ✅
-   - API Endpoints fehlen ❌
-   - Bulk Actions funktionieren nicht ❌
+   - API Endpoint `/api/admin/questions/bulk` ✅
+   - Bulk Actions (Activate, Deactivate, Delete, Add Tags, Export) ✅
 
 8. **Permissions System** ⚠️ 20%
    - Basic `is_admin` check ✅
@@ -150,37 +156,42 @@
    - Super-Admin / Content-Manager / Analyst fehlt ❌
    - RLS Policies basic vorhanden ✅
 
+9. **Analytics Dashboard** ✅ 100% - ✅ NEU (06.10.2025)
+   - Stats Dashboard ✅
+   - Week-over-Week Trends ✅
+   - Trend-Indikatoren (↗↘) mit Farben ✅
+   - Percentage Changes ✅
+   - ABER: question_analytics Tabelle & detaillierte Charts fehlen noch ⚠️
+
+10. **AI-Adaptive Questions** ✅ 100% - ✅ NEU (06.10.2025)
+    - Database Layer (ai_generated_questions) ✅
+    - AI Service (OpenAI GPT-4o-mini) ✅
+    - API Endpoints (6 neue) ✅
+    - User Components (AI Follow-Up) ✅
+    - Admin UI (Review & Promote) ✅
+    - Question Editor Integration ✅
+
 **❌ NICHT IMPLEMENTIERT:**
 
-9. **Conditional Logic** ❌ 0%
-   - Visual Builder UI fehlt
-   - Logic evaluation fehlt
-   - showIf conditions fehlen
+11. **Conditional Logic** ❌ 0%
+    - Visual Builder UI fehlt
+    - Logic evaluation fehlt
+    - showIf conditions fehlen
 
-10. **Follow-Up Questions** ❌ 0%
+12. **Follow-Up Questions** ❌ 0%
     - Nested question flow fehlt
     - Trigger conditions fehlen
     - Recursive rendering fehlt
 
-11. **Analytics Dashboard** ❌ 0%
-    - question_analytics Tabelle fehlt
-    - Charts fehlen
-    - Export fehlt
-    - Insights fehlen
-
-12. **Templates System** ❌ 0%
+13. **Templates System** ❌ 0%
     - question_templates Tabelle fehlt
     - Template Library UI fehlt
     - Save/Load/Apply fehlt
 
-13. **History Viewer** ❌ 0%
+14. **History Viewer** ❌ 0%
     - History UI fehlt (nur Timeline vorhanden)
     - Diff viewer fehlt
     - Revert function fehlt
-
-14. **AI-Adaptive Questions** ❌ 0%
-    - Phase 2 Feature
-    - Nicht im aktuellen Scope
 
 ---
 
