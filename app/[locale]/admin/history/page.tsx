@@ -11,5 +11,5 @@ export default async function HistoryPage() {
     .order('changed_at', { ascending: false })
     .limit(100)
 
-  return <HistoryClient changes={changes || []} />
+  return <HistoryClient changes={changes as any || []} />
 }

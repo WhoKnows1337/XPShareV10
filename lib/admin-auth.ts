@@ -44,7 +44,7 @@ export async function requireAdmin(minRole: AdminRole = 'analyst') {
   }
 
   // Check role hierarchy
-  if (ROLE_HIERARCHY[adminRole.role] < ROLE_HIERARCHY[minRole]) {
+  if (ROLE_HIERARCHY[adminRole.role as keyof typeof ROLE_HIERARCHY] < ROLE_HIERARCHY[minRole]) {
     redirect('/')
   }
 

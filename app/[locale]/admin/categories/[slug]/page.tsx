@@ -36,7 +36,7 @@ export default async function CategoryDetailPage({ params }: PageProps) {
   const questionIds = questions?.map(q => q.id) || []
   const { data: analytics } = await supabase
     .from('question_analytics_summary')
-    .select('question_id, total_shown, total_answered, answer_rate_percent, avg_time')
+    .select('question_id, total_shown, total_answered, answer_rate, avg_response_time')
     .in('question_id', questionIds)
 
   // Map analytics to questions
@@ -47,16 +47,16 @@ export default async function CategoryDetailPage({ params }: PageProps) {
       analytics: questionAnalytics || {
         total_shown: 0,
         total_answered: 0,
-        answer_rate_percent: 0,
-        avg_time: 0
+        answer_rate: 0,
+        avg_response_time: 0
       }
     }
   })
 
   return (
     <CategoryDetailClient
-      category={category}
-      initialQuestions={questionsWithAnalytics || []}
+      category={category as any}
+      initialQuestions={questionsWithAnalytics as any || []}
     />
   )
 }

@@ -49,10 +49,10 @@ export default async function AdminDashboard() {
 
   // Map analytics to categories
   const categoriesWithAnalytics = categories?.map(category => {
-    const questionCount = category.questions?.[0]?.count || 0
-    const analytics = categoryAnalytics?.filter(a => a.category_id === category.id) || []
+    const questionCount = (category.questions as any)?.[0]?.count || 0
+    const analytics = (categoryAnalytics as any)?.filter((a: any) => a.category_id === category.id) || []
     const avgRate = analytics.length > 0
-      ? Math.round(analytics.reduce((sum, a) => sum + (a.answer_rate_percent || 0), 0) / analytics.length)
+      ? Math.round(analytics.reduce((sum: number, a: any) => sum + (a.answer_rate_percent || a.answer_rate || 0), 0) / analytics.length)
       : 0
 
     return {
@@ -62,7 +62,7 @@ export default async function AdminDashboard() {
     }
   })
 
-  // Fetch recent changes
+  // Fetch recent changes with user info
   const { data: recentChanges } = await supabase
     .from('question_change_history')
     .select('*')
@@ -105,33 +105,36 @@ export default async function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Dashboard</h2>
-          <p className="text-muted-foreground">Overview of platform statistics</p>
+          <p className="text-muted-foreground">Übersicht über Plattform-Statistiken</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/api/admin/export/stats?format=csv">
-            <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-          </Link>
-          <Link href="/api/admin/export/stats?format=json">
-            <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
-              Export JSON
-            </Button>
-          </Link>
-          <Link href="/admin/analytics">
-            <Button variant="outline">
-              <TrendingUp className="mr-2 h-4 w-4" />
-              Analytics
-            </Button>
-          </Link>
-          <Link href="/admin/questions">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Manage Questions
-            </Button>
-          </Link>
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground text-right">Quick-Actions:</p>
+          <div className="flex gap-2">
+            <Link href="/api/admin/export/stats?format=json">
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Export alles (JSON)
+              </Button>
+            </Link>
+            <Link href="/api/admin/export/stats?format=csv">
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Wöchentlicher Report (CSV)
+              </Button>
+            </Link>
+            <Link href="/admin/analytics">
+              <Button variant="outline">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Analytics
+              </Button>
+            </Link>
+            <Link href="/admin/questions">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Fragen verwalten
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -221,29 +224,56 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Changes */}
+        {/* Activity Feed */}
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Changes</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Letzte Änderungen</CardTitle>
+            <Link href="/admin/history">
+              <Button variant="ghost" size="sm">
+                Alle anzeigen
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent className="space-y-3">
             {recentChanges && recentChanges.length > 0 ? (
-              recentChanges.map((change) => (
-                <div key={change.id} className="flex items-start gap-3 rounded-lg border p-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      {change.entity_type === 'category' ? 'Category' : 'Question'}{' '}
-                      {change.change_type}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{change.description}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(change.changed_at).toLocaleString()}
-                    </p>
+              recentChanges.map((change) => {
+                const timeAgo = (() => {
+                  if (!change.changed_at) return 'vor Kurzem'
+                  const diff = Date.now() - new Date(change.changed_at).getTime()
+                  const hours = Math.floor(diff / (1000 * 60 * 60))
+                  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+                  if (days > 0) return `vor ${days} Tag${days > 1 ? 'en' : ''}`
+                  if (hours > 0) return `vor ${hours} Stunde${hours > 1 ? 'n' : ''}`
+                  return 'vor Kurzem'
+                })()
+
+                return (
+                  <div key={change.id} className="flex items-start gap-3 text-sm">
+                    <div className="mt-0.5">
+                      {change.entity_type === 'category' ? '📂' : '❓'}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="leading-tight">
+                        <span className="font-medium">
+                          {change.changed_by ? `@${change.changed_by.split('@')[0]}` : 'System'}
+                        </span>
+                        {' '}hat{' '}
+                        {change.change_type === 'created' && 'erstellt'}
+                        {change.change_type === 'updated' && 'bearbeitet'}
+                        {change.change_type === 'deleted' && 'gelöscht'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {change.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {timeAgo}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             ) : (
-              <p className="text-sm text-muted-foreground">No recent changes</p>
+              <p className="text-sm text-muted-foreground">Keine Änderungen</p>
             )}
           </CardContent>
         </Card>

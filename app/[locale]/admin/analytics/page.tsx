@@ -5,7 +5,7 @@ export default async function AnalyticsPage() {
   const supabase = await createClient()
 
   // Fetch categories for filter
-  const { data: categories } = await supabase
+  const { data: categories } = await (supabase as any)
     .from('question_categories')
     .select('id, name, slug, icon')
     .eq('is_active', true)

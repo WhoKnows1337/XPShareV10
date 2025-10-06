@@ -13,7 +13,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { startDate, endDate, category } = await request.json()
+    // Parse request body with fallback to empty object
+    let body: { startDate?: string; endDate?: string; category?: string } = {}
+    try {
+      const text = await request.text()
+      if (text) {
+        body = JSON.parse(text)
+      }
+    } catch (e) {
+      // If parsing fails, use default empty body
+    }
+
+    const { startDate, endDate, category } = body
 
     // Build query
     let query = supabase

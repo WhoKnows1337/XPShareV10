@@ -25,7 +25,7 @@ import { QuestionPreview } from './question-preview'
 import { OptionsEditor } from './options-editor'
 import { ConditionalLogicBuilder } from './conditional-logic-builder'
 import { FollowUpBuilder } from './follow-up-builder'
-import { Save, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, X, ChevronDown, ChevronUp, Monitor, Smartphone } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 interface QuestionEditorDialogProps {
@@ -55,6 +55,7 @@ export function QuestionEditorDialog({
 }: QuestionEditorDialogProps) {
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
 
   // Form state
   const [questionText, setQuestionText] = useState('')
@@ -109,8 +110,8 @@ export function QuestionEditorDialog({
     options,
     priority: question?.priority || 1,
     is_optional: isOptional,
-    help_text: helpText || undefined,
-    placeholder: placeholder || undefined,
+    help_text: helpText || null,
+    placeholder: placeholder || null,
     conditional_logic: conditionalLogic,
     follow_up_question: null,
     tags,
@@ -390,8 +391,44 @@ export function QuestionEditorDialog({
           </div>
 
           {/* Right: Live Preview */}
-          <div className="rounded-lg border bg-slate-50 p-4">
-            <QuestionPreview question={previewQuestion} />
+          <div className="space-y-4">
+            {/* Preview Header with Device Toggle */}
+            <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-4 py-2">
+              <h3 className="text-sm font-semibold text-slate-700">
+                🎨 Live Preview
+              </h3>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant={previewMode === 'desktop' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setPreviewMode('desktop')}
+                >
+                  <Monitor className="h-4 w-4 mr-1" />
+                  Desktop
+                </Button>
+                <Button
+                  type="button"
+                  variant={previewMode === 'mobile' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setPreviewMode('mobile')}
+                >
+                  <Smartphone className="h-4 w-4 mr-1" />
+                  Mobile
+                </Button>
+              </div>
+            </div>
+
+            {/* Preview Container with responsive width */}
+            <div className="flex justify-center rounded-lg border bg-slate-100 p-4">
+              <div
+                className={`transition-all ${
+                  previewMode === 'mobile' ? 'max-w-md w-full' : 'w-full'
+                }`}
+              >
+                <QuestionPreview question={previewQuestion} />
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

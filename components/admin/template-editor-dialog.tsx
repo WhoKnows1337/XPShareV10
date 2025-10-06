@@ -74,7 +74,7 @@ export function TemplateEditorDialog({
 }: TemplateEditorDialogProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [categoryId, setCategoryId] = useState<string>('')
+  const [categoryId, setCategoryId] = useState<string>('none')
   const [questions, setQuestions] = useState<TemplateQuestion[]>([])
   const [isSaving, setIsSaving] = useState(false)
 
@@ -85,12 +85,12 @@ export function TemplateEditorDialog({
     if (template) {
       setName(template.name)
       setDescription(template.description || '')
-      setCategoryId(template.category_id || '')
+      setCategoryId(template.category_id || 'none')
       setQuestions(template.questions || [])
     } else {
       setName('')
       setDescription('')
-      setCategoryId('')
+      setCategoryId('none')
       setQuestions([])
     }
   }, [template])
@@ -152,7 +152,7 @@ export function TemplateEditorDialog({
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || null,
-          category_id: categoryId || null,
+          category_id: categoryId === 'none' ? null : categoryId,
           questions,
         }),
       })
@@ -222,7 +222,7 @@ export function TemplateEditorDialog({
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.icon} {cat.name}

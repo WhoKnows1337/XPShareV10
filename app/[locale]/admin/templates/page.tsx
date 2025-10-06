@@ -17,5 +17,5 @@ export default async function TemplatesPage() {
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
 
-  return <TemplatesClient templates={templates || []} categories={categories || []} />
+  return <TemplatesClient templates={templates as any || []} categories={categories || []} />
 }

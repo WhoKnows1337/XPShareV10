@@ -6,10 +6,11 @@ import { DraggableQuestionList } from '@/components/admin/draggable-question-lis
 import { QuestionEditorDialog } from '@/components/admin/question-editor-dialog'
 import { CategoryEditorDialog } from '@/components/admin/category-editor-dialog'
 import { FullscreenPreviewDialog } from '@/components/admin/fullscreen-preview-dialog'
+import { ApplyTemplateDialog } from '@/components/admin/apply-template-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Edit, Trash2, Maximize } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2, Maximize, FileInput, FilePlus2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
@@ -29,6 +30,8 @@ export function CategoryDetailClient({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<DynamicQuestion | null>(null)
   const [showCategoryInfo, setShowCategoryInfo] = useState(false)
+  const [isApplyTemplateOpen, setIsApplyTemplateOpen] = useState(false)
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -173,6 +176,62 @@ export function CategoryDetailClient({
     }
   }
 
+  const handleSaveAsTemplate = async () => {
+    if (questions.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No questions to save as template',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const templateName = prompt(`Template name:`, `${category.name} Template`)
+    if (!templateName) return
+
+    const templateDescription = prompt('Template description (optional):')
+
+    try {
+      const res = await fetch('/api/admin/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: templateName,
+          description: templateDescription,
+          category_id: category.id,
+          questions: questions.map(q => ({
+            question_text: q.question_text,
+            question_type: q.question_type,
+            options: q.options,
+            priority: q.priority,
+            is_optional: q.is_optional,
+            help_text: q.help_text,
+            placeholder: q.placeholder,
+            conditional_logic: q.conditional_logic,
+            follow_up_question: q.follow_up_question,
+            tags: q.tags,
+          })),
+          tags: [],
+          is_public: false,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to create template')
+
+      toast({
+        title: 'Success',
+        description: 'Template created successfully',
+      })
+    } catch (error) {
+      console.error('Save template error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to create template',
+        variant: 'destructive',
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -264,15 +323,25 @@ export function CategoryDetailClient({
         </CardContent>
       </Card>
 
-      {/* Preview Button */}
-      {questions.length > 0 && (
-        <div className="flex justify-end">
-          <Button onClick={() => setIsPreviewOpen(true)} variant="outline">
-            <Maximize className="mr-2 h-4 w-4" />
-            Fullscreen Preview
-          </Button>
-        </div>
-      )}
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-2">
+        <Button onClick={() => setIsApplyTemplateOpen(true)} variant="outline">
+          <FileInput className="mr-2 h-4 w-4" />
+          Aus Template
+        </Button>
+        {questions.length > 0 && (
+          <>
+            <Button onClick={handleSaveAsTemplate} variant="outline">
+              <FilePlus2 className="mr-2 h-4 w-4" />
+              Als Template
+            </Button>
+            <Button onClick={() => setIsPreviewOpen(true)} variant="outline">
+              <Maximize className="mr-2 h-4 w-4" />
+              Fullscreen Preview
+            </Button>
+          </>
+        )}
+      </div>
 
       {/* Questions List */}
       <DraggableQuestionList
@@ -307,6 +376,16 @@ export function CategoryDetailClient({
         onOpenChange={setIsPreviewOpen}
         questions={questions.filter(q => q.is_active)}
         categoryName={category.name}
+      />
+
+      {/* Apply Template Dialog */}
+      <ApplyTemplateDialog
+        open={isApplyTemplateOpen}
+        onOpenChange={setIsApplyTemplateOpen}
+        categoryId={category.id}
+        onApplied={() => {
+          router.refresh()
+        }}
       />
     </div>
   )

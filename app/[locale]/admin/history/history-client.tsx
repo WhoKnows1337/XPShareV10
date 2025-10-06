@@ -11,8 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { History, RefreshCw, FileText, FolderOpen, Download } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { History, RefreshCw, FileText, FolderOpen, Download, ChevronDown, ChevronRight, Eye, Undo2 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
 
 interface Change {
   id: string
@@ -36,6 +44,10 @@ export function HistoryClient({ changes: initialChanges }: HistoryClientProps) {
   const [filterEntity, setFilterEntity] = useState<string>('all')
   const [filterUser, setFilterUser] = useState<string>('all')
   const [dateRange, setDateRange] = useState<string>('30')
+  const [expandedChanges, setExpandedChanges] = useState<Set<string>>(new Set())
+  const [diffDialogChange, setDiffDialogChange] = useState<Change | null>(null)
+  const { toast } = useToast()
+  const router = useRouter()
 
   const filteredChanges = changes.filter((change) => {
     if (filterType !== 'all' && change.change_type !== filterType) return false
@@ -75,6 +87,44 @@ export function HistoryClient({ changes: initialChanges }: HistoryClientProps) {
         return 'destructive'
       default:
         return 'outline'
+    }
+  }
+
+  const toggleExpanded = (changeId: string) => {
+    const newExpanded = new Set(expandedChanges)
+    if (newExpanded.has(changeId)) {
+      newExpanded.delete(changeId)
+    } else {
+      newExpanded.add(changeId)
+    }
+    setExpandedChanges(newExpanded)
+  }
+
+  const handleUndo = async (change: Change) => {
+    if (!confirm(`Are you sure you want to revert this change: "${change.description}"?`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/admin/history/${change.id}/revert`, {
+        method: 'POST',
+      })
+
+      if (!res.ok) throw new Error('Failed to revert change')
+
+      toast({
+        title: 'Success',
+        description: 'Change reverted successfully',
+      })
+
+      router.refresh()
+    } catch (error) {
+      console.error('Revert error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to revert change',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -208,56 +258,166 @@ export function HistoryClient({ changes: initialChanges }: HistoryClientProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredChanges.map((change) => (
-                <div
-                  key={change.id}
-                  className="flex items-start gap-4 rounded-lg border p-4"
-                >
-                  <div className="mt-1">{getChangeIcon(change.entity_type)}</div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={getChangeBadgeVariant(change.change_type)}>
-                        {change.change_type}
-                      </Badge>
-                      <Badge variant="outline">{change.entity_type}</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(change.changed_at), 'PPp')}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium">{change.description}</p>
+              {filteredChanges.map((change) => {
+                const isExpanded = expandedChanges.has(change.id)
+                const hasDetails = change.old_value || change.new_value
 
-                    {/* Show old/new values if available */}
-                    {(change.old_value || change.new_value) && (
-                      <div className="mt-2 rounded-md bg-muted p-3 space-y-2 text-xs">
-                        {change.old_value && (
-                          <div>
-                            <span className="font-medium">Old:</span>{' '}
-                            <code className="text-muted-foreground">
-                              {typeof change.old_value === 'string'
-                                ? change.old_value
-                                : JSON.stringify(change.old_value, null, 2)}
-                            </code>
+                return (
+                  <div
+                    key={change.id}
+                    className="rounded-lg border overflow-hidden"
+                  >
+                    {/* Change Header */}
+                    <div className="flex items-start gap-4 p-4">
+                      <div className="mt-1">{getChangeIcon(change.entity_type)}</div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getChangeBadgeVariant(change.change_type)}>
+                            {change.change_type}
+                          </Badge>
+                          <Badge variant="outline">{change.entity_type}</Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(change.changed_at), 'PPp')}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium">{change.description}</p>
+
+                        {/* Expand Details Button */}
+                        {hasDetails && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleExpanded(change.id)}
+                            className="h-auto py-1 px-2 text-xs"
+                          >
+                            {isExpanded ? (
+                              <>
+                                <ChevronDown className="h-3 w-3 mr-1" />
+                                Hide Details
+                              </>
+                            ) : (
+                              <>
+                                <ChevronRight className="h-3 w-3 mr-1" />
+                                Show Details
+                              </>
+                            )}
+                          </Button>
+                        )}
+
+                        {/* Expanded Details */}
+                        {isExpanded && hasDetails && (
+                          <div className="mt-3 rounded-md bg-muted p-4 space-y-3 text-sm">
+                            <h4 className="font-semibold text-xs uppercase text-muted-foreground">
+                              Changes:
+                            </h4>
+                            {change.old_value && (
+                              <div className="space-y-1">
+                                <div className="font-medium text-xs text-muted-foreground">Old:</div>
+                                <code className="block rounded bg-slate-800 text-red-400 p-2 text-xs whitespace-pre-wrap">
+                                  {typeof change.old_value === 'string'
+                                    ? change.old_value
+                                    : JSON.stringify(change.old_value, null, 2)}
+                                </code>
+                              </div>
+                            )}
+                            {change.new_value && (
+                              <div className="space-y-1">
+                                <div className="font-medium text-xs text-muted-foreground">New:</div>
+                                <code className="block rounded bg-slate-800 text-green-400 p-2 text-xs whitespace-pre-wrap">
+                                  {typeof change.new_value === 'string'
+                                    ? change.new_value
+                                    : JSON.stringify(change.new_value, null, 2)}
+                                </code>
+                              </div>
+                            )}
                           </div>
                         )}
-                        {change.new_value && (
-                          <div>
-                            <span className="font-medium">New:</span>{' '}
-                            <code className="text-muted-foreground">
-                              {typeof change.new_value === 'string'
-                                ? change.new_value
-                                : JSON.stringify(change.new_value, null, 2)}
-                            </code>
-                          </div>
-                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 pt-2">
+                          {hasDetails && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setDiffDialogChange(change)}
+                            >
+                              <Eye className="mr-2 h-3 w-3" />
+                              Diff View
+                            </Button>
+                          )}
+                          {change.change_type !== 'deleted' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUndo(change)}
+                            >
+                              <Undo2 className="mr-2 h-3 w-3" />
+                              Undo
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Diff View Dialog */}
+      <Dialog open={diffDialogChange !== null} onOpenChange={() => setDiffDialogChange(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Change Comparison</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {diffDialogChange?.description}
+            </p>
+          </DialogHeader>
+          {diffDialogChange && (
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              {/* Old Value */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <h3 className="text-sm font-semibold">Old Value</h3>
+                </div>
+                <div className="rounded-lg border bg-slate-50 p-4">
+                  {diffDialogChange.old_value ? (
+                    <pre className="text-xs whitespace-pre-wrap font-mono text-red-700">
+                      {typeof diffDialogChange.old_value === 'string'
+                        ? diffDialogChange.old_value
+                        : JSON.stringify(diffDialogChange.old_value, null, 2)}
+                    </pre>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No previous value</p>
+                  )}
+                </div>
+              </div>
+
+              {/* New Value */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                  <h3 className="text-sm font-semibold">New Value</h3>
+                </div>
+                <div className="rounded-lg border bg-slate-50 p-4">
+                  {diffDialogChange.new_value ? (
+                    <pre className="text-xs whitespace-pre-wrap font-mono text-green-700">
+                      {typeof diffDialogChange.new_value === 'string'
+                        ? diffDialogChange.new_value
+                        : JSON.stringify(diffDialogChange.new_value, null, 2)}
+                    </pre>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No new value</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

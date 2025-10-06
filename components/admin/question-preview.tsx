@@ -9,10 +9,22 @@ import { useState } from 'react'
 interface QuestionPreviewProps {
   question: DynamicQuestion
   isFullscreen?: boolean
+  value?: unknown
+  onChange?: (value: unknown) => void
 }
 
-export function QuestionPreview({ question, isFullscreen = false }: QuestionPreviewProps) {
-  const [previewValue, setPreviewValue] = useState<unknown>(null)
+export function QuestionPreview({
+  question,
+  isFullscreen = false,
+  value: controlledValue,
+  onChange: controlledOnChange
+}: QuestionPreviewProps) {
+  const [internalValue, setInternalValue] = useState<unknown>(null)
+
+  // Use controlled value if provided, otherwise use internal state
+  const isControlled = controlledValue !== undefined && controlledOnChange !== undefined
+  const previewValue = isControlled ? controlledValue : internalValue
+  const setPreviewValue = isControlled ? controlledOnChange : setInternalValue
 
   return (
     <div

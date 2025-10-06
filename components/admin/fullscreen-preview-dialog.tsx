@@ -8,9 +8,17 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { QuestionPreview } from './question-preview'
-import { X, Monitor, Smartphone, ChevronLeft, ChevronRight, RotateCcw, Timer } from 'lucide-react'
+import { X, Monitor, Smartphone, ChevronLeft, ChevronRight, RotateCcw, Timer, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface FullscreenPreviewDialogProps {
   open: boolean
@@ -30,6 +38,7 @@ export function FullscreenPreviewDialog({
   const [startTime, setStartTime] = useState<number>(Date.now())
   const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({})
   const [answers, setAnswers] = useState<Record<number, any>>({})
+  const [testUser, setTestUser] = useState<string>('default')
 
   const currentQuestion = questions[currentIndex]
   const progress = ((currentIndex + 1) / questions.length) * 100
@@ -59,6 +68,19 @@ export function FullscreenPreviewDialog({
     setAnswers({})
   }
 
+  const handleTestUserChange = (userType: string) => {
+    setTestUser(userType)
+    handleReset()
+  }
+
+  const testUserProfiles = {
+    default: { name: 'Default User', desc: 'Standard test' },
+    new: { name: 'New User', desc: 'First-time visitor, might skip more' },
+    returning: { name: 'Returning User', desc: 'Familiar with flow, answers faster' },
+    detailed: { name: 'Detailed User', desc: 'Takes time, answers everything' },
+    quick: { name: 'Quick User', desc: 'Skips frequently, fast navigation' },
+  }
+
   const totalTime = Object.values(questionTimes).reduce((sum, time) => sum + time, 0)
   const avgTime = totalTime / Math.max(Object.keys(questionTimes).length, 1)
 
@@ -75,6 +97,30 @@ export function FullscreenPreviewDialog({
           </div>
 
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Test-User: {testUserProfiles[testUser as keyof typeof testUserProfiles]?.name || 'Default'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Select Test User Profile</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {Object.entries(testUserProfiles).map(([key, profile]) => (
+                  <DropdownMenuItem
+                    key={key}
+                    onClick={() => handleTestUserChange(key)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">{profile.name}</span>
+                      <span className="text-xs text-muted-foreground">{profile.desc}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant={deviceMode === 'desktop' ? 'default' : 'outline'}
               size="sm"
@@ -136,7 +182,13 @@ export function FullscreenPreviewDialog({
                       </p>
                     </div>
 
-                    <QuestionPreview question={currentQuestion} />
+                    <QuestionPreview
+                      question={currentQuestion}
+                      value={answers[currentIndex]}
+                      onChange={(value) =>
+                        setAnswers({ ...answers, [currentIndex]: value })
+                      }
+                    />
 
                     {/* Navigation */}
                     <div className="flex gap-3 pt-4 border-t">
@@ -148,7 +200,11 @@ export function FullscreenPreviewDialog({
                         <ChevronLeft className="h-4 w-4 mr-2" />
                         Previous
                       </Button>
-                      <Button variant="outline" className="flex-1">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={handleNext}
+                      >
                         Skip
                       </Button>
                       <Button
@@ -194,19 +250,47 @@ export function FullscreenPreviewDialog({
                   </div>
                 </div>
 
-                {/* Question Times */}
+                {/* Answer Stats */}
+                <div className="space-y-2 pt-4 border-t">
+                  <p className="text-sm font-medium">Answer Status:</p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Answered:</span>
+                    <span className="font-semibold text-green-600">
+                      {Object.keys(answers).filter(k => (answers as any)[k] != null).length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Skipped:</span>
+                    <span className="font-semibold text-orange-500">
+                      {Object.keys(questionTimes).length - Object.keys(answers).filter(k => (answers as any)[k] != null).length}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Question Details */}
                 {Object.keys(questionTimes).length > 0 && (
                   <div className="space-y-2 pt-4 border-t">
-                    <p className="text-sm font-medium">Time per Question:</p>
+                    <p className="text-sm font-medium">Question Details:</p>
                     <div className="space-y-1 max-h-60 overflow-y-auto">
-                      {Object.entries(questionTimes).map(([idx, time]) => (
-                        <div key={idx} className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Q{parseInt(idx) + 1}:</span>
-                          <span className={time > 10 ? 'text-orange-500' : ''}>
-                            {time}s {time > 10 && '⚠️'}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries(questionTimes).map(([idx, time]) => {
+                        const idxNum = parseInt(idx)
+                        const hasAnswer = answers[idxNum] != null
+                        return (
+                          <div key={idx} className="flex items-center justify-between text-sm rounded-md bg-muted/50 px-2 py-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">Q{idxNum + 1}:</span>
+                              {hasAnswer ? (
+                                <span className="text-green-600 text-xs">✓ Answered</span>
+                              ) : (
+                                <span className="text-orange-500 text-xs">⚠️ Skipped</span>
+                              )}
+                            </div>
+                            <span className={time > 10 ? 'text-orange-500 font-medium' : 'text-muted-foreground'}>
+                              {time}s
+                            </span>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}

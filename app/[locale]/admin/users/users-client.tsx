@@ -21,7 +21,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Search, Shield, UserCog, Ban, CheckCircle } from 'lucide-react'
+import { Search, Shield, UserCog, Ban, CheckCircle, History } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
@@ -66,6 +66,10 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [newRole, setNewRole] = useState<AdminRole>(null)
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
+  const [activityLogUser, setActivityLogUser] = useState<User | null>(null)
+  const [isActivityLogOpen, setIsActivityLogOpen] = useState(false)
+  const [activityLog, setActivityLog] = useState<any[]>([])
+  const [loadingActivity, setLoadingActivity] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -160,6 +164,30 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
     setSelectedUser(user)
     setNewRole(user.admin_role?.[0]?.role || null)
     setIsRoleDialogOpen(true)
+  }
+
+  const openActivityLog = async (user: User) => {
+    setActivityLogUser(user)
+    setIsActivityLogOpen(true)
+    setLoadingActivity(true)
+
+    try {
+      // Load activity from question_change_history for this user
+      const res = await fetch(`/api/admin/history?user_id=${user.id}`)
+      if (res.ok) {
+        const { data } = await res.json()
+        setActivityLog(data || [])
+      }
+    } catch (error) {
+      console.error('Load activity error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load activity log',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoadingActivity(false)
+    }
   }
 
   return (
@@ -282,6 +310,16 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
                     </div>
 
                     <div className="flex gap-2">
+                      {role && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openActivityLog(user)}
+                        >
+                          <History className="mr-2 h-4 w-4" />
+                          Activity Log
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -341,6 +379,60 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Activity Log Dialog */}
+      <Dialog open={isActivityLogOpen} onOpenChange={setIsActivityLogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Activity Log</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {activityLogUser?.display_name || activityLogUser?.username} (@{activityLogUser?.username})
+            </p>
+          </DialogHeader>
+
+          {loadingActivity ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">Loading activity...</p>
+            </div>
+          ) : activityLog.length === 0 ? (
+            <div className="py-12 text-center">
+              <History className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold">No activity yet</h3>
+              <p className="text-sm text-muted-foreground">
+                This user hasn't made any changes to questions or categories
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activityLog.map((activity) => (
+                <Card key={activity.id} className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
+                      {activity.entity_type === 'category' ? '📂' : '❓'}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          activity.change_type === 'created' ? 'default' :
+                          activity.change_type === 'updated' ? 'secondary' :
+                          'destructive'
+                        }>
+                          {activity.change_type}
+                        </Badge>
+                        <Badge variant="outline">{activity.entity_type}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(activity.changed_at), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium">{activity.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

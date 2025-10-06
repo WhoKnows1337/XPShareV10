@@ -14,77 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
-      badges: {
+      admin_roles: {
         Row: {
-          category: string | null
           created_at: string | null
-          description: string | null
-          icon_name: string | null
+          granted_at: string | null
+          granted_by: string | null
           id: string
-          name: string
-          rarity: string | null
-          xp_reward: number | null
+          last_activity: string | null
+          permissions: Json | null
+          role: string
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          category?: string | null
           created_at?: string | null
-          description?: string | null
-          icon_name?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
           id?: string
-          name: string
-          rarity?: string | null
-          xp_reward?: number | null
+          last_activity?: string | null
+          permissions?: Json | null
+          role: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          category?: string | null
           created_at?: string | null
-          description?: string | null
-          icon_name?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
           id?: string
-          name?: string
-          rarity?: string | null
-          xp_reward?: number | null
+          last_activity?: string | null
+          permissions?: Json | null
+          role?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
-      experience_views: {
+      question_categories: {
         Row: {
-          experience_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          icon: string | null
           id: string
-          viewed_at: string | null
-          viewer_ip: string | null
-          viewer_user_id: string | null
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
-          experience_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
           id?: string
-          viewed_at?: string | null
-          viewer_ip?: string | null
-          viewer_user_id?: string | null
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
-          experience_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
           id?: string
-          viewed_at?: string | null
-          viewer_ip?: string | null
-          viewer_user_id?: string | null
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string | null
+          updated_by?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "experience_views_experience_id_fkey"
-            columns: ["experience_id"]
-            isOneToOne: false
-            referencedRelation: "experiences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "experience_views_viewer_user_id_fkey"
-            columns: ["viewer_user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       experiences: {
         Row: {
@@ -162,15 +168,124 @@ export type Database = {
           view_count?: number | null
           visibility?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "experiences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          current_streak: number | null
+          display_name: string | null
+          id: string
+          is_admin: boolean | null
+          languages: string[] | null
+          level: number | null
+          location_city: string | null
+          location_country: string | null
+          longest_streak: number | null
+          total_contributions: number | null
+          total_experiences: number | null
+          total_xp: number | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          current_streak?: number | null
+          display_name?: string | null
+          id: string
+          is_admin?: boolean | null
+          languages?: string[] | null
+          level?: number | null
+          location_city?: string | null
+          location_country?: string | null
+          longest_streak?: number | null
+          total_contributions?: number | null
+          total_experiences?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          current_streak?: number | null
+          display_name?: string | null
+          id?: string
+          is_admin?: boolean | null
+          languages?: string[] | null
+          level?: number | null
+          location_city?: string | null
+          location_country?: string | null
+          longest_streak?: number | null
+          total_contributions?: number | null
+          total_experiences?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      badges: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          icon_name: string | null
+          id: string
+          name: string
+          rarity: string | null
+          xp_reward: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          name: string
+          rarity?: string | null
+          xp_reward?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          name?: string
+          rarity?: string | null
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
+      experience_views: {
+        Row: {
+          experience_id: string | null
+          id: string
+          viewed_at: string | null
+          viewer_ip: string | null
+          viewer_user_id: string | null
+        }
+        Insert: {
+          experience_id?: string | null
+          id?: string
+          viewed_at?: string | null
+          viewer_ip?: string | null
+          viewer_user_id?: string | null
+        }
+        Update: {
+          experience_id?: string | null
+          id?: string
+          viewed_at?: string | null
+          viewer_ip?: string | null
+          viewer_user_id?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -203,15 +318,7 @@ export type Database = {
           type?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       pattern_alerts: {
         Row: {
@@ -286,15 +393,7 @@ export type Database = {
           id?: string
           relevance_score?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "research_citations_experience_id_fkey"
-            columns: ["experience_id"]
-            isOneToOne: false
-            referencedRelation: "experiences"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_badges: {
         Row: {
@@ -315,125 +414,324 @@ export type Database = {
           id?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_badges_badge_id_fkey"
-            columns: ["badge_id"]
-            isOneToOne: false
-            referencedRelation: "badges"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_badges_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string | null
-          current_streak: number | null
-          display_name: string | null
-          id: string
-          languages: string[] | null
-          level: number | null
-          location_city: string | null
-          location_country: string | null
-          longest_streak: number | null
-          total_contributions: number | null
-          total_experiences: number | null
-          total_xp: number | null
-          updated_at: string | null
-          username: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          current_streak?: number | null
-          display_name?: string | null
-          id: string
-          languages?: string[] | null
-          level?: number | null
-          location_city?: string | null
-          location_country?: string | null
-          longest_streak?: number | null
-          total_contributions?: number | null
-          total_experiences?: number | null
-          total_xp?: number | null
-          updated_at?: string | null
-          username: string
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          current_streak?: number | null
-          display_name?: string | null
-          id?: string
-          languages?: string[] | null
-          level?: number | null
-          location_city?: string | null
-          location_country?: string | null
-          longest_streak?: number | null
-          total_contributions?: number | null
-          total_experiences?: number | null
-          total_xp?: number | null
-          updated_at?: string | null
-          username?: string
-        }
         Relationships: []
       }
       witness_verifications: {
         Row: {
-          experience_id: string | null
+          created_at: string | null
+          experience_id: string
           id: string
           status: string | null
-          verification_comment: string | null
-          verified_at: string | null
-          witness_user_id: string | null
+          user_id: string
+          verification_text: string
         }
         Insert: {
-          experience_id?: string | null
+          created_at?: string | null
+          experience_id: string
           id?: string
           status?: string | null
-          verification_comment?: string | null
-          verified_at?: string | null
-          witness_user_id?: string | null
+          user_id: string
+          verification_text: string
         }
         Update: {
-          experience_id?: string | null
+          created_at?: string | null
+          experience_id?: string
           id?: string
           status?: string | null
-          verification_comment?: string | null
-          verified_at?: string | null
-          witness_user_id?: string | null
+          user_id?: string
+          verification_text?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "witness_verifications_experience_id_fkey"
-            columns: ["experience_id"]
-            isOneToOne: false
-            referencedRelation: "experiences"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "witness_verifications_witness_user_id_fkey"
-            columns: ["witness_user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      dynamic_questions: {
+        Row: {
+          adaptive_conditions: Json | null
+          ai_adaptive: boolean | null
+          category_id: string | null
+          conditional_logic: Json | null
+          created_at: string | null
+          created_by: string | null
+          follow_up_question: Json | null
+          help_text: string | null
+          id: string
+          is_active: boolean | null
+          is_optional: boolean | null
+          options: Json | null
+          placeholder: string | null
+          priority: number
+          question_text: string
+          question_type: string
+          tags: string[] | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          adaptive_conditions?: Json | null
+          ai_adaptive?: boolean | null
+          category_id?: string | null
+          conditional_logic?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          follow_up_question?: Json | null
+          help_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_optional?: boolean | null
+          options?: Json | null
+          placeholder?: string | null
+          priority: number
+          question_text: string
+          question_type: string
+          tags?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          adaptive_conditions?: Json | null
+          ai_adaptive?: boolean | null
+          category_id?: string | null
+          conditional_logic?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          follow_up_question?: Json | null
+          help_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_optional?: boolean | null
+          options?: Json | null
+          placeholder?: string | null
+          priority?: number
+          question_text?: string
+          question_type?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          details: string | null
+          experience_id: string
+          id: string
+          reason: string
+          reported_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          details?: string | null
+          experience_id: string
+          id?: string
+          reason: string
+          reported_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          details?: string | null
+          experience_id?: string
+          id?: string
+          reason?: string
+          reported_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      question_templates: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          questions: Json
+          tags: string[] | null
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          questions: Json
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          questions?: Json
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      question_change_history: {
+        Row: {
+          change_type: string
+          changed_at: string | null
+          changed_by: string | null
+          description: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+        }
+        Insert: {
+          change_type: string
+          changed_at?: string | null
+          changed_by?: string | null
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Update: {
+          change_type?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Relationships: []
+      }
+      question_analytics: {
+        Row: {
+          answer_distribution: Json | null
+          answered_count: number | null
+          avg_time_seconds: number | null
+          category_id: string | null
+          created_at: string | null
+          date: string
+          id: string
+          question_id: string | null
+          shown_count: number | null
+          skipped_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer_distribution?: Json | null
+          answered_count?: number | null
+          avg_time_seconds?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          date: string
+          id?: string
+          question_id?: string | null
+          shown_count?: number | null
+          skipped_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer_distribution?: Json | null
+          answered_count?: number | null
+          avg_time_seconds?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          question_id?: string | null
+          shown_count?: number | null
+          skipped_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          experience_id: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          experience_id: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          experience_id?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      upvotes: {
+        Row: {
+          created_at: string | null
+          experience_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          experience_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          experience_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      question_analytics_summary: {
+        Row: {
+          answer_rate: number | null
+          avg_response_time: number | null
+          category_id: string | null
+          category_name: string | null
+          question_id: string | null
+          question_text: string | null
+          total_answered: number | null
+          total_shown: number | null
+          total_skipped: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
@@ -447,19 +745,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[keyof Database]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -477,12 +781,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -498,12 +806,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -514,17 +826,4 @@ export type TablesUpdate<
       }
       ? U
       : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never

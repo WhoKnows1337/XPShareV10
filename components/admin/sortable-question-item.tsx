@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { DynamicQuestion } from '@/lib/types/admin-questions'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -19,6 +20,7 @@ import {
   ToggleLeft,
   Calendar,
   Clock,
+  TrendingUp,
 } from 'lucide-react'
 
 interface SortableQuestionItemProps {

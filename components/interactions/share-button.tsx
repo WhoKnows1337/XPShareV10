@@ -138,7 +138,7 @@ export function ShareButton({ experienceId, title }: ShareButtonProps) {
           </div>
 
           {/* Native Share (Mobile) */}
-          {typeof navigator !== 'undefined' && navigator.share && (
+          {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
             <Button
               variant="default"
               className="w-full gap-2"

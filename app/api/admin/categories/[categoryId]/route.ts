@@ -1,13 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-// GET /api/admin/categories/[id] - Get single category
+// GET /api/admin/categories/[categoryId] - Get single category
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { categoryId: id } = await params
     const supabase = await createClient()
 
     // Check if user is admin
@@ -63,13 +63,13 @@ export async function GET(
   }
 }
 
-// PATCH /api/admin/categories/[id] - Update category
+// PATCH /api/admin/categories/[categoryId] - Update category
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { categoryId: id } = await params
     const supabase = await createClient()
 
     // Check if user is admin
@@ -127,13 +127,13 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/admin/categories/[id] - Delete category
+// DELETE /api/admin/categories/[categoryId] - Delete category
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { categoryId: id } = await params
     const supabase = await createClient()
 
     // Check if user is admin

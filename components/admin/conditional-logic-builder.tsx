@@ -31,7 +31,7 @@ export function ConditionalLogicBuilder({ value, onChange }: ConditionalLogicBui
   )
 
   const addRule = () => {
-    const newRules = [...rules, { type: 'field_empty' }]
+    const newRules: ConditionalRule[] = [...rules, { type: 'field_empty' }]
     setRules(newRules)
     updateValue(newRules)
   }
