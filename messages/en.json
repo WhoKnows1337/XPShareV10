@@ -1,0 +1,297 @@
+{
+  "nav": {
+    "home": "Home",
+    "feed": "Feed",
+    "search": "Search",
+    "map": "Map",
+    "timeline": "Timeline",
+    "submit": "Submit",
+    "profile": "Profile",
+    "settings": "Settings",
+    "admin": "Admin",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "notifications": "Notifications"
+  },
+  "home": {
+    "hero": {
+      "title": "Share Your Extraordinary Experiences",
+      "subtitle": "Connect with others who have experienced the unexplained. Share paranormal events, UFO sightings, synchronicities, and more.",
+      "cta": "Share Your Experience",
+      "login": "Login to Continue"
+    },
+    "features": {
+      "title": "Discover & Connect",
+      "share": {
+        "title": "Share Your Story",
+        "description": "Document your experiences with detailed descriptions, media uploads, and location data."
+      },
+      "discover": {
+        "title": "Discover Patterns",
+        "description": "Find similar experiences and connect with others who have shared your journey."
+      },
+      "community": {
+        "title": "Join the Community",
+        "description": "Engage with a global community of people exploring the unexplained."
+      }
+    },
+    "categories": {
+      "title": "Explore Categories",
+      "paranormal": "Paranormal",
+      "ufo": "UFO Sightings",
+      "synchronicity": "Synchronicity",
+      "spiritual": "Spiritual",
+      "nde": "NDE",
+      "psychic": "Psychic",
+      "cryptid": "Cryptid",
+      "other": "Other"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Login",
+      "noAccount": "Don't have an account?",
+      "signupLink": "Sign up here",
+      "error": "Invalid email or password"
+    },
+    "signup": {
+      "title": "Create Account",
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Sign Up",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Login here",
+      "error": "Failed to create account",
+      "passwordMismatch": "Passwords do not match"
+    }
+  },
+  "feed": {
+    "title": "Experience Feed",
+    "filters": {
+      "category": "Category",
+      "all": "All Categories",
+      "sortBy": "Sort By",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "mostViewed": "Most Viewed"
+    },
+    "empty": "No experiences found",
+    "loading": "Loading experiences..."
+  },
+  "search": {
+    "title": "Search Experiences",
+    "placeholder": "Search for experiences...",
+    "filters": {
+      "category": "Filter by category",
+      "dateRange": "Date Range"
+    },
+    "results": "{count} results found",
+    "noResults": "No results found for \"{query}\""
+  },
+  "submit": {
+    "title": "Share Your Experience",
+    "steps": {
+      "category": "Category",
+      "details": "Details",
+      "media": "Media",
+      "review": "Review"
+    },
+    "category": {
+      "title": "What type of experience?",
+      "description": "Select the category that best describes your experience"
+    },
+    "details": {
+      "title": "Title",
+      "titlePlaceholder": "Brief title for your experience",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what happened in detail...",
+      "date": "When did this happen?",
+      "location": "Location",
+      "locationPlaceholder": "Where did this happen?",
+      "witnesses": "Were there any witnesses?",
+      "witnessCount": "Number of witnesses"
+    },
+    "media": {
+      "title": "Add Media (Optional)",
+      "photos": "Photos",
+      "audio": "Audio",
+      "sketch": "Sketch",
+      "upload": "Upload",
+      "uploading": "Uploading..."
+    },
+    "review": {
+      "title": "Review Your Experience",
+      "submit": "Submit Experience",
+      "saveDraft": "Save as Draft",
+      "submitting": "Submitting..."
+    },
+    "success": {
+      "title": "Experience Shared!",
+      "message": "Your experience has been successfully shared with the community.",
+      "viewExperience": "View Experience",
+      "shareAnother": "Share Another"
+    }
+  },
+  "experience": {
+    "details": {
+      "category": "Category",
+      "date": "Date",
+      "location": "Location",
+      "witnesses": "Witnesses",
+      "views": "Views"
+    },
+    "actions": {
+      "share": "Share",
+      "report": "Report"
+    },
+    "similar": {
+      "title": "Similar Experiences",
+      "empty": "No similar experiences found"
+    },
+    "comments": {
+      "title": "Comments",
+      "add": "Add Comment",
+      "placeholder": "Share your thoughts...",
+      "submit": "Post Comment",
+      "empty": "No comments yet"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "tabs": {
+      "experiences": "Experiences",
+      "badges": "Badges",
+      "stats": "Stats"
+    },
+    "stats": {
+      "level": "Level {level}",
+      "xp": "{current} / {required} XP",
+      "experiences": "{count} Experiences",
+      "views": "{count} Views",
+      "joined": "Joined {date}"
+    },
+    "badges": {
+      "title": "Badges",
+      "empty": "No badges earned yet",
+      "locked": "Locked",
+      "unlocked": "Unlocked"
+    },
+    "edit": {
+      "title": "Edit Profile",
+      "displayName": "Display Name",
+      "bio": "Bio",
+      "avatar": "Avatar",
+      "save": "Save Changes",
+      "cancel": "Cancel"
+    }
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "tabs": {
+      "dashboard": "Dashboard",
+      "moderation": "Moderation",
+      "users": "Users",
+      "questions": "Questions"
+    },
+    "dashboard": {
+      "stats": {
+        "totalUsers": "Total Users",
+        "totalExperiences": "Total Experiences",
+        "pendingReports": "Pending Reports",
+        "activeToday": "Active Today"
+      }
+    },
+    "moderation": {
+      "title": "Content Moderation",
+      "pending": "Pending Review",
+      "approve": "Approve",
+      "reject": "Reject",
+      "ban": "Ban User"
+    },
+    "users": {
+      "title": "User Management",
+      "search": "Search users...",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "questions": {
+      "title": "Question Management",
+      "add": "Add Question",
+      "edit": "Edit",
+      "delete": "Delete"
+    }
+  },
+  "map": {
+    "title": "Experience Map",
+    "cluster": "{count} experiences",
+    "filters": {
+      "category": "Filter by category",
+      "dateRange": "Date range"
+    }
+  },
+  "timeline": {
+    "title": "Experience Timeline",
+    "filters": {
+      "category": "Filter by category",
+      "year": "Filter by year"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "types": {
+      "badge": "New badge unlocked: {badge}",
+      "comment": "New comment on your experience",
+      "level": "Level up! You are now level {level}"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close"
+  },
+  "categories": {
+    "paranormal": "Paranormal",
+    "ufo_sighting": "UFO Sighting",
+    "synchronicity": "Synchronicity",
+    "spiritual_experience": "Spiritual Experience",
+    "near_death_experience": "Near Death Experience",
+    "psychic_experience": "Psychic Experience",
+    "cryptid_encounter": "Cryptid Encounter",
+    "other": "Other"
+  },
+  "time": {
+    "justNow": "just now",
+    "minuteAgo": "{count} minute ago",
+    "minutesAgo": "{count} minutes ago",
+    "hourAgo": "{count} hour ago",
+    "hoursAgo": "{count} hours ago",
+    "dayAgo": "{count} day ago",
+    "daysAgo": "{count} days ago",
+    "weekAgo": "{count} week ago",
+    "weeksAgo": "{count} weeks ago",
+    "monthAgo": "{count} month ago",
+    "monthsAgo": "{count} months ago",
+    "yearAgo": "{count} year ago",
+    "yearsAgo": "{count} years ago"
+  }
+}

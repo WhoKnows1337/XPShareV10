@@ -1,0 +1,297 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "feed": "Feed",
+    "search": "Suche",
+    "map": "Karte",
+    "timeline": "Zeitstrahl",
+    "submit": "Teilen",
+    "profile": "Profil",
+    "settings": "Einstellungen",
+    "admin": "Admin",
+    "login": "Anmelden",
+    "signup": "Registrieren",
+    "logout": "Abmelden",
+    "notifications": "Benachrichtigungen"
+  },
+  "home": {
+    "hero": {
+      "title": "Teile Deine außergewöhnlichen Erfahrungen",
+      "subtitle": "Verbinde dich mit anderen, die das Unerklärliche erlebt haben. Teile paranormale Ereignisse, UFO-Sichtungen, Synchronizitäten und mehr.",
+      "cta": "Erfahrung Teilen",
+      "login": "Anmelden um Fortzufahren"
+    },
+    "features": {
+      "title": "Entdecken & Verbinden",
+      "share": {
+        "title": "Teile Deine Geschichte",
+        "description": "Dokumentiere deine Erfahrungen mit detaillierten Beschreibungen, Medien-Uploads und Ortsdaten."
+      },
+      "discover": {
+        "title": "Entdecke Muster",
+        "description": "Finde ähnliche Erfahrungen und verbinde dich mit anderen, die deine Reise geteilt haben."
+      },
+      "community": {
+        "title": "Tritt der Community bei",
+        "description": "Engagiere dich mit einer globalen Community von Menschen, die das Unerklärliche erforschen."
+      }
+    },
+    "categories": {
+      "title": "Kategorien Erkunden",
+      "paranormal": "Paranormal",
+      "ufo": "UFO-Sichtungen",
+      "synchronicity": "Synchronizität",
+      "spiritual": "Spirituell",
+      "nde": "Nahtoderfahrung",
+      "psychic": "Psychisch",
+      "cryptid": "Kryptid",
+      "other": "Andere"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Willkommen Zurück",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "submit": "Anmelden",
+      "noAccount": "Noch kein Konto?",
+      "signupLink": "Hier registrieren",
+      "error": "Ungültige E-Mail oder Passwort"
+    },
+    "signup": {
+      "title": "Konto Erstellen",
+      "username": "Benutzername",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "confirmPassword": "Passwort Bestätigen",
+      "submit": "Registrieren",
+      "hasAccount": "Bereits ein Konto?",
+      "loginLink": "Hier anmelden",
+      "error": "Konto konnte nicht erstellt werden",
+      "passwordMismatch": "Passwörter stimmen nicht überein"
+    }
+  },
+  "feed": {
+    "title": "Erfahrungs-Feed",
+    "filters": {
+      "category": "Kategorie",
+      "all": "Alle Kategorien",
+      "sortBy": "Sortieren Nach",
+      "newest": "Neueste",
+      "oldest": "Älteste",
+      "mostViewed": "Meist Angesehen"
+    },
+    "empty": "Keine Erfahrungen gefunden",
+    "loading": "Lade Erfahrungen..."
+  },
+  "search": {
+    "title": "Erfahrungen Suchen",
+    "placeholder": "Suche nach Erfahrungen...",
+    "filters": {
+      "category": "Nach Kategorie filtern",
+      "dateRange": "Datumsbereich"
+    },
+    "results": "{count} Ergebnisse gefunden",
+    "noResults": "Keine Ergebnisse für \"{query}\" gefunden"
+  },
+  "submit": {
+    "title": "Teile Deine Erfahrung",
+    "steps": {
+      "category": "Kategorie",
+      "details": "Details",
+      "media": "Medien",
+      "review": "Überprüfung"
+    },
+    "category": {
+      "title": "Welche Art von Erfahrung?",
+      "description": "Wähle die Kategorie, die deine Erfahrung am besten beschreibt"
+    },
+    "details": {
+      "title": "Titel",
+      "titlePlaceholder": "Kurzer Titel für deine Erfahrung",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Beschreibe detailliert, was passiert ist...",
+      "date": "Wann ist das passiert?",
+      "location": "Ort",
+      "locationPlaceholder": "Wo ist das passiert?",
+      "witnesses": "Gab es Zeugen?",
+      "witnessCount": "Anzahl der Zeugen"
+    },
+    "media": {
+      "title": "Medien Hinzufügen (Optional)",
+      "photos": "Fotos",
+      "audio": "Audio",
+      "sketch": "Skizze",
+      "upload": "Hochladen",
+      "uploading": "Wird hochgeladen..."
+    },
+    "review": {
+      "title": "Überprüfe Deine Erfahrung",
+      "submit": "Erfahrung Einreichen",
+      "saveDraft": "Als Entwurf Speichern",
+      "submitting": "Wird eingereicht..."
+    },
+    "success": {
+      "title": "Erfahrung Geteilt!",
+      "message": "Deine Erfahrung wurde erfolgreich mit der Community geteilt.",
+      "viewExperience": "Erfahrung Ansehen",
+      "shareAnother": "Weitere Teilen"
+    }
+  },
+  "experience": {
+    "details": {
+      "category": "Kategorie",
+      "date": "Datum",
+      "location": "Ort",
+      "witnesses": "Zeugen",
+      "views": "Aufrufe"
+    },
+    "actions": {
+      "share": "Teilen",
+      "report": "Melden"
+    },
+    "similar": {
+      "title": "Ähnliche Erfahrungen",
+      "empty": "Keine ähnlichen Erfahrungen gefunden"
+    },
+    "comments": {
+      "title": "Kommentare",
+      "add": "Kommentar Hinzufügen",
+      "placeholder": "Teile deine Gedanken...",
+      "submit": "Kommentar Posten",
+      "empty": "Noch keine Kommentare"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "tabs": {
+      "experiences": "Erfahrungen",
+      "badges": "Abzeichen",
+      "stats": "Statistiken"
+    },
+    "stats": {
+      "level": "Level {level}",
+      "xp": "{current} / {required} XP",
+      "experiences": "{count} Erfahrungen",
+      "views": "{count} Aufrufe",
+      "joined": "Beigetreten {date}"
+    },
+    "badges": {
+      "title": "Abzeichen",
+      "empty": "Noch keine Abzeichen verdient",
+      "locked": "Gesperrt",
+      "unlocked": "Freigeschaltet"
+    },
+    "edit": {
+      "title": "Profil Bearbeiten",
+      "displayName": "Anzeigename",
+      "bio": "Bio",
+      "avatar": "Avatar",
+      "save": "Änderungen Speichern",
+      "cancel": "Abbrechen"
+    }
+  },
+  "admin": {
+    "title": "Admin-Panel",
+    "tabs": {
+      "dashboard": "Dashboard",
+      "moderation": "Moderation",
+      "users": "Benutzer",
+      "questions": "Fragen"
+    },
+    "dashboard": {
+      "stats": {
+        "totalUsers": "Benutzer Gesamt",
+        "totalExperiences": "Erfahrungen Gesamt",
+        "pendingReports": "Ausstehende Meldungen",
+        "activeToday": "Heute Aktiv"
+      }
+    },
+    "moderation": {
+      "title": "Inhaltsmoderation",
+      "pending": "Zur Überprüfung",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "ban": "Benutzer Sperren"
+    },
+    "users": {
+      "title": "Benutzerverwaltung",
+      "search": "Benutzer suchen...",
+      "role": "Rolle",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "questions": {
+      "title": "Fragenverwaltung",
+      "add": "Frage Hinzufügen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen"
+    }
+  },
+  "map": {
+    "title": "Erfahrungs-Karte",
+    "cluster": "{count} Erfahrungen",
+    "filters": {
+      "category": "Nach Kategorie filtern",
+      "dateRange": "Datumsbereich"
+    }
+  },
+  "timeline": {
+    "title": "Erfahrungs-Zeitstrahl",
+    "filters": {
+      "category": "Nach Kategorie filtern",
+      "year": "Nach Jahr filtern"
+    }
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "empty": "Keine Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "types": {
+      "badge": "Neues Abzeichen freigeschaltet: {badge}",
+      "comment": "Neuer Kommentar zu deiner Erfahrung",
+      "level": "Level-Up! Du bist jetzt Level {level}"
+    }
+  },
+  "common": {
+    "loading": "Lädt...",
+    "error": "Ein Fehler ist aufgetreten",
+    "retry": "Erneut Versuchen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein",
+    "close": "Schließen"
+  },
+  "categories": {
+    "paranormal": "Paranormal",
+    "ufo_sighting": "UFO-Sichtung",
+    "synchronicity": "Synchronizität",
+    "spiritual_experience": "Spirituelle Erfahrung",
+    "near_death_experience": "Nahtoderfahrung",
+    "psychic_experience": "Psychische Erfahrung",
+    "cryptid_encounter": "Kryptid-Begegnung",
+    "other": "Andere"
+  },
+  "time": {
+    "justNow": "gerade eben",
+    "minuteAgo": "vor {count} Minute",
+    "minutesAgo": "vor {count} Minuten",
+    "hourAgo": "vor {count} Stunde",
+    "hoursAgo": "vor {count} Stunden",
+    "dayAgo": "vor {count} Tag",
+    "daysAgo": "vor {count} Tagen",
+    "weekAgo": "vor {count} Woche",
+    "weeksAgo": "vor {count} Wochen",
+    "monthAgo": "vor {count} Monat",
+    "monthsAgo": "vor {count} Monaten",
+    "yearAgo": "vor {count} Jahr",
+    "yearsAgo": "vor {count} Jahren"
+  }
+}

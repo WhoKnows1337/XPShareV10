@@ -1,0 +1,297 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "feed": "Feed",
+    "search": "Buscar",
+    "map": "Mapa",
+    "timeline": "Línea de Tiempo",
+    "submit": "Compartir",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "admin": "Admin",
+    "login": "Iniciar Sesión",
+    "signup": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "notifications": "Notificaciones"
+  },
+  "home": {
+    "hero": {
+      "title": "Comparte Tus Experiencias Extraordinarias",
+      "subtitle": "Conecta con otros que han experimentado lo inexplicable. Comparte eventos paranormales, avistamientos OVNI, sincronicidades, y más.",
+      "cta": "Compartir Tu Experiencia",
+      "login": "Iniciar Sesión para Continuar"
+    },
+    "features": {
+      "title": "Descubrir & Conectar",
+      "share": {
+        "title": "Comparte Tu Historia",
+        "description": "Documenta tus experiencias con descripciones detalladas, cargas de medios y datos de ubicación."
+      },
+      "discover": {
+        "title": "Descubre Patrones",
+        "description": "Encuentra experiencias similares y conéctate con otros que han compartido tu viaje."
+      },
+      "community": {
+        "title": "Únete a la Comunidad",
+        "description": "Participa con una comunidad global de personas explorando lo inexplicable."
+      }
+    },
+    "categories": {
+      "title": "Explorar Categorías",
+      "paranormal": "Paranormal",
+      "ufo": "Avistamientos OVNI",
+      "synchronicity": "Sincronicidad",
+      "spiritual": "Espiritual",
+      "nde": "ECM",
+      "psychic": "Psíquico",
+      "cryptid": "Críptido",
+      "other": "Otro"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Bienvenido de Vuelta",
+      "email": "Correo Electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar Sesión",
+      "noAccount": "¿No tienes cuenta?",
+      "signupLink": "Regístrate aquí",
+      "error": "Correo electrónico o contraseña inválidos"
+    },
+    "signup": {
+      "title": "Crear Cuenta",
+      "username": "Nombre de Usuario",
+      "email": "Correo Electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "submit": "Registrarse",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "loginLink": "Inicia sesión aquí",
+      "error": "Error al crear cuenta",
+      "passwordMismatch": "Las contraseñas no coinciden"
+    }
+  },
+  "feed": {
+    "title": "Feed de Experiencias",
+    "filters": {
+      "category": "Categoría",
+      "all": "Todas las Categorías",
+      "sortBy": "Ordenar Por",
+      "newest": "Más Reciente",
+      "oldest": "Más Antiguo",
+      "mostViewed": "Más Visto"
+    },
+    "empty": "No se encontraron experiencias",
+    "loading": "Cargando experiencias..."
+  },
+  "search": {
+    "title": "Buscar Experiencias",
+    "placeholder": "Buscar experiencias...",
+    "filters": {
+      "category": "Filtrar por categoría",
+      "dateRange": "Rango de fechas"
+    },
+    "results": "{count} resultados encontrados",
+    "noResults": "No se encontraron resultados para \"{query}\""
+  },
+  "submit": {
+    "title": "Comparte Tu Experiencia",
+    "steps": {
+      "category": "Categoría",
+      "details": "Detalles",
+      "media": "Medios",
+      "review": "Revisar"
+    },
+    "category": {
+      "title": "¿Qué tipo de experiencia?",
+      "description": "Selecciona la categoría que mejor describa tu experiencia"
+    },
+    "details": {
+      "title": "Título",
+      "titlePlaceholder": "Título breve para tu experiencia",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe en detalle lo que sucedió...",
+      "date": "¿Cuándo sucedió esto?",
+      "location": "Ubicación",
+      "locationPlaceholder": "¿Dónde sucedió esto?",
+      "witnesses": "¿Hubo testigos?",
+      "witnessCount": "Número de testigos"
+    },
+    "media": {
+      "title": "Agregar Medios (Opcional)",
+      "photos": "Fotos",
+      "audio": "Audio",
+      "sketch": "Boceto",
+      "upload": "Subir",
+      "uploading": "Subiendo..."
+    },
+    "review": {
+      "title": "Revisa Tu Experiencia",
+      "submit": "Enviar Experiencia",
+      "saveDraft": "Guardar como Borrador",
+      "submitting": "Enviando..."
+    },
+    "success": {
+      "title": "¡Experiencia Compartida!",
+      "message": "Tu experiencia ha sido compartida exitosamente con la comunidad.",
+      "viewExperience": "Ver Experiencia",
+      "shareAnother": "Compartir Otra"
+    }
+  },
+  "experience": {
+    "details": {
+      "category": "Categoría",
+      "date": "Fecha",
+      "location": "Ubicación",
+      "witnesses": "Testigos",
+      "views": "Vistas"
+    },
+    "actions": {
+      "share": "Compartir",
+      "report": "Reportar"
+    },
+    "similar": {
+      "title": "Experiencias Similares",
+      "empty": "No se encontraron experiencias similares"
+    },
+    "comments": {
+      "title": "Comentarios",
+      "add": "Agregar Comentario",
+      "placeholder": "Comparte tus pensamientos...",
+      "submit": "Publicar Comentario",
+      "empty": "Aún no hay comentarios"
+    }
+  },
+  "profile": {
+    "title": "Perfil",
+    "tabs": {
+      "experiences": "Experiencias",
+      "badges": "Insignias",
+      "stats": "Estadísticas"
+    },
+    "stats": {
+      "level": "Nivel {level}",
+      "xp": "{current} / {required} XP",
+      "experiences": "{count} Experiencias",
+      "views": "{count} Vistas",
+      "joined": "Se unió {date}"
+    },
+    "badges": {
+      "title": "Insignias",
+      "empty": "No se han ganado insignias aún",
+      "locked": "Bloqueado",
+      "unlocked": "Desbloqueado"
+    },
+    "edit": {
+      "title": "Editar Perfil",
+      "displayName": "Nombre para Mostrar",
+      "bio": "Bio",
+      "avatar": "Avatar",
+      "save": "Guardar Cambios",
+      "cancel": "Cancelar"
+    }
+  },
+  "admin": {
+    "title": "Panel de Administración",
+    "tabs": {
+      "dashboard": "Panel",
+      "moderation": "Moderación",
+      "users": "Usuarios",
+      "questions": "Preguntas"
+    },
+    "dashboard": {
+      "stats": {
+        "totalUsers": "Usuarios Totales",
+        "totalExperiences": "Experiencias Totales",
+        "pendingReports": "Reportes Pendientes",
+        "activeToday": "Activos Hoy"
+      }
+    },
+    "moderation": {
+      "title": "Moderación de Contenido",
+      "pending": "Pendiente de Revisión",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "ban": "Banear Usuario"
+    },
+    "users": {
+      "title": "Gestión de Usuarios",
+      "search": "Buscar usuarios...",
+      "role": "Rol",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "questions": {
+      "title": "Gestión de Preguntas",
+      "add": "Agregar Pregunta",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    }
+  },
+  "map": {
+    "title": "Mapa de Experiencias",
+    "cluster": "{count} experiencias",
+    "filters": {
+      "category": "Filtrar por categoría",
+      "dateRange": "Rango de fechas"
+    }
+  },
+  "timeline": {
+    "title": "Línea de Tiempo de Experiencias",
+    "filters": {
+      "category": "Filtrar por categoría",
+      "year": "Filtrar por año"
+    }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "empty": "Sin notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "types": {
+      "badge": "Nueva insignia desbloqueada: {badge}",
+      "comment": "Nuevo comentario en tu experiencia",
+      "level": "¡Subiste de nivel! Ahora eres nivel {level}"
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "close": "Cerrar"
+  },
+  "categories": {
+    "paranormal": "Paranormal",
+    "ufo_sighting": "Avistamiento OVNI",
+    "synchronicity": "Sincronicidad",
+    "spiritual_experience": "Experiencia Espiritual",
+    "near_death_experience": "Experiencia Cercana a la Muerte",
+    "psychic_experience": "Experiencia Psíquica",
+    "cryptid_encounter": "Encuentro con Críptido",
+    "other": "Otro"
+  },
+  "time": {
+    "justNow": "justo ahora",
+    "minuteAgo": "hace {count} minuto",
+    "minutesAgo": "hace {count} minutos",
+    "hourAgo": "hace {count} hora",
+    "hoursAgo": "hace {count} horas",
+    "dayAgo": "hace {count} día",
+    "daysAgo": "hace {count} días",
+    "weekAgo": "hace {count} semana",
+    "weeksAgo": "hace {count} semanas",
+    "monthAgo": "hace {count} mes",
+    "monthsAgo": "hace {count} meses",
+    "yearAgo": "hace {count} año",
+    "yearsAgo": "hace {count} años"
+  }
+}

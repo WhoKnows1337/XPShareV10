@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LogOut, Settings, User, Sparkles, Search } from 'lucide-react'
 import { NotificationsDropdown } from './notifications-dropdown'
+import { LanguageSwitcher } from './language-switcher'
+import { useTranslations } from 'next-intl'
 
 export function Navbar() {
   const { user, signOut, loading } = useAuth()
+  const t = useTranslations('nav')
 
   const getInitials = (email: string) => {
     return email
@@ -40,32 +43,33 @@ export function Navbar() {
               href="/feed"
               className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
             >
-              Feed
+              {t('feed')}
             </Link>
             <Link
               href="/search"
               className="flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
             >
               <Search className="h-4 w-4" />
-              Search
+              {t('search')}
             </Link>
             <Link
               href="/submit"
               className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
             >
-              Submit
+              {t('submit')}
             </Link>
             <Link
               href="/map"
               className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
             >
-              Map
+              {t('map')}
             </Link>
           </div>
         )}
 
         {/* Auth Section */}
         <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           {loading ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200" />
           ) : user ? (
@@ -99,13 +103,13 @@ export function Navbar() {
                 <DropdownMenuItem asChild>
                   <Link href={`/profile/${user.id}`} className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Profile
+                    {t('profile')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Settings
+                    {t('settings')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -114,7 +118,7 @@ export function Navbar() {
                   className="cursor-pointer text-red-600 focus:text-red-600"
                 >
                   <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Sign Out
+                  {t('logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -123,11 +127,11 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <Link href="/login">
                 <Button variant="ghost" size="sm">
-                  Login
+                  {t('login')}
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="sm">Sign Up</Button>
+                <Button size="sm">{t('signup')}</Button>
               </Link>
             </div>
           )}
