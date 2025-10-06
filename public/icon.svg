@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="128" fill="#8b5cf6"/>
+  <path d="M256 128l48 96h96l-80 64 32 96-96-64-96 64 32-96-80-64h96z" fill="white" stroke="white" stroke-width="8" stroke-linejoin="round"/>
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" text-anchor="middle">XP</text>
+</svg>
