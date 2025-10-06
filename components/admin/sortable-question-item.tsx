@@ -115,6 +115,30 @@ export function SortableQuestionItem({
               <p className="text-sm text-muted-foreground">{question.help_text}</p>
             )}
 
+            {/* Analytics (30 Tage) */}
+            {question.analytics && question.analytics.total_shown > 0 && (
+              <div className="rounded-md bg-muted/50 px-3 py-2 text-xs space-y-1">
+                <p className="font-semibold text-muted-foreground">📊 Analytics (30 Tage):</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <span className="text-muted-foreground">Antwort-Rate:</span>{' '}
+                    <span className="font-medium">{Math.round(question.analytics.answer_rate_percent)}%</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Ø Zeit:</span>{' '}
+                    <span className="font-medium">{Math.round(question.analytics.avg_time)} Sekunden</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Gezeigt:</span>{' '}
+                    <span className="font-medium">{question.analytics.total_shown}x</span>
+                  </div>
+                </div>
+                {question.analytics.answer_rate_percent < 70 && (
+                  <p className="text-orange-600 font-medium">⚠️ Niedriger als Durchschnitt!</p>
+                )}
+              </div>
+            )}
+
             {/* Meta Info */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Question Type */}

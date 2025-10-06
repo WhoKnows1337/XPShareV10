@@ -73,6 +73,12 @@ export interface DynamicQuestion {
   updated_at: string
   created_by: string | null
   updated_by: string | null
+  analytics?: {
+    total_shown: number
+    total_answered: number
+    answer_rate_percent: number
+    avg_time: number
+  }
 }
 
 // =====================================================

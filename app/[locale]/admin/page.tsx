@@ -7,30 +7,60 @@ import Link from 'next/link'
 export default async function AdminDashboard() {
   const supabase = await createClient()
 
-  // Fetch stats
+  // Fetch stats for question catalog dashboard
   const [
-    { count: totalUsers },
-    { count: totalExperiences },
-    { count: pendingReports },
-    { count: totalBadges },
     { count: totalCategories },
     { count: totalQuestions },
   ] = await Promise.all([
-    supabase.from('user_profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('experiences').select('*', { count: 'exact', head: true }),
-    supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('user_badges').select('*', { count: 'exact', head: true }),
-    supabase.from('question_categories').select('*', { count: 'exact', head: true }),
-    supabase.from('dynamic_questions').select('*', { count: 'exact', head: true }),
+    supabase.from('question_categories').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('dynamic_questions').select('*', { count: 'exact', head: true }).eq('is_active', true),
   ])
 
-  // Fetch categories with question counts
+  // Fetch answer statistics from last 7 days
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+  const { data: analyticsData } = await supabase
+    .from('question_analytics')
+    .select('answered_count, shown_count')
+    .gte('date', sevenDaysAgo.toISOString().split('T')[0])
+
+  const totalAnswers = analyticsData?.reduce((sum, row) => sum + (row.answered_count || 0), 0) || 0
+  const totalShown = analyticsData?.reduce((sum, row) => sum + (row.shown_count || 0), 0) || 0
+  const answerRate = totalShown > 0 ? Math.round((totalAnswers / totalShown) * 100) : 0
+
+  // Fetch categories with question counts and analytics
   const { data: categories } = await supabase
     .from('question_categories')
-    .select('*')
+    .select(`
+      *,
+      questions:dynamic_questions(count)
+    `)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
     .limit(6)
+
+  // Fetch analytics summary for categories
+  const categoryIds = categories?.map(c => c.id) || []
+  const { data: categoryAnalytics } = await supabase
+    .from('question_analytics_summary')
+    .select('category_id, answer_rate_percent')
+    .in('category_id', categoryIds)
+
+  // Map analytics to categories
+  const categoriesWithAnalytics = categories?.map(category => {
+    const questionCount = category.questions?.[0]?.count || 0
+    const analytics = categoryAnalytics?.filter(a => a.category_id === category.id) || []
+    const avgRate = analytics.length > 0
+      ? Math.round(analytics.reduce((sum, a) => sum + (a.answer_rate_percent || 0), 0) / analytics.length)
+      : 0
+
+    return {
+      ...category,
+      questionCount,
+      answerRate: avgRate
+    }
+  })
 
   // Fetch recent changes
   const { data: recentChanges } = await supabase
@@ -41,45 +71,32 @@ export default async function AdminDashboard() {
 
   const stats = [
     {
-      title: 'Total Users',
-      value: totalUsers || 0,
-      icon: Users,
-      color: 'text-blue-500',
-      href: '/admin/users',
-    },
-    {
-      title: 'Total Experiences',
-      value: totalExperiences || 0,
-      icon: FileText,
-      color: 'text-green-500',
-      href: '/admin/moderation',
-    },
-    {
-      title: 'Pending Reports',
-      value: pendingReports || 0,
-      icon: Flag,
-      color: 'text-red-500',
-      href: '/admin/moderation',
-    },
-    {
-      title: 'Badges Earned',
-      value: totalBadges || 0,
-      icon: BadgeCheck,
-      color: 'text-purple-500',
-    },
-    {
-      title: 'Categories',
+      title: 'Kategorien',
       value: totalCategories || 0,
       icon: FolderOpen,
       color: 'text-orange-500',
       href: '/admin/questions',
     },
     {
-      title: 'Questions',
+      title: 'Fragen',
       value: totalQuestions || 0,
       icon: MessageSquare,
       color: 'text-teal-500',
       href: '/admin/questions',
+    },
+    {
+      title: 'Antworten',
+      subtitle: '(7 Tage)',
+      value: totalAnswers.toLocaleString('de-DE'),
+      icon: FileText,
+      color: 'text-green-500',
+    },
+    {
+      title: 'Rate',
+      subtitle: '(Durchschnitt)',
+      value: `${answerRate}%`,
+      icon: TrendingUp,
+      color: 'text-blue-500',
     },
   ]
 
@@ -130,7 +147,9 @@ export default async function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
-              </CardContent>
+                {stat.subtitle && (
+                  <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+                )}
             </>
           )
 
@@ -158,8 +177,8 @@ export default async function AdminDashboard() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            {categories && categories.length > 0 ? (
-              categories.map((category) => (
+            {categoriesWithAnalytics && categoriesWithAnalytics.length > 0 ? (
+              categoriesWithAnalytics.map((category) => (
                 <div
                   key={category.id}
                   className="flex items-center justify-between rounded-lg border p-3"
@@ -168,19 +187,36 @@ export default async function AdminDashboard() {
                     <span className="text-2xl">{category.icon}</span>
                     <div>
                       <p className="font-medium">{category.name}</p>
-                      <p className="text-xs text-muted-foreground">{category.slug}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {category.questionCount} Fragen | {category.answerRate}% Rate
+                      </p>
                     </div>
                   </div>
-                  <Link href={`/admin/categories/${category.slug}`}>
-                    <Button variant="ghost" size="sm">
-                      Manage
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link href={`/admin/categories/${category.slug}`}>
+                      <Button variant="ghost" size="sm">
+                        Bearbeiten
+                      </Button>
+                    </Link>
+                    <Link href={`/admin/analytics?category=${category.id}`}>
+                      <Button variant="ghost" size="sm">
+                        Analytics
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               ))
             ) : (
               <p className="text-sm text-muted-foreground">No categories found</p>
             )}
+            <div className="pt-3 border-t">
+              <Link href="/admin/questions">
+                <Button className="w-full" variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Neue Kategorie
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
