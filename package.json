@@ -58,6 +58,7 @@
     "react-map-gl": "^7.1.7",
     "recordrtc": "^5.6.2",
     "sharp": "^0.33.5",
+    "sonner": "^2.0.7",
     "swr": "^2.2.5",
     "tailwind-merge": "^2.5.5",
     "zod": "^3.24.1",
