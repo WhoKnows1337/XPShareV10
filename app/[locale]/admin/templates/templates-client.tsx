@@ -113,38 +113,6 @@ export function TemplatesClient({ templates: initialTemplates, categories }: Tem
     }
   }
 
-  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    try {
-      const text = await file.text()
-      const data = JSON.parse(text)
-
-      const res = await fetch('/api/admin/templates/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-
-      if (!res.ok) throw new Error('Failed to import template')
-
-      toast({
-        title: 'Success',
-        description: 'Template imported successfully',
-      })
-
-      router.refresh()
-    } catch (error) {
-      console.error('Import error:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to import template. Check JSON format.',
-        variant: 'destructive',
-      })
-    }
-  }
-
   const handleApply = async (templateId: string, categoryId: string) => {
     try {
       const res = await fetch(`/api/admin/templates/${templateId}/apply`, {
