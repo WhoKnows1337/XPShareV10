@@ -34,13 +34,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
+      // Check is_admin field first (primary method)
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('is_admin')
         .eq('id', user.id)
         .single()
 
-      setIsAdmin(profile?.is_admin || false)
+      if (profile?.is_admin) {
+        setIsAdmin(true)
+        return
+      }
+
+      // Also check admin_roles table (for role-based system)
+      const { data: adminRoles } = await supabase
+        .from('admin_roles')
+        .select('role')
+        .eq('user_id', user.id)
+
+      if (adminRoles?.[0]) {
+        setIsAdmin(true)
+        return
+      }
+
+      setIsAdmin(false)
     }
 
     checkAdminStatus()

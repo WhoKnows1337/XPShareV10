@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/admin-auth'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Shield, FileQuestion, Flag, Users, BarChart } from 'lucide-react'
+import { Shield, FileQuestion, Flag, Users, BarChart, TrendingUp, FileText, History } from 'lucide-react'
 
 export default async function AdminLayout({
   children,
@@ -44,6 +44,24 @@ export default async function AdminLayout({
                   Questions
                 </Button>
               </Link>
+              <Link href="/admin/analytics">
+                <Button variant="ghost" className="w-full justify-start">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Analytics
+                </Button>
+              </Link>
+              <Link href="/admin/templates">
+                <Button variant="ghost" className="w-full justify-start">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Templates
+                </Button>
+              </Link>
+              <Link href="/admin/history">
+                <Button variant="ghost" className="w-full justify-start">
+                  <History className="mr-2 h-4 w-4" />
+                  History
+                </Button>
+              </Link>
               <Link href="/admin/moderation">
                 <Button variant="ghost" className="w-full justify-start">
                   <Flag className="mr-2 h-4 w-4" />
@@ -53,7 +71,7 @@ export default async function AdminLayout({
               <Link href="/admin/users">
                 <Button variant="ghost" className="w-full justify-start">
                   <Users className="mr-2 h-4 w-4" />
-                  Users
+                  Users & Roles
                 </Button>
               </Link>
             </nav>

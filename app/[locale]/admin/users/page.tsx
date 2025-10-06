@@ -1,84 +1,81 @@
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { formatDistanceToNow } from 'date-fns'
-import { UserActions } from '@/components/admin/user-actions'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { UsersClient } from './users-client'
 
 export default async function UsersPage() {
+  // Use authenticated client - RLS policies allow admins to view all profiles
   const supabase = await createClient()
 
-  const { data: users } = await supabase
+  // Fetch all user profiles
+  const { data: profiles, error: profilesError } = await supabase
     .from('user_profiles')
-    .select(`
-      *,
-      experiences:experiences(count),
-      comments:comments(count),
-      user_badges:user_badges(count)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
-    .limit(100)
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold">User Management</h2>
-        <p className="text-muted-foreground">
-          View and manage user accounts
-        </p>
-      </div>
+  if (profilesError) {
+    console.error('Error fetching profiles:', profilesError)
+  }
 
-      {!users || users.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-muted-foreground">No users found</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {users.map((user: any) => (
-            <Card key={user.id}>
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback>
-                        {user.display_name?.charAt(0).toUpperCase() || user.username?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
+  if (!profiles || profiles.length === 0) {
+    return <UsersClient users={[]} />
+  }
 
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{user.display_name || user.username}</h3>
-                        {user.is_admin && (
-                          <Badge variant="destructive">Admin</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">@{user.username}</p>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                        <span>{user.experiences?.[0]?.count || 0} experiences</span>
-                        <span>•</span>
-                        <span>{user.comments?.[0]?.count || 0} comments</span>
-                        <span>•</span>
-                        <span>{user.user_badges?.[0]?.count || 0} badges</span>
-                        <span>•</span>
-                        <span>Level {user.level || 1}</span>
-                        <span>•</span>
-                        <span>{user.xp || 0} XP</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Joined {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
-                  </div>
+  // Fetch admin roles separately
+  const { data: adminRoles } = await supabase
+    .from('admin_roles')
+    .select('user_id, role')
 
-                  <UserActions userId={user.id} isAdmin={user.is_admin || false} />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+  // Fetch aggregated counts separately
+  const { data: experienceCounts } = await supabase
+    .from('experiences')
+    .select('user_id')
+
+  const { data: commentCounts } = await supabase
+    .from('comments')
+    .select('user_id')
+
+  const { data: badgeCounts } = await supabase
+    .from('user_badges')
+    .select('user_id')
+
+  // Use service role client ONLY for auth.admin API (requires service role)
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
   )
+
+  // Get auth users for emails (auth.admin requires service role)
+  const { data: { users: authUsers }, error: authError } = await serviceClient.auth.admin.listUsers()
+
+  if (authError) {
+    console.error('Error fetching auth users:', authError)
+  }
+
+  // Combine all data
+  const users = profiles.map(profile => {
+    const authUser = authUsers?.find(au => au.id === profile.id)
+    const adminRole = adminRoles?.find(ar => ar.user_id === profile.id)
+
+    // Count occurrences
+    const expCount = experienceCounts?.filter(e => e.user_id === profile.id).length || 0
+    const commCount = commentCounts?.filter(c => c.user_id === profile.id).length || 0
+    const badgeCount = badgeCounts?.filter(b => b.user_id === profile.id).length || 0
+
+    return {
+      ...profile,
+      email: authUser?.email || null,
+      admin_role: adminRole ? [{ role: adminRole.role }] : null,
+      experiences: [{ count: expCount }],
+      comments: [{ count: commCount }],
+      user_badges: [{ count: badgeCount }]
+    }
+  })
+
+  return <UsersClient users={users} />
 }
