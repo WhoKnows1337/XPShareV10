@@ -3,13 +3,13 @@
 Complete task breakdown with priorities, dependencies, and success criteria for Claude Code agent development.
 
 **📅 Last Updated:** 06.10.2025
-**✅ Status:** 100% COMPLETE! (178/188 tasks - 95%)
+**✅ Status:** 100% COMPLETE! (179/189 tasks - 95%)
 
 ---
 
 ## 🎯 Current Status
 
-**Completion:** 178/188 Tasks (95%)
+**Completion:** 179/189 Tasks (95%)
 **MVP-Ready:** ✅ YES - Production Ready!
 **Phases Completed:** 0-8 (100%)
 **Phases Remaining:** 9 (Testing only)
@@ -21,7 +21,7 @@ Complete task breakdown with priorities, dependencies, and success criteria for 
 - ✅ **Phase 3:** Browse & Discovery - 26/26 (100%)
 - ✅ **Phase 4:** Detail & Interactions - 17/17 (100%)
 - ✅ **Phase 5:** Gamification - 20/20 (100%)
-- ✅ **Phase 6:** Admin Panel - 12/12 (100%) 🎉
+- ✅ **Phase 6:** Admin Panel - 13/13 (100%) 🎉
 - ✅ **Phase 7:** i18n (Infrastructure Complete) - 11/11 (100%)
 - ✅ **Phase 8:** Performance & SEO - 10/10 (100%)
 - ⏳ **Phase 9:** Testing & Deployment - 2/10 (20%)
@@ -30,7 +30,7 @@ Complete task breakdown with priorities, dependencies, and success criteria for 
 
 ## Overview
 
-**Total Tasks:** 188
+**Total Tasks:** 189
 **Estimated Timeline:** 8-12 weeks (MVP)
 **Actual Timeline:** 4 months (MVP completed!)
 **Development Phases:** 9
@@ -471,8 +471,9 @@ Complete task breakdown with priorities, dependencies, and success criteria for 
 | 6.1.1 | Add admin role to user_profiles table | P1 | S | Supabase SQL | ✅ Done |
 | 6.1.2 | Create admin middleware | P1 | M | `lib/admin-auth.ts` | ✅ Done |
 | 6.1.3 | Build admin layout | P1 | M | `app/[locale]/admin/layout.tsx` | ✅ Done |
+| 6.1.4 | Add admin link to navbar dropdown | P1 | S | `components/layout/navbar.tsx`, `lib/auth/context.tsx` | ✅ Done (06.10.2025) |
 
-**Success Criteria:** ✅ Only admins can access /admin routes.
+**Success Criteria:** ✅ Only admins can access /admin routes. Admin link visible in navbar dropdown.
 
 ---
 
@@ -653,11 +654,11 @@ Complete task breakdown with priorities, dependencies, and success criteria for 
 | Phase 3: Browse | 9 | 14 | 3 | 26 |
 | Phase 4: Detail | 7 | 5 | 5 | 17 |
 | Phase 5: Gamification | 0 | 11 | 9 | 20 |
-| Phase 6: Admin | 0 | 9 | 3 | 12 |
+| Phase 6: Admin | 0 | 10 | 3 | 13 |
 | Phase 7: i18n & A11y | 0 | 10 | 1 | 11 |
 | Phase 8: Perf & SEO | 0 | 10 | 0 | 10 |
 | Phase 9: Testing | 2 | 1 | 7 | 10 |
-| **Total** | **64** | **85** | **39** | **188** |
+| **Total** | **64** | **86** | **39** | **189** |
 
 ---
 

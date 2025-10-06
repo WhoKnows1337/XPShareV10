@@ -11,13 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LogOut, Settings, User, Sparkles, Search } from 'lucide-react'
+import { LogOut, Settings, User, Sparkles, Search, Shield } from 'lucide-react'
 import { NotificationsDropdown } from './notifications-dropdown'
 import { LanguageSwitcher } from './language-switcher'
 import { useTranslations } from 'next-intl'
 
 export function Navbar() {
-  const { user, signOut, loading } = useAuth()
+  const { user, signOut, loading, isAdmin } = useAuth()
   const t = useTranslations('nav')
 
   const getInitials = (email: string) => {
@@ -112,6 +112,14 @@ export function Navbar() {
                     {t('settings')}
                   </Link>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin" className="cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4" aria-hidden="true" />
+                      {t('admin')}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => signOut()}
