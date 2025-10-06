@@ -11,7 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LogOut, Settings, User, Sparkles } from 'lucide-react'
+import { LogOut, Settings, User, Sparkles, Search } from 'lucide-react'
+import { NotificationsDropdown } from './notifications-dropdown'
 
 export function Navbar() {
   const { user, signOut, loading } = useAuth()
@@ -42,6 +43,13 @@ export function Navbar() {
               Feed
             </Link>
             <Link
+              href="/search"
+              className="flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
+            >
+              <Search className="h-4 w-4" />
+              Search
+            </Link>
+            <Link
               href="/submit"
               className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
             >
@@ -61,7 +69,9 @@ export function Navbar() {
           {loading ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-slate-200" />
           ) : user ? (
-            <DropdownMenu>
+            <>
+              <NotificationsDropdown />
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2"
@@ -108,6 +118,7 @@ export function Navbar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">

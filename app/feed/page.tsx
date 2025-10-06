@@ -4,8 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Sparkles, MapPin, Calendar } from 'lucide-react'
+import { ExperienceCard } from '@/components/experience/experience-card'
+import { FeedFilters } from '@/components/feed/feed-filters'
 
-export default async function FeedPage() {
+interface FeedPageProps {
+  searchParams: Promise<{
+    category?: string
+    sort?: string
+  }>
+}
+
+export default async function FeedPage({ searchParams }: FeedPageProps) {
   const supabase = await createClient()
 
   const {
@@ -22,6 +31,45 @@ export default async function FeedPage() {
     .select('username, display_name')
     .eq('id', user.id)
     .single()
+
+  // Await searchParams
+  const params = await searchParams
+
+  // Build query based on filters
+  let query = supabase
+    .from('experiences')
+    .select(`
+      *,
+      user_profiles!experiences_user_id_fkey (
+        username,
+        display_name,
+        avatar_url
+      )
+    `)
+    .eq('visibility', 'public')
+
+  // Apply category filter
+  if (params.category && params.category !== 'all') {
+    query = query.eq('category', params.category)
+  }
+
+  // Apply sorting
+  const sort = params.sort || 'latest'
+  switch (sort) {
+    case 'popular':
+      query = query.order('upvote_count', { ascending: false })
+      break
+    case 'views':
+      query = query.order('view_count', { ascending: false })
+      break
+    case 'latest':
+    default:
+      query = query.order('created_at', { ascending: false })
+      break
+  }
+
+  // Fetch experiences
+  const { data: experiences, error } = await query.limit(20)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-8">
@@ -86,34 +134,48 @@ export default async function FeedPage() {
           </Card>
         </div>
 
-        {/* Recent Experiences Placeholder */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Experiences</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Sparkles className="mb-4 h-12 w-12 text-slate-300" aria-hidden="true" />
-              <h3 className="mb-2 text-lg font-semibold text-slate-700">
-                No experiences yet
-              </h3>
-              <p className="mb-6 text-sm text-slate-600">
-                Start by sharing your first extraordinary experience
-              </p>
-              <Link href="/submit">
-                <Button>Share Your First Experience</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Filters */}
+        <FeedFilters />
 
-        {/* Coming Soon Notice */}
-        <div className="mt-8 rounded-lg border-2 border-dashed border-purple-200 bg-purple-50 p-6 text-center">
-          <h3 className="mb-2 font-semibold text-purple-900">🚧 Feed Coming Soon</h3>
-          <p className="text-sm text-purple-700">
-            The experience feed is currently under development. Soon you'll be able to browse,
-            filter, and discover experiences from the community!
-          </p>
+        {/* Recent Experiences */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">
+              {params.category && params.category !== 'all'
+                ? `${params.category.charAt(0).toUpperCase() + params.category.slice(1)} Experiences`
+                : 'Recent Experiences'}
+            </h2>
+            {experiences && experiences.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {experiences.length} experience{experiences.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          {!experiences || experiences.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <Sparkles className="mb-4 h-12 w-12 text-slate-300" aria-hidden="true" />
+                  <h3 className="mb-2 text-lg font-semibold text-slate-700">
+                    No experiences yet
+                  </h3>
+                  <p className="mb-6 text-sm text-slate-600">
+                    Be the first to share an extraordinary experience!
+                  </p>
+                  <Link href="/submit">
+                    <Button>Share Your First Experience</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {experiences.map((experience: any) => (
+                <ExperienceCard key={experience.id} experience={experience} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

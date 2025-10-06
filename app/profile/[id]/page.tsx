@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { UserStats } from '@/components/profile/user-stats'
+import { BadgesShowcase } from '@/components/profile/badges-showcase'
 import { Settings, MapPin, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
@@ -34,7 +35,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     notFound()
   }
 
-  // Get user badges
+  // Get user badges with full badge data
   const { data: userBadges } = await supabase
     .from('user_badges')
     .select(`
@@ -43,8 +44,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         id,
         name,
         description,
-        icon_name,
-        rarity
+        icon,
+        rarity,
+        xp_reward
       )
     `)
     .eq('user_id', id)
@@ -176,35 +178,21 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           />
         </div>
 
-        {/* Badges */}
-        {profileData.badges && profileData.badges.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Badges ({profileData.badges.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {profileData.badges.map((badge: any) => (
-                  <div
-                    key={badge.id}
-                    className="flex flex-col items-center space-y-2 rounded-lg border p-4 text-center"
-                  >
-                    <div className="text-4xl" aria-hidden="true">
-                      {badge.icon_name}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{badge.name}</p>
-                      <p className="text-xs text-slate-600">{badge.description}</p>
-                      <Badge variant="secondary" className="mt-2">
-                        {badge.rarity}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Badges & XP Showcase */}
+        <div className="mb-8">
+          <BadgesShowcase
+            userBadges={userBadges?.map((ub: any) => ({
+              id: ub.badges.id,
+              name: ub.badges.name,
+              description: ub.badges.description,
+              icon: ub.badges.icon,
+              rarity: ub.badges.rarity,
+              xp_reward: ub.badges.xp_reward,
+              earned_at: ub.earned_at,
+            })) || []}
+            totalXP={profileData.total_xp}
+          />
+        </div>
 
         {/* Recent Experiences */}
         {profileData.recent_experiences && profileData.recent_experiences.length > 0 && (
