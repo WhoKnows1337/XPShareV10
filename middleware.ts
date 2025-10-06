@@ -11,19 +11,10 @@ const intlMiddleware = createIntlMiddleware({
 })
 
 export async function middleware(request: NextRequest) {
-  // First, handle internationalization
-  const intlResponse = intlMiddleware(request)
+  // First, handle internationalization - this adds locale to headers
+  let response = intlMiddleware(request)
 
-  // If intl middleware returns a redirect, return it
-  if (intlResponse.status === 307 || intlResponse.status === 308) {
-    return intlResponse
-  }
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
-
+  // Create Supabase client with the response from intl middleware
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -33,12 +24,6 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          response = NextResponse.next({
-            request,
-          })
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           )
@@ -51,29 +36,35 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes that require authentication
-  const protectedRoutes = ['/feed', '/profile', '/settings']
+  // Protected routes that require authentication (with locale prefix)
+  const protectedRoutes = ['/feed', '/profile', '/settings', '/submit', '/map', '/timeline', '/experiences', '/admin']
+  const pathname = request.nextUrl.pathname
+
+  // Remove locale prefix to check route
+  const pathnameWithoutLocale = pathname.replace(/^\/(de|en|fr|es)/, '') || '/'
   const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    pathnameWithoutLocale.startsWith(route)
   )
 
   // Redirect to login if accessing protected route without auth
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
+    const locale = pathname.match(/^\/(de|en|fr|es)/)?.[1] || 'en'
+    url.pathname = `/${locale}/login`
+    url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
   }
 
   // Redirect to feed if accessing auth pages while logged in
   const authRoutes = ['/login', '/signup']
   const isAuthRoute = authRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    pathnameWithoutLocale.startsWith(route)
   )
 
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/feed'
+    const locale = pathname.match(/^\/(de|en|fr|es)/)?.[1] || 'en'
+    url.pathname = `/${locale}/feed`
     return NextResponse.redirect(url)
   }
 
