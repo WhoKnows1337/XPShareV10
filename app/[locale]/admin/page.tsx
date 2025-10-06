@@ -150,6 +150,7 @@ export default async function AdminDashboard() {
                 {stat.subtitle && (
                   <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
                 )}
+              </CardContent>
             </>
           )
 
