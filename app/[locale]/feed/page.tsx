@@ -234,6 +234,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       <FeedClient
         userName={userName}
+        currentUserId={user.id}
         experiences={experiences}
         trendingExperiences={trendingExperiences || []}
         category={params.category}

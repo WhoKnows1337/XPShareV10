@@ -18,10 +18,11 @@ interface TrendingExperience {
 }
 
 interface FeedRightPanelProps {
+  currentUserId?: string
   trendingExperiences?: TrendingExperience[]
 }
 
-export function FeedRightPanel({ trendingExperiences = [] }: FeedRightPanelProps) {
+export function FeedRightPanel({ currentUserId, trendingExperiences = [] }: FeedRightPanelProps) {
   // Mock data if empty
   const trending = trendingExperiences.length > 0 ? trendingExperiences : [
     {
@@ -53,10 +54,10 @@ export function FeedRightPanel({ trendingExperiences = [] }: FeedRightPanelProps
   return (
     <div className="space-y-6">
       {/* Similar User Card - Aha-Moment #6 */}
-      <SimilarUserCard />
+      <SimilarUserCard currentUserId={currentUserId} />
 
       {/* Pattern Prediction Card - Aha-Moment #7 */}
-      <PatternPredictionCard category="UFO" />
+      <PatternPredictionCard category="ufo" />
 
       {/* Trending Card */}
       <Card>

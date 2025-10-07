@@ -50,6 +50,7 @@ interface TrendingExperience {
 
 interface FeedClientProps {
   userName: string
+  currentUserId: string
   experiences: Experience[]
   trendingExperiences: TrendingExperience[]
   category?: string
@@ -57,6 +58,7 @@ interface FeedClientProps {
 
 export function FeedClient({
   userName,
+  currentUserId,
   experiences,
   trendingExperiences,
   category,
@@ -68,7 +70,7 @@ export function FeedClient({
   return (
     <ThreeColumnLayout
       leftSidebar={<FeedLeftSidebar />}
-      rightPanel={<FeedRightPanel trendingExperiences={trendingExperiences} />}
+      rightPanel={<FeedRightPanel currentUserId={currentUserId} trendingExperiences={trendingExperiences} />}
       mainContent={
         <div className="space-y-6">
           {/* Welcome Section */}
