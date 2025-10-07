@@ -20,6 +20,7 @@ import Link from 'next/link'
 import { UserStats } from '@/components/profile/user-stats'
 import { BadgesShowcase } from '@/components/profile/badges-showcase'
 import { ProfileBadges } from './tabs/profile-badges'
+import { GlobalImpactDashboard } from '@/components/profile/global-impact-dashboard'
 
 interface ProfileClientTabsProps {
   profileUser: any
@@ -221,17 +222,7 @@ export function ProfileClientTabs({
 
         {/* Impact Tab */}
         <TabsContent value="impact">
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center text-muted-foreground">
-                <Globe className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-semibold mb-2">Global Impact</p>
-                <p className="text-sm">
-                  Impact analytics coming soon...
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <GlobalImpactDashboard userId={profileUser.id} />
         </TabsContent>
       </Tabs>
     </div>
