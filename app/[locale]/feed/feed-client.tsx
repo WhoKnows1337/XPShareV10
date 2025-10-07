@@ -4,7 +4,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
-import { ExperienceCard } from '@/components/experience/experience-card'
+import { EnhancedExperienceCard } from '@/components/experience/enhanced-experience-card'
+import { BentoGrid } from '@/components/ui/bento-grid'
+import { cn } from '@/lib/utils'
 import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
 import { FeedLeftSidebar } from '@/components/browse/feed-left-sidebar'
 import { FeedRightPanel } from '@/components/browse/feed-right-panel'
@@ -96,11 +98,28 @@ export function FeedClient({
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              {experiences.map((experience: Experience) => (
-                <ExperienceCard key={experience.id} experience={experience} />
+            <BentoGrid className="max-w-full">
+              {experiences.map((experience: Experience, index: number) => (
+                <EnhancedExperienceCard
+                  key={experience.id}
+                  experience={experience}
+                  size={
+                    index === 0
+                      ? 'large'
+                      : index === 2
+                        ? 'wide'
+                        : index % 7 === 0
+                          ? 'large'
+                          : 'default'
+                  }
+                  className={cn(
+                    index === 0 && 'md:col-span-2',
+                    index === 2 && 'md:row-span-2',
+                    index % 7 === 0 && 'md:col-span-2'
+                  )}
+                />
               ))}
-            </div>
+            </BentoGrid>
           )}
         </div>
       }
