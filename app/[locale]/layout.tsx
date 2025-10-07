@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import { AuthProvider } from "@/lib/auth/context";
 import { Navbar } from "@/components/layout/navbar";
+import { RootLayoutClient } from "@/components/layout/root-layout-client";
 import { Toaster } from "sonner";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -70,9 +71,11 @@ export default async function RootLayout({
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
-            <Navbar />
-            {children}
-            <Toaster position="top-right" richColors />
+            <RootLayoutClient>
+              <Navbar />
+              {children}
+              <Toaster position="top-right" richColors />
+            </RootLayoutClient>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

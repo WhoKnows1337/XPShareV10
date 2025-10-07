@@ -21,6 +21,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import { usePrefetch } from '@/hooks/use-prefetch'
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -66,6 +67,7 @@ export function EnhancedExperienceCard({
   className,
 }: EnhancedExperienceCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const prefetch = usePrefetch()
   const profile = experience.user_profiles
   const displayName = profile?.display_name || profile?.username || 'Anonymous'
   const initials = displayName.substring(0, 2).toUpperCase()
@@ -81,7 +83,10 @@ export function EnhancedExperienceCard({
   return (
     <motion.article
       whileHover={{ y: -4, boxShadow: '0 10px 30px rgba(139, 92, 246, 0.2)' }}
-      onHoverStart={() => setIsHovered(true)}
+      onHoverStart={() => {
+        setIsHovered(true)
+        prefetch(`/experiences/${experience.id}`)
+      }}
       onHoverEnd={() => setIsHovered(false)}
       className={cn(
         'group relative bg-card rounded-xl border overflow-hidden',

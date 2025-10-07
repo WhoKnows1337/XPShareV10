@@ -11,11 +11,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LogOut, Settings, User, Sparkles, Search, Shield } from 'lucide-react'
+import { LogOut, Settings, User, Sparkles, Search, Shield, ChevronDown, FolderOpen } from 'lucide-react'
 import { NotificationsDropdown } from './notifications-dropdown'
 import { LanguageSwitcher } from './language-switcher'
 import { CommandPalette } from '@/components/browse/command-palette'
 import { useTranslations } from 'next-intl'
+
+const categories = [
+  { slug: 'ufo', name: 'UFO Sichtungen', icon: '🛸' },
+  { slug: 'paranormal', name: 'Paranormal', icon: '👻' },
+  { slug: 'dreams', name: 'Träume', icon: '💭' },
+  { slug: 'psychedelic', name: 'Psychedelic', icon: '🍄' },
+  { slug: 'spiritual', name: 'Spiritual', icon: '🙏' },
+  { slug: 'synchronicity', name: 'Synchronicity', icon: '🔮' },
+  { slug: 'nde', name: 'Near-Death', icon: '💫' },
+  { slug: 'other', name: 'Other', icon: '📦' },
+]
 
 export function Navbar() {
   const { user, signOut, loading, isAdmin } = useAuth()
@@ -48,6 +59,31 @@ export function Navbar() {
               >
                 {t('feed')}
               </Link>
+
+              {/* Categories Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1">
+                    <FolderOpen className="h-4 w-4" />
+                    Categories
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {categories.map((category) => (
+                    <DropdownMenuItem key={category.slug} asChild>
+                      <Link
+                        href={`/categories/${category.slug}`}
+                        className="cursor-pointer flex items-center gap-2"
+                      >
+                        <span className="text-lg">{category.icon}</span>
+                        <span>{category.name}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Link
                 href="/submit"
                 className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"

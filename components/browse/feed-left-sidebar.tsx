@@ -108,7 +108,7 @@ export function FeedLeftSidebar() {
             </span>
           </Link>
 
-          {/* Individual Categories */}
+          {/* Individual Categories - Filter only */}
           {categories.map((category) => (
             <Link
               key={category.slug}

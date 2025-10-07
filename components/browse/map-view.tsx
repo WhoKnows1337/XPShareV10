@@ -178,13 +178,6 @@ export function MapView({ experiences }: MapViewProps) {
             anchor="bottom"
           >
             <div className="p-2 min-w-[250px]">
-              {selectedExperience.hero_image_url && (
-                <img
-                  src={selectedExperience.hero_image_url}
-                  alt=""
-                  className="w-full h-32 object-cover rounded mb-2"
-                />
-              )}
               <Link
                 href={`/experiences/${selectedExperience.id}`}
                 className="font-semibold hover:underline block mb-1 text-primary"
@@ -192,12 +185,12 @@ export function MapView({ experiences }: MapViewProps) {
                 {selectedExperience.title}
               </Link>
               <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                {selectedExperience.content}
+                {selectedExperience.story_text}
               </p>
               <div className="flex items-center justify-between text-xs">
                 <span>@{selectedExperience.user_profiles?.username}</span>
                 <span>
-                  {formatDistanceToNow(new Date(selectedExperience.occurred_at || selectedExperience.created_at), {
+                  {formatDistanceToNow(new Date(selectedExperience.date_occurred || selectedExperience.created_at), {
                     addSuffix: true,
                     locale: de
                   })}
@@ -209,7 +202,7 @@ export function MapView({ experiences }: MapViewProps) {
       </Map>
 
       {/* Controls */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+      <div className="absolute top-4 left-4 z-[100] flex flex-col gap-2 pointer-events-auto">
         <Button
           variant="secondary"
           size="sm"
@@ -221,6 +214,7 @@ export function MapView({ experiences }: MapViewProps) {
           variant={showTimeTravel ? 'default' : 'secondary'}
           size="sm"
           onClick={() => {
+            console.log('Time Travel button clicked, current state:', showTimeTravel)
             setShowTimeTravel(!showTimeTravel)
             if (showTimeTravel) {
               setTimeRange(null) // Reset filter
@@ -241,7 +235,7 @@ export function MapView({ experiences }: MapViewProps) {
       )}
 
       {/* Legend */}
-      <Card className="absolute bottom-4 left-4 z-10 max-w-xs">
+      <Card className="absolute bottom-4 left-4 z-[100] max-w-xs">
         <CardContent className="p-3">
           <p className="text-xs font-semibold mb-2">Legend</p>
           <div className="space-y-1 text-xs">
@@ -256,7 +250,7 @@ export function MapView({ experiences }: MapViewProps) {
       </Card>
 
       {/* Stats */}
-      <Card className="absolute top-4 right-16 z-10">
+      <Card className="absolute top-4 right-16 z-[100]">
         <CardContent className="p-3">
           <p className="text-sm font-semibold">
             {filteredExperiences.length} {showTimeTravel ? '/ ' + validExperiences.length : ''} Experiences

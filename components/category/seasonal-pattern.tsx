@@ -65,9 +65,11 @@ export function SeasonalPattern({ category }: SeasonalPatternProps) {
         })
 
       // Find peak month
-      const peakMonth = monthlyData.reduce((prev, current) =>
-        prev.count > current.count ? prev : current
-      )
+      const peakMonth = monthlyData.length > 0
+        ? monthlyData.reduce((prev, current) =>
+            prev.count > current.count ? prev : current
+          )
+        : null
 
       // Get yearly comparison (last 3 years)
       const currentYear = new Date().getFullYear()
@@ -88,7 +90,7 @@ export function SeasonalPattern({ category }: SeasonalPatternProps) {
       }
 
       setData({
-        peak_month: peakMonth.month,
+        peak_month: peakMonth?.month || '',
         monthly_data: monthlyData,
         yearly_comparison: yearlyComparison,
         current_year_position: 'upward',

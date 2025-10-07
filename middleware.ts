@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protected routes that require authentication (with locale prefix)
-  const protectedRoutes = ['/feed', '/profile', '/settings', '/submit', '/map', '/timeline', '/experiences', '/admin']
+  const protectedRoutes = ['/feed', '/profile', '/settings', '/submit', '/map', '/timeline', '/experiences', '/admin', '/categories']
   const pathname = request.nextUrl.pathname
 
   // Remove locale prefix to check route

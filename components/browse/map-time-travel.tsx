@@ -13,6 +13,9 @@ interface Experience {
   title: string
   date_occurred?: string
   created_at: string
+  category: string
+  location_lat?: number
+  location_lng?: number
 }
 
 interface Props {
@@ -24,11 +27,11 @@ interface Props {
 export function MapTimeTravel({ experiences, onTimeRangeChange, className }: Props) {
   // Find date range from experiences
   const dateRange = useMemo(() => {
-    const dates = experiences.map(e => new Date(e.date_occurred || e.created_at).getTime())
-    if (dates.length === 0) {
+    if (!experiences || experiences.length === 0) {
       const now = Date.now()
       return { min: now - 30 * 24 * 60 * 60 * 1000, max: now }
     }
+    const dates = experiences.map(e => new Date(e.date_occurred || e.created_at).getTime())
     return {
       min: Math.min(...dates),
       max: Math.max(...dates)
@@ -74,13 +77,13 @@ export function MapTimeTravel({ experiences, onTimeRangeChange, className }: Pro
 
   // Detect wave peaks
   const wavePeak = useMemo(() => {
-    const currentDay = format(currentTime, 'yyyy-MM-dd')
+    const currentDay = format(new Date(currentTime), 'yyyy-MM-dd')
     const dayExperiences = experiences.filter(e => {
       const expDay = format(new Date(e.date_occurred || e.created_at), 'yyyy-MM-dd')
       return expDay === currentDay
     })
 
-    if (dayExperiences.length >= 3) {
+    if (dayExperiences.length >= 2) {
       return {
         count: dayExperiences.length,
         date: currentDay

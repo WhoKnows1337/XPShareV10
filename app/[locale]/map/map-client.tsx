@@ -1,28 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapView } from '@/components/map/map-view'
-import { TimeTravelSlider } from '@/components/map/time-travel-slider'
+import { MapView } from '@/components/browse/map-view'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Map, Layers, TrendingUp } from 'lucide-react'
+import { Map, Layers } from 'lucide-react'
 import Link from 'next/link'
-
-interface Marker {
-  id: string
-  title: string
-  category: string
-  lat: number
-  lng: number
-  location: string
-  date: string
-  timeOfDay?: string
-  viewCount: number
-  upvoteCount: number
-  username: string
-}
+import { createClient } from '@/lib/supabase/client'
 
 interface MapClientProps {
   profile: {
@@ -32,48 +18,64 @@ interface MapClientProps {
 }
 
 export function MapClient({ profile }: MapClientProps) {
-  const [markers, setMarkers] = useState<Marker[]>([])
+  const [experiences, setExperiences] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [category, setCategory] = useState('all')
-  const [showHeatmap, setShowHeatmap] = useState(false)
-  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({
-    start: null,
-    end: null,
-  })
 
-  // Fetch markers based on filters
-  const fetchMarkers = async () => {
+  // Fetch experiences with location data
+  const fetchExperiences = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/patterns/time-travel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          startDate: dateRange.start,
-          endDate: dateRange.end,
-          category: category === 'all' ? null : category,
-        }),
-      })
+      const supabase = createClient()
 
-      const data = await response.json()
-      if (data.success) {
-        setMarkers(data.markers || [])
+      let query = supabase
+        .from('experiences')
+        .select(`
+          id,
+          title,
+          story_text,
+          category,
+          date_occurred,
+          created_at,
+          location_lat,
+          location_lng,
+          location_text,
+          view_count,
+          user_profiles (
+            username,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('visibility', 'public')
+        .not('location_lat', 'is', null)
+        .not('location_lng', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(500)
+
+      if (category !== 'all') {
+        query = query.eq('category', category)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error('Error fetching experiences:', error)
+      } else {
+        console.log('Fetched experiences for map:', data?.length, data)
+        setExperiences(data || [])
       }
     } catch (error) {
-      console.error('Failed to fetch markers:', error)
+      console.error('Failed to fetch experiences:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Initial load and refetch when filters change
+  // Initial load and refetch when category changes
   useEffect(() => {
-    fetchMarkers()
-  }, [dateRange, category])
-
-  const handleDateRangeChange = (startDate: string | null, endDate: string | null) => {
-    setDateRange({ start: startDate, end: endDate })
-  }
+    fetchExperiences()
+  }, [category])
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
@@ -99,7 +101,7 @@ export function MapClient({ profile }: MapClientProps) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Map className="h-4 w-4" />
-            <span>{markers.length} locations</span>
+            <span>{experiences.length} locations</span>
           </div>
           {isLoading && (
             <Badge variant="secondary" className="animate-pulse">
@@ -110,63 +112,35 @@ export function MapClient({ profile }: MapClientProps) {
       </div>
 
       {/* Controls */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-        {/* Category filter */}
-        <Card className="lg:col-span-1">
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Layers className="h-4 w-4" />
-                <span className="font-medium text-sm">Category Filter</span>
-              </div>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="ufo">UFO Sighting</SelectItem>
-                  <SelectItem value="paranormal">Paranormal</SelectItem>
-                  <SelectItem value="dreams">Dreams</SelectItem>
-                  <SelectItem value="psychedelic">Psychedelic</SelectItem>
-                  <SelectItem value="spiritual">Spiritual</SelectItem>
-                  <SelectItem value="synchronicity">Synchronicity</SelectItem>
-                  <SelectItem value="nde">Near-Death Experience</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Heatmap toggle */}
-              <div className="pt-3 border-t">
-                <Button
-                  size="sm"
-                  variant={showHeatmap ? 'default' : 'outline'}
-                  onClick={() => setShowHeatmap(!showHeatmap)}
-                  className="w-full"
-                >
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  {showHeatmap ? 'Hide' : 'Show'} Heatmap
-                </Button>
-              </div>
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4" />
+              <span className="font-medium text-sm">Category Filter:</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Time travel slider */}
-        <div className="lg:col-span-3">
-          <TimeTravelSlider
-            onDateRangeChange={handleDateRangeChange}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
-
-      {/* Map */}
-      <Card className="overflow-hidden">
-        <div className="h-[600px] lg:h-[700px]">
-          <MapView markers={markers} showHeatmap={showHeatmap} />
-        </div>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="ufo">🛸 UFO Sighting</SelectItem>
+                <SelectItem value="paranormal">👻 Paranormal</SelectItem>
+                <SelectItem value="dreams">💭 Dreams</SelectItem>
+                <SelectItem value="psychedelic">🌈 Psychedelic</SelectItem>
+                <SelectItem value="spiritual">✨ Spiritual</SelectItem>
+                <SelectItem value="synchronicity">🔄 Synchronicity</SelectItem>
+                <SelectItem value="nde">💫 Near-Death Experience</SelectItem>
+                <SelectItem value="other">❓ Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
       </Card>
+
+      {/* Map with Time-Travel */}
+      <MapView experiences={experiences} />
 
       {/* Legend */}
       <Card className="mt-6">
@@ -196,7 +170,7 @@ export function MapClient({ profile }: MapClientProps) {
       </Card>
 
       {/* Empty state */}
-      {!isLoading && markers.length === 0 && (
+      {!isLoading && experiences.length === 0 && (
         <Card className="mt-6">
           <CardContent className="py-12 text-center">
             <Map className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -205,7 +179,7 @@ export function MapClient({ profile }: MapClientProps) {
               No experiences with location data found for the selected filters.
             </p>
             <p className="text-xs text-muted-foreground">
-              Try adjusting the time range or category filter
+              Try adjusting the category filter or add some experiences with location data
             </p>
           </CardContent>
         </Card>
