@@ -1,0 +1,109 @@
+'use client'
+
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { Sparkles } from 'lucide-react'
+import { ExperienceCard } from '@/components/experience/experience-card'
+import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
+import { FeedLeftSidebar } from '@/components/browse/feed-left-sidebar'
+import { FeedRightPanel } from '@/components/browse/feed-right-panel'
+
+interface Experience {
+  id: string
+  title: string
+  story_text: string
+  category: string
+  tags: string[]
+  location_text?: string
+  date_occurred?: string
+  time_of_day?: string
+  view_count: number
+  upvote_count: number
+  comment_count: number
+  created_at: string
+  user_profiles?: {
+    username: string
+    display_name: string
+    avatar_url?: string
+  } | null
+}
+
+interface TrendingExperience {
+  id: string
+  title: string
+  category: string
+  upvote_count: number
+  comment_count: number
+  view_count: number
+}
+
+interface FeedClientProps {
+  userName: string
+  experiences: Experience[]
+  trendingExperiences: TrendingExperience[]
+  category?: string
+}
+
+export function FeedClient({
+  userName,
+  experiences,
+  trendingExperiences,
+  category,
+}: FeedClientProps) {
+  return (
+    <ThreeColumnLayout
+      leftSidebar={<FeedLeftSidebar />}
+      rightPanel={<FeedRightPanel trendingExperiences={trendingExperiences} />}
+      mainContent={
+        <div className="space-y-6">
+          {/* Welcome Section */}
+          <div>
+            <h1 className="mb-2 text-3xl font-bold">Welcome back, {userName}!</h1>
+            <p className="text-slate-600">Discover and share extraordinary experiences</p>
+          </div>
+
+          {/* Feed Controls */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">
+              {category && category !== 'all'
+                ? `${category.charAt(0).toUpperCase() + category.slice(1)} Experiences`
+                : 'Recent Experiences'}
+            </h2>
+            {experiences && experiences.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {experiences.length} experience{experiences.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          {/* Experiences Grid */}
+          {!experiences || experiences.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <Sparkles className="mb-4 h-12 w-12 text-slate-300" aria-hidden="true" />
+                  <h3 className="mb-2 text-lg font-semibold text-slate-700">
+                    No experiences yet
+                  </h3>
+                  <p className="mb-6 text-sm text-slate-600">
+                    Be the first to share an extraordinary experience!
+                  </p>
+                  <Link href="/submit">
+                    <Button>Share Your First Experience</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {experiences.map((experience: Experience) => (
+                <ExperienceCard key={experience.id} experience={experience} />
+              ))}
+            </div>
+          )}
+        </div>
+      }
+    />
+  )
+}

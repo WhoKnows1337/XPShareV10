@@ -135,7 +135,7 @@ export default async function ExperiencePage({ params }: { params: Promise<{ id:
 
       {/* Similar Experiences */}
       <SimilarExperiences
-        text={experience.story_text}
+        text={experience.story_text || ''}
         category={experience.category}
         tags={experience.tags || []}
         currentExperienceId={experience.id}
@@ -143,7 +143,7 @@ export default async function ExperiencePage({ params }: { params: Promise<{ id:
 
       {/* Metadata */}
       <div className="text-xs text-muted-foreground text-center mt-6">
-        Posted on {new Date(experience.created_at).toLocaleDateString('de-DE', {
+        Posted on {new Date(experience.created_at || new Date()).toLocaleDateString('de-DE', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',

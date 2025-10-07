@@ -69,6 +69,7 @@ export default async function UsersPage() {
 
     return {
       ...profile,
+      level: profile.level ?? 1,
       email: authUser?.email || null,
       admin_role: adminRole ? [{ role: adminRole.role }] : null,
       experiences: [{ count: expCount }],
@@ -77,5 +78,5 @@ export default async function UsersPage() {
     }
   })
 
-  return <UsersClient users={users} />
+  return <UsersClient users={users as any} />
 }
