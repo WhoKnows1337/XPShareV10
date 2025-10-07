@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import Map, { Marker, Popup, NavigationControl } from 'react-map-gl'
 import Supercluster from 'supercluster'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { MapTimeTravel } from './map-time-travel'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface MapViewProps {
@@ -27,20 +28,36 @@ export function MapView({ experiences }: MapViewProps) {
   })
   const [selectedExperience, setSelectedExperience] = useState<any>(null)
   const [showHeatmap, setShowHeatmap] = useState(false)
+  const [showTimeTravel, setShowTimeTravel] = useState(false)
+  const [timeRange, setTimeRange] = useState<{ start: Date; end: Date } | null>(null)
 
   // Filter experiences with valid coordinates
   const validExperiences = experiences.filter(exp =>
     exp.location_lat && exp.location_lng
   )
 
-  // Create supercluster instance
+  // Filter by time range if time travel is active
+  const filteredExperiences = useMemo(() => {
+    if (!timeRange) return validExperiences
+
+    return validExperiences.filter(exp => {
+      const expDate = new Date(exp.date_occurred || exp.created_at)
+      return expDate >= timeRange.start && expDate <= timeRange.end
+    })
+  }, [validExperiences, timeRange])
+
+  const handleTimeRangeChange = useCallback((start: Date, end: Date) => {
+    setTimeRange({ start, end })
+  }, [])
+
+  // Create supercluster instance with filtered experiences
   const cluster = useMemo(() => {
     const supercluster = new Supercluster({
       radius: 60,
       maxZoom: 16
     })
 
-    const points = validExperiences.map(exp => ({
+    const points = filteredExperiences.map(exp => ({
       type: 'Feature',
       properties: { experience: exp },
       geometry: {
@@ -51,7 +68,7 @@ export function MapView({ experiences }: MapViewProps) {
 
     supercluster.load(points as any)
     return supercluster
-  }, [validExperiences])
+  }, [filteredExperiences])
 
   // Get clusters for current viewport
   const clusters = useMemo(() => {
@@ -191,8 +208,8 @@ export function MapView({ experiences }: MapViewProps) {
         )}
       </Map>
 
-      {/* Heatmap Toggle */}
-      <div className="absolute top-4 left-4 z-10">
+      {/* Controls */}
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
         <Button
           variant="secondary"
           size="sm"
@@ -200,7 +217,28 @@ export function MapView({ experiences }: MapViewProps) {
         >
           {showHeatmap ? 'Hide' : 'Show'} Heatmap
         </Button>
+        <Button
+          variant={showTimeTravel ? 'default' : 'secondary'}
+          size="sm"
+          onClick={() => {
+            setShowTimeTravel(!showTimeTravel)
+            if (showTimeTravel) {
+              setTimeRange(null) // Reset filter
+            }
+          }}
+        >
+          <Clock className="w-4 h-4 mr-2" />
+          {showTimeTravel ? 'Exit' : 'Time Travel'}
+        </Button>
       </div>
+
+      {/* Time Travel Controls */}
+      {showTimeTravel && (
+        <MapTimeTravel
+          experiences={validExperiences}
+          onTimeRangeChange={handleTimeRangeChange}
+        />
+      )}
 
       {/* Legend */}
       <Card className="absolute bottom-4 left-4 z-10 max-w-xs">
@@ -221,8 +259,13 @@ export function MapView({ experiences }: MapViewProps) {
       <Card className="absolute top-4 right-16 z-10">
         <CardContent className="p-3">
           <p className="text-sm font-semibold">
-            {validExperiences.length} Experiences
+            {filteredExperiences.length} {showTimeTravel ? '/ ' + validExperiences.length : ''} Experiences
           </p>
+          {showTimeTravel && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Time Travel Mode
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
