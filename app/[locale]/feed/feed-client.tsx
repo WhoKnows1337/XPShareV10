@@ -9,6 +9,7 @@ import { Sparkles } from 'lucide-react'
 import { EnhancedExperienceCard } from '@/components/experience/enhanced-experience-card'
 import { ExperienceListView } from '@/components/experience/experience-list-view'
 import { MapView } from '@/components/browse/map-view'
+import { TimelineView } from '@/components/browse/timeline-view'
 import { BentoGrid } from '@/components/ui/bento-grid'
 import { cn } from '@/lib/utils'
 import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
@@ -124,19 +125,7 @@ export function FeedClient({
               ) : viewMode === 'map' ? (
                 <MapView experiences={experiences} />
               ) : viewMode === 'timeline' ? (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <Sparkles className="mb-4 h-12 w-12 text-slate-300" aria-hidden="true" />
-                      <h3 className="mb-2 text-lg font-semibold text-slate-700">
-                        Timeline View Coming Soon
-                      </h3>
-                      <p className="text-sm text-slate-600">
-                        Explore experiences in chronological order
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <TimelineView experiences={experiences} />
               ) : (
                 <BentoGrid className="max-w-full">
                   {experiences.map((experience: Experience, index: number) => (
