@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, BarChart3, Sparkles, Eye, MessageCircle, ThumbsUp } from 'lucide-react'
+import { SimilarUserCard } from '@/components/feed/similar-user-card'
+import { PatternPredictionCard } from '@/components/feed/pattern-prediction-card'
 
 interface TrendingExperience {
   id: string
@@ -50,6 +52,12 @@ export function FeedRightPanel({ trendingExperiences = [] }: FeedRightPanelProps
 
   return (
     <div className="space-y-6">
+      {/* Similar User Card - Aha-Moment #6 */}
+      <SimilarUserCard />
+
+      {/* Pattern Prediction Card - Aha-Moment #7 */}
+      <PatternPredictionCard category="UFO" />
+
       {/* Trending Card */}
       <Card>
         <CardHeader>

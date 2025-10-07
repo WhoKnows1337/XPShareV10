@@ -1,14 +1,22 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Home, TrendingUp, PlusCircle, FolderOpen, MapPin, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useState } from 'react'
 
 const navigation = [
   { name: 'Home', href: '/feed', icon: Home },
@@ -30,7 +38,21 @@ const categories = [
 export function FeedLeftSidebar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const selectedCategory = searchParams.get('category') || 'all'
+  const [radius, setRadius] = useState<number[]>([
+    parseInt(searchParams.get('radius') || '50')
+  ])
+
+  const updateSearchParam = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) {
+      params.set(key, value)
+    } else {
+      params.delete(key)
+    }
+    router.push(`${pathname}?${params.toString()}`)
+  }
 
   return (
     <div className="space-y-6">
@@ -116,12 +138,19 @@ export function FeedLeftSidebar() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Radius: 50km</Label>
-            <Slider defaultValue={[50]} max={500} step={10} className="w-full" />
+            <Label className="text-xs text-muted-foreground">Radius: {radius[0]}km</Label>
+            <Slider
+              value={radius}
+              onValueChange={setRadius}
+              onValueCommit={(value) => updateSearchParam('radius', value[0].toString())}
+              max={500}
+              step={10}
+              className="w-full"
+            />
           </div>
-          <Button variant="outline" size="sm" className="w-full">
-            Set Location
-          </Button>
+          <p className="text-xs text-muted-foreground">
+            Location filter uses your profile location
+          </p>
         </CardContent>
       </Card>
 
@@ -134,9 +163,22 @@ export function FeedLeftSidebar() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" size="sm" className="w-full">
-            Last 30 Days
-          </Button>
+          <Select
+            value={searchParams.get('dateRange') || 'all'}
+            onValueChange={(value) => updateSearchParam('dateRange', value === 'all' ? '' : value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All Time" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="24h">Last 24 Hours</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="90d">Last 3 Months</SelectItem>
+              <SelectItem value="1y">Last Year</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 

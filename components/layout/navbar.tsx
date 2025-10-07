@@ -14,6 +14,7 @@ import {
 import { LogOut, Settings, User, Sparkles, Search, Shield } from 'lucide-react'
 import { NotificationsDropdown } from './notifications-dropdown'
 import { LanguageSwitcher } from './language-switcher'
+import { CommandPalette } from '@/components/browse/command-palette'
 import { useTranslations } from 'next-intl'
 
 export function Navbar() {
@@ -36,34 +37,30 @@ export function Navbar() {
           <span className="text-xl font-bold">XP-Share</span>
         </Link>
 
-        {/* Navigation Links (only if logged in) */}
+        {/* Command Palette + Navigation Links (only if logged in) */}
         {user && (
-          <div className="hidden items-center gap-6 md:flex">
-            <Link
-              href="/feed"
-              className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
-            >
-              {t('feed')}
-            </Link>
-            <Link
-              href="/search"
-              className="flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
-            >
-              <Search className="h-4 w-4" />
-              {t('search')}
-            </Link>
-            <Link
-              href="/submit"
-              className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
-            >
-              {t('submit')}
-            </Link>
-            <Link
-              href="/map"
-              className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
-            >
-              {t('map')}
-            </Link>
+          <div className="flex items-center gap-4 flex-1 max-w-2xl mx-4">
+            <CommandPalette />
+            <div className="hidden items-center gap-6 md:flex">
+              <Link
+                href="/feed"
+                className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
+              >
+                {t('feed')}
+              </Link>
+              <Link
+                href="/submit"
+                className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
+              >
+                {t('submit')}
+              </Link>
+              <Link
+                href="/map"
+                className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600"
+              >
+                {t('map')}
+              </Link>
+            </div>
           </div>
         )}
 

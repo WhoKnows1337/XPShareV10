@@ -32,9 +32,18 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (error: any) {
+    // Handle rate limit errors gracefully
+    if (error?.message?.includes('rate limit')) {
+      console.warn('Auth rate limit reached, allowing request through')
+    } else {
+      console.error('Auth error in middleware:', error)
+    }
+  }
 
   // Protected routes that require authentication (with locale prefix)
   const protectedRoutes = ['/feed', '/profile', '/settings', '/submit', '/map', '/timeline', '/experiences', '/admin']
