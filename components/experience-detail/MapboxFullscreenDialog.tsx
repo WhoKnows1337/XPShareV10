@@ -38,73 +38,89 @@ export function MapboxFullscreenDialog({
   const map = useRef<mapboxgl.Map | null>(null)
 
   useEffect(() => {
+    console.log('[Mapbox] useEffect triggered', { open, hasContainer: !!mapContainer.current, hasMap: !!map.current })
     if (!open || !mapContainer.current || map.current) return
 
-    // Set access token at runtime
-    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-    if (!token) {
-      console.error('Mapbox token not configured')
-      setHasToken(false)
-      return
-    }
+    const initMap = async () => {
+      try {
+        console.log('[Mapbox] Starting map initialization...')
+        // Fetch token from API
+        const response = await fetch('/api/mapbox-token')
+        const data = await response.json()
+        console.log('[Mapbox] Token response:', { hasToken: !!data.token })
 
-    mapboxgl.accessToken = token
-    setHasToken(true)
+        if (!data.token) {
+          console.error('[Mapbox] Token not configured')
+          setHasToken(false)
+          return
+        }
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [lng, lat],
-      zoom: 12,
-    })
+        mapboxgl.accessToken = data.token
+        setHasToken(true)
 
-    // Add main marker
-    new mapboxgl.Marker({ color: '#8b5cf6' })
-      .setLngLat([lng, lat])
-      .setPopup(
-        new mapboxgl.Popup().setHTML(
-          `<div class="p-2">
-            <p class="font-semibold text-sm">Experience Location</p>
-            ${locationText ? `<p class="text-xs text-gray-600">${locationText}</p>` : ''}
-          </div>`
-        )
-      )
-      .addTo(map.current)
+        console.log('[Mapbox] Creating map with container:', mapContainer.current)
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current!,
+          style: 'mapbox://styles/mapbox/dark-v11',
+          center: [lng, lat],
+          zoom: 12,
+        })
+        console.log('[Mapbox] Map instance created:', map.current)
 
-    // Add nearby experience markers
-    nearbyExperiences.forEach((exp) => {
-      if (map.current) {
-        new mapboxgl.Marker({ color: '#64748b', scale: 0.8 })
-          .setLngLat([exp.lng, exp.lat])
+        // Add main marker
+        new mapboxgl.Marker({ color: '#8b5cf6' })
+          .setLngLat([lng, lat])
           .setPopup(
             new mapboxgl.Popup().setHTML(
               `<div class="p-2">
-                <p class="font-semibold text-sm">${exp.title}</p>
-                <a href="/experiences/${exp.id}" class="text-xs text-primary hover:underline">View →</a>
+                <p class="font-semibold text-sm">Experience Location</p>
+                ${locationText ? `<p class="text-xs text-gray-600">${locationText}</p>` : ''}
               </div>`
             )
           )
           .addTo(map.current)
+
+        // Add nearby experience markers
+        nearbyExperiences.forEach((exp) => {
+          if (map.current) {
+            new mapboxgl.Marker({ color: '#64748b', scale: 0.8 })
+              .setLngLat([exp.lng, exp.lat])
+              .setPopup(
+                new mapboxgl.Popup().setHTML(
+                  `<div class="p-2">
+                    <p class="font-semibold text-sm">${exp.title}</p>
+                    <a href="/experiences/${exp.id}" class="text-xs text-primary hover:underline">View →</a>
+                  </div>`
+                )
+              )
+              .addTo(map.current)
+          }
+        })
+
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
+        // Add fullscreen control
+        map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right')
+
+        // Add geolocation control
+        map.current.addControl(
+          new mapboxgl.GeolocateControl({
+            positionOptions: {
+              enableHighAccuracy: true,
+            },
+            trackUserLocation: true,
+            showUserHeading: true,
+          }),
+          'top-right'
+        )
+      } catch (error) {
+        console.error('Error initializing Mapbox:', error)
+        setHasToken(false)
       }
-    })
+    }
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
-
-    // Add fullscreen control
-    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right')
-
-    // Add geolocation control
-    map.current.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-        },
-        trackUserLocation: true,
-        showUserHeading: true,
-      }),
-      'top-right'
-    )
+    initMap();
 
     return () => {
       map.current?.remove()
@@ -120,7 +136,7 @@ export function MapboxFullscreenDialog({
           Open Full Map
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl h-[85vh] p-0">
+      <DialogContent className="max-w-6xl w-full h-[85vh] p-0 overflow-hidden">
         <div className="absolute top-4 left-4 z-10 bg-background/95 backdrop-blur-sm rounded-lg p-4 shadow-lg max-w-xs">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -140,7 +156,7 @@ export function MapboxFullscreenDialog({
           </DialogHeader>
         </div>
 
-        <div ref={mapContainer} className="w-full h-full rounded-lg" />
+        <div ref={mapContainer} className="w-full h-full" style={{ minHeight: '85vh' }} />
 
         {!hasToken && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
