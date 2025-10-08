@@ -83,33 +83,36 @@ export function ExperienceHeader({
   const initials = displayName.substring(0, 2).toUpperCase()
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b">
+    <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b" role="banner">
       <div className="flex items-center justify-between px-6 py-4">
         {/* Left: User Info */}
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            {user.avatar_url && <AvatarImage src={user.avatar_url} />}
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
+          <Link href={`/@${user.username}`} aria-label={`View profile of ${displayName}`}>
+            <Avatar className="h-10 w-10">
+              {user.avatar_url && <AvatarImage src={user.avatar_url} alt={`${displayName}'s avatar`} />}
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+          </Link>
           <div>
             <div className="flex items-center gap-2">
               <Link
                 href={`/@${user.username}`}
                 className="font-semibold hover:underline"
+                aria-label={`View profile of ${displayName}`}
               >
                 @{user.username}
               </Link>
               {/* User Level & Badges */}
               {user.level && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs" aria-label={`Level ${user.level}`}>
                   Lvl {user.level}
                 </Badge>
               )}
               {user.topBadges?.slice(0, 2).map((badge) => (
                 <TooltipProvider key={badge.slug}>
                   <Tooltip>
-                    <TooltipTrigger>
-                      <span className="text-sm" title={badge.name}>
+                    <TooltipTrigger aria-label={`Badge: ${badge.name}`}>
+                      <span className="text-sm" aria-hidden="true">
                         {badge.icon}
                       </span>
                     </TooltipTrigger>
@@ -124,10 +127,10 @@ export function ExperienceHeader({
               ))}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Badge variant="outline">
+              <Badge variant="outline" aria-label={`Category: ${categoryLabels[category] || category}`}>
                 {categoryLabels[category] || category}
               </Badge>
-              <span>·</span>
+              <span aria-hidden="true">·</span>
               {occurredAt && (
                 <>
                   <time dateTime={occurredAt}>
@@ -136,47 +139,55 @@ export function ExperienceHeader({
                       locale: de,
                     })}
                   </time>
-                  <span>·</span>
+                  <span aria-hidden="true">·</span>
                 </>
               )}
-              <span>{viewCount} Views</span>
+              <span aria-label={`${viewCount} views`}>{viewCount} Views</span>
             </div>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            <Heart className="w-4 h-4 mr-2" />
-            {likeCount}
+        <nav className="flex items-center gap-2" aria-label="Experience actions">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Like this experience. Currently ${likeCount} likes`}
+          >
+            <Heart className="w-4 h-4 mr-2" aria-hidden="true" />
+            <span aria-hidden="true">{likeCount}</span>
           </Button>
 
-          <Button variant="ghost" size="sm">
-            <Share2 className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Share this experience"
+          >
+            <Share2 className="w-4 h-4" aria-hidden="true" />
           </Button>
 
           {isAuthor && (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/experiences/${id}/edit`}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
+                <Link href={`/experiences/${id}/edit`} aria-label="Edit this experience">
+                  <Edit className="w-4 h-4 mr-2" aria-hidden="true" />
+                  <span>Edit</span>
                 </Link>
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="w-4 h-4" />
+                  <Button variant="ghost" size="sm" aria-label="More options">
+                    <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>
-                    <Download className="w-4 h-4 mr-2" />
+                    <Download className="w-4 h-4 mr-2" aria-hidden="true" />
                     Export PDF
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive">
-                    <Trash className="w-4 h-4 mr-2" />
+                    <Trash className="w-4 h-4 mr-2" aria-hidden="true" />
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -185,11 +196,15 @@ export function ExperienceHeader({
           )}
 
           {!isAuthor && currentUserId && (
-            <Button variant="ghost" size="sm">
-              <Flag className="w-4 h-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Report this experience"
+            >
+              <Flag className="w-4 h-4" aria-hidden="true" />
             </Button>
           )}
-        </div>
+        </nav>
       </div>
 
       {/* Community Thank-You Banner (Aha-Moment #12) */}
@@ -198,10 +213,15 @@ export function ExperienceHeader({
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           className="border-b bg-primary/5 px-6 py-3"
+          role="complementary"
+          aria-label="Community impact notification"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <div
+                className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center"
+                aria-hidden="true"
+              >
                 🙏
               </div>
               <div>
@@ -213,7 +233,7 @@ export function ExperienceHeader({
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" aria-label="View detailed impact statistics">
               Impact ansehen →
             </Button>
           </div>

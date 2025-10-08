@@ -12,10 +12,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Experience ID is required' }, { status: 400 })
     }
 
-    // Fetch comments
+    // Fetch comments (including threaded fields)
     const { data: comments, error } = await supabase
       .from('comments')
-      .select('id, content, created_at, updated_at, user_id')
+      .select('id, content, created_at, updated_at, user_id, parent_id, reply_count')
       .eq('experience_id', experienceId)
       .order('created_at', { ascending: true })
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { experienceId, content } = await request.json()
+    const { experienceId, content, parentId } = await request.json()
 
     if (!experienceId || !content) {
       return NextResponse.json(
@@ -83,8 +83,9 @@ export async function POST(request: Request) {
         experience_id: experienceId,
         user_id: user.id,
         content: content.trim(),
+        parent_id: parentId || null,
       })
-      .select('id, content, created_at, updated_at, user_id')
+      .select('id, content, created_at, updated_at, user_id, parent_id, reply_count')
       .single()
 
     if (error) {

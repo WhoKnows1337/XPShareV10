@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
+import type { Metadata } from 'next'
 import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
 import { ExperienceHeader } from '@/components/experience-detail/ExperienceHeader'
 import { ExperienceContent } from '@/components/experience-detail/ExperienceContent'
@@ -8,8 +9,100 @@ import { RelatedSidebar } from '@/components/experience-detail/RelatedSidebar'
 import { PatternSidebar } from '@/components/experience-detail/PatternSidebar'
 import { MobileTabsLayout } from '@/components/experience-detail/MobileTabsLayout'
 import { CommentsSection } from '@/components/interactions/comments-section'
+import { CrossCategoryInsights } from '@/components/experience-detail/CrossCategoryInsights'
+import { MapboxMiniMap } from '@/components/experience-detail/MapboxMiniMap'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  getSimilarExperiences,
+  getEnvironmentalData,
+  getCrossCategoryInsights,
+} from '@/lib/api/experiences'
+
+const categoryLabels: Record<string, string> = {
+  ufo: 'UFO Sighting',
+  paranormal: 'Paranormal',
+  dreams: 'Dream Experience',
+  psychedelic: 'Psychedelic',
+  spiritual: 'Spiritual',
+  synchronicity: 'Synchronicity',
+  nde: 'Near-Death Experience',
+  other: 'Other Experience',
+}
+
+// Generate metadata for SEO
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const supabase = await createClient()
+  const { id } = await params
+
+  const { data: experience } = await supabase
+    .from('experiences')
+    .select(`
+      id,
+      title,
+      story_text,
+      category,
+      date_occurred,
+      location_text,
+      tags,
+      user_profiles!experiences_user_id_fkey (
+        username,
+        display_name
+      )
+    `)
+    .eq('id', id)
+    .single()
+
+  if (!experience) {
+    return {
+      title: 'Experience Not Found',
+    }
+  }
+
+  const profile = experience.user_profiles as any
+  const authorName = profile?.display_name || profile?.username || 'Anonymous'
+  const categoryLabel = categoryLabels[experience.category] || experience.category
+  const description = experience.story_text
+    ? experience.story_text.substring(0, 155) + '...'
+    : `A ${categoryLabel.toLowerCase()} experience shared by ${authorName}`
+
+  const title = `${experience.title} - ${categoryLabel} | XPShare`
+
+  return {
+    title,
+    description,
+    keywords: [
+      experience.category,
+      categoryLabel,
+      ...(experience.tags || []),
+      'experience sharing',
+      'anomalous phenomena',
+    ].join(', '),
+    authors: [{ name: authorName }],
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      publishedTime: experience.date_occurred || undefined,
+      authors: [authorName],
+      tags: experience.tags || [],
+      locale: 'de_DE',
+      siteName: 'XPShare',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `/experiences/${id}`,
+    },
+  }
+}
 
 export default async function ExperiencePage({
   params,
@@ -73,22 +166,18 @@ export default async function ExperiencePage({
     .eq('user_id', experience.user_id!)
     .eq('visibility', 'public')
 
-  // Fetch similar experiences (for pattern detection)
-  const { data: similarExperiences } = await supabase
-    .from('experiences')
-    .select(`
-      id,
-      title,
-      category,
-      created_at,
-      user_profiles (
-        username,
-        display_name
-      )
-    `)
-    .eq('category', experience.category)
-    .neq('id', id)
-    .limit(12)
+  // Fetch similar experiences using vector similarity
+  const similarExperiences = await getSimilarExperiences(id, 12)
+
+  // Fetch external events (Solar, Moon, Weather)
+  const externalEvents = await getEnvironmentalData(
+    experience.date_occurred,
+    experience.location_lat ?? undefined,
+    experience.location_lng ?? undefined
+  )
+
+  // Fetch cross-category insights (Aha-Moment #9)
+  const crossCategoryInsights = await getCrossCategoryInsights(experience.category)
 
   // Check if current user is following the author
   // TODO: Implement user_follows table and uncomment this code
@@ -126,15 +215,8 @@ export default async function ExperiencePage({
       })) || [],
   }
 
-  // Prepare similar experiences data
-  const similarExpsData = similarExperiences?.map((exp: any) => ({
-    id: exp.id,
-    title: exp.title,
-    category: exp.category,
-    created_at: exp.created_at,
-    user_profiles: exp.user_profiles,
-    match_score: Math.floor(Math.random() * 30) + 70, // TODO: Replace with actual similarity algorithm
-  })) || []
+  // Prepare similar experiences data (now with real similarity scores)
+  const similarExpsData = similarExperiences || []
 
   // Prepare sidebar components
   const relatedSidebarContent = (
@@ -150,26 +232,37 @@ export default async function ExperiencePage({
 
   const patternSidebarContent = (
     <Suspense fallback={<SidebarSkeleton />}>
-      <PatternSidebar
-        experienceId={experience.id}
-        category={experience.category}
-        dateOccurred={experience.date_occurred ?? undefined}
-        locationLat={experience.location_lat ?? undefined}
-        locationLng={experience.location_lng ?? undefined}
-        similarCount={similarExpsData.length}
-        patternMatches={[
-          // TODO: Replace with actual pattern detection
-          {
-            category: experience.category,
-            count: similarExpsData.length,
-            strength: 75,
-            timeframe: 'Last 30 days',
-          },
-        ]}
-        externalEvents={[
-          // TODO: Replace with actual external events API
-        ]}
-      />
+      <div className="space-y-6">
+        <PatternSidebar
+          experienceId={experience.id}
+          category={experience.category}
+          dateOccurred={experience.date_occurred ?? undefined}
+          locationLat={experience.location_lat ?? undefined}
+          locationLng={experience.location_lng ?? undefined}
+          similarCount={similarExpsData.length}
+          patternMatches={[
+            {
+              category: experience.category,
+              count: similarExpsData.length,
+              strength: similarExpsData.length > 10 ? 85 : similarExpsData.length > 5 ? 65 : 45,
+              timeframe: 'Last 30 days',
+            },
+          ]}
+          externalEvents={externalEvents}
+        />
+        <CrossCategoryInsights
+          insights={crossCategoryInsights}
+          currentCategory={experience.category}
+        />
+        {experience.location_lat && experience.location_lng && (
+          <MapboxMiniMap
+            lat={experience.location_lat}
+            lng={experience.location_lng}
+            locationText={experience.location_text ?? undefined}
+            nearbyCount={0}
+          />
+        )}
+      </div>
     </Suspense>
   )
 
@@ -211,8 +304,55 @@ export default async function ExperiencePage({
     </div>
   )
 
+  // JSON-LD Structured Data for SEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: experience.title,
+    description: experience.story_text?.substring(0, 200),
+    author: {
+      '@type': 'Person',
+      name: userData.display_name || userData.username,
+    },
+    datePublished: experience.date_occurred || experience.created_at,
+    dateModified: experience.updated_at,
+    publisher: {
+      '@type': 'Organization',
+      name: 'XPShare',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://xpshare.com/logo.png',
+      },
+    },
+    keywords: experience.tags?.join(', '),
+    articleSection: categoryLabels[experience.category] || experience.category,
+    interactionStatistic: [
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/ViewAction',
+        userInteractionCount: experience.view_count || 0,
+      },
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/LikeAction',
+        userInteractionCount: experience.upvote_count || 0,
+      },
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/CommentAction',
+        userInteractionCount: experience.comment_count || 0,
+      },
+    ],
+  }
+
   return (
     <>
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Sticky Header */}
       <ExperienceHeader
         id={experience.id}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { MediaLightbox } from './MediaLightbox'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -127,14 +128,50 @@ export function ExperienceContent({
 }: ExperienceContentProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const shouldShowReadMore = storyText.length > 500
 
   const displayText = isExpanded || !shouldShowReadMore
     ? storyText
     : storyText.substring(0, 500) + '...'
 
+  const handleMediaClick = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  // Staggered animation variants for content sections
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.1, 0.25, 1],
+      },
+    },
+  }
+
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Hero Image */}
       {heroImageUrl && (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg">
@@ -150,7 +187,7 @@ export function ExperienceContent({
       )}
 
       {/* Title */}
-      <div>
+      <motion.div variants={itemVariants}>
         <h1 className="text-3xl md:text-4xl font-bold mb-3">{title}</h1>
 
         {/* Meta Information */}
@@ -191,7 +228,7 @@ export function ExperienceContent({
             {categoryLabels[category] || category}
           </Badge>
         </div>
-      </div>
+      </motion.div>
 
       <Separator />
 
@@ -217,8 +254,9 @@ export function ExperienceContent({
       )}
 
       {/* Story Content */}
-      <Card>
-        <CardContent className="pt-6">
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardContent className="pt-6">
           <div className="prose prose-slate dark:prose-invert max-w-none">
             <p className="whitespace-pre-wrap text-base leading-relaxed">
               {displayText}
@@ -245,28 +283,37 @@ export function ExperienceContent({
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Tags */}
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Link key={tag} href={`/feed?tag=${tag}`}>
-              <Badge
-                variant="outline"
-                className="cursor-pointer hover:bg-accent transition-colors"
-              >
-                #{tag}
-              </Badge>
-            </Link>
+        <motion.div variants={itemVariants} className="flex flex-wrap gap-2">
+          {tags.map((tag, idx) => (
+            <motion.div
+              key={tag}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.05 * idx, duration: 0.3 }}
+            >
+              <Link href={`/feed?tag=${tag}`}>
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-accent transition-colors"
+                >
+                  #{tag}
+                </Badge>
+              </Link>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Dynamic Questions & Answers */}
       {dynamicAnswers.length > 0 && (
-        <Card>
+        <motion.div variants={itemVariants}>
+          <Card>
           <CardContent className="pt-6 space-y-4">
             <h3 className="text-lg font-semibold mb-4">Additional Details</h3>
             {dynamicAnswers.map((answer) => (
@@ -323,11 +370,13 @@ export function ExperienceContent({
             ))}
           </CardContent>
         </Card>
+      </motion.div>
       )}
 
       {/* Media Gallery */}
       {media.length > 0 && (
-        <Card>
+        <motion.div variants={itemVariants}>
+          <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-4">
               <ImageIcon className="w-5 h-5" />
@@ -335,10 +384,11 @@ export function ExperienceContent({
               <Badge variant="secondary">{media.length}</Badge>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {media.map((item) => (
-                <div
+              {media.map((item, index) => (
+                <button
                   key={item.id}
-                  className="relative aspect-square overflow-hidden rounded-lg border group"
+                  onClick={() => handleMediaClick(index)}
+                  className="relative aspect-square overflow-hidden rounded-lg border group cursor-pointer"
                 >
                   {item.type === 'image' && (
                     <Image
@@ -354,16 +404,18 @@ export function ExperienceContent({
                       <p className="text-xs truncate">{item.caption}</p>
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </CardContent>
         </Card>
+      </motion.div>
       )}
 
       {/* Sketches */}
       {sketches.length > 0 && (
-        <Card>
+        <motion.div variants={itemVariants}>
+          <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-4">
               <Palette className="w-5 h-5" />
@@ -388,11 +440,13 @@ export function ExperienceContent({
             </div>
           </CardContent>
         </Card>
+      </motion.div>
       )}
 
       {/* Witnesses */}
       {witnesses.length > 0 && (
-        <Card>
+        <motion.div variants={itemVariants}>
+          <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-5 h-5" />
@@ -427,11 +481,23 @@ export function ExperienceContent({
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+      )}
+
+      {/* Media Lightbox */}
+      {media.length > 0 && (
+        <MediaLightbox
+          media={media}
+          initialIndex={lightboxIndex}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
 
       {/* Linked/Collaborative Experiences */}
       {linkedExperiences.length > 0 && (
-        <Card>
+        <motion.div variants={itemVariants}>
+          <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-4">
               <Link2 className="w-5 h-5" />
@@ -461,7 +527,8 @@ export function ExperienceContent({
             </div>
           </CardContent>
         </Card>
+      </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }

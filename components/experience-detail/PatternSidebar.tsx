@@ -23,15 +23,11 @@ import {
   Calendar,
   MapPin,
   Info,
+  CloudRain,
 } from 'lucide-react'
+import { formatExternalEvent } from '@/lib/api/external-events'
+import type { ExternalEvent } from '@/lib/api/external-events'
 
-interface ExternalEvent {
-  type: 'solar' | 'moon' | 'weather' | 'geomagnetic'
-  name: string
-  value: string
-  intensity?: number
-  icon: React.ReactNode
-}
 
 interface PatternMatch {
   category: string
@@ -184,21 +180,38 @@ export function PatternSidebar({
         </CardHeader>
         <CardContent className="space-y-3">
           {externalEvents.length > 0 ? (
-            externalEvents.map((event, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <div className="mt-0.5">{event.icon}</div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium">{event.name}</p>
-                  <p className="text-xs text-muted-foreground">{event.value}</p>
-                  {event.intensity && (
-                    <Progress value={event.intensity} className="h-1" />
-                  )}
+            externalEvents.map((event, idx) => {
+              const eventFormat = formatExternalEvent(event)
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-start gap-3 p-3 rounded-lg border ${eventFormat.borderColor} ${eventFormat.bgColor} transition-colors`}
+                >
+                  <div className="text-2xl mt-0.5">{eventFormat.icon}</div>
+                  <div className="flex-1 space-y-1">
+                    <p className={`text-sm font-medium ${eventFormat.color}`}>{event.name}</p>
+                    {event.type === 'solar' && (
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          KP Index: {event.kp_index} · {new Date(event.timestamp).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
+                        </p>
+                        <Progress value={event.intensity} className="h-1.5 mt-2" />
+                      </>
+                    )}
+                    {event.type === 'moon' && (
+                      <p className="text-xs text-muted-foreground">
+                        {event.illumination}% beleuchtet · {event.phase}
+                      </p>
+                    )}
+                    {event.type === 'weather' && (
+                      <p className="text-xs text-muted-foreground">
+                        {event.temperature}°C · {event.clouds}% Wolken · {event.wind_speed} km/h Wind
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="text-center py-6 text-muted-foreground">
               {dateOccurred && locationLat && locationLng ? (
