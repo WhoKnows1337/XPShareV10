@@ -17,6 +17,7 @@ import {
   getSimilarExperiences,
   getEnvironmentalData,
   getCrossCategoryInsights,
+  getNearbyExperiences,
 } from '@/lib/api/experiences'
 import { getImageBlurDataURL } from '@/lib/utils/image-blur'
 
@@ -180,6 +181,27 @@ export default async function ExperiencePage({
   // Fetch cross-category insights (Aha-Moment #9)
   const crossCategoryInsights = await getCrossCategoryInsights(experience.category)
 
+  // Fetch nearby experiences if location is available
+  let nearbyCount = 0
+  if (experience.location_lat && experience.location_lng) {
+    const nearbyExperiences = await getNearbyExperiences(
+      experience.location_lat,
+      experience.location_lng,
+      50, // 50km radius
+      20 // limit
+    )
+    nearbyCount = nearbyExperiences.length
+  }
+
+  // Fetch author's experiences for timeline
+  const { data: authorExperiences } = await supabase
+    .from('experiences')
+    .select('created_at, date_occurred')
+    .eq('user_id', experience.user_id!)
+    .eq('visibility', 'public')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
   // Fetch dynamic Q&A answers
   const { data: dynamicAnswers } = await supabase
     .from('experience_answers')
@@ -251,18 +273,15 @@ export default async function ExperiencePage({
   }
 
   // Check if current user is following the author
-  // TODO: Implement user_follows table and uncomment this code
   let isFollowing = false
-  // if (user?.id && user.id !== experience.user_id) {
-  //   const { data: followData } = await supabase
-  //     .from('user_follows')
-  //     .select('id')
-  //     .eq('follower_id', user.id)
-  //     .eq('following_id', experience.user_id!)
-  //     .single()
+  if (user?.id && user.id !== experience.user_id) {
+    const { data: followData } = await supabase.rpc('is_following', {
+      p_follower_id: user.id,
+      p_following_id: experience.user_id!,
+    })
 
-  //   isFollowing = !!followData
-  // }
+    isFollowing = !!followData
+  }
 
   const profile = experience.user_profiles as any
   const isAuthor = user?.id === experience.user_id
@@ -297,6 +316,7 @@ export default async function ExperiencePage({
         similarExperiences={similarExpsData}
         currentUserId={user?.id}
         isFollowing={isFollowing}
+        authorTimeline={authorExperiences || []}
       />
     </Suspense>
   )
@@ -330,7 +350,7 @@ export default async function ExperiencePage({
             lat={experience.location_lat}
             lng={experience.location_lng}
             locationText={experience.location_text ?? undefined}
-            nearbyCount={0}
+            nearbyCount={nearbyCount}
           />
         )}
       </div>

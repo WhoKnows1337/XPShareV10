@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { MessageCircle, Trash2, Send, Reply, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createClient } from '@/lib/supabase/client'
 
 interface Comment {
   id: string
@@ -40,6 +41,42 @@ export function CommentsSection({ experienceId, currentUserId }: CommentsSection
 
   useEffect(() => {
     fetchComments()
+
+    // Set up Supabase Realtime subscription for new comments
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`experience:${experienceId}:comments`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `experience_id=eq.${experienceId}`,
+        },
+        (payload) => {
+          // Add new comment to list
+          setComments((prev) => [...prev, payload.new as Comment])
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'comments',
+          filter: `experience_id=eq.${experienceId}`,
+        },
+        (payload) => {
+          // Remove deleted comment
+          setComments((prev) => prev.filter((c) => c.id !== payload.old.id))
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [experienceId])
 
   const fetchComments = async () => {

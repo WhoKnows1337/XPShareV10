@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -12,10 +13,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { UserPlus, MapPin, Calendar, Sparkles, TrendingUp } from 'lucide-react'
+import { UserPlus, UserCheck, MapPin, Calendar, Sparkles, TrendingUp } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { TimelinePreviewChart } from './TimelinePreviewChart'
+import { toggleFollow } from '@/app/actions/follow'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface UserBadge {
   slug: string
@@ -53,6 +57,7 @@ interface RelatedSidebarProps {
   similarExperiences?: SimilarExperience[]
   currentUserId?: string
   isFollowing?: boolean
+  authorTimeline?: Array<{ created_at: string; date_occurred?: string }>
 }
 
 const categoryIcons: Record<string, string> = {
@@ -71,10 +76,39 @@ export function RelatedSidebar({
   similarExperiences = [],
   currentUserId,
   isFollowing = false,
+  authorTimeline = [],
 }: RelatedSidebarProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [following, setFollowing] = useState(isFollowing)
+
   const displayName = user.display_name || user.username
   const initials = displayName.substring(0, 2).toUpperCase()
   const isOwnProfile = currentUserId === user.id
+
+  const handleFollowToggle = async () => {
+    if (!currentUserId) {
+      toast.error('Please sign in to follow users')
+      return
+    }
+
+    // Optimistic update
+    const newFollowingState = !following
+    setFollowing(newFollowingState)
+
+    startTransition(async () => {
+      const result = await toggleFollow(user.id)
+
+      if (!result.success) {
+        // Rollback on error
+        setFollowing(!newFollowingState)
+        toast.error(result.error || 'Failed to toggle follow')
+      } else {
+        toast.success(newFollowingState ? `Following @${user.username}` : `Unfollowed @${user.username}`)
+        router.refresh()
+      }
+    })
+  }
 
   return (
     <div className="space-y-6">
@@ -155,12 +189,23 @@ export function RelatedSidebar({
             {/* Follow Button */}
             {!isOwnProfile && currentUserId && (
               <Button
-                variant={isFollowing ? 'outline' : 'default'}
+                variant={following ? 'outline' : 'default'}
                 className="w-full"
                 size="sm"
+                onClick={handleFollowToggle}
+                disabled={isPending}
               >
-                <UserPlus className="w-4 h-4 mr-2" />
-                {isFollowing ? 'Following' : 'Follow'}
+                {following ? (
+                  <>
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    {isPending ? 'Updating...' : 'Following'}
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    {isPending ? 'Updating...' : 'Follow'}
+                  </>
+                )}
               </Button>
             )}
 
@@ -174,8 +219,8 @@ export function RelatedSidebar({
       </Card>
 
       {/* Timeline Preview Chart */}
-      {similarExperiences.length > 0 && (
-        <TimelinePreviewChart experiences={similarExperiences} />
+      {authorTimeline.length > 0 && (
+        <TimelinePreviewChart experiences={authorTimeline} />
       )}
 
       {/* Similar Experiences */}
@@ -188,54 +233,56 @@ export function RelatedSidebar({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {similarExperiences.slice(0, 12).map((exp) => (
-              <Link
-                key={exp.id}
-                href={`/experiences/${exp.id}`}
-                className="block group"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                        {exp.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {exp.user_profiles?.display_name || exp.user_profiles?.username}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs shrink-0">
-                      <span className="text-lg">{categoryIcons[exp.category] || '📍'}</span>
-                    </div>
-                  </div>
-
-                  {/* Match Score */}
-                  {exp.match_score && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${exp.match_score}%` }}
-                        />
+            {similarExperiences.slice(0, 12).map((exp, idx) => (
+              <div key={exp.id}>
+                <Link
+                  href={`/experiences/${exp.id}`}
+                  className="block group"
+                  prefetch={true}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                          {exp.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {exp.user_profiles?.display_name || exp.user_profiles?.username}
+                        </p>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {exp.match_score}%
-                      </span>
+                      <div className="flex items-center gap-1 text-xs shrink-0">
+                        <span className="text-lg">{categoryIcons[exp.category] || '📍'}</span>
+                      </div>
                     </div>
-                  )}
 
-                  <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(exp.created_at), {
-                      addSuffix: true,
-                      locale: de,
-                    })}
-                  </p>
-                </div>
+                    {/* Match Score */}
+                    {exp.match_score && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all"
+                            style={{ width: `${exp.match_score}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {exp.match_score}%
+                        </span>
+                      </div>
+                    )}
 
-                {exp !== similarExperiences[similarExperiences.length - 1] && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(exp.created_at), {
+                        addSuffix: true,
+                        locale: de,
+                      })}
+                    </p>
+                  </div>
+                </Link>
+
+                {idx < similarExperiences.slice(0, 12).length - 1 && (
                   <Separator className="mt-3" />
                 )}
-              </Link>
+              </div>
             ))}
 
             {similarExperiences.length > 12 && (
