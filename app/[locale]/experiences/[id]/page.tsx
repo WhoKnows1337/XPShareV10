@@ -230,7 +230,8 @@ export default async function ExperiencePage({
         category,
         user_profiles (
           username,
-          display_name
+          display_name,
+          avatar_url
         )
       )
     `)
@@ -394,6 +395,7 @@ export default async function ExperiencePage({
         witnesses={formattedWitnesses}
         linkedExperiences={formattedLinkedExperiences}
         isTranslated={false}
+        isAuthor={isAuthor}
       />
 
       {/* Comments Section */}

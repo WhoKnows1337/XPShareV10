@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { MediaLightbox } from './MediaLightbox'
+import { LinkedExperiences } from './LinkedExperiences'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,6 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
-  Link2,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -59,6 +59,7 @@ interface LinkedExperience {
   user_profiles?: {
     username: string
     display_name?: string
+    avatar_url?: string
   }
   category: string
 }
@@ -84,6 +85,7 @@ interface ExperienceContentProps {
   isTranslated?: boolean
   originalLanguage?: string
   currentLanguage?: string
+  isAuthor?: boolean
 }
 
 const categoryLabels: Record<string, string> = {
@@ -127,6 +129,7 @@ export function ExperienceContent({
   isTranslated = false,
   originalLanguage,
   currentLanguage = 'de',
+  isAuthor = false,
 }: ExperienceContentProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
@@ -521,40 +524,11 @@ export function ExperienceContent({
       )}
 
       {/* Linked/Collaborative Experiences */}
-      {linkedExperiences.length > 0 && (
-        <motion.div variants={itemVariants}>
-          <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Link2 className="w-5 h-5" />
-              <h3 className="text-lg font-semibold">Connected Experiences</h3>
-              <Badge variant="secondary">{linkedExperiences.length}</Badge>
-            </div>
-            <div className="space-y-3">
-              {linkedExperiences.map((exp) => (
-                <Link
-                  key={exp.id}
-                  href={`/experiences/${exp.id}`}
-                  className="block p-3 rounded-lg border hover:bg-accent transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <p className="font-medium hover:text-primary transition-colors">
-                        {exp.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        by {exp.user_profiles?.display_name || exp.user_profiles?.username}
-                      </p>
-                    </div>
-                    <Badge variant="outline">{categoryLabels[exp.category]}</Badge>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-      )}
+      <LinkedExperiences
+        experienceId={id}
+        linkedExperiences={linkedExperiences}
+        isAuthor={isAuthor}
+      />
     </motion.div>
   )
 }
