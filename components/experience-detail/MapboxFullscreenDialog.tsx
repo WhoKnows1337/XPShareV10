@@ -14,8 +14,6 @@ import { MapPin, Maximize2, Navigation } from 'lucide-react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
-
 interface MapboxFullscreenDialogProps {
   lat: number
   lng: number
@@ -40,6 +38,15 @@ export function MapboxFullscreenDialog({
 
   useEffect(() => {
     if (!open || !mapContainer.current || map.current) return
+
+    // Set access token at runtime
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+    if (!token) {
+      console.error('Mapbox token not configured')
+      return
+    }
+
+    mapboxgl.accessToken = token
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -132,7 +139,7 @@ export function MapboxFullscreenDialog({
 
         <div ref={mapContainer} className="w-full h-full rounded-lg" />
 
-        {!mapboxgl.accessToken && (
+        {!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
             <div className="text-center p-8">
               <Navigation className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

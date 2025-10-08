@@ -26,21 +26,7 @@ export function ShareButton({ experienceId, title }: ShareButtonProps) {
     : ''
 
   const handleShare = async () => {
-    // Try native share first (mobile)
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: title,
-          text: `Check out this experience: ${title}`,
-          url: shareUrl,
-        })
-        return
-      } catch (err) {
-        // User cancelled or error - fallback to sheet
-      }
-    }
-
-    // Fallback to custom sheet
+    // Always use custom sheet for consistent UX
     setOpen(true)
   }
 
