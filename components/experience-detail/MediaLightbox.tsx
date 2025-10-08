@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@/components/ui/visually-hidden'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import Image from 'next/image'
@@ -64,6 +65,9 @@ export function MediaLightbox({ media, initialIndex, isOpen, onClose }: MediaLig
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none">
+        <VisuallyHidden>
+          <DialogTitle>Media Gallery - {currentMedia.caption || `Image ${currentIndex + 1} of ${media.length}`}</DialogTitle>
+        </VisuallyHidden>
         <div className="relative w-full h-[90vh] flex items-center justify-center">
           {/* Close Button */}
           <Button

@@ -28,6 +28,8 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { LikeButton } from './LikeButton'
+import { ShareButton } from './ShareButton'
 
 interface UserBadge {
   slug: string
@@ -47,6 +49,7 @@ interface ExperienceUser {
 
 interface ExperienceHeaderProps {
   id: string
+  title: string
   user: ExperienceUser
   category: string
   occurredAt?: string
@@ -55,6 +58,7 @@ interface ExperienceHeaderProps {
   commentCount: number
   isAuthor: boolean
   currentUserId?: string
+  initialIsLiked?: boolean
 }
 
 const categoryLabels: Record<string, string> = {
@@ -70,6 +74,7 @@ const categoryLabels: Record<string, string> = {
 
 export function ExperienceHeader({
   id,
+  title,
   user,
   category,
   occurredAt,
@@ -78,6 +83,7 @@ export function ExperienceHeader({
   commentCount,
   isAuthor,
   currentUserId,
+  initialIsLiked = false,
 }: ExperienceHeaderProps) {
   const displayName = user.display_name || user.username
   const initials = displayName.substring(0, 2).toUpperCase()
@@ -149,22 +155,14 @@ export function ExperienceHeader({
 
         {/* Right: Actions */}
         <nav className="flex items-center gap-2" aria-label="Experience actions">
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label={`Like this experience. Currently ${likeCount} likes`}
-          >
-            <Heart className="w-4 h-4 mr-2" aria-hidden="true" />
-            <span aria-hidden="true">{likeCount}</span>
-          </Button>
+          <LikeButton
+            experienceId={id}
+            initialLikeCount={likeCount}
+            initialIsLiked={initialIsLiked}
+            currentUserId={currentUserId}
+          />
 
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Share this experience"
-          >
-            <Share2 className="w-4 h-4" aria-hidden="true" />
-          </Button>
+          <ShareButton experienceId={id} title={title} />
 
           {isAuthor && (
             <>

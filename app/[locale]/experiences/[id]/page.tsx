@@ -179,6 +179,64 @@ export default async function ExperiencePage({
   // Fetch cross-category insights (Aha-Moment #9)
   const crossCategoryInsights = await getCrossCategoryInsights(experience.category)
 
+  // Fetch dynamic Q&A answers
+  const { data: dynamicAnswers } = await supabase
+    .from('experience_answers')
+    .select(`
+      id,
+      answer_value,
+      dynamic_questions (
+        id,
+        question_text,
+        question_type,
+        options
+      )
+    `)
+    .eq('experience_id', id)
+
+  // Fetch media
+  const { data: mediaItems } = await supabase
+    .from('experience_media')
+    .select('*')
+    .eq('experience_id', id)
+    .order('sort_order', { ascending: true })
+
+  // Fetch witnesses
+  const { data: witnesses } = await supabase
+    .from('experience_witnesses')
+    .select('*')
+    .eq('experience_id', id)
+
+  // Fetch linked experiences
+  const { data: linkedExps } = await supabase
+    .from('experience_links')
+    .select(`
+      linked_experience_id,
+      experiences!experience_links_linked_experience_id_fkey (
+        id,
+        title,
+        category,
+        user_profiles (
+          username,
+          display_name
+        )
+      )
+    `)
+    .eq('source_experience_id', id)
+
+  // Check if current user has liked this experience
+  let isLiked = false
+  if (user?.id) {
+    const { data: likeData } = await supabase
+      .from('upvotes')
+      .select('id')
+      .eq('experience_id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    isLiked = !!likeData
+  }
+
   // Check if current user is following the author
   // TODO: Implement user_follows table and uncomment this code
   let isFollowing = false
@@ -266,6 +324,42 @@ export default async function ExperiencePage({
     </Suspense>
   )
 
+  // Transform data for ExperienceContent
+  const formattedDynamicAnswers = (dynamicAnswers || []).map((answer: any) => ({
+    question_id: answer.dynamic_questions.id,
+    question_text: answer.dynamic_questions.question_text,
+    answer_type: answer.dynamic_questions.question_type as 'text' | 'chips' | 'slider',
+    answer_value: answer.answer_value,
+    options: answer.dynamic_questions.options,
+  }))
+
+  const formattedMedia = (mediaItems || [])
+    .filter((item: any) => item.type === 'image')
+    .map((item: any) => ({
+      id: item.id,
+      url: item.url,
+      type: 'image' as const,
+      caption: item.caption,
+    }))
+
+  const formattedSketches = (mediaItems || [])
+    .filter((item: any) => item.type === 'sketch')
+    .map((item: any) => item.url)
+
+  const formattedWitnesses = (witnesses || []).map((w: any) => ({
+    id: w.id,
+    name: w.name,
+    is_verified: w.is_verified,
+    testimony: w.testimony,
+  }))
+
+  const formattedLinkedExperiences = (linkedExps || []).map((link: any) => ({
+    id: link.experiences.id,
+    title: link.experiences.title,
+    category: link.experiences.category,
+    user_profiles: link.experiences.user_profiles,
+  }))
+
   const mainContentArea = (
     <div className="space-y-8">
       {/* Main Experience Content */}
@@ -281,11 +375,11 @@ export default async function ExperiencePage({
         dateOccurred={experience.date_occurred ?? undefined}
         timeOfDay={experience.time_of_day ?? undefined}
         tags={experience.tags || []}
-        dynamicAnswers={[]}
-        media={[]}
-        sketches={[]}
-        witnesses={[]}
-        linkedExperiences={[]}
+        dynamicAnswers={formattedDynamicAnswers}
+        media={formattedMedia}
+        sketches={formattedSketches}
+        witnesses={formattedWitnesses}
+        linkedExperiences={formattedLinkedExperiences}
         isTranslated={false}
       />
 
@@ -356,6 +450,7 @@ export default async function ExperiencePage({
       {/* Sticky Header */}
       <ExperienceHeader
         id={experience.id}
+        title={experience.title}
         user={userData}
         category={experience.category}
         occurredAt={experience.date_occurred ?? undefined}
@@ -364,6 +459,7 @@ export default async function ExperiencePage({
         commentCount={experience.comment_count || 0}
         isAuthor={isAuthor}
         currentUserId={user?.id}
+        initialIsLiked={isLiked}
       />
 
       {/* Desktop: Three-Column Layout */}
