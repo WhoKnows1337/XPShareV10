@@ -51,6 +51,7 @@ export async function GET(request: Request) {
       required: !q.is_optional,
       helpText: q.help_text,
       placeholder: q.placeholder,
+      conditionalLogic: q.conditional_logic || undefined,
     }))
 
     return NextResponse.json({ questions: transformedQuestions })

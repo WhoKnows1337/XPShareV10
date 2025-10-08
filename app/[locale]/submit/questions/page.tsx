@@ -20,6 +20,10 @@ interface Question {
   required: boolean
   helpText?: string
   placeholder?: string
+  conditionalLogic?: {
+    dependsOn: string
+    showWhen: string | string[]
+  }
 }
 
 export default function QuestionsPage() {
@@ -98,6 +102,35 @@ export default function QuestionsPage() {
     const locale = pathname.split('/')[1]
     router.push(`/${locale}/submit/witnesses`)
   }
+
+  // Check if a question should be shown based on conditional logic
+  const shouldShowQuestion = (question: Question): boolean => {
+    if (!question.conditionalLogic) return true
+    
+    const { dependsOn, showWhen } = question.conditionalLogic
+    if (!dependsOn) return true
+    
+    const dependentAnswer = answers[dependsOn]
+    if (!dependentAnswer) return false
+    
+    // Check if the dependent answer matches the showWhen condition
+    if (Array.isArray(showWhen)) {
+      // If showWhen is an array, check if answer is in that array
+      if (Array.isArray(dependentAnswer)) {
+        return showWhen.some(val => dependentAnswer.includes(val))
+      }
+      return showWhen.includes(dependentAnswer)
+    } else {
+      // If showWhen is a single value, check exact match
+      if (Array.isArray(dependentAnswer)) {
+        return dependentAnswer.includes(showWhen)
+      }
+      return dependentAnswer === showWhen
+    }
+  }
+
+  // Filter questions based on conditional logic
+  const visibleQuestions = questions.filter(shouldShowQuestion)
 
   const renderQuestion = (question: Question) => {
     switch (question.type) {
@@ -201,7 +234,7 @@ export default function QuestionsPage() {
         </div>
       )}
 
-      {questions.length === 0 ? (
+      {visibleQuestions.length === 0 ? (
         <Card>
           <CardContent className="pt-12 pb-12 text-center">
             <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -227,7 +260,7 @@ export default function QuestionsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {questions.map((question) => (
+              {visibleQuestions.map((question) => (
                 <div key={question.id} className="space-y-2">
                   <Label className="text-base">
                     {question.question}
