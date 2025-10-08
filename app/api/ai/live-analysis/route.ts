@@ -120,20 +120,23 @@ async function analyzeCategory(text: string): Promise<string | null> {
       messages: [
         {
           role: 'system',
-          content: `You are an AI that categorizes unusual experiences.
-Analyze the text and return ONLY ONE of these category slugs (the exact slug string, nothing else):
+          content: `You categorize unusual experiences. Return a JSON object with the category slug.
+
+Available categories:
 ${categoryList}
 
-IMPORTANT: Return ONLY the category slug exactly as shown above (e.g., "ufo-sighting", not "ufo").
-Example: If the user reports seeing a UFO, return "ufo-sighting"`,
+Return format: {"category": "exact-slug-here"}
+IMPORTANT: Use the EXACT slug from the list above. For UFO sightings, use "ufo-sighting" not "ufo".`,
         },
         { role: 'user', content: text },
       ],
       temperature: 0.3,
       max_tokens: 50,
+      response_format: { type: 'json_object' },
     })
 
-    const category = completion.choices[0]?.message?.content?.trim().toLowerCase()
+    const result = JSON.parse(completion.choices[0]?.message?.content || '{}')
+    const category = result.category?.toLowerCase()
 
     // Return the slug if valid, otherwise return first category as fallback
     return validSlugs.includes(category || '') ? category : validSlugs[0]
