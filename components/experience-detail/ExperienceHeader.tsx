@@ -30,7 +30,7 @@ import { de } from 'date-fns/locale'
 import { LikeButton } from './LikeButton'
 import { ShareButton } from './ShareButton'
 import { ReportDialog } from '@/components/interactions/report-dialog'
-import { deleteExperience, exportExperiencePDF } from '@/app/actions/experience'
+import { deleteExperience } from '@/app/actions/experience'
 import { toast } from 'sonner'
 
 interface UserBadge {
@@ -96,24 +96,34 @@ export function ExperienceHeader({
 
   const handleExportPDF = async () => {
     startTransition(async () => {
-      const result = await exportExperiencePDF(id)
+      try {
+        const response = await fetch(`/api/experiences/${id}/export`)
 
-      if (result.success && result.data) {
-        // Create and download JSON file (can be extended to actual PDF)
-        const jsonString = JSON.stringify(result.data, null, 2)
-        const blob = new Blob([jsonString], { type: 'application/json' })
+        if (!response.ok) {
+          throw new Error('Export failed')
+        }
+
+        const blob = await response.blob()
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = `experience-${id}.json`
+
+        // Extract filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition')
+        const filename = contentDisposition
+          ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+          : `experience-${id}.html`
+
+        link.download = filename
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
         URL.revokeObjectURL(url)
 
         toast.success('Experience exported successfully!')
-      } else {
-        toast.error(result.error || 'Failed to export experience')
+      } catch (error) {
+        console.error('Export error:', error)
+        toast.error('Failed to export experience')
       }
     })
   }

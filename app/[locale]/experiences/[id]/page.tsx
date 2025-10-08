@@ -9,6 +9,7 @@ import { ExperienceContent } from '@/components/experience-detail/ExperienceCont
 import { RelatedSidebar } from '@/components/experience-detail/RelatedSidebar'
 import { PatternSidebar } from '@/components/experience-detail/PatternSidebar'
 import { MobileTabsLayout } from '@/components/experience-detail/MobileTabsLayout'
+import { AnimatedPageWrapper, AnimatedSection } from '@/components/experience-detail/AnimatedPageWrapper'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -68,6 +69,9 @@ const categoryLabels: Record<string, string> = {
   nde: 'Near-Death Experience',
   other: 'Other Experience',
 }
+
+// ISR: Cache for 1 hour, then revalidate (Spec Lines 1429-1433)
+export const revalidate = 3600
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -530,36 +534,43 @@ export default async function ExperiencePage({
         Skip to main content
       </a>
 
-      {/* Sticky Header */}
-      <ExperienceHeader
-        id={experience.id}
-        title={experience.title}
-        user={userData}
-        category={experience.category}
-        occurredAt={experience.date_occurred ?? undefined}
-        viewCount={experience.view_count || 0}
-        likeCount={experience.upvote_count || 0}
-        commentCount={experience.comment_count || 0}
-        isAuthor={isAuthor}
-        currentUserId={user?.id}
-        initialIsLiked={isLiked}
-      />
+      {/* Animated Page Wrapper (Spec: Lines 1043-1077) */}
+      <AnimatedPageWrapper>
+        {/* Sticky Header */}
+        <AnimatedSection>
+          <ExperienceHeader
+            id={experience.id}
+            title={experience.title}
+            user={userData}
+            category={experience.category}
+            occurredAt={experience.date_occurred ?? undefined}
+            viewCount={experience.view_count || 0}
+            likeCount={experience.upvote_count || 0}
+            commentCount={experience.comment_count || 0}
+            isAuthor={isAuthor}
+            currentUserId={user?.id}
+            initialIsLiked={isLiked}
+          />
+        </AnimatedSection>
 
-      {/* Desktop: Three-Column Layout */}
-      <div className="hidden lg:block">
-        <ThreeColumnLayout
-          leftSidebar={relatedSidebarContent}
-          mainContent={mainContentArea}
-          rightPanel={patternSidebarContent}
-        />
-      </div>
+        {/* Desktop: Three-Column Layout */}
+        <AnimatedSection className="hidden lg:block">
+          <ThreeColumnLayout
+            leftSidebar={relatedSidebarContent}
+            mainContent={mainContentArea}
+            rightPanel={patternSidebarContent}
+          />
+        </AnimatedSection>
 
-      {/* Mobile: Tabs Layout */}
-      <MobileTabsLayout
-        mainContent={mainContentArea}
-        relatedSidebar={relatedSidebarContent}
-        patternSidebar={patternSidebarContent}
-      />
+        {/* Mobile: Tabs Layout */}
+        <AnimatedSection>
+          <MobileTabsLayout
+            mainContent={mainContentArea}
+            relatedSidebar={relatedSidebarContent}
+            patternSidebar={patternSidebarContent}
+          />
+        </AnimatedSection>
+      </AnimatedPageWrapper>
     </>
   )
 }

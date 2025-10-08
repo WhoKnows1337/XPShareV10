@@ -267,7 +267,19 @@ export function RelatedSidebar({
           </CardHeader>
           <CardContent className="space-y-3">
             {similarExperiences.slice(0, 12).map((exp, idx) => (
-              <div key={exp.id}>
+              <motion.article
+                key={exp.id}
+                role="article"
+                aria-labelledby={`exp-title-${exp.id}`}
+                aria-describedby={`exp-meta-${exp.id}`}
+                whileHover={{
+                  y: -4,
+                  boxShadow: '0 10px 30px rgba(139, 92, 246, 0.2)'
+                }}
+                transition={{ duration: 0.2 }}
+                className="rounded-lg"
+                onMouseEnter={() => router.prefetch(`/experiences/${exp.id}`)}
+              >
                 <Link
                   href={`/experiences/${exp.id}`}
                   className="block group"
@@ -276,9 +288,16 @@ export function RelatedSidebar({
                   <div className="space-y-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                        <p
+                          id={`exp-title-${exp.id}`}
+                          className="text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors"
+                        >
                           {exp.title}
                         </p>
+                        <div id={`exp-meta-${exp.id}`} className="sr-only">
+                          Von {exp.user_profiles?.display_name || exp.user_profiles?.username}, {formatDistanceToNow(new Date(exp.created_at), { addSuffix: true, locale: de })}
+                          {exp.match_score && `, ${exp.match_score}% Match`}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {exp.user_profiles?.display_name || exp.user_profiles?.username}
                         </p>
@@ -315,7 +334,7 @@ export function RelatedSidebar({
                 {idx < similarExperiences.slice(0, 12).length - 1 && (
                   <Separator className="mt-3" />
                 )}
-              </div>
+              </motion.article>
             ))}
 
             {similarExperiences.length > 12 && (
