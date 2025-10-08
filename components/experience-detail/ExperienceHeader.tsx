@@ -295,8 +295,10 @@ export function ExperienceHeader({
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" aria-label="View detailed impact statistics">
-                Impact ansehen →
+              <Button variant="ghost" size="sm" asChild aria-label="View detailed impact statistics">
+                <Link href={`/experiences/${id}/impact`}>
+                  Impact ansehen →
+                </Link>
               </Button>
             </div>
           </motion.div>

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { MediaLightbox } from './MediaLightbox'
 import { LinkedExperiences } from './LinkedExperiences'
+import { InviteWitnessDialog } from './InviteWitnessDialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -473,45 +474,62 @@ export function ExperienceContent({
       )}
 
       {/* Witnesses */}
-      {witnesses.length > 0 && (
-        <motion.div variants={itemVariants}>
-          <Card>
+      <motion.div variants={itemVariants}>
+        <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5" />
-              <h3 className="text-lg font-semibold">Witnesses</h3>
-              <Badge variant="secondary">{witnesses.length}</Badge>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                <h3 className="text-lg font-semibold">Witnesses</h3>
+                {witnesses.length > 0 && (
+                  <Badge variant="secondary">{witnesses.length}</Badge>
+                )}
+              </div>
+              {isAuthor && (
+                <InviteWitnessDialog experienceId={id} experienceTitle={title} />
+              )}
             </div>
-            <div className="space-y-4">
-              {witnesses.map((witness) => (
-                <div key={witness.id} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{witness.name}</p>
-                    {witness.is_verified && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <CheckCircle className="w-4 h-4 text-primary" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Verified witness</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+            {witnesses.length > 0 ? (
+              <div className="space-y-4">
+                {witnesses.map((witness) => (
+                  <div key={witness.id} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{witness.name}</p>
+                      {witness.is_verified && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <CheckCircle className="w-4 h-4 text-primary" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Verified witness</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    {witness.testimony && (
+                      <p className="text-sm text-muted-foreground pl-6">
+                        &ldquo;{witness.testimony}&rdquo;
+                      </p>
                     )}
                   </div>
-                  {witness.testimony && (
-                    <p className="text-sm text-muted-foreground pl-6">
-                      &ldquo;{witness.testimony}&rdquo;
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No witnesses added yet</p>
+                {isAuthor && (
+                  <p className="text-xs mt-1">
+                    Invite someone who was present to share their perspective
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
-      )}
 
       {/* Media Lightbox */}
       {media.length > 0 && (

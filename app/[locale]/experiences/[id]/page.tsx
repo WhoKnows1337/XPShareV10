@@ -371,6 +371,7 @@ export default async function ExperiencePage({
           dateOccurred={experience.date_occurred ?? undefined}
           locationLat={experience.location_lat ?? undefined}
           locationLng={experience.location_lng ?? undefined}
+          locationText={experience.location_text ?? undefined}
           similarCount={similarExpsData.length}
           patternMatches={[
             {

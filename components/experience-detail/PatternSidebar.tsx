@@ -29,6 +29,7 @@ import { formatExternalEvent } from '@/lib/api/external-events'
 import type { ExternalEvent } from '@/lib/api/external-events'
 import { motion } from 'framer-motion'
 import { useScrollAnimation } from '@/lib/hooks/useScrollAnimation'
+import { ScientificDetailsDialog } from './ScientificDetailsDialog'
 
 
 interface PatternMatch {
@@ -44,6 +45,7 @@ interface PatternSidebarProps {
   dateOccurred?: string
   locationLat?: number
   locationLng?: number
+  locationText?: string
   patternMatches?: PatternMatch[]
   externalEvents?: ExternalEvent[]
   similarCount?: number
@@ -55,6 +57,7 @@ export function PatternSidebar({
   dateOccurred,
   locationLat,
   locationLng,
+  locationText,
   patternMatches = [],
   externalEvents = [],
   similarCount = 0,
@@ -246,10 +249,11 @@ export function PatternSidebar({
           )}
 
           {externalEvents.length > 0 && (
-            <Button variant="ghost" size="sm" className="w-full mt-2">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              View detailed timeline
-            </Button>
+            <ScientificDetailsDialog
+              externalEvents={externalEvents}
+              dateOccurred={dateOccurred}
+              locationText={locationText}
+            />
           )}
         </CardContent>
       </Card>
@@ -297,17 +301,27 @@ export function PatternSidebar({
       {/* Quick Actions */}
       <Card>
         <CardContent className="pt-6 space-y-2">
-          <Button variant="outline" size="sm" className="w-full justify-start">
-            <Calendar className="w-4 h-4 mr-2" />
-            View on timeline
-          </Button>
-          <Button variant="outline" size="sm" className="w-full justify-start">
-            <MapPin className="w-4 h-4 mr-2" />
-            View on map
-          </Button>
-          <Button variant="outline" size="sm" className="w-full justify-start">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Find more patterns
+          {dateOccurred && (
+            <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+              <a href={`/timeline?date=${dateOccurred}&category=${category}`}>
+                <Calendar className="w-4 h-4 mr-2" />
+                View on timeline
+              </a>
+            </Button>
+          )}
+          {locationLat && locationLng && (
+            <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+              <a href={`/map?lat=${locationLat}&lng=${locationLng}&category=${category}`}>
+                <MapPin className="w-4 h-4 mr-2" />
+                View on map
+              </a>
+            </Button>
+          )}
+          <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+            <a href={`/browse?category=${category}&sort=similarity`}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Find more patterns
+            </a>
           </Button>
         </CardContent>
       </Card>
