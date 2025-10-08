@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,6 +23,7 @@ import Link from 'next/link'
 
 export default function EntryPage() {
   const router = useRouter()
+  const pathname = usePathname()
   const [text, setText] = useState('')
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [loadingDrafts, setLoadingDrafts] = useState(true)
@@ -83,13 +84,19 @@ export default function EntryPage() {
     reset()
     setContent(text)
     setStep(2)
-    router.push('/submit/compose')
+
+    // Extract locale from pathname and build the URL
+    const locale = pathname.split('/')[1]
+    router.push(`/${locale}/submit/compose`)
   }
 
   const handleLoadDraft = async (draftId: string) => {
     const { loadDraft } = useSubmissionStore.getState()
     await loadDraft(draftId)
-    router.push('/submit/compose')
+
+    // Extract locale from pathname and build the URL
+    const locale = pathname.split('/')[1]
+    router.push(`/${locale}/submit/compose`)
   }
 
   if (showOnboarding) {
@@ -144,7 +151,10 @@ export default function EntryPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => router.push('/submit/audio')}
+                  onClick={() => {
+                    const locale = pathname.split('/')[1]
+                    router.push(`/${locale}/submit/audio`)
+                  }}
                 >
                   <Mic className="h-4 w-4 mr-2" />
                   Audio
@@ -152,7 +162,10 @@ export default function EntryPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => router.push('/submit/photo')}
+                  onClick={() => {
+                    const locale = pathname.split('/')[1]
+                    router.push(`/${locale}/submit/photo`)
+                  }}
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Foto
@@ -160,7 +173,10 @@ export default function EntryPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => router.push('/submit/sketch')}
+                  onClick={() => {
+                    const locale = pathname.split('/')[1]
+                    router.push(`/${locale}/submit/sketch`)
+                  }}
                 >
                   <Pencil className="h-4 w-4 mr-2" />
                   Skizze
@@ -195,7 +211,7 @@ export default function EntryPage() {
           Oder wähle:
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/submit/audio">
+          <Link href={`/${pathname.split('/')[1]}/submit/audio`}>
             <Card className="cursor-pointer hover:border-primary/50 transition-colors h-full">
               <CardHeader className="text-center">
                 <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-red-500/20 to-pink-500/20 flex items-center justify-center mb-3">
@@ -211,7 +227,7 @@ export default function EntryPage() {
             </Card>
           </Link>
 
-          <Link href="/submit/photo">
+          <Link href={`/${pathname.split('/')[1]}/submit/photo`}>
             <Card className="cursor-pointer hover:border-primary/50 transition-colors h-full">
               <CardHeader className="text-center">
                 <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-3">
@@ -227,7 +243,7 @@ export default function EntryPage() {
             </Card>
           </Link>
 
-          <Link href="/submit/sketch">
+          <Link href={`/${pathname.split('/')[1]}/submit/sketch`}>
             <Card className="cursor-pointer hover:border-primary/50 transition-colors h-full">
               <CardHeader className="text-center">
                 <div className="mx-auto h-12 w-12 rounded-full bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center mb-3">
@@ -282,7 +298,7 @@ export default function EntryPage() {
                   </button>
                 ))}
               </div>
-              <Link href="/drafts">
+              <Link href={`/${pathname.split('/')[1]}/drafts`}>
                 <Button variant="ghost" className="w-full mt-3">
                   Alle Entwürfe anzeigen
                 </Button>
@@ -294,7 +310,7 @@ export default function EntryPage() {
 
       {/* Quick Links */}
       <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-        <Link href="/experiences" className="hover:text-foreground transition-colors">
+        <Link href={`/${pathname.split('/')[1]}/experiences`} className="hover:text-foreground transition-colors">
           📋 Meine Erfahrungen
         </Link>
         <span>•</span>
