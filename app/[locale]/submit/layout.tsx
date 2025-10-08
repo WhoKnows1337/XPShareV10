@@ -31,10 +31,10 @@ export default function SubmitLayout({
   const showProgress = !pathWithoutLocale.includes('/success')
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="container mx-auto px-4 py-8">
         {showProgress && currentStep > 0 && (
-          <div className="max-w-4xl mx-auto mb-8">
+          <div className="max-w-4xl mx-auto mb-8 mt-16">
             <ProgressIndicator currentStep={currentStep} totalSteps={7} />
           </div>
         )}

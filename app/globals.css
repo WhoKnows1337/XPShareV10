@@ -53,7 +53,28 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Fix: Ensure scrolling works */
+  html {
+    overflow-y: scroll !important;
+    overflow-x: hidden;
+    height: 100%;
+  }
+
+  body {
+    overflow-y: scroll !important;
+    overflow-x: hidden;
+    height: 100%;
+    min-height: 100vh;
+  }
+
+  body[style*="overflow"],
+  body[data-scroll-locked] {
+    overflow: auto !important;
+  }
 }
+

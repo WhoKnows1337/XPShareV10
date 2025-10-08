@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 
 export default function ReviewPage() {
   const router = useRouter()
+  const pathname = usePathname()
   const { content, analysis, setCategory, setSubcategory, setTags, setLocation, setDate } = useSubmissionStore()
 
   const [category, setCategoryLocal] = useState('')
@@ -33,6 +34,7 @@ export default function ReviewPage() {
   const [selectedDate, setSelectedDate] = useState<Date>()
   const [time, setTime] = useState('')
   const [timeAccuracy, setTimeAccuracy] = useState<'exact' | 'approximate'>('exact')
+  const [showDatePicker, setShowDatePicker] = useState(false)
 
   useEffect(() => {
     // Load from store
@@ -74,6 +76,7 @@ export default function ReviewPage() {
     const date = new Date()
     date.setDate(date.getDate() - daysAgo)
     setSelectedDate(date)
+    setShowDatePicker(true)
   }
 
   const handleContinue = () => {
@@ -84,7 +87,9 @@ export default function ReviewPage() {
       setDate(fullDate)
     }
 
-    router.push('/submit/questions')
+    // Extract locale from pathname and build the URL
+    const locale = pathname.split('/')[1]
+    router.push(`/${locale}/submit/questions`)
   }
 
   if (!content) {
@@ -99,36 +104,26 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <ProgressIndicator currentStep={2} />
-      
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 text-center"
-      >
-        <h1 className="text-4xl font-bold mb-2">✨ Review & Kategorisierung</h1>
-        <p className="text-muted-foreground">
+    <div className="w-full max-w-4xl mx-auto pb-16">
+      <div className="mb-4 text-center">
+        <h1 className="text-3xl font-bold mb-1">✨ Review & Kategorisierung</h1>
+        <p className="text-muted-foreground text-sm">
           Überprüfe die AI-Vorschläge und ergänze Details zu deiner Erfahrung
         </p>
-      </motion.div>
+      </div>
 
-      <div className="space-y-6">
+      <div className="space-y-3">
         {/* Your Experience */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        <div>
           <Card>
-            <CardHeader>
-              <CardTitle>Deine Erfahrung</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Deine Erfahrung</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <p className="text-sm leading-relaxed">{content}</p>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
         {/* AI Analysis Badge */}
         {analysis && (
@@ -144,7 +139,7 @@ export default function ReviewPage() {
                   AI-Analyse
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2 pt-4">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="bg-purple-100 text-purple-900">
                     <Layers className="h-3 w-3 mr-1" />
@@ -175,14 +170,14 @@ export default function ReviewPage() {
           transition={{ delay: 0.3 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Layers className="h-5 w-5 text-purple-500" />
                 Kategorie
               </CardTitle>
               <CardDescription>Wähle die Art der Erfahrung</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2 pt-4">
               <CategoryChips selected={category} onSelect={handleCategorySelect} />
 
               {/* Subcategory Chips */}
@@ -209,8 +204,8 @@ export default function ReviewPage() {
           transition={{ delay: 0.4 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Tag className="h-5 w-5 text-purple-500" />
                 Tags
                 {analysis?.tags && analysis.tags.length > 0 && (
@@ -222,7 +217,7 @@ export default function ReviewPage() {
               </CardTitle>
               <CardDescription>Füge Tags hinzu um deine Erfahrung zu beschreiben</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <TagInput value={tags} onChange={handleTagsChange} category={category} />
             </CardContent>
           </Card>
@@ -235,14 +230,14 @@ export default function ReviewPage() {
           transition={{ delay: 0.5 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <MapPin className="h-5 w-5 text-purple-500" />
                 Ort
               </CardTitle>
               <CardDescription>Wo ist diese Erfahrung passiert?</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <LocationPicker
                 value={location}
                 coordinates={coordinates}
@@ -259,14 +254,14 @@ export default function ReviewPage() {
           transition={{ delay: 0.6 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Calendar className="h-5 w-5 text-purple-500" />
                 Datum & Uhrzeit
               </CardTitle>
               <CardDescription>Wann ist das passiert?</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2 pt-4">
               {/* Quick Date Selection */}
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -368,7 +363,7 @@ export default function ReviewPage() {
             onClick={handleContinue}
             className="w-full"
             size="lg"
-            disabled={!category || tags.length === 0}
+            disabled={!category}
           >
             Weiter zu den Fragen →
           </Button>

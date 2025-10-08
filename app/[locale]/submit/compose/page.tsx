@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,7 @@ import { format } from 'date-fns'
 
 export default function ComposePage() {
   const router = useRouter()
+  const pathname = usePathname()
   const { user } = useAuth()
 
   const { content, title, setContent, setTitle, currentStep, setAnalysis } = useSubmissionStore()
@@ -73,7 +74,7 @@ export default function ComposePage() {
   )
 
   const handleContinue = () => {
-    if (text.trim().length < 50) {
+    if (text.length < 50) {
       alert('Bitte schreibe mindestens 50 Zeichen.')
       return
     }
@@ -81,23 +82,19 @@ export default function ComposePage() {
     // Save to store and navigate
     setContent(text)
     setTitle(titleText)
-    router.push('/submit/review')
+
+    // Extract locale from pathname and build the URL
+    const locale = pathname.split('/')[1] // e.g., 'de' from '/de/submit/compose'
+    router.push(`/${locale}/submit/review`)
   }
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Progress Indicator */}
-      <div className="mb-6">
-        <Button variant="ghost" onClick={() => router.push('/submit')} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Zurück zum Start
-        </Button>
-        <ProgressIndicator
-          currentStep={currentStep}
-          totalSteps={7}
-          labels={['Start', 'Text', 'Review', 'Fragen', 'Pattern', 'Privacy', 'Fertig']}
-        />
-      </div>
+      {/* Back Button */}
+      <Button variant="ghost" onClick={() => router.push('/submit')} className="mb-6">
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Zurück zum Start
+      </Button>
 
       {/* Desktop: Split View */}
       <div className="hidden md:block">
@@ -136,7 +133,7 @@ export default function ComposePage() {
                     placeholder="Erzähl uns, was du erlebt hast..."
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    className="min-h-[400px] resize-none"
+                    className="min-h-[200px] resize-y"
                   />
                   <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
                     <span>{text.length} Zeichen</span>
@@ -173,14 +170,16 @@ export default function ComposePage() {
             </Card>
 
             {/* Continue Button */}
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleContinue}
-              disabled={text.trim().length < 50}
-            >
-              Weiter zur Review →
-            </Button>
+            <div className="pt-4">
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={handleContinue}
+                disabled={text.length < 50}
+              >
+                Weiter zur Review →
+              </Button>
+            </div>
           </div>
 
           {/* Right: Sidebar */}
@@ -244,14 +243,16 @@ export default function ComposePage() {
               </CardContent>
             </Card>
 
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleContinue}
-              disabled={text.trim().length < 50}
-            >
-              Weiter zur Review →
-            </Button>
+            <div className="pt-4">
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={handleContinue}
+                disabled={text.length < 50}
+              >
+                Weiter zur Review →
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="insights">
