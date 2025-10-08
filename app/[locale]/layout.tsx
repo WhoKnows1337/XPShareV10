@@ -4,6 +4,7 @@ import "../globals.css";
 import { AuthProvider } from "@/lib/auth/context";
 import { Navbar } from "@/components/layout/navbar";
 import { RootLayoutClient } from "@/components/layout/root-layout-client";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "sonner";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -70,13 +71,15 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            <RootLayoutClient>
-              <Navbar />
-              {children}
-              <Toaster position="top-right" richColors />
-            </RootLayoutClient>
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <RootLayoutClient>
+                <Navbar />
+                {children}
+                <Toaster position="top-right" richColors />
+              </RootLayoutClient>
+            </AuthProvider>
+          </QueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>

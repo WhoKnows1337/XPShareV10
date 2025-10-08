@@ -5,23 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Settings,
   MapPin,
   Calendar,
-  FileText,
-  Trophy,
-  Globe
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import Link from 'next/link'
 import { UserStats } from '@/components/profile/user-stats'
-import { BadgesShowcase } from '@/components/profile/badges-showcase'
-import { ProfileBadges } from './tabs/profile-badges'
-import { GlobalImpactDashboard } from '@/components/profile/global-impact-dashboard'
-import { SimilarUsersCard } from '@/components/profile/similar-users-card'
+import { DownloadReportButton } from '@/components/profile/download-report-button'
+import { ProfileTabs } from '@/components/profile/profile-tabs'
+import { ActivityChart } from '@/components/profile/activity-chart'
 
 interface ProfileClientTabsProps {
   profileUser: any
@@ -109,15 +104,23 @@ export function ProfileClientTabs({
               </div>
             </div>
 
-            {/* Edit Button */}
-            {isOwnProfile && (
-              <Link href={`/settings`}>
-                <Button variant="outline">
-                  <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Edit Profile
-                </Button>
-              </Link>
-            )}
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {isOwnProfile && (
+                <>
+                  <DownloadReportButton
+                    userId={profileUser.id}
+                    userName={profileUser.username}
+                  />
+                  <Link href={`/settings`}>
+                    <Button variant="outline">
+                      <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Edit Profile
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -134,192 +137,22 @@ export function ProfileClientTabs({
         />
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-          <TabsTrigger value="overview">
-            <FileText className="h-4 w-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="experiences">
-            Experiences ({stats.experiencesCount})
-          </TabsTrigger>
-          {isOwnProfile && (
-            <>
-              <TabsTrigger value="drafts">
-                Drafts ({stats.draftsCount})
-              </TabsTrigger>
-              <TabsTrigger value="private">
-                Private ({stats.privateCount})
-              </TabsTrigger>
-            </>
-          )}
-          <TabsTrigger value="liked">
-            Liked
-          </TabsTrigger>
-          <TabsTrigger value="badges">
-            <Trophy className="h-4 w-4 mr-2" />
-            Badges ({badges.length})
-          </TabsTrigger>
-          <TabsTrigger value="impact">
-            <Globe className="h-4 w-4 mr-2" />
-            Impact
-          </TabsTrigger>
-        </TabsList>
+      {/* Activity Chart */}
+      <div className="mb-8">
+        <ActivityChart userId={profileUser.id} />
+      </div>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Badges Showcase */}
-              <BadgesShowcase
-                userBadges={badges.map((ub: any) => ({
-                  id: ub.badges?.id || ub.id,
-                  name: ub.badges?.name || ub.name,
-                  description: ub.badges?.description || ub.description,
-                  icon: ub.badges?.icon || ub.icon,
-                  rarity: ub.badges?.rarity || ub.rarity,
-                  xp_reward: ub.badges?.xp_reward || ub.xp_reward,
-                  earned_at: ub.earned_at,
-                }))}
-                totalXP={totalXP}
-              />
-
-              {/* Recent Experiences */}
-            {experiences && experiences.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Experiences</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {experiences.map((exp: any) => (
-                      <Link
-                        key={exp.id}
-                        href={`/experiences/${exp.id}`}
-                        className="block rounded-lg border p-4 transition-colors hover:bg-slate-50"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold">{exp.title}</h3>
-                            <Badge variant="outline" className="mt-1">
-                              {exp.category}
-                            </Badge>
-                          </div>
-                          <span className="text-sm text-slate-600">
-                            {format(new Date(exp.created_at), 'dd. MMM yyyy', { locale: de })}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <SimilarUsersCard userId={profileUser.id} />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Experiences Tab */}
-        <TabsContent value="experiences">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Experiences</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {experiences && experiences.length > 0 ? (
-                <div className="space-y-4">
-                  {experiences.map((exp: any) => (
-                    <Link
-                      key={exp.id}
-                      href={`/experiences/${exp.id}`}
-                      className="block rounded-lg border p-4 transition-colors hover:bg-slate-50"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold">{exp.title}</h3>
-                          <Badge variant="outline" className="mt-1">
-                            {exp.category}
-                          </Badge>
-                        </div>
-                        <span className="text-sm text-slate-600">
-                          {format(new Date(exp.created_at), 'dd. MMM yyyy', { locale: de })}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Keine Erfahrungen gefunden
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Drafts Tab (only visible for own profile) */}
-        {isOwnProfile && (
-          <TabsContent value="drafts">
-            <Card>
-              <CardHeader>
-                <CardTitle>Entwürfe</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-muted-foreground py-8">
-                  Du hast {stats.draftsCount} gespeicherte Entwürfe
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-
-        {/* Private Tab (only visible for own profile) */}
-        {isOwnProfile && (
-          <TabsContent value="private">
-            <Card>
-              <CardHeader>
-                <CardTitle>Private Erfahrungen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-muted-foreground py-8">
-                  Du hast {stats.privateCount} private Erfahrungen
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-
-        {/* Liked Tab */}
-        <TabsContent value="liked">
-          <Card>
-            <CardHeader>
-              <CardTitle>Liked Experiences</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground py-8">
-                Deine gelikten Erfahrungen werden hier angezeigt
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Badges Tab */}
-        <TabsContent value="badges">
-          <ProfileBadges userId={profileUser.id} badges={badges} />
-        </TabsContent>
-
-        {/* Impact Tab */}
-        <TabsContent value="impact">
-          <GlobalImpactDashboard userId={profileUser.id} />
-        </TabsContent>
-      </Tabs>
+      {/* Profile Tabs - New 9-Tab System */}
+      <ProfileTabs
+        userId={profileUser.id}
+        isOwnProfile={isOwnProfile}
+        stats={{
+          experiencesCount: stats.experiencesCount,
+          draftsCount: stats.draftsCount,
+          privateCount: stats.privateCount,
+          badgesCount: badges.length,
+        }}
+      />
     </div>
   )
 }

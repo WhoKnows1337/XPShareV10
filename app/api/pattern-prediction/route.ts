@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const category = searchParams.get('category') || 'UFO'
 
     // Call the predict_next_wave function
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .rpc('predict_next_wave', { p_category: category })
 
     if (error) {

@@ -60,6 +60,14 @@ export function Navbar() {
                 {t('feed')}
               </Link>
 
+              <Link
+                href="/search"
+                className="text-sm font-medium text-slate-700 transition-colors hover:text-purple-600 flex items-center gap-1"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </Link>
+
               {/* Categories Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

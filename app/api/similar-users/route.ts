@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       : null
 
     // Get all other users with their experiences
-    const { data: otherUsers } = await supabase
+    const { data: otherUsers } = await (supabase as any)
       .from('user_profiles')
       .select(`
         id,
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
 
     // Calculate similarity for each user
     const similarityScores = await Promise.all(
-      otherUsers.map(async (otherUser) => {
+      otherUsers.map(async (otherUser: any) => {
         // Get other user's experiences
         const { data: otherUserExperiences } = await supabase
           .from('experiences')

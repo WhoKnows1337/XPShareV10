@@ -26,7 +26,7 @@ export async function POST(
     const { data: maxPriorityQuestion } = await supabase
       .from('dynamic_questions')
       .select('priority')
-      .eq('category_id', original.category_id)
+      .eq('category_id', original.category_id!)
       .order('priority', { ascending: false })
       .limit(1)
       .single()

@@ -50,19 +50,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   // Apply tab-specific filters
   switch (currentTab) {
     case 'following':
-      // Get users that current user follows
-      const { data: followedUsers } = await supabase
-        .from('user_follows')
-        .select('followed_user_id')
-        .eq('follower_user_id', user.id)
-
-      if (followedUsers && followedUsers.length > 0) {
-        const followedUserIds = followedUsers.map(f => f.followed_user_id)
-        query = query.in('user_id', followedUserIds)
-      } else {
-        // No followed users, return empty array
-        query = query.eq('id', '00000000-0000-0000-0000-000000000000') // Non-existent ID
-      }
+      // Use get_following_feed RPC
       break
 
     case 'trending':
@@ -121,15 +109,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   if (currentTab !== 'achievements' && params.radius && user) {
     const { data: userProfile } = await supabase
       .from('user_profiles')
-      .select('location_text, city')
-      .eq('user_id', user.id)
+      .select('location_city, location_country')
+      .eq('id', user.id)
       .single()
 
-    if (userProfile?.location_text || userProfile?.city) {
-      const userLocation = userProfile.location_text || userProfile.city
+    if (userProfile?.location_city) {
       // Simple text-based proximity filter
       // In production, use PostGIS for proper distance calculation
-      query = query.ilike('location_text', `%${userLocation}%`)
+      query = query.ilike('location_text', `%${userProfile.location_city}%`)
     }
   }
 
@@ -151,15 +138,34 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   }
 
   // Fetch experiences (skip for achievements tab)
-  let experiences = []
+  let experiences: any[] = []
   if (currentTab !== 'achievements') {
-    if (currentTab === 'for-you') {
+    if (currentTab === 'following') {
+      // Use Following Feed RPC
+      try {
+        const { data: followingData, error: followingError } = await supabase.rpc('get_following_feed', {
+          p_user_id: user.id,
+          p_limit: 20,
+          p_offset: 0
+        })
+
+        if (followingError) {
+          console.error('Following-Feed RPC error:', followingError)
+          experiences = []
+        } else {
+          experiences = followingData || []
+        }
+      } catch (error) {
+        console.error('Following-Feed error:', error)
+        experiences = []
+      }
+    } else if (currentTab === 'for-you') {
       // Try AI-powered For You feed, fallback to smart filtering if RPC doesn't exist
       try {
         const { data: userProfile } = await supabase
           .from('user_profiles')
-          .select('location_text, city, country')
-          .eq('user_id', user.id)
+          .select('location_city, location_country')
+          .eq('id', user.id)
           .single()
 
         // Get user's liked categories
@@ -172,20 +178,21 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           upvotes?.map((u: any) => u.experiences?.category).filter(Boolean) || []
         )]
 
-        // Try to use RPC function if it exists
-        const { data, error } = await supabase.rpc('get_for_you_feed', {
+        // Call For-You-Feed RPC
+        const { data: forYouData, error: rpcError } = await supabase.rpc('get_for_you_feed', {
           p_user_id: user.id,
-          p_liked_categories: likedCategories,
-          p_user_location: userProfile?.location_text || userProfile?.city || null,
+          p_liked_categories: likedCategories.length > 0 ? likedCategories : ['ufo', 'paranormal'],
+          p_user_location: userProfile?.location_city || null,
           p_limit: 20,
           p_offset: 0
         })
 
-        if (!error && data) {
-          experiences = data
-        } else {
-          throw new Error('RPC function not available')
+        if (rpcError) {
+          console.error('For-You-Feed RPC error:', rpcError)
+          throw rpcError
         }
+
+        experiences = forYouData || []
       } catch (error) {
         // Fallback: Smart filtering based on user preferences
         console.log('Using fallback For You algorithm')
@@ -228,6 +235,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     .order('upvote_count', { ascending: false })
     .limit(3)
 
+  // Map trending experiences to handle null values
+  const mappedTrendingExperiences = trendingExperiences?.map(exp => ({
+    ...exp,
+    upvote_count: exp.upvote_count ?? 0,
+    comment_count: exp.comment_count ?? 0,
+    view_count: exp.view_count ?? 0
+  })) || []
+
   const userName = profile?.display_name || profile?.username || 'User'
 
   return (
@@ -236,7 +251,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         userName={userName}
         currentUserId={user.id}
         experiences={experiences}
-        trendingExperiences={trendingExperiences || []}
+        trendingExperiences={mappedTrendingExperiences}
         category={params.category}
       />
     </div>

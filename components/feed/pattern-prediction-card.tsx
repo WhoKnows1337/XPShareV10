@@ -1,194 +1,78 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Sparkles, Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { TrendingUp, Bell, Zap, Calendar } from 'lucide-react'
-import { Progress } from '@/components/ui/progress'
 
 interface Prediction {
   event_type: string
   date_range: string
   probability: number
-  peak_date: string
-  predicted_count: number
 }
 
 interface PatternPredictionCardProps {
-  category?: string
+  category: string
 }
 
 export function PatternPredictionCard({ category }: PatternPredictionCardProps) {
-  const [prediction, setPrediction] = useState<Prediction | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notificationEnabled, setNotificationEnabled] = useState(false)
+  const { data: prediction, isLoading } = useQuery({
+    queryKey: ['pattern-prediction', category],
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc('predict_next_wave', {
+        category_param: category,
+        days_ahead: 30
+      })
 
-  useEffect(() => {
-    async function fetchPrediction() {
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase.rpc('predict_next_wave', {
-          p_category: category || null
-        })
-
-        if (error) {
-          console.error('Error fetching prediction:', error)
-          setLoading(false)
-          return
-        }
-
-        if (data && data.length > 0 && data[0].probability >= 0.5) {
-          setPrediction(data[0])
-        }
-      } catch (err) {
-        console.error('Error:', err)
-      } finally {
-        setLoading(false)
+      if (error) {
+        console.error('Error fetching prediction:', error)
+        return null
       }
-    }
 
-    fetchPrediction()
-  }, [category])
+      return data && data.length > 0 ? data[0] : null
+    },
+    enabled: !!category
+  })
 
-  const handleEnableNotification = () => {
-    // TODO: Implement notification subscription
-    setNotificationEnabled(true)
-    // Could save to localStorage or database
-    localStorage.setItem(`prediction_notify_${prediction?.peak_date}`, 'true')
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            🔮 PATTERN-PREDICTION
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 animate-pulse">
-            <div className="h-4 bg-muted rounded w-full" />
-            <div className="h-4 bg-muted rounded w-3/4" />
-            <div className="h-8 bg-muted rounded w-full" />
-          </div>
+      <Card className="animate-pulse">
+        <CardContent className="pt-6">
+          <div className="h-24 bg-muted rounded" />
         </CardContent>
       </Card>
     )
   }
 
-  if (!prediction) {
-    return null
-  }
-
-  const probabilityPercentage = Math.round(prediction.probability * 100)
-  const isHighProbability = probabilityPercentage >= 70
+  if (!prediction || prediction.probability < 0.5) return null
 
   return (
-    <Card className={isHighProbability ? "border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent" : "border-primary/20"}>
+    <Card className="border-primary/50 bg-primary/5">
       <CardHeader>
         <CardTitle className="text-sm flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-orange-500" />
-          🔮 PATTERN-PREDICTION
+          <Sparkles className="h-4 w-4 text-purple-500" />
+          PATTERN-PREDICTION
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Prediction Info */}
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">
-            Basierend auf historischen Daten:
-          </p>
-          <div className="p-4 bg-background rounded-lg border space-y-3">
-            <div className="flex items-start gap-2">
-              <Zap className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-semibold text-lg">
-                  {prediction.event_type}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Calendar className="w-3 h-3 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    {prediction.date_range}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Probability */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Wahrscheinlichkeit</span>
-                <Badge
-                  variant={isHighProbability ? "default" : "secondary"}
-                  className="font-bold"
-                >
-                  {probabilityPercentage}%
-                </Badge>
-              </div>
-              <Progress
-                value={probabilityPercentage}
-                className="h-2"
-              />
-            </div>
-
-            {/* Predicted Count */}
-            {prediction.predicted_count > 0 && (
-              <div className="flex items-center justify-between text-sm pt-2 border-t">
-                <span className="text-muted-foreground">Erwartete Berichte:</span>
-                <span className="font-semibold">{prediction.predicted_count}+</span>
-              </div>
-            )}
-          </div>
+      <CardContent>
+        <p className="text-sm mb-2 text-muted-foreground">
+          Basierend auf historischen Daten:
+        </p>
+        <div className="p-3 bg-background rounded-lg mb-3">
+          <p className="font-semibold mb-1">{prediction.event_type}</p>
+          <p className="text-sm text-muted-foreground mb-2">{prediction.date_range}</p>
+          <Badge variant="default" className="gap-1">
+            <Sparkles className="h-3 w-3" />
+            {Math.round(prediction.probability * 100)}% Wahrscheinlichkeit
+          </Badge>
         </div>
-
-        {/* Notification CTA */}
-        {!notificationEnabled ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={handleEnableNotification}
-          >
-            <Bell className="w-4 h-4 mr-2" />
-            Benachrichtigung aktivieren
-          </Button>
-        ) : (
-          <div className="flex items-center justify-center gap-2 text-sm text-primary">
-            <Bell className="w-4 h-4" />
-            <span>Benachrichtigung aktiv ✓</span>
-          </div>
-        )}
-
-        {/* Aha Moment for high probability */}
-        {isHighProbability && (
-          <div className="pt-3 border-t">
-            <div className="flex items-start gap-2">
-              <Zap className="w-5 h-5 text-orange-500 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                  Sehr hohe Vorhersage-Genauigkeit!
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Pattern zeigt starke Korrelation mit historischen Daten
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Additional Context */}
-        <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t">
-          <p className="flex items-center gap-1">
-            <span className="text-primary">•</span>
-            Analyse basiert auf {category ? 'Kategorie-' : ''}Daten der letzten 2 Jahre
-          </p>
-          <p className="flex items-center gap-1">
-            <span className="text-primary">•</span>
-            Berücksichtigt saisonale Muster und aktuelle Trends
-          </p>
-        </div>
+        <Button variant="outline" size="sm" className="w-full gap-2">
+          <Bell className="h-4 w-4" />
+          Notification aktivieren
+        </Button>
       </CardContent>
     </Card>
   )

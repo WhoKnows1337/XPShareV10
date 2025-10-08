@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     if (action === 'follow') {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('user_follows')
         .insert({
           follower_user_id: user.id,
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to follow user' }, { status: 500 })
       }
     } else if (action === 'unfollow') {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('user_follows')
         .delete()
         .eq('follower_user_id', user.id)

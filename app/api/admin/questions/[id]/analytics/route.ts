@@ -13,7 +13,7 @@ export async function GET(
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    const { data: analytics, error } = await supabase
+    const { data: analytics, error } = await (supabase as any)
       .from('question_analytics')
       .select('shown_count, answered_count, time_spent_seconds, answer_value')
       .eq('question_id', id)
@@ -21,15 +21,15 @@ export async function GET(
 
     if (error) throw error
 
-    const totalShown = analytics?.reduce((sum, a) => sum + (a.shown_count || 0), 0) || 0
-    const totalAnswered = analytics?.reduce((sum, a) => sum + (a.answered_count || 0), 0) || 0
-    const totalTime = analytics?.reduce((sum, a) => sum + (a.time_spent_seconds || 0), 0) || 0
+    const totalShown = analytics?.reduce((sum: number, a: any) => sum + (a.shown_count || 0), 0) || 0
+    const totalAnswered = analytics?.reduce((sum: number, a: any) => sum + (a.answered_count || 0), 0) || 0
+    const totalTime = analytics?.reduce((sum: number, a: any) => sum + (a.time_spent_seconds || 0), 0) || 0
     const answerRate = totalShown > 0 ? Math.round((totalAnswered / totalShown) * 100) : 0
     const avgTime = totalAnswered > 0 ? Math.round(totalTime / totalAnswered) : 0
 
     // Get top answer
     const answerCounts = new Map<string, number>()
-    analytics?.forEach((a) => {
+    analytics?.forEach((a: any) => {
       if (a.answer_value) {
         const answers = Array.isArray(a.answer_value) ? a.answer_value : [a.answer_value]
         answers.forEach((ans: string) => {

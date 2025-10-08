@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get('limit') || '50')
 
   try {
-    let query = supabase
+    let query = (supabase as any)
       .from('ai_generated_questions')
       .select(`
         *,
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     if (error) throw error
 
     // Get stats
-    const { data: stats } = await supabase.rpc('get_ai_question_stats')
+    const { data: stats } = await (supabase as any).rpc('get_ai_question_stats')
 
     return NextResponse.json({
       data,

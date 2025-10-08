@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       .order('sort_order', { ascending: true })
 
     // Fetch questions with category info
-    const { data: questions } = await supabase
+    const { data: questions } = await (supabase as any)
       .from('dynamic_questions')
       .select(`
         *,
@@ -88,11 +88,11 @@ export async function GET(req: NextRequest) {
         // Questions section
         'QUESTIONS',
         'ID,Category,Question Text,Type,Is Active,Is Optional,Tags,Created At',
-        ...stats.questions.map((q) =>
+        ...stats.questions.map((q: any) =>
           [
             q.id,
             `"${q.category?.name || 'N/A'}"`,
-            `"${q.question_text.replace(/"/g, '""')}"`,
+            `"${(q.question_text || '').replace(/"/g, '""')}"`,
             q.question_type,
             q.is_active,
             q.is_optional,

@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     // Update the AI question with the answer
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('ai_generated_questions')
       .update({
         answer_text: answerText,

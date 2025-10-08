@@ -39,8 +39,8 @@ export async function GET(request: Request) {
     }> = []
 
     summary?.forEach((q) => {
-      const answerRate = q.answer_rate_percent || 0
-      const avgTime = q.avg_time || 0
+      const answerRate = q.answer_rate || 0
+      const avgTime = q.avg_response_time || 0
       const totalShown = q.total_shown || 0
 
       // Low answer rate warning
@@ -48,8 +48,8 @@ export async function GET(request: Request) {
         insights.push({
           type: 'warning',
           severity: answerRate < 50 ? 'high' : 'medium',
-          questionId: q.question_id,
-          questionText: q.question_text,
+          questionId: q.question_id ?? '',
+          questionText: q.question_text ?? '',
           message: `Low answer rate: ${answerRate}%`,
           suggestion: 'Consider making this question optional or rephrasing it to be clearer',
           metric: {
@@ -65,8 +65,8 @@ export async function GET(request: Request) {
         insights.push({
           type: 'warning',
           severity: 'high',
-          questionId: q.question_id,
-          questionText: q.question_text,
+          questionId: q.question_id ?? '',
+          questionText: q.question_text ?? '',
           message: `Critical: Only ${answerRate}% of users answer this question`,
           suggestion: 'This question might be confusing or irrelevant. Consider removing or completely rewording it.',
           metric: {
@@ -82,15 +82,15 @@ export async function GET(request: Request) {
         insights.push({
           type: 'warning',
           severity: avgTime > 15 ? 'high' : 'medium',
-          questionId: q.question_id,
-          questionText: q.question_text,
+          questionId: q.question_id ?? '',
+          questionText: q.question_text ?? '',
           message: `Users take ${avgTime.toFixed(1)}s to answer (avg)`,
           suggestion:
             avgTime > 15
               ? 'This is significantly longer than average. Consider reducing options or simplifying the question.'
               : 'This is slightly longer than average. Consider if the question has too many options.',
           metric: {
-            name: 'avg_time',
+            name: 'avg_response_time',
             value: avgTime,
             threshold: 10,
           },
@@ -102,8 +102,8 @@ export async function GET(request: Request) {
         insights.push({
           type: 'success',
           severity: 'low',
-          questionId: q.question_id,
-          questionText: q.question_text,
+          questionId: q.question_id ?? '',
+          questionText: q.question_text ?? '',
           message: `Excellent answer rate: ${answerRate}%`,
           suggestion: 'This question is performing very well. Consider using similar phrasing for other questions.',
           metric: {
@@ -119,12 +119,12 @@ export async function GET(request: Request) {
         insights.push({
           type: 'success',
           severity: 'low',
-          questionId: q.question_id,
-          questionText: q.question_text,
+          questionId: q.question_id ?? '',
+          questionText: q.question_text ?? '',
           message: `Fast and high completion: ${avgTime.toFixed(1)}s avg, ${answerRate}% rate`,
           suggestion: 'This question is well-designed. Users answer quickly and consistently.',
           metric: {
-            name: 'avg_time',
+            name: 'avg_response_time',
             value: avgTime,
             threshold: 5,
           },
@@ -136,8 +136,8 @@ export async function GET(request: Request) {
         insights.push({
           type: 'warning',
           severity: 'high',
-          questionId: q.question_id,
-          questionText: q.question_text,
+          questionId: q.question_id ?? '',
+          questionText: q.question_text ?? '',
           message: `Very low engagement: Shown ${totalShown} times but only ${answerRate}% answer`,
           suggestion: 'This question is being skipped frequently. Consider if it\'s relevant or if users understand it.',
         })
@@ -148,8 +148,8 @@ export async function GET(request: Request) {
         insights.push({
           type: 'info',
           severity: 'low',
-          questionId: q.question_id,
-          questionText: q.question_text,
+          questionId: q.question_id ?? '',
+          questionText: q.question_text ?? '',
           message: `Limited data: Only ${totalShown} responses`,
           suggestion: 'Wait for more data before drawing conclusions about this question\'s performance.',
         })
@@ -168,11 +168,11 @@ export async function GET(request: Request) {
       successes: insights.filter((i) => i.type === 'success').length,
       avgAnswerRate:
         summary && summary.length > 0
-          ? (summary.reduce((sum, q) => sum + (q.answer_rate_percent || 0), 0) / summary.length).toFixed(1)
+          ? (summary.reduce((sum, q) => sum + (q.answer_rate || 0), 0) / summary.length).toFixed(1)
           : 0,
       avgResponseTime:
         summary && summary.length > 0
-          ? (summary.reduce((sum, q) => sum + (q.avg_time || 0), 0) / summary.length).toFixed(1)
+          ? (summary.reduce((sum, q) => sum + (q.avg_response_time || 0), 0) / summary.length).toFixed(1)
           : 0,
     }
 

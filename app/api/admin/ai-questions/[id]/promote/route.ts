@@ -15,7 +15,8 @@ export async function POST(
     const { questionText } = body
 
     // Call the promote function
-    const { data, error } = await supabase.rpc('promote_ai_question_to_template', {
+    // TODO: Implement promote_ai_question_to_template RPC function in database
+    const { data, error } = await (supabase as any).rpc('promote_ai_question_to_template', {
       ai_question_id: id,
       template_question_text: questionText || null,
     })

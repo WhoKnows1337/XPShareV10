@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     // Check if conditions are met
-    const conditions = question.adaptive_conditions || {}
+    const conditions = (question.adaptive_conditions || {}) as any
     const shouldGenerate = aiAdaptiveService.shouldTriggerGeneration(
       answerValue,
       conditions
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     // Store generated questions in database
     const storedQuestions = []
     for (const gq of generatedQuestions) {
-      const { data: stored, error: storeError } = await supabase
+      const { data: stored, error: storeError } = await (supabase as any)
         .from('ai_generated_questions')
         .insert({
           parent_question_id: questionId,

@@ -49,7 +49,7 @@ export function SeasonalPattern({ category }: SeasonalPatternProps) {
       // Process monthly data
       const monthCounts: Record<string, number> = {}
       experiences.forEach((exp) => {
-        const month = new Date(exp.created_at).toLocaleDateString('de-DE', {
+        const month = new Date(exp.created_at || new Date()).toLocaleDateString('de-DE', {
           month: 'short',
           year: 'numeric',
         })

@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // Get badge details for XP amount
-    const { data: badge, error: badgeError } = await supabase
+    const { data: badge, error: badgeError } = await (supabase as any)
       .from('badges')
       .select('name, description, xp_reward, icon')
       .eq('id', badgeId)

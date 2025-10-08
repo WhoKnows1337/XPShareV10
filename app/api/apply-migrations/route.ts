@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const results = []
 
     // Migration 1: similar_users
-    const { error: error1 } = await supabase.rpc('exec_sql', { sql: migration1 })
+    const { error: error1 } = await (supabase as any).rpc('exec_sql', { sql: migration1 })
     results.push({
       migration: '20250000000015_similar_users.sql',
       success: !error1,
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     })
 
     // Migration 2: pattern_prediction
-    const { error: error2 } = await supabase.rpc('exec_sql', { sql: migration2 })
+    const { error: error2 } = await (supabase as any).rpc('exec_sql', { sql: migration2 })
     results.push({
       migration: '20250000000016_pattern_prediction.sql',
       success: !error2,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -18,6 +18,8 @@ import { FeedRightPanel } from '@/components/browse/feed-right-panel'
 import { FeedTabs } from '@/components/browse/feed-tabs'
 import { AchievementFeed } from '@/components/achievements/achievement-feed'
 import { ViewSwitcher, ViewMode } from '@/components/browse/view-switcher'
+import { MobileFilterSheet } from '@/components/browse/mobile-filter-sheet'
+import { PullToRefresh } from '@/components/browse/pull-to-refresh'
 
 interface Experience {
   id: string
@@ -64,14 +66,32 @@ export function FeedClient({
   category,
 }: FeedClientProps) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const currentTab = searchParams.get('tab') || 'for-you'
   const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
+  const handleRefresh = async () => {
+    router.refresh()
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
   return (
     <ThreeColumnLayout
-      leftSidebar={<FeedLeftSidebar />}
+      leftSidebar={
+        <>
+          {/* Desktop Sidebar */}
+          <div className="hidden md:block">
+            <FeedLeftSidebar />
+          </div>
+          {/* Mobile Filter Button */}
+          <div className="md:hidden">
+            <MobileFilterSheet />
+          </div>
+        </>
+      }
       rightPanel={<FeedRightPanel currentUserId={currentUserId} trendingExperiences={trendingExperiences} />}
       mainContent={
+        <PullToRefresh onRefresh={handleRefresh}>
         <div className="space-y-6">
           {/* Welcome Section */}
           <div>
@@ -155,6 +175,7 @@ export function FeedClient({
             </>
           )}
         </div>
+      </PullToRefresh>
       }
     />
   )

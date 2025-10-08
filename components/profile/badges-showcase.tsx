@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge'
 import { Trophy, Lock } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { calculateLevel, getLevelTitle, getLevelColor } from '@/lib/utils/xp-calculator'
+import { motion } from 'framer-motion'
+import confetti from 'canvas-confetti'
+import { useEffect, useState } from 'react'
 
 interface BadgeData {
   id: string
@@ -39,6 +42,23 @@ export function BadgesShowcase({ userBadges, totalXP }: BadgesShowcaseProps) {
   const levelInfo = calculateLevel(totalXP)
   const levelTitle = getLevelTitle(levelInfo.level)
   const levelColor = getLevelColor(levelInfo.level)
+  const [hasShownConfetti, setHasShownConfetti] = useState(false)
+
+  // Confetti for legendary badges
+  useEffect(() => {
+    if (!hasShownConfetti && userBadges.some(b => b.rarity === 'legendary')) {
+      const timer = setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#FFD700', '#FFA500', '#FF6347']
+        })
+        setHasShownConfetti(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [userBadges, hasShownConfetti])
 
   return (
     <div className="space-y-6">
@@ -88,10 +108,23 @@ export function BadgesShowcase({ userBadges, totalXP }: BadgesShowcaseProps) {
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              {userBadges.map((badge) => (
-                <div
+              {userBadges.map((badge, index) => (
+                <motion.div
                   key={badge.id}
-                  className={`rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{
+                    delay: index * 0.1,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15
+                  }}
+                  whileHover={{
+                    scale: 1.05,
+                    rotate: badge.rarity === 'legendary' ? [0, -2, 2, -2, 0] : 0,
+                    transition: { duration: 0.3 }
+                  }}
+                  className={`rounded-lg border-2 p-4 transition-all hover:shadow-md cursor-pointer ${
                     rarityColors[badge.rarity]
                   }`}
                 >
@@ -123,7 +156,7 @@ export function BadgesShowcase({ userBadges, totalXP }: BadgesShowcaseProps) {
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}

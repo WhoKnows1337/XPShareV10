@@ -10,6 +10,9 @@ import { Separator } from '@/components/ui/separator'
 import { EnhancedExperienceCard } from '@/components/experience/enhanced-experience-card'
 import { ExperienceListView } from '@/components/experience/experience-list-view'
 import { SeasonalPattern } from '@/components/category/seasonal-pattern'
+import { CategoryStatsDashboard } from '@/components/category/category-stats-dashboard'
+import { FollowCategoryButton } from '@/components/category/follow-category-button'
+import { SubCategoryFilter } from '@/components/category/sub-category-filter'
 import { BentoGrid } from '@/components/ui/bento-grid'
 import { cn } from '@/lib/utils'
 import {
@@ -51,6 +54,7 @@ export function CategoryViewClient({
   const [viewMode, setViewMode] = useState<'cards' | 'list'>(
     (searchParams.get('view') as 'cards' | 'list') || 'cards'
   )
+  const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([])
   const currentSort = searchParams.get('sort') || 'newest'
 
   const updateSort = (sort: string) => {
@@ -109,10 +113,6 @@ export function CategoryViewClient({
 
         {/* Actions */}
         <div className="flex items-center justify-center gap-3">
-          <Button variant="default">
-            <Bell className="h-4 w-4 mr-2" />
-            Follow Category
-          </Button>
           <Button variant="outline">
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
@@ -120,9 +120,19 @@ export function CategoryViewClient({
         </div>
       </div>
 
+      {/* Category Stats Dashboard */}
+      <CategoryStatsDashboard categorySlug={category.slug} />
+
       <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_300px] gap-6">
         {/* Left Sidebar */}
         <div className="space-y-6">
+          {/* Sub-Category Filter */}
+          <SubCategoryFilter
+            categorySlug={category.slug}
+            selectedSubCategories={selectedSubCategories}
+            onSubCategoryChange={setSelectedSubCategories}
+          />
+
           {/* Hotspots */}
           <Card>
             <CardHeader>

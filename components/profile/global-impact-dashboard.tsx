@@ -51,15 +51,29 @@ export function GlobalImpactDashboard({ userId }: GlobalImpactDashboardProps) {
       try {
         const supabase = createClient()
         const { data, error } = await supabase.rpc('calculate_user_impact', {
-          p_user_id: userId
+          target_user_id: userId
         })
 
         if (error) {
           console.error('Error fetching impact:', error)
+          setLoading(false)
           return
         }
 
-        setImpact(data)
+        // Get first row since SQL function returns TABLE
+        const impactData = data && data.length > 0 ? data[0] : null
+
+        if (impactData) {
+          setImpact({
+            patterns_discovered: 0, // TODO: Implement pattern discovery tracking
+            countries_reached: impactData.countries_reached || 0,
+            people_helped: impactData.total_views || 0,
+            research_citations: 0, // TODO: Implement research citations
+            viewer_countries: {}, // TODO: Implement country tracking
+            pattern_contributions: [], // TODO: Implement pattern contributions
+            data_quality_score: 85 // Fixed score for now
+          })
+        }
       } catch (err) {
         console.error('Error:', err)
       } finally {

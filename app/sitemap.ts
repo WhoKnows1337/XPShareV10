@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const experienceUrls = (experiences || []).map((exp) => ({
     url: `${baseUrl}/experiences/${exp.id}`,
-    lastModified: new Date(exp.updated_at),
+    lastModified: new Date(exp.updated_at || new Date()),
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }))

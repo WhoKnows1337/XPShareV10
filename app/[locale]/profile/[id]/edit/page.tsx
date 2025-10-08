@@ -41,10 +41,10 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
           initialData={{
             username: profile.username,
             displayName: profile.display_name || profile.username,
-            bio: profile.bio,
-            avatarUrl: profile.avatar_url,
-            locationCity: profile.location_city,
-            locationCountry: profile.location_country,
+            bio: profile.bio ?? undefined,
+            avatarUrl: profile.avatar_url ?? undefined,
+            locationCity: profile.location_city ?? undefined,
+            locationCountry: profile.location_country ?? undefined,
           }}
         />
       </div>

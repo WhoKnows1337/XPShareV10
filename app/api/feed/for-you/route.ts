@@ -14,24 +14,24 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get('offset') || '0')
 
     // Get user's profile with location
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await (supabase as any)
       .from('user_profiles')
       .select('location_text, city, country')
       .eq('user_id', user.id)
       .single()
 
     // Get user's liked categories (from upvotes)
-    const { data: upvotes } = await supabase
+    const { data: upvotes } = await (supabase as any)
       .from('upvotes')
       .select('experiences(category)')
       .eq('user_id', user.id)
 
     const likedCategories = [...new Set(
-      upvotes?.map(u => u.experiences?.category).filter(Boolean) || []
+      upvotes?.map((u: any) => u.experiences?.category).filter(Boolean) || []
     )]
 
     // Build the For You feed with weighted scoring
-    const { data: experiences, error } = await supabase.rpc('get_for_you_feed', {
+    const { data: experiences, error } = await (supabase as any).rpc('get_for_you_feed', {
       p_user_id: user.id,
       p_liked_categories: likedCategories,
       p_user_location: userProfile?.location_text || userProfile?.city || null,

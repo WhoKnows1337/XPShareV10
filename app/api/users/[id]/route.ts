@@ -57,7 +57,7 @@ export async function GET(
       .eq('user_id', id)
 
     // Calculate level (every 100 XP = 1 level)
-    const level = Math.floor(profile.total_xp / 100) + 1
+    const level = Math.floor((profile.total_xp || 0) / 100) + 1
 
     // Format response
     const response = {

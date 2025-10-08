@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const { startDate, endDate, category } = body
 
     // Build query
-    let query = supabase
+    let query = (supabase as any)
       .from('experiences')
       .select(`
         id,
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     }
 
     // Transform data for map markers
-    const markers = experiences?.map((exp) => ({
+    const markers = experiences?.map((exp: any) => ({
       id: exp.id,
       title: exp.title,
       category: exp.category,

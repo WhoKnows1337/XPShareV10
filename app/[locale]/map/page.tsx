@@ -20,9 +20,15 @@ export default async function MapPage() {
     .eq('id', user.id)
     .single()
 
+  // Map profile to handle null display_name
+  const mappedProfile = profile ? {
+    username: profile.username,
+    display_name: profile.display_name ?? profile.username
+  } : null
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
-      <MapClient profile={profile} />
+      <MapClient profile={mappedProfile} />
     </div>
   )
 }

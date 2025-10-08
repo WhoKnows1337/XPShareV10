@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       const rows = analytics.map((row) => [
         row.question_id,
         row.category_name,
-        `"${row.question_text.replace(/"/g, '""')}"`, // Escape quotes
+        `"${(row.question_text || '').replace(/"/g, '""')}"`, // Escape quotes
         row.total_shown,
         row.total_answered,
         row.total_skipped,

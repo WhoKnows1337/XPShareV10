@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useRef, useCallback } from 'react'
-import Map, { Marker, Popup, NavigationControl } from 'react-map-gl'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
+import Map, { Marker, Popup, NavigationControl, Source, Layer } from 'react-map-gl'
 import Supercluster from 'supercluster'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -49,6 +49,57 @@ export function MapView({ experiences }: MapViewProps) {
   const handleTimeRangeChange = useCallback((start: Date, end: Date) => {
     setTimeRange({ start, end })
   }, [])
+
+  // Heatmap data - convert experiences to GeoJSON
+  const heatmapData = useMemo(() => {
+    return {
+      type: 'FeatureCollection' as const,
+      features: filteredExperiences.map(exp => ({
+        type: 'Feature' as const,
+        properties: {
+          weight: 1
+        },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [exp.location_lng, exp.location_lat] as [number, number]
+        }
+      }))
+    }
+  }, [filteredExperiences])
+
+  // Heatmap layer style
+  const heatmapLayer = {
+    id: 'experience-heatmap',
+    type: 'heatmap' as const,
+    paint: {
+      // Increase weight as zoom increases
+      'heatmap-weight': ['interpolate', ['linear'], ['zoom'], 0, 1, 20, 1],
+      // Increase intensity as zoom increases
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 20, 3],
+      // Color ramp for heatmap
+      'heatmap-color': [
+        'interpolate',
+        ['linear'],
+        ['heatmap-density'],
+        0,
+        'rgba(33,102,172,0)',
+        0.2,
+        'rgb(103,169,207)',
+        0.4,
+        'rgb(209,229,240)',
+        0.6,
+        'rgb(253,219,199)',
+        0.8,
+        'rgb(239,138,98)',
+        1,
+        'rgb(178,24,43)'
+      ],
+      // Adjust heatmap radius by zoom level
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 20, 30],
+      // Transition from heatmap to circle as zoom increases
+      'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 7, 1, 12, 0.5]
+    }
+  }
 
   // Create supercluster instance with filtered experiences
   const cluster = useMemo(() => {
@@ -116,6 +167,13 @@ export function MapView({ experiences }: MapViewProps) {
         style={{ width: '100%', height: '100%' }}
       >
         <NavigationControl position="top-right" />
+
+        {/* Heatmap Layer */}
+        {showHeatmap && (
+          <Source type="geojson" data={heatmapData as any}>
+            <Layer {...(heatmapLayer as any)} />
+          </Source>
+        )}
 
         {clusters.map((cluster: any) => {
           const [lng, lat] = cluster.geometry.coordinates

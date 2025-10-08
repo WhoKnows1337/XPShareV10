@@ -39,7 +39,7 @@ export async function POST(
     }
 
     // Call the apply_question_template function
-    const { data: questions, error } = await supabase.rpc(
+    const { data: questions, error } = await (supabase as any).rpc(
       'apply_question_template',
       {
         p_template_id: id,
@@ -51,7 +51,7 @@ export async function POST(
     if (error) throw error
 
     // Increment usage_count for the template
-    await supabase.rpc('increment_template_usage', {
+    await (supabase as any).rpc('increment_template_usage', {
       template_id: id
     })
 

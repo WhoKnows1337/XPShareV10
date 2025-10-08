@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { usePrefetch } from '@/hooks/use-prefetch'
+import { getShimmerDataURL } from '@/lib/image-blur'
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -82,10 +83,13 @@ export function EnhancedExperienceCard({
 
   return (
     <motion.article
+      role="article"
+      aria-labelledby={`exp-title-${experience.id}`}
+      aria-describedby={`exp-meta-${experience.id}`}
       whileHover={{ y: -4, boxShadow: '0 10px 30px rgba(139, 92, 246, 0.2)' }}
       onHoverStart={() => {
         setIsHovered(true)
-        prefetch(`/experiences/${experience.id}`)
+        prefetch(`/experiences/${experience.id}`, experience.id)
       }}
       onHoverEnd={() => setIsHovered(false)}
       className={cn(
@@ -110,6 +114,8 @@ export function EnhancedExperienceCard({
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes={isLarge ? '(max-width: 768px) 100vw, 50vw' : '300px'}
+              placeholder="blur"
+              blurDataURL={getShimmerDataURL()}
             />
 
             {/* Category Badge Overlay */}
@@ -170,7 +176,7 @@ export function EnhancedExperienceCard({
 
         {/* Title */}
         <Link href={`/experiences/${experience.id}`}>
-          <h3 className="text-lg font-semibold line-clamp-2 mb-2 hover:text-primary transition-colors">
+          <h3 id={`exp-title-${experience.id}`} className="text-lg font-semibold line-clamp-2 mb-2 hover:text-primary transition-colors">
             {experience.title}
           </h3>
         </Link>
@@ -213,17 +219,17 @@ export function EnhancedExperienceCard({
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-4 pt-2 border-t text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Eye className="h-3.5 w-3.5" />
+        <div id={`exp-meta-${experience.id}`} className="flex items-center gap-4 pt-2 border-t text-xs text-muted-foreground">
+          <div className="flex items-center gap-1" aria-label={`${experience.view_count || 0} views`}>
+            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{experience.view_count || 0}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <ThumbsUp className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1" aria-label={`${experience.upvote_count || 0} upvotes`}>
+            <ThumbsUp className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{experience.upvote_count || 0}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <MessageCircle className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1" aria-label={`${experience.comment_count || 0} comments`}>
+            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{experience.comment_count || 0}</span>
           </div>
 

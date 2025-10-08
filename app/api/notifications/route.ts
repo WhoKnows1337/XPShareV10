@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       .limit(limit)
 
     if (unreadOnly) {
-      query = query.eq('read', false)
+      query = query.eq('is_read', false)
     }
 
     const { data: notifications, error } = await query
@@ -53,9 +53,9 @@ export async function PUT(request: Request) {
     if (markAllAsRead) {
       const { error } = await supabase
         .from('notifications')
-        .update({ read: true })
+        .update({ is_read: true })
         .eq('user_id', user.id)
-        .eq('read', false)
+        .eq('is_read', false)
 
       if (error) {
         console.error('Mark all as read error:', error)
@@ -71,7 +71,7 @@ export async function PUT(request: Request) {
 
     const { error } = await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('id', notificationId)
       .eq('user_id', user.id)
 

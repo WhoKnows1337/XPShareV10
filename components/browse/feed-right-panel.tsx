@@ -53,12 +53,8 @@ export function FeedRightPanel({ currentUserId, trendingExperiences = [] }: Feed
 
   return (
     <div className="space-y-6">
-      {/* Similar User Card - Aha-Moment #6 */}
-      <SimilarUserCard currentUserId={currentUserId} />
-
-      {/* Pattern Prediction Card - Aha-Moment #7 */}
-      <PatternPredictionCard category="ufo" />
-
+      {/* Similar User Card (Aha-Moment #6) */}
+      {currentUserId && <SimilarUserCard currentUserId={currentUserId} />}
       {/* Trending Card */}
       <Card>
         <CardHeader>
@@ -143,6 +139,9 @@ export function FeedRightPanel({ currentUserId, trendingExperiences = [] }: Feed
           </Button>
         </CardContent>
       </Card>
+
+      {/* Pattern Prediction Card (Aha-Moment #7) */}
+      <PatternPredictionCard category="ufo" />
 
       {/* AI Insights Card */}
       <Card className="border-primary/50 bg-primary/5">

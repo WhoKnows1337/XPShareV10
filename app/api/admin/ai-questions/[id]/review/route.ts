@@ -22,7 +22,7 @@ export async function PATCH(
       updates.quality_rating = qualityRating
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('ai_generated_questions')
       .update(updates)
       .eq('id', id)

@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     if (timeSeriesError) throw timeSeriesError
 
     // Get category-level aggregates
-    const { data: categoryStats, error: categoryError } = await supabase.rpc(
+    const { data: categoryStats, error: categoryError } = await (supabase as any).rpc(
       'get_category_analytics',
       {}
     )

@@ -34,7 +34,7 @@ export function SimilarUsersCard({ userId }: SimilarUsersCardProps) {
 
       try {
         // Call RPC function to find similar users based on embeddings
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .rpc('find_similar_users', {
             target_user_id: userId,
             match_threshold: 0.7,

@@ -25,7 +25,7 @@ export async function POST() {
 
   try {
     // Call the refresh function
-    const { error } = await supabase.rpc('refresh_analytics_summary')
+    const { error } = await (supabase as any).rpc('refresh_analytics_summary')
 
     if (error) throw error
 

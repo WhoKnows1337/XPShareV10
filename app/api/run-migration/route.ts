@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const { sql } = await request.json()
 
   try {
-    const { data, error } = await supabase.rpc('exec', { sql })
+    const { data, error } = await (supabase as any).rpc('exec', { sql })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
