@@ -6,95 +6,67 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Calendar, MapPin, Tag, X, Plus } from 'lucide-react'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-
-interface ReviewData {
-  text: string
-  analysis: {
-    category: string
-    tags: string[]
-    emotion: string
-  }
-}
-
-const categoryOptions = [
-  { value: 'ufo', label: 'UFO Sighting' },
-  { value: 'paranormal', label: 'Paranormal' },
-  { value: 'dreams', label: 'Dream Experience' },
-  { value: 'psychedelic', label: 'Psychedelic' },
-  { value: 'spiritual', label: 'Spiritual' },
-  { value: 'synchronicity', label: 'Synchronicity' },
-  { value: 'nde', label: 'Near-Death Experience' },
-  { value: 'other', label: 'Other Experience' },
-]
+import { Calendar, MapPin, Tag, Layers } from 'lucide-react'
+import { CategoryChips, SubcategoryChips } from '@/components/submit/CategoryChips'
+import { LocationPicker } from '@/components/submit/LocationPicker'
+import { TagInput } from '@/components/submit/TagInput'
+import { useSubmissionStore } from '@/lib/stores/submissionStore'
 
 export default function ReviewPage() {
   const router = useRouter()
-  const [data, setData] = useState<ReviewData | null>(null)
-  const [category, setCategory] = useState('')
-  const [tags, setTags] = useState<string[]>([])
-  const [newTag, setNewTag] = useState('')
-  const [location, setLocation] = useState('')
-  const [date, setDate] = useState('')
+  const { content, analysis, setCategory, setSubcategory, setTags, setLocation, setDate } = useSubmissionStore()
+
+  const [category, setCategoryLocal] = useState('')
+  const [subcategory, setSubcategoryLocal] = useState('')
+  const [tags, setTagsLocal] = useState<string[]>([])
+  const [location, setLocationLocal] = useState('')
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 })
+  const [date, setDateLocal] = useState('')
   const [time, setTime] = useState('')
 
   useEffect(() => {
-    // Get data from localStorage
-    const draft = localStorage.getItem('experience_draft')
-    if (!draft) {
-      router.push('/submit')
-      return
+    // Load from store
+    if (analysis?.category) {
+      setCategoryLocal(analysis.category)
     }
+    if (analysis?.tags) {
+      setTagsLocal(analysis.tags)
+    }
+  }, [analysis])
 
-    try {
-      const parsed = JSON.parse(draft)
-      setData(parsed)
-      setCategory(parsed.analysis?.category || '')
-      setTags(parsed.analysis?.tags || [])
-    } catch (e) {
-      console.error('Failed to parse draft:', e)
-      router.push('/submit')
-    }
-  }, [router])
-
-  const handleAddTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()])
-      setNewTag('')
-    }
+  const handleCategorySelect = (value: string) => {
+    setCategoryLocal(value)
+    setSubcategoryLocal('') // Reset subcategory when category changes
+    setCategory(value)
   }
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove))
+  const handleSubcategorySelect = (value: string) => {
+    setSubcategoryLocal(value)
+    setSubcategory(value)
+  }
+
+  const handleTagsChange = (newTags: string[]) => {
+    setTagsLocal(newTags)
+    setTags(newTags)
+  }
+
+  const handleLocationSelect = (loc: string, coords: { lat: number; lng: number }) => {
+    setLocationLocal(loc)
+    setCoordinates(coords)
+    setLocation(loc, coords)
   }
 
   const handleContinue = () => {
-    // Save updated data to localStorage
-    const draft = JSON.parse(localStorage.getItem('experience_draft') || '{}')
-    localStorage.setItem(
-      'experience_draft',
-      JSON.stringify({
-        ...draft,
-        category,
-        tags,
-        location,
-        date,
-        time,
-      })
-    )
+    // Combine date and time
+    if (date) {
+      const fullDate = time ? `${date}T${time}:00` : `${date}T12:00:00`
+      setDate(fullDate)
+    }
+
     router.push('/submit/questions')
   }
 
-  if (!data) {
+  if (!content) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -108,9 +80,9 @@ export default function ReviewPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold mb-2">Review & Edit</h1>
+        <h1 className="text-4xl font-bold mb-2">✨ Review & Kategorisierung</h1>
         <p className="text-muted-foreground">
-          Review the AI suggestions and add more details about your experience
+          Überprüfe die AI-Vorschläge und ergänze Details zu deiner Erfahrung
         </p>
       </div>
 
@@ -118,90 +90,69 @@ export default function ReviewPage() {
         {/* Your Experience */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Experience</CardTitle>
+            <CardTitle>Deine Erfahrung</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed text-muted-foreground">{data.text}</p>
+            <p className="text-sm leading-relaxed">{content}</p>
           </CardContent>
         </Card>
 
-        {/* Category Selection */}
+        {/* Category Selection with Chips */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-purple-500" />
-              Category
+              <Layers className="h-5 w-5 text-purple-500" />
+              Kategorie
             </CardTitle>
-            <CardDescription>Select the type of experience</CardDescription>
+            <CardDescription>Wähle die Art der Erfahrung</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <CardContent className="space-y-4">
+            <CategoryChips selected={category} onSelect={handleCategorySelect} />
+
+            {/* Subcategory Chips */}
+            {category && (
+              <div className="pt-4 border-t">
+                <Label className="text-sm text-muted-foreground mb-3 block">
+                  Unterkategorie (optional)
+                </Label>
+                <SubcategoryChips
+                  category={category}
+                  selected={subcategory}
+                  onSelect={handleSubcategorySelect}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Tags */}
+        {/* Tags with Suggestions */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-purple-500" />
               Tags
             </CardTitle>
-            <CardDescription>Add or remove tags to describe your experience</CardDescription>
+            <CardDescription>Füge Tags hinzu um deine Erfahrung zu beschreiben</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="gap-1 px-3 py-1">
-                  {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="ml-1 hover:text-destructive"
-                    aria-label={`Remove ${tag}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a tag..."
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-              />
-              <Button onClick={handleAddTag} variant="outline" size="icon">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+          <CardContent>
+            <TagInput value={tags} onChange={handleTagsChange} category={category} />
           </CardContent>
         </Card>
 
-        {/* Location */}
+        {/* Location with Mapbox Picker */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-purple-500" />
-              Location
+              Ort
             </CardTitle>
-            <CardDescription>Where did this experience occur?</CardDescription>
+            <CardDescription>Wo ist diese Erfahrung passiert?</CardDescription>
           </CardHeader>
           <CardContent>
-            <Input
-              placeholder="Enter location (city, country)..."
+            <LocationPicker
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              coordinates={coordinates}
+              onSelect={handleLocationSelect}
             />
           </CardContent>
         </Card>
@@ -211,22 +162,22 @@ export default function ReviewPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-purple-500" />
-              Date & Time
+              Datum & Uhrzeit
             </CardTitle>
-            <CardDescription>When did this experience happen?</CardDescription>
+            <CardDescription>Wann ist das passiert?</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">Datum</Label>
               <Input
                 id="date"
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => setDateLocal(e.target.value)}
               />
             </div>
             <div>
-              <Label htmlFor="time">Time (optional)</Label>
+              <Label htmlFor="time">Uhrzeit (optional)</Label>
               <Input
                 id="time"
                 type="time"
@@ -244,7 +195,7 @@ export default function ReviewPage() {
           size="lg"
           disabled={!category || tags.length === 0}
         >
-          Continue to Questions →
+          Weiter zu den Fragen →
         </Button>
       </div>
     </div>

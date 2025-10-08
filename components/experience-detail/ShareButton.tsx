@@ -10,14 +10,16 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
-import { Share2, Copy, Check, Facebook, Twitter } from 'lucide-react'
+import { Share2, Copy, Check, Facebook, Twitter, MessageCircle, Send } from 'lucide-react'
 
 interface ShareButtonProps {
   experienceId: string
   title: string
+  category?: string
+  excerpt?: string
 }
 
-export function ShareButton({ experienceId, title }: ShareButtonProps) {
+export function ShareButton({ experienceId, title, category, excerpt }: ShareButtonProps) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -25,8 +27,43 @@ export function ShareButton({ experienceId, title }: ShareButtonProps) {
     ? `${window.location.origin}/experiences/${experienceId}`
     : ''
 
+  // Enhanced share text with category and excerpt
+  const getShareText = () => {
+    let text = `🔮 ${title}`
+    if (category) {
+      const categoryEmojis: Record<string, string> = {
+        ufo: '🛸',
+        paranormal: '👻',
+        dreams: '💭',
+        psychedelic: '🌈',
+        spiritual: '🙏',
+        synchronicity: '✨',
+        nde: '🌟',
+        other: '❓',
+      }
+      text = `${categoryEmojis[category] || '🔮'} ${title}`
+    }
+    if (excerpt) {
+      text += `\n\n${excerpt.substring(0, 100)}${excerpt.length > 100 ? '...' : ''}`
+    }
+    text += `\n\n🔗 ${shareUrl}`
+    return text
+  }
+
   const handleShare = async () => {
-    // Always use custom sheet for consistent UX
+    // Try native share API first on mobile
+    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: title,
+          text: `Check out this experience on XPShare: ${title}`,
+          url: shareUrl,
+        })
+        return
+      } catch (err) {
+        // Fall back to custom sheet if native share fails or is cancelled
+      }
+    }
     setOpen(true)
   }
 
@@ -41,7 +78,7 @@ export function ShareButton({ experienceId, title }: ShareButtonProps) {
   }
 
   const shareToTwitter = () => {
-    const text = encodeURIComponent(`Check out this experience: ${title}`)
+    const text = encodeURIComponent(`🔮 ${title}\n\nRead the full experience on XPShare:`)
     const url = encodeURIComponent(shareUrl)
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
   }
@@ -49,6 +86,17 @@ export function ShareButton({ experienceId, title }: ShareButtonProps) {
   const shareToFacebook = () => {
     const url = encodeURIComponent(shareUrl)
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank')
+  }
+
+  const shareToWhatsApp = () => {
+    const text = encodeURIComponent(getShareText())
+    window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
+
+  const shareToTelegram = () => {
+    const text = encodeURIComponent(`🔮 ${title}`)
+    const url = encodeURIComponent(shareUrl)
+    window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank')
   }
 
   return (
@@ -75,7 +123,7 @@ export function ShareButton({ experienceId, title }: ShareButtonProps) {
             {/* Social Share Buttons */}
             <div className="space-y-2">
               <p className="text-sm font-medium">Share on social media</p>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -91,6 +139,22 @@ export function ShareButton({ experienceId, title }: ShareButtonProps) {
                 >
                   <Facebook className="w-4 h-4 mr-2" />
                   Facebook
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={shareToWhatsApp}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={shareToTelegram}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Telegram
                 </Button>
               </div>
             </div>

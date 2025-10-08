@@ -93,6 +93,40 @@ export default function FinalPage() {
 
       const result = await response.json()
 
+      // Update user streak
+      try {
+        await fetch('/api/gamification/streak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ activity_type: 'experience' }),
+        })
+      } catch (streakErr) {
+        console.error('Streak update error:', streakErr)
+        // Don't fail submission if streak update fails
+      }
+
+      // Check for badges earned
+      try {
+        const badgeResponse = await fetch('/api/gamification/check-badges', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'experience_submitted',
+            category: data.category,
+            timeOfDay: data.analysis?.time?.timeOfDay,
+          }),
+        })
+
+        if (badgeResponse.ok) {
+          const badges = await badgeResponse.json()
+          // Store badges for success screen
+          localStorage.setItem('earned_badges', JSON.stringify(badges))
+        }
+      } catch (badgeErr) {
+        console.error('Badge checking error:', badgeErr)
+        // Don't fail submission if badge checking fails
+      }
+
       // Clear draft from localStorage
       localStorage.removeItem('experience_draft')
 

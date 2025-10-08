@@ -99,11 +99,11 @@ export default function QuestionsPage() {
         questions: answers,
       })
     )
-    router.push('/submit/witnesses')
+    router.push('/submit/patterns')
   }
 
   const handleSkip = () => {
-    router.push('/submit/witnesses')
+    router.push('/submit/patterns')
   }
 
   const renderQuestion = (question: Question) => {

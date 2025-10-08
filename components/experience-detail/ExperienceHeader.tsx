@@ -30,6 +30,7 @@ import { de } from 'date-fns/locale'
 import { LikeButton } from './LikeButton'
 import { ShareButton } from './ShareButton'
 import { ReportDialog } from '@/components/interactions/report-dialog'
+import { AnonymousBadge } from '@/components/ui/AnonymousBadge'
 import { deleteExperience } from '@/app/actions/experience'
 import { toast } from 'sonner'
 
@@ -61,6 +62,7 @@ interface ExperienceHeaderProps {
   isAuthor: boolean
   currentUserId?: string
   initialIsLiked?: boolean
+  isAnonymous?: boolean
 }
 
 const categoryLabels: Record<string, string> = {
@@ -86,6 +88,7 @@ export function ExperienceHeader({
   isAuthor,
   currentUserId,
   initialIsLiked = false,
+  isAnonymous = false,
 }: ExperienceHeaderProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -161,34 +164,39 @@ export function ExperienceHeader({
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <Link
-                  href={`/@${user.username}`}
-                  className="font-semibold hover:underline"
-                  aria-label={`View profile of ${displayName}`}
-                >
-                  @{user.username}
-                </Link>
-                {/* User Level & Badges */}
-                {user.level && (
+                {isAnonymous ? (
+                  <AnonymousBadge />
+                ) : (
+                  <Link
+                    href={`/@${user.username}`}
+                    className="font-semibold hover:underline"
+                    aria-label={`View profile of ${displayName}`}
+                  >
+                    @{user.username}
+                  </Link>
+                )}
+                {/* User Level & Badges (only show if not anonymous) */}
+                {!isAnonymous && user.level && (
                   <Badge variant="secondary" className="text-xs" aria-label={`Level ${user.level}`}>
                     Lvl {user.level}
                   </Badge>
                 )}
-                {user.topBadges?.slice(0, 2).map((badge) => (
-                  <TooltipProvider key={badge.slug}>
-                    <Tooltip>
-                      <TooltipTrigger aria-label={`Badge: ${badge.name}`}>
-                        <span className="text-sm" aria-hidden="true">
-                          {badge.icon}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="font-semibold">{badge.name}</p>
-                        <p className="text-xs text-muted-foreground">{badge.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
+                {!isAnonymous &&
+                  user.topBadges?.slice(0, 2).map((badge) => (
+                    <TooltipProvider key={badge.slug}>
+                      <Tooltip>
+                        <TooltipTrigger aria-label={`Badge: ${badge.name}`}>
+                          <span className="text-sm" aria-hidden="true">
+                            {badge.icon}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="font-semibold">{badge.name}</p>
+                          <p className="text-xs text-muted-foreground">{badge.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Badge

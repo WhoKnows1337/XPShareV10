@@ -17,6 +17,7 @@ import { UserStats } from '@/components/profile/user-stats'
 import { DownloadReportButton } from '@/components/profile/download-report-button'
 import { ProfileTabs } from '@/components/profile/profile-tabs'
 import { ActivityChart } from '@/components/profile/activity-chart'
+import { StreakWidget } from '@/components/gamification/StreakWidget'
 
 interface ProfileClientTabsProps {
   profileUser: any
@@ -137,8 +138,9 @@ export function ProfileClientTabs({
         />
       </div>
 
-      {/* Activity Chart */}
-      <div className="mb-8">
+      {/* Streak Widget and Activity Chart */}
+      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <StreakWidget userId={profileUser.id} />
         <ActivityChart userId={profileUser.id} />
       </div>
 
