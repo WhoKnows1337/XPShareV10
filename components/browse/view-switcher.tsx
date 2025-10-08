@@ -13,11 +13,11 @@ interface ViewSwitcherProps {
 }
 
 export function ViewSwitcher({ currentView, onViewChange, className }: ViewSwitcherProps) {
-  const views: { mode: ViewMode; icon: React.ReactNode; label: string; emoji: string }[] = [
-    { mode: 'cards', icon: <LayoutGrid className="h-4 w-4" />, label: 'Cards', emoji: '🎴' },
-    { mode: 'list', icon: <List className="h-4 w-4" />, label: 'List', emoji: '📝' },
-    { mode: 'map', icon: <Map className="h-4 w-4" />, label: 'Map', emoji: '🗺️' },
-    { mode: 'timeline', icon: <Clock className="h-4 w-4" />, label: 'Timeline', emoji: '⏱️' },
+  const views: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
+    { mode: 'cards', icon: <LayoutGrid className="h-4 w-4" />, label: 'Cards' },
+    { mode: 'list', icon: <List className="h-4 w-4" />, label: 'List' },
+    { mode: 'map', icon: <Map className="h-4 w-4" />, label: 'Map' },
+    { mode: 'timeline', icon: <Clock className="h-4 w-4" />, label: 'Timeline' },
   ]
 
   return (
@@ -35,7 +35,6 @@ export function ViewSwitcher({ currentView, onViewChange, className }: ViewSwitc
           aria-label={`Switch to ${view.label} view`}
           aria-pressed={currentView === view.mode}
         >
-          <span className="text-base">{view.emoji}</span>
           {view.icon}
           <span className="hidden sm:inline">{view.label}</span>
         </Button>
