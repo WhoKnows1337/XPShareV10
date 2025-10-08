@@ -22,7 +22,7 @@ export function ThreeColumnLayout({
         {/* Left Sidebar - 240px, sticky, hidden on mobile */}
         {leftSidebar && (
           <aside className="hidden lg:block w-60 flex-shrink-0">
-            <div className="sticky top-20 space-y-6">{leftSidebar}</div>
+            <div className="sticky top-20 space-y-6 max-h-[calc(100vh-6rem)] overflow-y-auto">{leftSidebar}</div>
           </aside>
         )}
 
@@ -32,7 +32,7 @@ export function ThreeColumnLayout({
         {/* Right Panel - 340px, sticky, hidden on md */}
         {rightPanel && (
           <aside className="hidden xl:block w-[340px] flex-shrink-0">
-            <div className="sticky top-20 space-y-6">{rightPanel}</div>
+            <div className="sticky top-20 space-y-6 max-h-[calc(100vh-6rem)] overflow-y-auto">{rightPanel}</div>
           </aside>
         )}
       </div>
