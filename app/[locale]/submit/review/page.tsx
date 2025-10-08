@@ -4,13 +4,22 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Calendar, MapPin, Tag, Layers } from 'lucide-react'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ArrowLeft, Calendar, MapPin, Tag, Layers, Clock, Sparkles, Check } from 'lucide-react'
 import { CategoryChips, SubcategoryChips } from '@/components/submit/CategoryChips'
 import { LocationPicker } from '@/components/submit/LocationPicker'
 import { TagInput } from '@/components/submit/TagInput'
+import { ProgressIndicator } from '@/components/submit/ProgressIndicator'
 import { useSubmissionStore } from '@/lib/stores/submissionStore'
+import { motion } from 'framer-motion'
+import { format } from 'date-fns'
+import { de } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
 
 export default function ReviewPage() {
   const router = useRouter()
@@ -21,8 +30,9 @@ export default function ReviewPage() {
   const [tags, setTagsLocal] = useState<string[]>([])
   const [location, setLocationLocal] = useState('')
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 })
-  const [date, setDateLocal] = useState('')
+  const [selectedDate, setSelectedDate] = useState<Date>()
   const [time, setTime] = useState('')
+  const [timeAccuracy, setTimeAccuracy] = useState<'exact' | 'approximate'>('exact')
 
   useEffect(() => {
     // Load from store
@@ -56,10 +66,21 @@ export default function ReviewPage() {
     setLocation(loc, coords)
   }
 
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date)
+  }
+
+  const handleQuickDate = (daysAgo: number) => {
+    const date = new Date()
+    date.setDate(date.getDate() - daysAgo)
+    setSelectedDate(date)
+  }
+
   const handleContinue = () => {
     // Combine date and time
-    if (date) {
-      const fullDate = time ? `${date}T${time}:00` : `${date}T12:00:00`
+    if (selectedDate) {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd')
+      const fullDate = time ? `${dateStr}T${time}:00` : `${dateStr}T12:00:00`
       setDate(fullDate)
     }
 
@@ -79,124 +100,279 @@ export default function ReviewPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8 text-center">
+      <ProgressIndicator currentStep={2} />
+      
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 text-center"
+      >
         <h1 className="text-4xl font-bold mb-2">✨ Review & Kategorisierung</h1>
         <p className="text-muted-foreground">
           Überprüfe die AI-Vorschläge und ergänze Details zu deiner Erfahrung
         </p>
-      </div>
+      </motion.div>
 
       <div className="space-y-6">
         {/* Your Experience */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Deine Erfahrung</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm leading-relaxed">{content}</p>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Deine Erfahrung</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed">{content}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* AI Analysis Badge */}
+        {analysis && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-purple-200 bg-purple-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-900">
+                  <Sparkles className="h-5 w-5" />
+                  AI-Analyse
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-900">
+                    <Layers className="h-3 w-3 mr-1" />
+                    {analysis.category}
+                  </Badge>
+                  {analysis.tags && analysis.tags.length > 0 && (
+                    <div className="flex gap-1 flex-wrap">
+                      {analysis.tags.slice(0, 3).map((tag, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  💡 Du kannst diese Vorschläge anpassen
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Category Selection with Chips */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-purple-500" />
-              Kategorie
-            </CardTitle>
-            <CardDescription>Wähle die Art der Erfahrung</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <CategoryChips selected={category} onSelect={handleCategorySelect} />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-purple-500" />
+                Kategorie
+              </CardTitle>
+              <CardDescription>Wähle die Art der Erfahrung</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <CategoryChips selected={category} onSelect={handleCategorySelect} />
 
-            {/* Subcategory Chips */}
-            {category && (
-              <div className="pt-4 border-t">
-                <Label className="text-sm text-muted-foreground mb-3 block">
-                  Unterkategorie (optional)
-                </Label>
-                <SubcategoryChips
-                  category={category}
-                  selected={subcategory}
-                  onSelect={handleSubcategorySelect}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              {/* Subcategory Chips */}
+              {category && (
+                <div className="pt-4 border-t">
+                  <Label className="text-sm text-muted-foreground mb-3 block">
+                    Unterkategorie (optional)
+                  </Label>
+                  <SubcategoryChips
+                    category={category}
+                    selected={subcategory}
+                    onSelect={handleSubcategorySelect}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Tags with Suggestions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-purple-500" />
-              Tags
-            </CardTitle>
-            <CardDescription>Füge Tags hinzu um deine Erfahrung zu beschreiben</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TagInput value={tags} onChange={handleTagsChange} category={category} />
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5 text-purple-500" />
+                Tags
+                {analysis?.tags && analysis.tags.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    AI-Vorschläge
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>Füge Tags hinzu um deine Erfahrung zu beschreiben</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TagInput value={tags} onChange={handleTagsChange} category={category} />
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Location with Mapbox Picker */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-purple-500" />
-              Ort
-            </CardTitle>
-            <CardDescription>Wo ist diese Erfahrung passiert?</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LocationPicker
-              value={location}
-              coordinates={coordinates}
-              onSelect={handleLocationSelect}
-            />
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-purple-500" />
+                Ort
+              </CardTitle>
+              <CardDescription>Wo ist diese Erfahrung passiert?</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LocationPicker
+                value={location}
+                coordinates={coordinates}
+                onSelect={handleLocationSelect}
+              />
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* Date & Time */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-purple-500" />
-              Datum & Uhrzeit
-            </CardTitle>
-            <CardDescription>Wann ist das passiert?</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="date">Datum</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDateLocal(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="time">Uhrzeit (optional)</Label>
-              <Input
-                id="time"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Date & Time with Calendar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-purple-500" />
+                Datum & Uhrzeit
+              </CardTitle>
+              <CardDescription>Wann ist das passiert?</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Quick Date Selection */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickDate(0)}
+                  type="button"
+                >
+                  Heute
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickDate(1)}
+                  type="button"
+                >
+                  Gestern
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickDate(7)}
+                  type="button"
+                >
+                  Vor 1 Woche
+                </Button>
+              </div>
+
+              {/* Calendar Popover */}
+              <div>
+                <Label>Datum wählen</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !selectedDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, 'PPP', { locale: de }) : 'Datum auswählen'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      initialFocus
+                      locale={de}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Time Accuracy */}
+              <div className="space-y-3">
+                <Label>Zeitgenauigkeit</Label>
+                <RadioGroup value={timeAccuracy} onValueChange={(val) => setTimeAccuracy(val as 'exact' | 'approximate')}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="exact" id="exact" />
+                    <Label htmlFor="exact" className="font-normal cursor-pointer">
+                      Exakte Zeit
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="approximate" id="approximate" />
+                    <Label htmlFor="approximate" className="font-normal cursor-pointer">
+                      Ungefähre Zeit
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Time Input */}
+              {timeAccuracy === 'exact' && (
+                <div>
+                  <Label htmlFor="time">Uhrzeit</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Continue Button */}
-        <Button
-          onClick={handleContinue}
-          className="w-full"
-          size="lg"
-          disabled={!category || tags.length === 0}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
         >
-          Weiter zu den Fragen →
-        </Button>
+          <Button
+            onClick={handleContinue}
+            className="w-full"
+            size="lg"
+            disabled={!category || tags.length === 0}
+          >
+            Weiter zu den Fragen →
+          </Button>
+        </motion.div>
       </div>
     </div>
   )

@@ -28,6 +28,7 @@ export default function AudioPage() {
   const [audioURL, setAudioURL] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isTranscribing, setIsTranscribing] = useState(false)
+  const [transcript, setTranscript] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -35,7 +36,7 @@ export default function AudioPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const { setContent, setAudioBlob, setAudioTranscript, setStep, reset } = useSubmissionStore()
+  const { setContent, setAudioBlob, setAudioTranscript } = useSubmissionStore()
 
   const MAX_RECORDING_TIME = 600 // 10 minutes in seconds
 
@@ -134,6 +135,7 @@ export default function AudioPage() {
     if (audioURL) URL.revokeObjectURL(audioURL)
     setAudioURL(null)
     setRecordingTime(0)
+    setTranscript(null)
     setAudioBlob(null)
     audioChunksRef.current = []
   }
@@ -175,21 +177,23 @@ export default function AudioPage() {
         throw new Error('Transcription failed')
       }
 
-      const { transcript } = await response.json()
+      const { transcript: transcribedText } = await response.json()
 
-      // Store transcript
-      setContent(transcript)
-      setAudioTranscript(transcript)
-      reset()
-      setStep(2)
-
-      // Navigate to main submit page
-      router.push('/submit')
+      // Store transcript locally and in store
+      setTranscript(transcribedText)
+      setAudioTranscript(transcribedText)
     } catch (err) {
       console.error('Transcription error:', err)
       setError('Transkription fehlgeschlagen. Bitte versuche es erneut.')
     } finally {
       setIsTranscribing(false)
+    }
+  }
+
+  const handleContinue = () => {
+    if (transcript) {
+      setContent(transcript)
+      router.push('/submit/compose')
     }
   }
 
@@ -303,7 +307,7 @@ export default function AudioPage() {
       </Card>
 
       {/* Playback & Transcribe */}
-      {audioURL && (
+      {audioURL && !transcript && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -353,14 +357,75 @@ export default function AudioPage() {
                   {isTranscribing ? (
                     <>
                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      Transkribiere...
+                      Transkribiere mit Whisper AI...
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-5 w-5 mr-2" />
-                      Transkribieren & Weiter →
+                      Transkribieren mit AI
                     </>
                   )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Transcript Result */}
+      {transcript && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className="border-2 border-purple-500/20 bg-purple-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-500" />
+                Transkript
+                <Badge variant="secondary">Whisper AI</Badge>
+              </CardTitle>
+              <CardDescription>
+                Deine Aufnahme wurde erfolgreich transkribiert
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Transcript Text */}
+              <div className="p-4 bg-background rounded-lg border">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{transcript}</p>
+              </div>
+
+              {/* Audio Player */}
+              <audio
+                ref={audioRef}
+                src={audioURL || ''}
+                onEnded={() => setIsPlaying(false)}
+                className="hidden"
+              />
+
+              <div className="flex items-center gap-3">
+                <Button variant="outline" onClick={togglePlayPause} size="sm">
+                  {isPlaying ? (
+                    <Pause className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  {isPlaying ? 'Pause' : 'Audio anhören'}
+                </Button>
+
+                <Button variant="outline" onClick={resetRecording} size="sm">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Neu aufnehmen
+                </Button>
+              </div>
+
+              <div className="pt-4 border-t">
+                <Button
+                  size="lg"
+                  className="w-full h-14"
+                  onClick={handleContinue}
+                >
+                  Weiter zur Erfahrung →
                 </Button>
               </div>
             </CardContent>

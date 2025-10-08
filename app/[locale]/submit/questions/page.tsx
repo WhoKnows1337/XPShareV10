@@ -15,49 +15,10 @@ interface Question {
   id: string
   type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'number'
   question: string
-  options?: string[]
+  options?: any[]
   required: boolean
-}
-
-// Simplified questions for now - will be fetched from API later
-const questionsByCategory: Record<string, Question[]> = {
-  ufo: [
-    { id: 'shape', type: 'radio', question: 'What shape was the object?', options: ['Circular', 'Triangular', 'Cylindrical', 'Other'], required: true },
-    { id: 'lights', type: 'checkbox', question: 'Did it have lights?', options: ['Yes', 'No'], required: false },
-    { id: 'duration', type: 'number', question: 'How long did the sighting last? (in minutes)', required: true },
-    { id: 'additional', type: 'textarea', question: 'Any additional details about the object?', required: false },
-  ],
-  paranormal: [
-    { id: 'type', type: 'radio', question: 'What type of paranormal activity?', options: ['Apparition', 'Poltergeist', 'EVP/Sounds', 'Other'], required: true },
-    { id: 'witnesses', type: 'radio', question: 'Were there other witnesses?', options: ['Yes', 'No'], required: false },
-    { id: 'additional', type: 'textarea', question: 'Describe what happened in detail', required: false },
-  ],
-  dreams: [
-    { id: 'lucid', type: 'radio', question: 'Was this a lucid dream?', options: ['Yes', 'No', 'Partially'], required: false },
-    { id: 'recurring', type: 'radio', question: 'Is this a recurring dream?', options: ['Yes', 'No'], required: false },
-    { id: 'symbols', type: 'textarea', question: 'What symbols or themes stood out?', required: false },
-  ],
-  psychedelic: [
-    { id: 'substance', type: 'text', question: 'What substance did you use? (optional)', required: false },
-    { id: 'dosage', type: 'text', question: 'Approximate dosage?', required: false },
-    { id: 'insights', type: 'textarea', question: 'What insights or realizations did you have?', required: false },
-  ],
-  spiritual: [
-    { id: 'type', type: 'radio', question: 'Type of spiritual experience?', options: ['Meditation', 'Prayer', 'Spontaneous', 'Other'], required: false },
-    { id: 'impact', type: 'textarea', question: 'How has this impacted your life?', required: false },
-  ],
-  synchronicity: [
-    { id: 'frequency', type: 'radio', question: 'How often do you experience synchronicities?', options: ['Daily', 'Weekly', 'Monthly', 'Rarely'], required: false },
-    { id: 'meaning', type: 'textarea', question: 'What meaning did this synchronicity have for you?', required: false },
-  ],
-  nde: [
-    { id: 'cause', type: 'text', question: 'What caused the near-death experience?', required: false },
-    { id: 'tunnel', type: 'radio', question: 'Did you see a tunnel or light?', options: ['Yes', 'No'], required: false },
-    { id: 'beings', type: 'radio', question: 'Did you encounter any beings?', options: ['Yes', 'No'], required: false },
-  ],
-  other: [
-    { id: 'details', type: 'textarea', question: 'Please provide any additional details', required: false },
-  ],
+  helpText?: string
+  placeholder?: string
 }
 
 export default function QuestionsPage() {
@@ -65,24 +26,43 @@ export default function QuestionsPage() {
   const [category, setCategory] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, any>>({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Get data from localStorage
-    const draft = localStorage.getItem('experience_draft')
-    if (!draft) {
-      router.push('/submit')
-      return
+    const loadQuestions = async () => {
+      // Get data from localStorage
+      const draft = localStorage.getItem('experience_draft')
+      if (!draft) {
+        router.push('/submit')
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(draft)
+        const cat = parsed.category || 'other'
+        setCategory(cat)
+
+        // Fetch questions from API
+        const response = await fetch(`/api/questions?category=${cat}`)
+        const data = await response.json()
+
+        if (response.ok && data.questions) {
+          setQuestions(data.questions)
+        } else {
+          // Fallback to empty if no questions found
+          setQuestions([])
+        }
+      } catch (e) {
+        console.error('Failed to load questions:', e)
+        setError('Failed to load questions. You can skip this step.')
+        setQuestions([])
+      } finally {
+        setLoading(false)
+      }
     }
 
-    try {
-      const parsed = JSON.parse(draft)
-      const cat = parsed.category || 'other'
-      setCategory(cat)
-      setQuestions(questionsByCategory[cat] || questionsByCategory.other)
-    } catch (e) {
-      console.error('Failed to parse draft:', e)
-      router.push('/submit')
-    }
+    loadQuestions()
   }, [router])
 
   const handleAnswerChange = (questionId: string, value: any) => {
@@ -115,6 +95,7 @@ export default function QuestionsPage() {
             type={question.type}
             value={answers[question.id] || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            placeholder={question.placeholder}
           />
         )
 
@@ -124,16 +105,22 @@ export default function QuestionsPage() {
             value={answers[question.id] || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             rows={4}
+            placeholder={question.placeholder}
           />
         )
 
       case 'radio':
+        // For radio questions, options might be an array of objects or strings
+        const radioOptions = Array.isArray(question.options)
+          ? question.options.map(opt => typeof opt === 'string' ? opt : opt.label || opt.value)
+          : []
+
         return (
           <RadioGroup
             value={answers[question.id] || ''}
             onValueChange={(value) => handleAnswerChange(question.id, value)}
           >
-            {question.options?.map((option) => (
+            {radioOptions.map((option: string) => (
               <div key={option} className="flex items-center space-x-2">
                 <RadioGroupItem value={option} id={`${question.id}-${option}`} />
                 <Label htmlFor={`${question.id}-${option}`}>{option}</Label>
@@ -143,9 +130,14 @@ export default function QuestionsPage() {
         )
 
       case 'checkbox':
+        // For checkbox questions, options might be an array of objects or strings
+        const checkboxOptions = Array.isArray(question.options)
+          ? question.options.map(opt => typeof opt === 'string' ? opt : opt.label || opt.value)
+          : []
+
         return (
           <div className="space-y-2">
-            {question.options?.map((option) => (
+            {checkboxOptions.map((option: string) => (
               <div key={option} className="flex items-center space-x-2">
                 <Checkbox
                   id={`${question.id}-${option}`}
@@ -170,12 +162,12 @@ export default function QuestionsPage() {
     }
   }
 
-  if (!category) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-600 border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Lade Fragen...</p>
         </div>
       </div>
     )
@@ -184,43 +176,69 @@ export default function QuestionsPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold mb-2">Additional Questions</h1>
+        <h1 className="text-4xl font-bold mb-2">Zusätzliche Fragen</h1>
         <p className="text-muted-foreground">
-          Help us understand your experience better by answering a few questions
+          Hilf uns, deine Erfahrung besser zu verstehen
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <HelpCircle className="h-5 w-5 text-purple-500" />
-            Category-Specific Questions
-          </CardTitle>
-          <CardDescription>
-            These questions are tailored to your experience type. You can skip any that don't apply.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {questions.map((question) => (
-            <div key={question.id} className="space-y-2">
-              <Label className="text-base">
-                {question.question}
-                {question.required && <span className="text-red-500 ml-1">*</span>}
-              </Label>
-              {renderQuestion(question)}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      {error && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">{error}</p>
+        </div>
+      )}
 
-      <div className="mt-6 flex gap-4">
-        <Button onClick={handleSkip} variant="outline" className="flex-1" size="lg">
-          Skip Questions
-        </Button>
-        <Button onClick={handleContinue} className="flex-1" size="lg">
-          Continue to Witnesses →
-        </Button>
-      </div>
+      {questions.length === 0 ? (
+        <Card>
+          <CardContent className="pt-12 pb-12 text-center">
+            <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-lg font-medium mb-2">Keine Fragen verfügbar</p>
+            <p className="text-muted-foreground mb-6">
+              Für diese Kategorie sind aktuell keine zusätzlichen Fragen konfiguriert.
+            </p>
+            <Button onClick={handleSkip} size="lg">
+              Weiter →
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-purple-500" />
+                Kategorie-spezifische Fragen
+              </CardTitle>
+              <CardDescription>
+                Diese Fragen sind auf deine Erfahrungsart zugeschnitten. Du kannst alle überspringen, die nicht passen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {questions.map((question) => (
+                <div key={question.id} className="space-y-2">
+                  <Label className="text-base">
+                    {question.question}
+                    {question.required && <span className="text-red-500 ml-1">*</span>}
+                  </Label>
+                  {question.helpText && (
+                    <p className="text-sm text-muted-foreground">{question.helpText}</p>
+                  )}
+                  {renderQuestion(question)}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <div className="mt-6 flex gap-4">
+            <Button onClick={handleSkip} variant="outline" className="flex-1" size="lg">
+              Fragen überspringen
+            </Button>
+            <Button onClick={handleContinue} className="flex-1" size="lg">
+              Weiter zu Zeugen →
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
