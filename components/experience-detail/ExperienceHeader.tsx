@@ -30,6 +30,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { LikeButton } from './LikeButton'
 import { ShareButton } from './ShareButton'
+import { ReportDialog } from '@/components/interactions/report-dialog'
 
 interface UserBadge {
   slug: string
@@ -194,13 +195,7 @@ export function ExperienceHeader({
           )}
 
           {!isAuthor && currentUserId && (
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label="Report this experience"
-            >
-              <Flag className="w-4 h-4" aria-hidden="true" />
-            </Button>
+            <ReportDialog experienceId={id} currentUserId={currentUserId} />
           )}
         </nav>
       </div>

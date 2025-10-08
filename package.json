@@ -62,6 +62,7 @@
     "next": "^15.1.5",
     "next-intl": "^3.26.5",
     "openai": "^4.77.3",
+    "plaiceholder": "^3.0.0",
     "react": "^19.0.0",
     "react-day-picker": "^9.11.0",
     "react-dom": "^19.0.0",

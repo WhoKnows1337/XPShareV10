@@ -18,6 +18,7 @@ import {
   getEnvironmentalData,
   getCrossCategoryInsights,
 } from '@/lib/api/experiences'
+import { getImageBlurDataURL } from '@/lib/utils/image-blur'
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -201,6 +202,17 @@ export default async function ExperiencePage({
     .eq('experience_id', id)
     .order('sort_order', { ascending: true })
 
+  // Get hero image (first image) for blur placeholder
+  const heroImage = mediaItems?.find((item: any) => item.type === 'image')
+  let heroImageBlur = ''
+  if (heroImage?.url) {
+    try {
+      heroImageBlur = await getImageBlurDataURL(heroImage.url)
+    } catch (error) {
+      console.error('Failed to generate blur placeholder:', error)
+    }
+  }
+
   // Fetch witnesses
   const { data: witnesses } = await supabase
     .from('experience_witnesses')
@@ -361,14 +373,15 @@ export default async function ExperiencePage({
   }))
 
   const mainContentArea = (
-    <div className="space-y-8">
+    <div className="space-y-8" id="main-content">
       {/* Main Experience Content */}
       <ExperienceContent
         id={experience.id}
         title={experience.title}
         storyText={experience.story_text || ''}
         category={experience.category}
-        heroImageUrl={undefined}
+        heroImageUrl={heroImage?.url}
+        heroImageBlur={heroImageBlur}
         locationText={experience.location_text ?? undefined}
         locationLat={experience.location_lat ?? undefined}
         locationLng={experience.location_lng ?? undefined}
@@ -446,6 +459,14 @@ export default async function ExperiencePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
+      {/* Skip to Content Link for Accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
 
       {/* Sticky Header */}
       <ExperienceHeader

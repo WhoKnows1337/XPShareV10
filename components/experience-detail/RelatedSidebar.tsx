@@ -15,6 +15,7 @@ import {
 import { UserPlus, MapPin, Calendar, Sparkles, TrendingUp } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { TimelinePreviewChart } from './TimelinePreviewChart'
 
 interface UserBadge {
   slug: string
@@ -171,6 +172,11 @@ export function RelatedSidebar({
           </div>
         </CardContent>
       </Card>
+
+      {/* Timeline Preview Chart */}
+      {similarExperiences.length > 0 && (
+        <TimelinePreviewChart experiences={similarExperiences} />
+      )}
 
       {/* Similar Experiences */}
       {similarExperiences.length > 0 && (

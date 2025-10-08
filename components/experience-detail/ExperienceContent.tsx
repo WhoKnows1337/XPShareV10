@@ -69,6 +69,7 @@ interface ExperienceContentProps {
   storyText: string
   category: string
   heroImageUrl?: string
+  heroImageBlur?: string
   locationText?: string
   locationLat?: number
   locationLng?: number
@@ -111,6 +112,7 @@ export function ExperienceContent({
   storyText,
   category,
   heroImageUrl,
+  heroImageBlur,
   locationText,
   locationLat,
   locationLng,
@@ -181,6 +183,8 @@ export function ExperienceContent({
             fill
             className="object-cover"
             priority
+            placeholder={heroImageBlur ? 'blur' : 'empty'}
+            blurDataURL={heroImageBlur}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 900px"
           />
         </div>
@@ -189,6 +193,28 @@ export function ExperienceContent({
       {/* Title */}
       <motion.div variants={itemVariants}>
         <h1 className="text-3xl md:text-4xl font-bold mb-3">{title}</h1>
+
+        {/* Translation Badge */}
+        {isTranslated && originalLanguage && (
+          <Card className="mb-4 bg-muted/50 border-primary/20">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-2">
+                <Languages className="w-4 h-4 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">Translated from {originalLanguage.toUpperCase()}</p>
+                  <p className="text-xs text-muted-foreground">This experience was automatically translated</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowOriginal(!showOriginal)}
+              >
+                {showOriginal ? 'Show translation' : `Show original (${originalLanguage.toUpperCase()})`}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Meta Information */}
         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
