@@ -27,6 +27,8 @@ import {
 } from 'lucide-react'
 import { formatExternalEvent } from '@/lib/api/external-events'
 import type { ExternalEvent } from '@/lib/api/external-events'
+import { motion } from 'framer-motion'
+import { useScrollAnimation } from '@/lib/hooks/useScrollAnimation'
 
 
 interface PatternMatch {
@@ -67,8 +69,17 @@ export function PatternSidebar({
 
   const hasPatterns = patternMatches.length > 0 || externalEvents.length > 0
 
+  // Scroll-triggered animation
+  const { y, opacity } = useScrollAnimation()
+
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      style={{ y, opacity }}
+      initial={{ opacity: 0, y: 100 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+    >
       {/* Pattern Summary Card */}
       <Card>
         <CardHeader>
@@ -300,6 +311,6 @@ export function PatternSidebar({
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   )
 }

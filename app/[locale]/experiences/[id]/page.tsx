@@ -2,15 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
 import { ExperienceHeader } from '@/components/experience-detail/ExperienceHeader'
 import { ExperienceContent } from '@/components/experience-detail/ExperienceContent'
 import { RelatedSidebar } from '@/components/experience-detail/RelatedSidebar'
 import { PatternSidebar } from '@/components/experience-detail/PatternSidebar'
 import { MobileTabsLayout } from '@/components/experience-detail/MobileTabsLayout'
-import { CommentsSection } from '@/components/interactions/comments-section'
-import { CrossCategoryInsights } from '@/components/experience-detail/CrossCategoryInsights'
-import { MapboxMiniMap } from '@/components/experience-detail/MapboxMiniMap'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -20,6 +18,45 @@ import {
   getNearbyExperiences,
 } from '@/lib/api/experiences'
 import { getImageBlurDataURL } from '@/lib/utils/image-blur'
+
+// Dynamic imports for heavy components
+const CommentsSection = dynamic(
+  () => import('@/components/interactions/comments-section').then((mod) => ({ default: mod.CommentsSection })),
+  {
+    loading: () => (
+      <Card>
+        <CardContent className="p-8">
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    ),
+  }
+)
+
+const CrossCategoryInsights = dynamic(
+  () => import('@/components/experience-detail/CrossCategoryInsights').then((mod) => ({ default: mod.CrossCategoryInsights })),
+  {
+    loading: () => <Skeleton className="h-32 w-full" />,
+  }
+)
+
+const MapboxMiniMap = dynamic(
+  () => import('@/components/experience-detail/MapboxMiniMap').then((mod) => ({ default: mod.MapboxMiniMap })),
+  {
+    loading: () => <Skeleton className="aspect-square w-full" />,
+  }
+)
+
+const GraphVisualization = dynamic(
+  () => import('@/components/experience-detail/GraphVisualization').then((mod) => ({ default: mod.GraphVisualization })),
+  {
+    loading: () => <Skeleton className="aspect-square w-full" />,
+  }
+)
+
+const LiveRegion = dynamic(
+  () => import('@/components/accessibility/LiveRegion').then((mod) => ({ default: mod.LiveRegion }))
+)
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -481,6 +518,9 @@ export default async function ExperiencePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
+      {/* Live Region for Screen Reader Announcements */}
+      <LiveRegion experienceId={experience.id} />
 
       {/* Skip to Content Link for Accessibility */}
       <a

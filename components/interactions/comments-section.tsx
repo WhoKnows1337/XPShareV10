@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,6 +9,7 @@ import { MessageCircle, Trash2, Send, Reply, ChevronDown, ChevronUp } from 'luci
 import { formatDistanceToNow } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
+import { useVirtualizer } from '@tanstack/react-virtual'
 
 interface Comment {
   id: string
@@ -38,6 +39,7 @@ export function CommentsSection({ experienceId, currentUserId }: CommentsSection
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set())
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const parentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchComments()
@@ -189,6 +191,17 @@ export function CommentsSection({ experienceId, currentUserId }: CommentsSection
   const getReplies = (parentId: string) =>
     comments.filter((c) => c.parent_id === parentId)
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+  // Virtualization for long comment lists (>50 items)
+  const shouldVirtualize = rootComments.length > 50
+
+  const virtualizer = useVirtualizer({
+    count: rootComments.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 150,
+    overscan: 5,
+    enabled: shouldVirtualize,
+  })
 
   const renderComment = (comment: Comment, isReply = false) => {
     const profile = comment.user_profiles
@@ -371,6 +384,37 @@ export function CommentsSection({ experienceId, currentUserId }: CommentsSection
         ) : rootComments.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No comments yet. Be the first to share your thoughts!
+          </div>
+        ) : shouldVirtualize ? (
+          <div ref={parentRef} className="h-[600px] overflow-y-auto">
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const comment = rootComments.sort(
+                  (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                )[virtualItem.index]
+                return (
+                  <div
+                    key={virtualItem.key}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                  >
+                    {renderComment(comment)}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

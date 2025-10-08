@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { VisuallyHidden } from '@/components/ui/visually-hidden'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 
 interface MediaItem {
   id: string
@@ -24,6 +25,10 @@ interface MediaLightboxProps {
 
 export function MediaLightbox({ media, initialIndex, isOpen, onClose }: MediaLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Focus trap
+  useFocusTrap(dialogRef, isOpen)
 
   useEffect(() => {
     setCurrentIndex(initialIndex)
@@ -64,7 +69,10 @@ export function MediaLightbox({ media, initialIndex, isOpen, onClose }: MediaLig
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none">
+      <DialogContent
+        ref={dialogRef}
+        className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none"
+      >
         <VisuallyHidden>
           <DialogTitle>Media Gallery - {currentMedia.caption || `Image ${currentIndex + 1} of ${media.length}`}</DialogTitle>
         </VisuallyHidden>

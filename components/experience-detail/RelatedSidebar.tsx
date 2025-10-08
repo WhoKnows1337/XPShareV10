@@ -13,13 +13,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { UserPlus, UserCheck, MapPin, Calendar, Sparkles, TrendingUp } from 'lucide-react'
+import { UserPlus, UserCheck, MapPin, Calendar, Sparkles, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { TimelinePreviewChart } from './TimelinePreviewChart'
 import { toggleFollow } from '@/app/actions/follow'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface UserBadge {
   slug: string
@@ -81,6 +82,7 @@ export function RelatedSidebar({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [following, setFollowing] = useState(isFollowing)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   const displayName = user.display_name || user.username
   const initials = displayName.substring(0, 2).toUpperCase()
@@ -111,7 +113,38 @@ export function RelatedSidebar({
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      animate={{ width: isCollapsed ? '60px' : '280px' }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Collapse Toggle */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="w-full flex items-center justify-center gap-2"
+        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {isCollapsed ? (
+          <ChevronRight className="w-4 h-4" />
+        ) : (
+          <>
+            <ChevronLeft className="w-4 h-4" />
+            <span className="text-xs">Collapse</span>
+          </>
+        )}
+      </Button>
+
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
       {/* Author Profile Card */}
       <Card>
         <CardContent className="pt-6">
@@ -319,6 +352,9 @@ export function RelatedSidebar({
           )}
         </CardContent>
       </Card>
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }
