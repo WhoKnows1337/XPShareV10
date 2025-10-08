@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { HelpCircle } from 'lucide-react'
+import { useSubmissionStore } from '@/lib/stores/submissionStore'
 
 interface Question {
   id: string
@@ -23,6 +24,8 @@ interface Question {
 
 export default function QuestionsPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const { content, category: storeCategory } = useSubmissionStore()
   const [category, setCategory] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, any>>({})
@@ -31,16 +34,15 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     const loadQuestions = async () => {
-      // Get data from localStorage
-      const draft = localStorage.getItem('experience_draft')
-      if (!draft) {
-        router.push('/submit')
+      // Check if we have content in the store
+      if (!content || !storeCategory) {
+        const locale = pathname.split('/')[1]
+        router.push(`/${locale}/submit`)
         return
       }
 
       try {
-        const parsed = JSON.parse(draft)
-        const cat = parsed.category || 'other'
+        const cat = storeCategory || 'other'
         setCategory(cat)
 
         // Fetch questions from API
@@ -63,27 +65,22 @@ export default function QuestionsPage() {
     }
 
     loadQuestions()
-  }, [router])
+  }, [content, storeCategory, router, pathname])
 
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }))
   }
 
   const handleContinue = () => {
-    // Save answers to localStorage
-    const draft = JSON.parse(localStorage.getItem('experience_draft') || '{}')
-    localStorage.setItem(
-      'experience_draft',
-      JSON.stringify({
-        ...draft,
-        questions: answers,
-      })
-    )
-    router.push('/submit/patterns')
+    // TODO: Save answers to store if needed
+    // For now, just navigate to next step
+    const locale = pathname.split('/')[1]
+    router.push(`/${locale}/submit/witnesses`)
   }
 
   const handleSkip = () => {
-    router.push('/submit/patterns')
+    const locale = pathname.split('/')[1]
+    router.push(`/${locale}/submit/witnesses`)
   }
 
   const renderQuestion = (question: Question) => {
