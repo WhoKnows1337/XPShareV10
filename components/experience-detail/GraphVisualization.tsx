@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Graph from 'graphology'
 import { SigmaContainer, useLoadGraph, useSigma } from '@react-sigma/core'
-import '@react-sigma/core/lib/react-sigma.min.css'
+import '@react-sigma/core/lib/style.css'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
