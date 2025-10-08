@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { HelpCircle } from 'lucide-react'
 import { useSubmissionStore } from '@/lib/stores/submissionStore'
+import { categoryToQuestionSlugMap } from '@/components/submit/CategoryChips'
 
 interface Question {
   id: string
@@ -25,7 +26,8 @@ interface Question {
 export default function QuestionsPage() {
   const router = useRouter()
   const pathname = usePathname()
-  const { content, category: storeCategory } = useSubmissionStore()
+  const { content, confirmed } = useSubmissionStore()
+  const storeCategory = confirmed?.category
   const [category, setCategory] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, any>>({})
@@ -34,8 +36,21 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     const loadQuestions = async () => {
+      // Get full store state for debugging
+      const storeState = useSubmissionStore.getState()
+      console.log('[DEBUG questions] FULL STORE STATE:', {
+        content: storeState.content,
+        'confirmed.category': storeState.confirmed?.category,
+        'analysis.category': storeState.analysis?.category,
+        confirmed: storeState.confirmed,
+      })
+      console.log('[DEBUG questions] content:', content)
+      console.log('[DEBUG questions] storeCategory:', storeCategory)
+      console.log('[DEBUG questions] pathname:', pathname)
+
       // Check if we have content in the store
       if (!content || !storeCategory) {
+        console.log('[DEBUG questions] Missing content or category, redirecting to submit')
         const locale = pathname.split('/')[1]
         router.push(`/${locale}/submit`)
         return
@@ -45,8 +60,12 @@ export default function QuestionsPage() {
         const cat = storeCategory || 'other'
         setCategory(cat)
 
+        // Map frontend category to backend question slug
+        const questionSlug = categoryToQuestionSlugMap[cat] || cat
+        console.log('[DEBUG questions] Mapped category:', cat, '→', questionSlug)
+
         // Fetch questions from API
-        const response = await fetch(`/api/questions?category=${cat}`)
+        const response = await fetch(`/api/questions?category=${questionSlug}`)
         const data = await response.json()
 
         if (response.ok && data.questions) {

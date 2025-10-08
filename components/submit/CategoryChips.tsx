@@ -26,6 +26,18 @@ export const categories: Category[] = [
   { value: 'other', label: 'Andere', emoji: '❓', color: 'from-gray-500 to-slate-500' },
 ]
 
+// Mapping from frontend category values to backend question_categories slugs
+export const categoryToQuestionSlugMap: Record<string, string> = {
+  'ufo': 'ufo-sighting',
+  'paranormal': 'paranormal-activity',
+  'dreams': 'precognition', // or create a new 'dreams' category in DB
+  'psychedelic': 'entity-encounter', // or create new category
+  'spiritual': 'astral-projection',
+  'synchronicity': 'synchronicity',
+  'nde': 'dimensional-shift', // or create new category
+  'other': 'other',
+}
+
 interface CategoryChipsProps {
   selected?: string
   onSelect: (value: string) => void

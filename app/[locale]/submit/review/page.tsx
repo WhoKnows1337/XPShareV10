@@ -37,19 +37,23 @@ export default function ReviewPage() {
   const [showDatePicker, setShowDatePicker] = useState(false)
 
   useEffect(() => {
-    // Load from store
+    // Load from store and sync AI analysis to confirmed state
     if (analysis?.category) {
       setCategoryLocal(analysis.category)
+      setCategory(analysis.category) // Sync to store's confirmed.category
     }
     if (analysis?.tags) {
       setTagsLocal(analysis.tags)
+      setTags(analysis.tags) // Sync to store's confirmed.tags
     }
-  }, [analysis])
+  }, [analysis, setCategory, setTags])
 
   const handleCategorySelect = (value: string) => {
+    console.log('[DEBUG] handleCategorySelect called with:', value)
     setCategoryLocal(value)
     setSubcategoryLocal('') // Reset subcategory when category changes
     setCategory(value)
+    console.log('[DEBUG] After setCategory, store state:', useSubmissionStore.getState().confirmed.category)
   }
 
   const handleSubcategorySelect = (value: string) => {
@@ -80,6 +84,15 @@ export default function ReviewPage() {
   }
 
   const handleContinue = () => {
+    console.log('[DEBUG] handleContinue called')
+    console.log('[DEBUG] pathname:', pathname)
+    console.log('[DEBUG] LOCAL category:', category)
+
+    // Get the full store state to see what's actually saved
+    const storeState = useSubmissionStore.getState()
+    console.log('[DEBUG] STORE confirmed.category:', storeState.confirmed.category)
+    console.log('[DEBUG] STORE confirmed:', storeState.confirmed)
+
     // Combine date and time
     if (selectedDate) {
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
@@ -89,6 +102,7 @@ export default function ReviewPage() {
 
     // Extract locale from pathname and build the URL
     const locale = pathname.split('/')[1]
+    console.log('[DEBUG] Navigating to:', `/${locale}/submit/questions`)
     router.push(`/${locale}/submit/questions`)
   }
 
