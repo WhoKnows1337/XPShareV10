@@ -33,6 +33,7 @@ export function MapboxFullscreenDialog({
   nearbyExperiences = [],
 }: MapboxFullscreenDialogProps) {
   const [open, setOpen] = useState(false)
+  const [hasToken, setHasToken] = useState(true)
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
 
@@ -43,10 +44,12 @@ export function MapboxFullscreenDialog({
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
     if (!token) {
       console.error('Mapbox token not configured')
+      setHasToken(false)
       return
     }
 
     mapboxgl.accessToken = token
+    setHasToken(true)
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -139,7 +142,7 @@ export function MapboxFullscreenDialog({
 
         <div ref={mapContainer} className="w-full h-full rounded-lg" />
 
-        {!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN && (
+        {!hasToken && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
             <div className="text-center p-8">
               <Navigation className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
