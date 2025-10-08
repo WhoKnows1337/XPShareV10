@@ -95,34 +95,48 @@ export async function POST(req: NextRequest) {
 
 async function analyzeCategory(text: string): Promise<string | null> {
   try {
+    // Fetch valid categories from database
+    const supabase = await createClient()
+    const { data: categories } = await supabase
+      .from('question_categories')
+      .select('slug, name, description')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+
+    if (!categories || categories.length === 0) {
+      console.error('No categories found in database')
+      return 'other'
+    }
+
+    // Build category list for AI prompt
+    const categoryList = categories
+      .map(cat => `- ${cat.slug}: ${cat.description || cat.name}`)
+      .join('\n')
+
+    const validSlugs = categories.map(cat => cat.slug)
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
           content: `You are an AI that categorizes unusual experiences.
-Analyze the text and return ONLY ONE of these categories:
-- ufo: UFO sightings, unidentified aerial phenomena
-- paranormal: Ghosts, hauntings, unexplained phenomena
-- dreams: Dream experiences, lucid dreams, nightmares
-- psychedelic: Psychedelic experiences, altered states
-- spiritual: Spiritual experiences, meditation, enlightenment
-- synchronicity: Meaningful coincidences, patterns
-- nde: Near-death experiences
-- other: Anything else
+Analyze the text and return ONLY ONE of these category slugs (the exact slug string, nothing else):
+${categoryList}
 
-Return ONLY the category name, nothing else.`,
+IMPORTANT: Return ONLY the category slug exactly as shown above (e.g., "ufo-sighting", not "ufo").
+Example: If the user reports seeing a UFO, return "ufo-sighting"`,
         },
         { role: 'user', content: text },
       ],
       temperature: 0.3,
-      max_tokens: 20,
+      max_tokens: 50,
     })
 
     const category = completion.choices[0]?.message?.content?.trim().toLowerCase()
-    const validCategories = ['ufo', 'paranormal', 'dreams', 'psychedelic', 'spiritual', 'synchronicity', 'nde', 'other']
 
-    return validCategories.includes(category || '') ? category : 'other'
+    // Return the slug if valid, otherwise return first category as fallback
+    return validSlugs.includes(category || '') ? category : validSlugs[0]
   } catch (error) {
     console.error('Category analysis error:', error)
     return null

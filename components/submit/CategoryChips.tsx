@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,34 +9,20 @@ import { motion } from 'framer-motion'
 import { CategorySelectionModal } from './CategorySelectionModal'
 
 export interface Category {
+  id?: string
   value: string
   label: string
   emoji: string
   color: string
 }
 
-export const categories: Category[] = [
-  { value: 'ufo', label: 'UFO Sichtung', emoji: '🛸', color: 'from-blue-500 to-cyan-500' },
-  { value: 'paranormal', label: 'Paranormal', emoji: '👻', color: 'from-purple-500 to-pink-500' },
-  { value: 'dreams', label: 'Träume', emoji: '💭', color: 'from-indigo-500 to-purple-500' },
-  { value: 'psychedelic', label: 'Psychedelic', emoji: '🌈', color: 'from-pink-500 to-orange-500' },
-  { value: 'spiritual', label: 'Spirituell', emoji: '🙏', color: 'from-yellow-500 to-amber-500' },
+// Default fallback categories (used if API fails)
+const defaultCategories: Category[] = [
+  { value: 'ufo-sighting', label: 'UFO Sichtung', emoji: '🛸', color: 'from-blue-500 to-cyan-500' },
+  { value: 'paranormal-activity', label: 'Paranormal', emoji: '👻', color: 'from-purple-500 to-pink-500' },
   { value: 'synchronicity', label: 'Synchronizität', emoji: '✨', color: 'from-teal-500 to-emerald-500' },
-  { value: 'nde', label: 'Nahtoderfahrung', emoji: '🌟', color: 'from-violet-500 to-purple-500' },
   { value: 'other', label: 'Andere', emoji: '❓', color: 'from-gray-500 to-slate-500' },
 ]
-
-// Mapping from frontend category values to backend question_categories slugs
-export const categoryToQuestionSlugMap: Record<string, string> = {
-  'ufo': 'ufo-sighting',
-  'paranormal': 'paranormal-activity',
-  'dreams': 'precognition', // or create a new 'dreams' category in DB
-  'psychedelic': 'entity-encounter', // or create new category
-  'spiritual': 'astral-projection',
-  'synchronicity': 'synchronicity',
-  'nde': 'dimensional-shift', // or create new category
-  'other': 'other',
-}
 
 interface CategoryChipsProps {
   selected?: string
@@ -46,6 +32,35 @@ interface CategoryChipsProps {
 
 export function CategoryChips({ selected, onSelect, className }: CategoryChipsProps) {
   const [showModal, setShowModal] = useState(false)
+  const [categories, setCategories] = useState<Category[]>(defaultCategories)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Fetch categories from API
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        if (response.ok) {
+          const data = await response.json()
+          const mappedCategories = data.categories.map((cat: any) => ({
+            id: cat.id,
+            value: cat.slug,
+            label: cat.name,
+            emoji: cat.emoji || '📌',
+            color: cat.color || 'from-gray-500 to-slate-500',
+          }))
+          setCategories(mappedCategories)
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+        // Keep default categories on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   // Show first 4 categories + "Mehr" button
   const visibleCategories = categories.slice(0, 4)
@@ -112,6 +127,7 @@ export function CategoryChips({ selected, onSelect, className }: CategoryChipsPr
       onOpenChange={setShowModal}
       selected={selected}
       onSelect={onSelect}
+      categories={categories}
     />
     </>
   )

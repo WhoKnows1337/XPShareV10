@@ -11,7 +11,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { HelpCircle } from 'lucide-react'
 import { useSubmissionStore } from '@/lib/stores/submissionStore'
-import { categoryToQuestionSlugMap } from '@/components/submit/CategoryChips'
 
 interface Question {
   id: string
@@ -60,12 +59,10 @@ export default function QuestionsPage() {
         const cat = storeCategory || 'other'
         setCategory(cat)
 
-        // Map frontend category to backend question slug
-        const questionSlug = categoryToQuestionSlugMap[cat] || cat
-        console.log('[DEBUG questions] Mapped category:', cat, '→', questionSlug)
+        console.log('[DEBUG questions] Fetching questions for category:', cat)
 
-        // Fetch questions from API
-        const response = await fetch(`/api/questions?category=${questionSlug}`)
+        // Fetch questions from API (category is now the backend slug directly)
+        const response = await fetch(`/api/questions?category=${cat}`)
         const data = await response.json()
 
         if (response.ok && data.questions) {

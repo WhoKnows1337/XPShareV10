@@ -8,7 +8,7 @@ export async function GET() {
     // Get all active question categories
     const { data: categories, error } = await supabase
       .from('question_categories')
-      .select('id, slug, name, description, icon, is_active')
+      .select('id, slug, name, description, icon, emoji, color, is_active')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
 

@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Search, Check } from 'lucide-react'
-import { categories, type Category } from './CategoryChips'
+import { type Category } from './CategoryChips'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -21,6 +21,7 @@ interface CategorySelectionModalProps {
   onOpenChange: (open: boolean) => void
   selected?: string
   onSelect: (value: string) => void
+  categories: Category[]
 }
 
 // Extended category descriptions
@@ -40,6 +41,7 @@ export function CategorySelectionModal({
   onOpenChange,
   selected,
   onSelect,
+  categories,
 }: CategorySelectionModalProps) {
   const [search, setSearch] = useState('')
 
