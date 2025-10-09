@@ -1,35 +1,84 @@
 import { NextRequest, NextResponse } from 'next/server'
+import OpenAI from 'openai'
 
-// Simpler keyword-based extraction (will be replaced with OpenAI later)
-function extractDataFromText(text: string) {
-  // Simple location detection
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
+
+async function extractDataFromText(text: string) {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert at analyzing personal experience narratives and extracting structured information.
+
+Extract the following information from the user's experience text:
+1. **Title**: A concise, engaging title (max 60 characters)
+2. **Location**: Geographic location mentioned (city, region, country, or specific place)
+3. **Date/Time**: When did this happen? (parse relative times like "last night", "yesterday", or specific dates)
+4. **Tags**: 3-5 relevant keywords that describe the experience
+5. **Category**: Classify into one of these categories:
+   - UAP Sighting (UFO, unexplained aerial phenomena)
+   - Spiritual Experience (meditation, awakening, mystical)
+   - Synchronicity (meaningful coincidences)
+   - Paranormal (ghosts, unexplained events)
+   - Dream/Vision (vivid dreams, visions)
+   - Consciousness (altered states, psychedelics)
+   - Other
+
+For each field, provide:
+- value: the extracted information
+- confidence: a score from 0-100 indicating how confident you are
+
+Return ONLY valid JSON with this exact structure:
+{
+  "title": { "value": "string", "confidence": number },
+  "location": { "value": "string", "confidence": number },
+  "date": { "value": "string", "confidence": number },
+  "tags": { "value": ["string"], "confidence": number },
+  "category": { "value": "string", "confidence": number }
+}`,
+        },
+        {
+          role: 'user',
+          content: text,
+        },
+      ],
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+    })
+
+    const extracted = JSON.parse(completion.choices[0].message.content || '{}')
+    return extracted
+  } catch (error) {
+    console.error('OpenAI extraction error:', error)
+    // Fallback to simple extraction
+    return fallbackExtraction(text)
+  }
+}
+
+// Fallback if OpenAI fails
+function fallbackExtraction(text: string) {
   const locationKeywords = ['Zürich', 'Berlin', 'München', 'Hamburg', 'A1', 'Autobahn']
   const foundLocation = locationKeywords.find(loc =>
     text.toLowerCase().includes(loc.toLowerCase())
   )
 
-  // Simple time detection
   const timeKeywords = ['nachts', 'abends', 'morgens', 'mittags', 'spät']
   const foundTime = timeKeywords.find(time =>
     text.toLowerCase().includes(time.toLowerCase())
   )
 
-  // Simple category detection
-  let category = 'Unknown'
+  let category = 'Other'
   let categoryConfidence = 50
 
-  if (text.toLowerCase().includes('licht') || text.toLowerCase().includes('ufo') || text.toLowerCase().includes('objekt')) {
+  if (text.toLowerCase().includes('licht') || text.toLowerCase().includes('ufo')) {
     category = 'UAP Sighting'
-    categoryConfidence = 85
-  } else if (text.toLowerCase().includes('traum') || text.toLowerCase().includes('vision')) {
-    category = 'Dream/Vision'
-    categoryConfidence = 80
-  } else if (text.toLowerCase().includes('meditation') || text.toLowerCase().includes('spirituell')) {
-    category = 'Spiritual Experience'
-    categoryConfidence = 75
+    categoryConfidence = 70
   }
 
-  // Simple tag extraction (first 5 meaningful words)
   const words = text
     .toLowerCase()
     .replace(/[^\w\s]/g, '')
@@ -37,33 +86,17 @@ function extractDataFromText(text: string) {
     .filter(w => w.length > 4)
     .slice(0, 5)
 
-  // Generate title (first sentence or first 60 chars)
   const firstSentence = text.split(/[.!?]/)[0]
   const title = firstSentence.length > 60
     ? firstSentence.substring(0, 57) + '...'
     : firstSentence
 
   return {
-    title: {
-      value: title,
-      confidence: Math.min(95, Math.max(70, text.length / 2))
-    },
-    location: {
-      value: foundLocation || '',
-      confidence: foundLocation ? 85 : 40
-    },
-    date: {
-      value: foundTime || '',
-      confidence: foundTime ? 75 : 30
-    },
-    tags: {
-      value: words,
-      confidence: words.length > 0 ? 70 : 20
-    },
-    category: {
-      value: category,
-      confidence: categoryConfidence
-    }
+    title: { value: title, confidence: 60 },
+    location: { value: foundLocation || '', confidence: foundLocation ? 70 : 20 },
+    date: { value: foundTime || '', confidence: foundTime ? 60 : 20 },
+    tags: { value: words, confidence: 50 },
+    category: { value: category, confidence: categoryConfidence },
   }
 }
 
