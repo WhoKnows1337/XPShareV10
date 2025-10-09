@@ -51,7 +51,7 @@ const questionVariants = {
 }
 
 export const QuestionFlow = () => {
-  const { extractedData, answers, currentStep, answerQuestion, nextStep, prevStep } = useSubmitStore()
+  const { rawText, extractedData, answers, currentStep, answerQuestion, nextStep, prevStep } = useSubmitStore()
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 
