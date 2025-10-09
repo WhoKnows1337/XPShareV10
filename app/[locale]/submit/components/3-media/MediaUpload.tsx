@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useSubmitStore } from '@/lib/stores/submitStore'
 import { DropZone } from './DropZone'
 import { MediaPreview } from './MediaPreview'
+import { SketchModal } from './SketchModal'
 import { ProgressBar } from '../shared/ProgressBar'
 import { NavigationButtons } from '../shared/NavigationButtons'
 import { Camera, Video, Mic, Pencil } from 'lucide-react'
@@ -33,6 +34,7 @@ const typeButtonVariants = {
 export const MediaUpload = () => {
   const { uploadedFiles, uploadFile, removeFile, nextStep, prevStep, currentStep } = useSubmitStore()
   const [activeType, setActiveType] = useState<'photo' | 'video' | 'audio' | 'sketch'>('photo')
+  const [isSketchModalOpen, setIsSketchModalOpen] = useState(false)
 
   const mediaTypes = [
     { type: 'photo' as const, icon: <Camera className="w-6 h-6" />, label: 'Foto', accept: 'image/*' },
@@ -53,6 +55,10 @@ export const MediaUpload = () => {
 
   const handleSkip = () => {
     nextStep()
+  }
+
+  const handleSketchSave = async (file: File) => {
+    await uploadFile(file)
   }
 
   const currentTypeConfig = mediaTypes.find(t => t.type === activeType)
@@ -124,12 +130,14 @@ export const MediaUpload = () => {
               <p className="text-gray-600 mb-6">
                 Zeichne eine Skizze um deine Erfahrung zu visualisieren
               </p>
-              <button className="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsSketchModalOpen(true)}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+              >
                 Skizzen-Editor öffnen
-              </button>
-              <p className="text-sm text-gray-500 mt-4">
-                Excalidraw integration coming soon...
-              </p>
+              </motion.button>
             </div>
           ) : (
             <DropZone
@@ -176,6 +184,13 @@ export const MediaUpload = () => {
             </motion.button>
           </motion.div>
         </div>
+
+        {/* Sketch Modal */}
+        <SketchModal
+          isOpen={isSketchModalOpen}
+          onClose={() => setIsSketchModalOpen(false)}
+          onSave={handleSketchSave}
+        />
       </motion.div>
     </div>
   )

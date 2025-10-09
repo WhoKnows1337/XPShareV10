@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { useSubmitStore } from '@/lib/stores/submitStore'
 import { SimilarExperiences } from './SimilarExperiences'
-import { WorldMapPlaceholder } from './WorldMapPlaceholder'
+import { WorldMap } from './WorldMap'
 import { StatsCounter } from './StatsCounter'
 import { CheckCircle2, Sparkles, PlusCircle, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -100,7 +100,7 @@ export const Discovery = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             🌍 Auf der Weltkarte
           </h2>
-          <WorldMapPlaceholder mapData={mapData} />
+          <WorldMap mapData={mapData} />
         </motion.div>
 
         {/* Action Buttons */}

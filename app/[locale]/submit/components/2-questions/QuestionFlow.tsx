@@ -10,7 +10,8 @@ import { LocationQuestion } from './LocationQuestion'
 import { MultiChoice } from './MultiChoice'
 import { EmotionalTags } from './EmotionalTags'
 import { TextQuestion } from './TextQuestion'
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
+import * as Collapsible from '@radix-ui/react-collapsible'
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, FileText } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -146,6 +147,40 @@ export const QuestionFlow = () => {
             />
           </div>
         </motion.div>
+
+        {/* Original Text Display - Collapsible */}
+        <Collapsible.Root defaultOpen={false} className="mb-6">
+          <Collapsible.Trigger asChild>
+            <motion.button
+              className="w-full flex items-center justify-between p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 transition-colors"
+              whileHover={{ scale: 1.01 }}
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-gray-600" />
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-900">Dein ursprünglicher Text</p>
+                  <p className="text-sm text-gray-500">
+                    {rawText.length > 80 ? `"${rawText.slice(0, 80)}..."` : `"${rawText}"`}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            </motion.button>
+          </Collapsible.Trigger>
+
+          <Collapsible.Content>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 p-6 bg-gray-50 rounded-xl border-2 border-gray-200"
+            >
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {rawText}
+              </p>
+            </motion.div>
+          </Collapsible.Content>
+        </Collapsible.Root>
 
         {/* Question Card */}
         <AnimatePresence mode="wait">
