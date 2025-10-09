@@ -112,6 +112,8 @@ export interface SubmitStore {
   rawText: string
   wordCount: number
   charCount: number
+  isTypewriting: boolean
+  typewriterText: string
   extractedData: {
     title: ExtractedField
     location: ExtractedField
@@ -171,6 +173,7 @@ export interface SubmitStore {
 
   // Canvas
   setText: (text: string) => void
+  setTextTypewriter: (text: string) => void
   triggerExtraction: () => Promise<void>
   updateExtractedField: (field: keyof SubmitStore['extractedData'], value: any) => void
 
@@ -227,6 +230,8 @@ const initialState = {
   rawText: '',
   wordCount: 0,
   charCount: 0,
+  isTypewriting: false,
+  typewriterText: '',
   extractedData: {
     title: { value: '', confidence: 0, isManuallyEdited: false },
     location: { value: '', confidence: 0, isManuallyEdited: false },
@@ -309,6 +314,13 @@ export const useSubmitStore = create<SubmitStore>()(
           if (charCount > 50) {
             get().triggerExtraction()
           }
+        },
+
+        setTextTypewriter: (text: string) => {
+          set({
+            isTypewriting: true,
+            typewriterText: text,
+          })
         },
 
         triggerExtraction: async () => {

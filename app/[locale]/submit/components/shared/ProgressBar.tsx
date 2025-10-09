@@ -18,6 +18,21 @@ export const ProgressBar = ({
   const progress = (currentStep / totalSteps) * 100
   const isLastStep = currentStep === totalSteps
 
+  const getStepMessage = () => {
+    if (!showCompletionMessage) return null
+
+    switch (currentStep) {
+      case 4:
+        return <span className="text-sm text-blue-600 font-medium">Fast geschafft! ✨</span>
+      case 5:
+        return <span className="text-sm text-green-600 font-medium">Letzter Schritt! 🎉</span>
+      case 6:
+        return <span className="text-sm text-purple-600 font-medium">Fertig! 🎊</span>
+      default:
+        return null
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -29,9 +44,7 @@ export const ProgressBar = ({
           <span className="text-sm font-medium text-gray-700">
             Schritt {currentStep} von {totalSteps}
           </span>
-          {showCompletionMessage && isLastStep && (
-            <span className="text-sm text-green-600 font-medium">Letzter Schritt! 🎉</span>
-          )}
+          {getStepMessage()}
         </div>
       )}
 

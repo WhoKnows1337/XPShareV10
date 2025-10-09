@@ -36,7 +36,7 @@ const backdropVariants = {
 }
 
 export const STTModal = ({ isOpen, onClose }: STTModalProps) => {
-  const { setText } = useSubmitStore()
+  const { setTextTypewriter } = useSubmitStore()
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -168,7 +168,7 @@ export const STTModal = ({ isOpen, onClose }: STTModalProps) => {
 
   const handleFinish = () => {
     if (transcript) {
-      setText(transcript)
+      setTextTypewriter(transcript)
     }
     handleClose()
   }

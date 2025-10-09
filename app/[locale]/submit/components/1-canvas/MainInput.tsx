@@ -8,9 +8,28 @@ import { AutosaveIndicator, useAutosaveTracking } from '../shared/AutosaveIndica
 const MAX_CHARS = 9999
 
 export const MainInput = () => {
-  const { rawText, charCount, setText } = useSubmitStore()
+  const { rawText, charCount, isTypewriting, typewriterText, setText } = useSubmitStore()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { lastSaved, isSaving } = useAutosaveTracking()
+
+  // Typewriter effect
+  useEffect(() => {
+    if (isTypewriting && typewriterText) {
+      let i = 0
+      const timer = setInterval(() => {
+        if (i < typewriterText.length) {
+          const currentText = typewriterText.slice(0, i + 1)
+          setText(currentText)
+          i++
+        } else {
+          clearInterval(timer)
+          useSubmitStore.setState({ isTypewriting: false, typewriterText: '' })
+        }
+      }, 30) // 30ms per character
+
+      return () => clearInterval(timer)
+    }
+  }, [isTypewriting, typewriterText, setText])
 
   // Auto-grow textarea
   useEffect(() => {
