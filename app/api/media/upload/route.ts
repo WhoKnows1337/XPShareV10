@@ -33,15 +33,15 @@ export async function POST(request: NextRequest) {
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}/${timestamp}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
-    // Determine bucket based on type
+    // Determine bucket based on type (using existing Supabase buckets)
     const bucketMap = {
-      photo: 'experience-photos',
-      video: 'experience-videos',
-      audio: 'experience-audio',
-      sketch: 'experience-sketches',
+      photo: 'images',
+      video: 'images',  // Videos also go to images bucket
+      audio: 'audio',
+      sketch: 'images', // Sketches go to images bucket
     }
 
-    const bucket = bucketMap[type as keyof typeof bucketMap] || 'experience-photos'
+    const bucket = bucketMap[type as keyof typeof bucketMap] || 'images'
 
     // Convert File to ArrayBuffer then to Buffer
     const arrayBuffer = await file.arrayBuffer()
