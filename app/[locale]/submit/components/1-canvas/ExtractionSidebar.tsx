@@ -112,7 +112,7 @@ export const ExtractionSidebar = () => {
                   icon={<Tag className="w-4 h-4" />}
                   label="Tags"
                   field="tags"
-                  value={extractedData.tags.value.join(', ')}
+                  value={Array.isArray(extractedData.tags.value) ? extractedData.tags.value.join(', ') : ''}
                   confidence={extractedData.tags.confidence}
                   isEdited={extractedData.tags.isManuallyEdited}
                   onEdit={(value) =>

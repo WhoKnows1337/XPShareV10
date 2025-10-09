@@ -1,14 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { useSubmitStore } from '@/lib/stores/submitStore'
 import { DropZone } from './DropZone'
 import { MediaPreview } from './MediaPreview'
-import { SketchModal } from './SketchModal'
 import { ProgressBar } from '../shared/ProgressBar'
 import { NavigationButtons } from '../shared/NavigationButtons'
 import { Camera, Video, Mic, Pencil } from 'lucide-react'
+
+// Dynamic import for SketchModal to avoid SSR issues with Excalidraw
+const SketchModal = dynamic(() => import('./SketchModal').then(mod => ({ default: mod.SketchModal })), {
+  ssr: false
+})
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },

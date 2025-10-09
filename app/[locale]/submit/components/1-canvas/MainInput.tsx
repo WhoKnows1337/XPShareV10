@@ -121,8 +121,9 @@ export const MainInput = () => {
                 : 'text-red-500'
               }
             `}
+            suppressHydrationWarning
           >
-            {charCount.toLocaleString()} / {MAX_CHARS.toLocaleString()}
+            {charCount} / {MAX_CHARS}
           </motion.div>
         </div>
       </motion.div>
