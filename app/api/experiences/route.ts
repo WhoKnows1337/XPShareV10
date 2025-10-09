@@ -22,43 +22,66 @@ export async function POST(request: Request) {
 
     console.log('Authenticated user:', user.id, user.email)
 
-    // Parse request body
+    // Parse request body - NEW FLOW FORMAT
     const body = await request.json()
     const {
-      text,
+      // From extractedData
+      title,
       category,
-      tags,
       location,
       date,
-      time,
-      questions,
-      witnesses,
-      mediaFiles,
+      tags,
+      // From story
+      rawText,
+      enrichedText,
+      audioUrl,
+      // From answers
+      questionAnswers,
+      // From media
+      mediaUrls,
+      // From privacy
+      privacy,
+      // Optional
+      language,
     } = body
 
     // Validate required fields
-    if (!text || !category) {
+    if (!title || !category || !rawText) {
       return NextResponse.json(
-        { error: 'Missing required fields: text, category' },
+        { error: 'Missing required fields: title, category, rawText' },
         { status: 400 }
       )
     }
 
-    // Create the experience in the database
+    // Prepare experience data
+    const experienceData = {
+      user_id: user.id,
+      title,
+      category,
+      location_text: location?.text || null,
+      location_lat: location?.lat || null,
+      location_lng: location?.lng || null,
+      date_occurred: date ? new Date(date).toISOString().split('T')[0] : null,
+      story_text: enrichedText || rawText,
+      story_transcription: enrichedText ? rawText : null, // Keep original if enriched
+      story_audio_url: audioUrl || null,
+      tags: tags || [],
+      question_answers: questionAnswers || {},
+      is_anonymous: privacy === 'anonymous',
+      visibility: privacy || 'public',
+      language: language || 'de',
+      options: {
+        allowTagging: true,
+        allowComments: privacy !== 'private',
+        notifyOnSimilar: true,
+        hideExactLocation: privacy === 'anonymous',
+      },
+    }
+
+    // Insert experience
     const { data: experience, error: insertError } = await supabase
       .from('experiences')
-      .insert({
-        user_id: user.id,
-        title: text.substring(0, 100), // First 100 chars as title
-        story_text: text,
-        category,
-        tags: tags || [],
-        location_text: location,
-        date_occurred: date,
-        time_of_day: time,
-        visibility: 'public',
-        is_anonymous: false,
-      })
+      .insert(experienceData)
       .select()
       .single()
 
@@ -70,30 +93,91 @@ export async function POST(request: Request) {
       )
     }
 
-    // TODO: Upload media files to Supabase Storage
-    // TODO: Create witness relationships
-    // TODO: Generate embedding for the experience
-    // TODO: Create Neo4j nodes and relationships
+    // If there are media URLs, create media records
+    if (mediaUrls) {
+      const mediaRecords = []
 
-    // Check and award badges
+      // Photos
+      if (mediaUrls.photos?.length) {
+        mediaRecords.push(
+          ...mediaUrls.photos.map((url: string) => ({
+            experience_id: experience.id,
+            type: 'photo',
+            url,
+          }))
+        )
+      }
+
+      // Videos
+      if (mediaUrls.videos?.length) {
+        mediaRecords.push(
+          ...mediaUrls.videos.map((url: string) => ({
+            experience_id: experience.id,
+            type: 'video',
+            url,
+          }))
+        )
+      }
+
+      // Audio
+      if (mediaUrls.audio?.length) {
+        mediaRecords.push(
+          ...mediaUrls.audio.map((url: string) => ({
+            experience_id: experience.id,
+            type: 'audio',
+            url,
+          }))
+        )
+      }
+
+      // Sketches
+      if (mediaUrls.sketches?.length) {
+        mediaRecords.push(
+          ...mediaUrls.sketches.map((url: string) => ({
+            experience_id: experience.id,
+            type: 'sketch',
+            url,
+          }))
+        )
+      }
+
+      // Insert media records if any exist
+      if (mediaRecords.length > 0) {
+        const { error: mediaError } = await supabase
+          .from('experience_media')
+          .insert(mediaRecords)
+
+        if (mediaError) {
+          console.error('Media insert error:', mediaError)
+          // Don't fail the whole request, just log
+        }
+      }
+    }
+
+    // Award XP and check badges
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/gamification/check-badges`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'experience_submitted',
-          category,
-          timeOfDay: time,
-        }),
+      // Award XP for creating experience (50 XP)
+      await supabase.rpc('award_xp', {
+        p_user_id: user.id,
+        p_amount: 50,
+        p_reason: 'experience_submitted',
       })
-    } catch (badgeError) {
-      console.error('Badge checking error:', badgeError)
-      // Don't fail the request if badge checking fails
+
+      // Check and award badges
+      await supabase.rpc('check_and_award_badges', {
+        p_user_id: user.id,
+      })
+    } catch (xpError) {
+      console.error('XP/Badge error:', xpError)
+      // Don't fail the request
     }
 
     return NextResponse.json(
       {
         id: experience.id,
+        title: experience.title,
+        category: experience.category,
+        created_at: experience.created_at,
         message: 'Experience created successfully',
       },
       { status: 201 }

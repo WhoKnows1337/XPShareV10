@@ -380,14 +380,17 @@ export const useExperienceSubmitStore = create<ExperienceSubmitStore>()(
           const fileId = Math.random().toString(36).substring(7)
           const preview = URL.createObjectURL(file)
 
+          // Determine file type
+          const fileType = file.type.startsWith('image/') ? 'image' :
+                          file.type.startsWith('video/') ? 'video' : 'audio'
+
           // Add to store immediately
           set((state) => ({
             uploadedFiles: [
               ...state.uploadedFiles,
               {
                 id: fileId,
-                type: file.type.startsWith('image/') ? 'image' :
-                      file.type.startsWith('video/') ? 'video' : 'audio',
+                type: fileType,
                 file,
                 preview,
                 uploadProgress: 0,
@@ -395,10 +398,10 @@ export const useExperienceSubmitStore = create<ExperienceSubmitStore>()(
             ],
           }))
 
-          // TODO: Upload to server
           try {
             const formData = new FormData()
             formData.append('file', file)
+            formData.append('type', fileType === 'image' ? 'photo' : fileType)
 
             const response = await fetch('/api/media/upload', {
               method: 'POST',
@@ -619,46 +622,84 @@ export const useExperienceSubmitStore = create<ExperienceSubmitStore>()(
           set({ isLoading: true, error: null })
 
           try {
+            // Group media URLs by type
+            const mediaUrls: {
+              photos?: string[]
+              videos?: string[]
+              audio?: string[]
+              sketches?: string[]
+            } = {}
+
+            state.uploadedFiles.forEach((file) => {
+              if (file.url) {
+                if (file.type === 'image') {
+                  mediaUrls.photos = [...(mediaUrls.photos || []), file.url]
+                } else if (file.type === 'video') {
+                  mediaUrls.videos = [...(mediaUrls.videos || []), file.url]
+                } else if (file.type === 'audio') {
+                  mediaUrls.audio = [...(mediaUrls.audio || []), file.url]
+                }
+              }
+            })
+
+            // Add sketches if any
+            if (state.sketches.length > 0) {
+              mediaUrls.sketches = state.sketches.map((s) => s.preview)
+            }
+
             const response = await fetch('/api/experiences', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                originalText: state.rawText,
-                enrichedText: state.enrichedText,
-                displayMode: state.displayMode,
-                summary: state.summary,
+                title: state.summary.title || state.extractedData.title.value || state.rawText.substring(0, 60),
                 category: state.extractedData.category.value,
-                location: state.extractedData.location.value,
+                location: state.extractedData.location.value ? {
+                  text: state.extractedData.location.value,
+                } : undefined,
+                date: state.extractedData.date.value,
                 tags: state.extractedData.tags.value,
+                rawText: state.rawText,
+                enrichedText: state.displayMode === 'enriched' && state.enrichedText ? state.enrichedText : undefined,
                 questionAnswers: state.answers,
-                mediaIds: state.uploadedFiles.map((f) => f.id),
-                privacyLevel: state.privacyLevel,
-                witnessIds: state.witnesses.map((w) => w.id),
-                linkedExperienceIds: state.linkedExperiences,
+                mediaUrls: Object.keys(mediaUrls).length > 0 ? mediaUrls : undefined,
+                privacy: state.privacyLevel,
+                language: 'de',
               }),
             })
 
-            if (!response.ok) throw new Error('Submission failed')
+            if (!response.ok) {
+              const errorData = await response.json()
+              throw new Error(errorData.error || 'Submission failed')
+            }
 
             const data = await response.json()
 
             set({
-              experienceId: data.experienceId,
+              experienceId: data.id,
               currentStep: 6,
               isLoading: false,
             })
 
             // Fetch similar experiences
             const similarResponse = await fetch(
-              `/api/experiences/${data.experienceId}/similar`
+              `/api/experiences/${data.id}/similar`
             )
-            const similarData = await similarResponse.json()
 
-            set({
-              similarExperiences: similarData.similar,
-              mapData: similarData.mapData,
-              stats: similarData.stats,
-            })
+            if (similarResponse.ok) {
+              const similarData = await similarResponse.json()
+
+              set({
+                similarExperiences: similarData.similar || [],
+                stats: similarData.stats || {
+                  totalSimilar: 0,
+                  globalCategoryCount: 0,
+                  averageMatchScore: 0,
+                  countriesCount: 0,
+                  timeframeMonths: 0,
+                  trendPercentage: 0,
+                },
+              })
+            }
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : 'Submission failed',
