@@ -32,7 +32,7 @@ const typeButtonVariants = {
 }
 
 export const MediaUpload = () => {
-  const { uploadedFiles, uploadFile, removeFile, nextStep, prevStep, currentStep } = useSubmitStore()
+  const { uploadedFiles, uploadFile, removeFile, additionalNotes, setAdditionalNotes, nextStep, prevStep, currentStep } = useSubmitStore()
   const [activeType, setActiveType] = useState<'photo' | 'video' | 'audio' | 'sketch'>('photo')
   const [isSketchModalOpen, setIsSketchModalOpen] = useState(false)
 
@@ -160,6 +160,24 @@ export const MediaUpload = () => {
               Hochgeladene Dateien ({uploadedFiles.length})
             </h3>
             <MediaPreview files={uploadedFiles} onRemove={removeFile} />
+
+            {/* Optional Notes */}
+            <div className="mt-6">
+              <label htmlFor="media-notes" className="block text-sm font-medium text-gray-700 mb-2">
+                Notizen zu diesen Medien (optional)
+              </label>
+              <textarea
+                id="media-notes"
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+                placeholder="Füge hier zusätzliche Informationen zu deinen Medien hinzu..."
+                className="w-full min-h-[100px] p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none resize-none transition-colors"
+                maxLength={500}
+              />
+              <div className="text-right mt-1">
+                <span className="text-sm text-gray-500">{additionalNotes.length}/500</span>
+              </div>
+            </div>
           </motion.div>
         )}
 

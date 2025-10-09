@@ -181,6 +181,7 @@ export interface SubmitStore {
   uploadFile: (file: File) => Promise<void>
   removeFile: (fileId: string) => void
   addSketch: (data: SketchData) => void
+  setAdditionalNotes: (notes: string) => void
 
   // Review & Enrich
   generateEnrichedText: () => Promise<void>
@@ -196,6 +197,8 @@ export interface SubmitStore {
   addWitness: (user: User) => void
   removeWitness: (userId: string) => void
   generateInviteLink: () => Promise<string>
+  linkExperience: (experienceId: string) => void
+  unlinkExperience: (experienceId: string) => void
 
   // Submit
   submit: () => Promise<void>
@@ -441,6 +444,10 @@ export const useSubmitStore = create<SubmitStore>()(
           }))
         },
 
+        setAdditionalNotes: (notes: string) => {
+          set({ additionalNotes: notes })
+        },
+
         // ========================================
         // REVIEW & ENRICH ACTIONS
         // ========================================
@@ -611,6 +618,18 @@ export const useSubmitStore = create<SubmitStore>()(
           }))
 
           return url
+        },
+
+        linkExperience: (experienceId: string) => {
+          set((state) => ({
+            linkedExperiences: [...state.linkedExperiences, experienceId],
+          }))
+        },
+
+        unlinkExperience: (experienceId: string) => {
+          set((state) => ({
+            linkedExperiences: state.linkedExperiences.filter((id) => id !== experienceId),
+          }))
         },
 
         // ========================================

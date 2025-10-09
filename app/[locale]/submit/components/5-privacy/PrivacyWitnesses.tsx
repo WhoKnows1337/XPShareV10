@@ -24,17 +24,27 @@ export const PrivacyWitnesses = () => {
     privacyLevel,
     witnesses,
     inviteLinks,
+    linkedExperiences,
     currentStep,
     setPrivacy,
     addWitness,
     removeWitness,
     generateInviteLink,
+    linkExperience,
+    unlinkExperience,
     submit,
     prevStep,
   } = useSubmitStore()
 
   const [witnessEmail, setWitnessEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Mock user experiences (in real app, this would come from API)
+  const userExperiences = [
+    { id: '1', title: 'Erste Begegnung im Park', date: '2024-01-15' },
+    { id: '2', title: 'Lichtphänomen am Himmel', date: '2024-02-20' },
+    { id: '3', title: 'Seltsame Geräusche nachts', date: '2024-03-10' },
+  ]
 
   const privacyOptions = [
     {
@@ -252,6 +262,81 @@ export const PrivacyWitnesses = () => {
               </div>
             )}
           </div>
+        </motion.div>
+
+        {/* Link Own Experiences Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl shadow-xl p-6 border-2 border-gray-200 mb-8"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <LinkIcon className="w-5 h-5 text-gray-700" />
+            <h2 className="text-xl font-semibold text-gray-900">Verknüpfe eigene Erfahrungen</h2>
+            <span className="text-sm text-gray-500">(Optional)</span>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Hast du ähnliche Erfahrungen gemacht? Verknüpfe sie, um ein vollständiges Bild zu zeigen.
+          </p>
+
+          {userExperiences.length > 0 ? (
+            <div className="space-y-2">
+              {userExperiences.map((experience) => {
+                const isLinked = linkedExperiences.includes(experience.id)
+
+                return (
+                  <div
+                    key={experience.id}
+                    className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                      isLinked
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{experience.title}</p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(experience.date).toLocaleDateString('de-DE', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (isLinked) {
+                          unlinkExperience(experience.id)
+                        } else {
+                          linkExperience(experience.id)
+                        }
+                      }}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                        isLinked
+                          ? 'bg-purple-500 text-white hover:bg-purple-600'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {isLinked ? 'Verknüpft' : 'Verknüpfen'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>Du hast noch keine anderen Erfahrungen geteilt.</p>
+            </div>
+          )}
+
+          {linkedExperiences.length > 0 && (
+            <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              <p className="text-sm text-purple-700">
+                ✓ {linkedExperiences.length} {linkedExperiences.length === 1 ? 'Erfahrung' : 'Erfahrungen'} verknüpft
+              </p>
+            </div>
+          )}
         </motion.div>
 
         {/* Navigation Buttons */}
