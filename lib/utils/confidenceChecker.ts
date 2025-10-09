@@ -1,4 +1,4 @@
-import { ExperienceSubmitStore, Question as StoreQuestion } from '@/lib/stores/experienceSubmitStore'
+import { SubmitStore, Question as StoreQuestion } from '@/lib/stores/submitStore'
 
 export interface Question extends Omit<StoreQuestion, 'type'> {
   type: 'date' | 'location' | 'multiChoice' | 'emotionalTags' | 'text'
@@ -194,7 +194,7 @@ const CATEGORY_QUESTIONS: Record<string, Question[]> = {
 /**
  * Determine if Screen 2 (Questions) should be shown
  */
-export function shouldShowQuestions(extractedData: ExperienceSubmitStore['extractedData']): boolean {
+export function shouldShowQuestions(extractedData: SubmitStore['extractedData']): boolean {
   const fields = [
     extractedData.title,
     extractedData.location,
@@ -210,7 +210,7 @@ export function shouldShowQuestions(extractedData: ExperienceSubmitStore['extrac
  * Generate questions based on category and low-confidence fields
  */
 export function generateQuestions(
-  extractedData: ExperienceSubmitStore['extractedData']
+  extractedData: SubmitStore['extractedData']
 ): Question[] {
   const category = extractedData.category.value || 'Other'
   const categoryQuestions = CATEGORY_QUESTIONS[category] || CATEGORY_QUESTIONS['Other']
