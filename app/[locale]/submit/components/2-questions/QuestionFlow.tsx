@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSubmitStore } from '@/lib/stores/submitStore'
 import { generateQuestions, type Question } from '@/lib/utils/confidenceChecker'
+import { ProgressBar } from '../shared/ProgressBar'
 import { DateQuestion } from './DateQuestion'
 import { LocationQuestion } from './LocationQuestion'
 import { MultiChoice } from './MultiChoice'
@@ -49,7 +50,7 @@ const questionVariants = {
 }
 
 export const QuestionFlow = () => {
-  const { extractedData, answers, answerQuestion, nextStep, prevStep } = useSubmitStore()
+  const { extractedData, answers, currentStep, answerQuestion, nextStep, prevStep } = useSubmitStore()
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 
@@ -117,7 +118,10 @@ export const QuestionFlow = () => {
         exit="exit"
         className="max-w-3xl mx-auto"
       >
-        {/* Progress Bar */}
+        {/* Overall Progress Bar */}
+        <ProgressBar currentStep={currentStep} />
+
+        {/* Question Progress Bar */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}

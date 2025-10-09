@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useSubmitStore } from '@/lib/stores/submitStore'
-import { Globe, UserCheck, Lock, Users, Mail, Link as LinkIcon, ArrowLeft, Send, X } from 'lucide-react'
+import { ProgressBar } from '../shared/ProgressBar'
+import { NavigationButtons } from '../shared/NavigationButtons'
+import { Globe, UserCheck, Lock, Users, Mail, Link as LinkIcon, Send, X } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -91,25 +93,8 @@ export const PrivacyWitnesses = () => {
         animate="visible"
         className="max-w-4xl mx-auto"
       >
-        {/* Progress Indicator */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Schritt {currentStep} von 6</span>
-            <span className="text-sm text-green-600 font-medium">Letzter Schritt! 🎉</span>
-          </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-              initial={{ width: 0 }}
-              animate={{ width: `${(currentStep / 6) * 100}%` }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
-          </div>
-        </motion.div>
+        {/* Progress Bar */}
+        <ProgressBar currentStep={currentStep} showCompletionMessage={true} />
 
         {/* Header */}
         <motion.div
@@ -270,42 +255,14 @@ export const PrivacyWitnesses = () => {
         </motion.div>
 
         {/* Navigation Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="flex items-center justify-between"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={prevStep}
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Zurück</span>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: isSubmitting ? 1 : 1.05 }}
-            whileTap={{ scale: isSubmitting ? 1 : 0.95 }}
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl font-medium hover:shadow-xl transition-all shadow-lg disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Wird veröffentlicht...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                <span>Veröffentlichen</span>
-              </>
-            )}
-          </motion.button>
-        </motion.div>
+        <NavigationButtons
+          onBack={prevStep}
+          onNext={handleSubmit}
+          nextLabel="Veröffentlichen"
+          nextIcon={<Send className="w-5 h-5" />}
+          isNextLoading={isSubmitting}
+          nextVariant="success"
+        />
       </motion.div>
     </div>
   )

@@ -6,7 +6,9 @@ import { useSubmitStore } from '@/lib/stores/submitStore'
 import { EnrichedTextEditor } from './EnrichedTextEditor'
 import { CardPreview } from './CardPreview'
 import { SummaryEditor } from './SummaryEditor'
-import { ArrowLeft, ArrowRight, Sparkles, Eye, EyeOff, RotateCcw, Check } from 'lucide-react'
+import { ProgressBar } from '../shared/ProgressBar'
+import { NavigationButtons } from '../shared/NavigationButtons'
+import { Sparkles, Eye, EyeOff, RotateCcw, Check } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -87,25 +89,8 @@ export const ReviewEnrich = () => {
         animate="visible"
         className="max-w-6xl mx-auto"
       >
-        {/* Progress Indicator */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Schritt {currentStep} von 6</span>
-            <span className="text-sm text-purple-600 font-medium">Fast geschafft! ✨</span>
-          </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-              initial={{ width: 0 }}
-              animate={{ width: `${(currentStep / 6) * 100}%` }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
-          </div>
-        </motion.div>
+        {/* Progress Bar */}
+        <ProgressBar currentStep={currentStep} />
 
         {/* Header */}
         <motion.div
@@ -237,32 +222,12 @@ export const ReviewEnrich = () => {
         </div>
 
         {/* Navigation Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="flex items-center justify-between mt-12"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={prevStep}
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Zurück</span>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleContinue}
-            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:shadow-xl transition-all shadow-lg"
-          >
-            <span>Weiter</span>
-            <ArrowRight className="w-5 h-5" />
-          </motion.button>
-        </motion.div>
+        <div className="mt-12">
+          <NavigationButtons
+            onBack={prevStep}
+            onNext={handleContinue}
+          />
+        </div>
       </motion.div>
     </div>
   )
