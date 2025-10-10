@@ -6,7 +6,6 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, RotateCcw } from 'lucide-react'
 import type { ExcalidrawImperativeAPI, ExcalidrawElement } from '@excalidraw/excalidraw/types/types'
-import { exportToBlob } from '@excalidraw/excalidraw'
 
 const Excalidraw = dynamic(
   async () => {
@@ -40,6 +39,9 @@ export const SketchModal = ({ isOpen, onClose, onSave }: SketchModalProps) => {
     try {
       const elements = excalidrawAPI.getSceneElements()
       const appState = excalidrawAPI.getAppState()
+
+      // Dynamically import exportToBlob to avoid SSR issues
+      const { exportToBlob } = await import('@excalidraw/excalidraw')
 
       // Export to blob
       const blob = await exportToBlob({

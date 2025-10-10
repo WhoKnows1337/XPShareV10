@@ -683,7 +683,7 @@ export const useSubmitStore = create<SubmitStore>()(
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 title: state.summary.title || state.extractedData.title.value || state.rawText.substring(0, 60),
-                category: state.extractedData.category.value,
+                category: state.extractedData.category.value || 'other',
                 location: state.extractedData.location.value ? {
                   text: state.extractedData.location.value,
                 } : undefined,
