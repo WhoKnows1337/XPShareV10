@@ -64,6 +64,24 @@ export function PrivacyControls({ settings, onChange }: PrivacyControlsProps) {
               whileHover={{ x: 4 }}
               className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
             >
+              <RadioGroupItem value="private" id="private" className="mt-1" />
+              <div className="flex-1">
+                <Label htmlFor="private" className="cursor-pointer">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Lock className="h-4 w-4 text-red-600" />
+                    <span className="font-semibold">Private</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Only you can view this experience
+                  </p>
+                </Label>
+              </div>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ x: 4 }}
+              className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+            >
               <RadioGroupItem value="public" id="public" className="mt-1" />
               <div className="flex-1">
                 <Label htmlFor="public" className="cursor-pointer">
@@ -94,24 +112,6 @@ export function PrivacyControls({ settings, onChange }: PrivacyControlsProps) {
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Only people with the link can view
-                  </p>
-                </Label>
-              </div>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ x: 4 }}
-              className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
-            >
-              <RadioGroupItem value="private" id="private" className="mt-1" />
-              <div className="flex-1">
-                <Label htmlFor="private" className="cursor-pointer">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Lock className="h-4 w-4 text-red-600" />
-                    <span className="font-semibold">Private</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Only you can view this experience
                   </p>
                 </Label>
               </div>
@@ -153,53 +153,6 @@ export function PrivacyControls({ settings, onChange }: PrivacyControlsProps) {
               onCheckedChange={(checked) => updateSetting('anonymous', checked)}
             />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Location Privacy */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-purple-500" />
-            Location Privacy
-          </CardTitle>
-          <CardDescription>How precise should your location be?</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={settings.locationPrecision}
-            onValueChange={(value: any) => updateSetting('locationPrecision', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="exact">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>Exact Location</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="approximate">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>Approximate (~5km radius)</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="country">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>Country Only</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="hidden">
-                <div className="flex items-center gap-2">
-                  <EyeOff className="h-4 w-4" />
-                  <span>Hidden</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
         </CardContent>
       </Card>
 

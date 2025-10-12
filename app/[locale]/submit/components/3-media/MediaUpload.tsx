@@ -8,12 +8,21 @@ import { DropZone } from './DropZone'
 import { MediaPreview } from './MediaPreview'
 import { ProgressBar } from '../shared/ProgressBar'
 import { NavigationButtons } from '../shared/NavigationButtons'
-import { Camera, Video, Mic, Pencil } from 'lucide-react'
+import { WitnessManager } from '@/components/submit3/WitnessManager'
+import { Pencil } from 'lucide-react'
 
-// Dynamic import for SketchModal to avoid SSR issues with Excalidraw
-const SketchModal = dynamic(() => import('./SketchModal').then(mod => ({ default: mod.SketchModal })), {
-  ssr: false
-})
+// Dynamic import for Excalidraw to avoid SSR issues
+const Excalidraw = dynamic(
+  () => import('@excalidraw/excalidraw').then(mod => mod.Excalidraw),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-[500px] bg-gray-50 rounded-xl">
+        <p className="text-gray-500">Lade Skizzen-Editor...</p>
+      </div>
+    ),
+  }
+)
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -37,16 +46,21 @@ const typeButtonVariants = {
 }
 
 export const MediaUpload = () => {
-  const { uploadedFiles, uploadFile, removeFile, additionalNotes, setAdditionalNotes, nextStep, prevStep, currentStep } = useSubmitStore()
-  const [activeType, setActiveType] = useState<'photo' | 'video' | 'audio' | 'sketch'>('photo')
-  const [isSketchModalOpen, setIsSketchModalOpen] = useState(false)
-
-  const mediaTypes = [
-    { type: 'photo' as const, icon: <Camera className="w-6 h-6" />, label: 'Foto', accept: 'image/*' },
-    { type: 'video' as const, icon: <Video className="w-6 h-6" />, label: 'Video', accept: 'video/*' },
-    { type: 'audio' as const, icon: <Mic className="w-6 h-6" />, label: 'Audio', accept: 'audio/*' },
-    { type: 'sketch' as const, icon: <Pencil className="w-6 h-6" />, label: 'Skizze', accept: '' },
-  ]
+  const {
+    uploadedFiles,
+    uploadFile,
+    removeFile,
+    additionalNotes,
+    setAdditionalNotes,
+    witnesses,
+    addWitness,
+    removeWitness,
+    nextStep,
+    prevStep,
+    currentStep
+  } = useSubmitStore()
+  const [showSketch, setShowSketch] = useState(false)
+  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null)
 
   const handleFileUpload = async (files: File[]) => {
     for (const file of files) {
@@ -62,11 +76,38 @@ export const MediaUpload = () => {
     nextStep()
   }
 
-  const handleSketchSave = async (file: File) => {
-    await uploadFile(file)
-  }
+  const handleSaveSketch = async () => {
+    if (!excalidrawAPI) return
 
-  const currentTypeConfig = mediaTypes.find(t => t.type === activeType)
+    try {
+      const elements = excalidrawAPI.getSceneElements()
+      const appState = excalidrawAPI.getAppState()
+
+      if (elements.length === 0) {
+        alert('Bitte zeichne etwas, bevor du speicherst')
+        return
+      }
+
+      // Export to blob
+      const { exportToBlob } = await import('@excalidraw/excalidraw')
+      const blob = await exportToBlob({
+        elements,
+        appState,
+        files: excalidrawAPI.getFiles(),
+      })
+
+      // Convert blob to file
+      const file = new File([blob], `sketch-${Date.now()}.png`, {
+        type: 'image/png',
+      })
+
+      await uploadFile(file)
+      setShowSketch(false)
+    } catch (error) {
+      console.error('Error saving sketch:', error)
+      alert('Fehler beim Speichern der Skizze')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
@@ -86,71 +127,29 @@ export const MediaUpload = () => {
           transition={{ delay: 0.1 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            📸 Möchtest du Medien hinzufügen?
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            Medien & Zeugen
           </h1>
-          <p className="text-gray-600">
-            Fotos, Videos, Audio oder Skizzen können deine Erfahrung verdeutlichen
+          <p className="text-lg text-gray-600">
+            Füge Medien hinzu und benenne Personen, die dabei waren
           </p>
         </motion.div>
 
-        {/* Media Type Selector */}
+        {/* Unified Drop Zone for all media types */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex justify-center gap-4 mb-8"
-        >
-          {mediaTypes.map((type, index) => (
-            <motion.button
-              key={type.type}
-              variants={typeButtonVariants}
-              custom={index}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setActiveType(type.type)}
-              className={`flex flex-col items-center gap-2 px-6 py-4 rounded-xl border-2 transition-all ${
-                activeType === type.type
-                  ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
-                  : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {type.icon}
-              <span className="text-sm font-medium">{type.label}</span>
-            </motion.button>
-          ))}
-        </motion.div>
-
-        {/* Drop Zone or Sketch Canvas */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
           className="mb-8"
         >
-          {activeType === 'sketch' ? (
-            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-              <Pencil className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Skizze erstellen</h3>
-              <p className="text-gray-600 mb-6">
-                Zeichne eine Skizze um deine Erfahrung zu visualisieren
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsSketchModalOpen(true)}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
-              >
-                Skizzen-Editor öffnen
-              </motion.button>
-            </div>
-          ) : (
-            <DropZone
-              accept={currentTypeConfig?.accept || ''}
-              onFilesAdded={handleFileUpload}
-              maxFiles={activeType === 'photo' ? 10 : activeType === 'video' ? 3 : 5}
-            />
-          )}
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            📸 Medien hinzufügen (optional)
+          </h2>
+          <DropZone
+            accept="image/*,video/*,audio/*"
+            onFilesAdded={handleFileUpload}
+            maxFiles={20}
+          />
         </motion.div>
 
         {/* Media Preview */}
@@ -186,6 +185,79 @@ export const MediaUpload = () => {
           </motion.div>
         )}
 
+        {/* Witness Manager */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mb-8"
+        >
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            👥 Zeugen (optional)
+          </h2>
+          <WitnessManager
+            witnesses={witnesses}
+            onAdd={addWitness}
+            onRemove={removeWitness}
+          />
+        </motion.div>
+
+        {/* Inline Sketch Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mb-8"
+        >
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            ✏️ Skizze erstellen (optional)
+          </h2>
+
+          {!showSketch ? (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowSketch(true)}
+              className="w-full p-8 bg-white border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all"
+            >
+              <Pencil className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+              <p className="text-gray-700 font-medium">Skizzen-Editor öffnen</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Zeichne eine Skizze um deine Erfahrung zu visualisieren
+              </p>
+            </motion.button>
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div className="h-[500px] border-2 border-gray-200 rounded-t-xl">
+                <Excalidraw
+                  excalidrawAPI={(api) => setExcalidrawAPI(api)}
+                  initialData={{
+                    appState: { viewBackgroundColor: '#ffffff' },
+                  }}
+                />
+              </div>
+              <div className="p-4 bg-gray-50 flex items-center justify-between rounded-b-xl">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowSketch(false)}
+                  className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium"
+                >
+                  Abbrechen
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSaveSketch}
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Skizze speichern
+                </motion.button>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
         {/* Navigation Buttons */}
         <div className="relative">
           <NavigationButtons
@@ -207,13 +279,6 @@ export const MediaUpload = () => {
             </motion.button>
           </motion.div>
         </div>
-
-        {/* Sketch Modal */}
-        <SketchModal
-          isOpen={isSketchModalOpen}
-          onClose={() => setIsSketchModalOpen(false)}
-          onSave={handleSketchSave}
-        />
       </motion.div>
     </div>
   )

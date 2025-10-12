@@ -73,6 +73,18 @@ export const ExtractionSidebar = () => {
             >
               <motion.div variants={fieldVariants}>
                 <ExtractionField
+                  icon={<Folder className="w-4 h-4" />}
+                  label="Kategorie"
+                  field="category"
+                  value={extractedData.category.value}
+                  confidence={extractedData.category.confidence}
+                  isEdited={extractedData.category.isManuallyEdited}
+                  onEdit={(value) => updateExtractedField('category', value)}
+                />
+              </motion.div>
+
+              <motion.div variants={fieldVariants}>
+                <ExtractionField
                   icon={<Sparkles className="w-4 h-4" />}
                   label="Titel"
                   field="title"
@@ -121,18 +133,6 @@ export const ExtractionSidebar = () => {
                       value.split(',').map((t: string) => t.trim())
                     )
                   }
-                />
-              </motion.div>
-
-              <motion.div variants={fieldVariants}>
-                <ExtractionField
-                  icon={<Folder className="w-4 h-4" />}
-                  label="Kategorie"
-                  field="category"
-                  value={extractedData.category.value}
-                  confidence={extractedData.category.confidence}
-                  isEdited={extractedData.category.isManuallyEdited}
-                  onEdit={(value) => updateExtractedField('category', value)}
                 />
               </motion.div>
             </motion.div>

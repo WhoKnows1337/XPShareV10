@@ -36,7 +36,7 @@ export function TextInputScreen() {
           </h1>
           <p className="text-text-secondary text-base leading-relaxed max-w-2xl mt-4">
             {t(
-              'description',
+              'subtitle',
               'Beschreibe was passiert ist. Je detaillierter, desto besser kann das System Muster erkennen.'
             )}
           </p>

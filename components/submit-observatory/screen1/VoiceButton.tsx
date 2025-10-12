@@ -102,7 +102,8 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
     }
   };
 
-  if (!isSupported) {
+  // Don't render on server to avoid hydration mismatch
+  if (typeof window === 'undefined' || !isSupported) {
     return null;
   }
 

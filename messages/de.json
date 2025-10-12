@@ -110,7 +110,9 @@
       "placeholder": "Beginne deine Geschichte hier zu schreiben...\n\nWas ist passiert? Wann und wo? Was hast du gefühlt?",
       "continue": "Weiter",
       "wordCounter": {
-        "words": "{count} Wörter",
+        "words": "Wörter",
+        "start": "Beginne deine Erfahrung zu schreiben...",
+        "moreDetail": "→ MEHR DETAILS EMPFOHLEN",
         "minimum": "Mindestens 50 Wörter erforderlich",
         "bronze": "Bronze erreicht! (+20 XP)",
         "silver": "Silber erreicht! (+50 XP)",
@@ -120,14 +122,20 @@
         "optimal": "✓ OPTIMAL",
         "detailed": "✓ DETAILLIERT",
         "comprehensive": "✓ UMFASSEND",
-        "exceptional": "✓ AUSSERGEWÖHNLICH"
+        "exceptional": "✓ AUSSERGEWÖHNLICH",
+        "maxReached": "Maximales Detail erreicht!",
+        "earnedXP": "+{xp} XP gesamt verdient"
       },
       "voice": {
         "button": "Sprache",
+        "start": "🎤 Diktat",
+        "stop": "Stoppen",
         "recording": "Aufnahme...",
         "processing": "Verarbeite...",
         "error": "Aufnahme fehlgeschlagen",
-        "success": "Text erfolgreich transkribiert!"
+        "success": "Text erfolgreich transkribiert!",
+        "notSupported": "Sprachaufnahme wird in deinem Browser nicht unterstützt",
+        "permissionError": "Mikrofon-Berechtigung verweigert"
       },
       "ocr": {
         "button": "Text extrahieren",
@@ -152,10 +160,13 @@
         "badge": "✨ Automatisch erkannt",
         "category": "Kategorie",
         "tags": "Tags",
-        "editTitle": "Titel bearbeiten"
+        "editTitle": "Titel bearbeiten",
+        "change": "Ändern",
+        "addTag": "Tag hinzufügen"
       },
       "required": {
         "title": "Erforderliche Angaben",
+        "description": "Bitte fülle die folgenden Pflichtfelder aus",
         "date": "Datum",
         "datePlaceholder": "Wann ist das passiert?",
         "time": "Uhrzeit",
@@ -164,8 +175,10 @@
         "locationPlaceholder": "Wo ist das passiert?",
         "duration": "Dauer",
         "lessThan1min": "< 1 Minute",
+        "less1min": "< 1 Minute",
         "1to5min": "1-5 Minuten",
-        "moreThan5min": "> 5 Minuten"
+        "moreThan5min": "> 5 Minuten",
+        "more5min": "> 5 Minuten"
       },
       "extraQuestions": {
         "promptTitle": "Möchtest du mehr Details teilen?",
@@ -182,11 +195,25 @@
         "answered": "Beantwortet",
         "typeText": "Deine Antwort...",
         "typeScale": "Wert: {value}"
-      }
+      },
+      "extraPrompt": {
+        "title": "Möchtest du mehr Details teilen?",
+        "description": "Beantworte zusätzliche Fragen um Muster zu erkennen",
+        "benefit1": "+100 XP Bonus",
+        "benefit2": "Pattern Seeker Badge",
+        "benefit3": "Bessere Mustererkennung",
+        "time": "~5-8 Minuten",
+        "accept": "Ja, gerne!",
+        "decline": "Nein, danke"
+      },
+      "continue": "Weiter"
     },
     "screen3": {
       "title": "Zusammenfassung & Verbesserung",
       "subtitle": "Überprüfe und verfeinere deinen Beitrag",
+      "summarizing": "Erstelle Zusammenfassung...",
+      "summarizingDesc": "KI erstellt eine prägnante Zusammenfassung",
+      "continue": "Weiter →",
       "enhancement": {
         "label": "KI-Verbesserungen",
         "description": "Lasse KI deinen Text grammatikalisch und stilistisch verbessern",
@@ -203,6 +230,10 @@
       },
       "metadata": {
         "edit": "✏️"
+      },
+      "textEditor": {
+        "title": "Dein Text",
+        "description": "KI-Verbesserungen sind hervorgehoben"
       },
       "editor": {
         "legend": {

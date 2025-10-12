@@ -11,7 +11,7 @@ interface ProgressBarProps {
 
 export const ProgressBar = ({
   currentStep,
-  totalSteps = 6,
+  totalSteps = 5,
   showStepText = true,
   showCompletionMessage = false,
 }: ProgressBarProps) => {
@@ -26,8 +26,6 @@ export const ProgressBar = ({
         return <span className="text-sm text-blue-600 font-medium">Fast geschafft! ✨</span>
       case 5:
         return <span className="text-sm text-green-600 font-medium">Letzter Schritt! 🎉</span>
-      case 6:
-        return <span className="text-sm text-purple-600 font-medium">Fertig! 🎊</span>
       default:
         return null
     }

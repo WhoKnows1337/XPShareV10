@@ -2,44 +2,20 @@
 
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Mic } from 'lucide-react'
-import { Waveform } from './Waveform'
-import { LiveTranscript } from './LiveTranscript'
-import { Controls } from './Controls'
+import { Waveform } from './STTModal/Waveform'
+import { Controls } from './STTModal/Controls'
 import { useSubmitStore } from '@/lib/stores/submitStore'
+import { Loader2 } from 'lucide-react'
 
-interface STTModalProps {
-  isOpen: boolean
+interface InlineSTTProps {
   onClose: () => void
 }
 
-const modalVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: 20 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: 'spring', damping: 25, stiffness: 300 },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    y: 20,
-    transition: { duration: 0.2, ease: 'easeIn' },
-  },
-}
-
-const backdropVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-  exit: { opacity: 0 },
-}
-
-export const STTModal = ({ isOpen, onClose }: STTModalProps) => {
-  const { setTextTypewriter } = useSubmitStore()
+export const InlineSTT = ({ onClose }: InlineSTTProps) => {
+  const { rawText, setTextTypewriter } = useSubmitStore()
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const [transcript, setTranscript] = useState('')
+  const [isTranscribing, setIsTranscribing] = useState(false)
   const [duration, setDuration] = useState(0)
   const [audioData, setAudioData] = useState<number[]>([])
 
@@ -147,6 +123,7 @@ export const STTModal = ({ isOpen, onClose }: STTModalProps) => {
   }
 
   const transcribeAudio = async (audioBlob: Blob) => {
+    setIsTranscribing(true)
     try {
       const formData = new FormData()
       formData.append('audio', audioBlob)
@@ -159,28 +136,18 @@ export const STTModal = ({ isOpen, onClose }: STTModalProps) => {
       if (!response.ok) throw new Error('Transcription failed')
 
       const data = await response.json()
-      setTranscript(data.text)
+
+      // Append text with typewriter animation
+      const newText = rawText ? rawText + ' ' + data.text : data.text
+      setTextTypewriter(newText)
+
+      // Close inline STT after successful transcription
+      onClose()
     } catch (error) {
       console.error('Transcription error:', error)
-      setTranscript('Fehler bei der Transkription. Bitte versuchen Sie es erneut.')
+      alert('Fehler bei der Transkription. Bitte versuchen Sie es erneut.')
+      setIsTranscribing(false)
     }
-  }
-
-  const handleFinish = () => {
-    if (transcript) {
-      setTextTypewriter(transcript)
-    }
-    handleClose()
-  }
-
-  const handleClose = () => {
-    if (isRecording) {
-      stopRecording()
-    }
-    setTranscript('')
-    setDuration(0)
-    setAudioData([])
-    onClose()
   }
 
   const formatTime = (seconds: number) => {
@@ -191,85 +158,41 @@ export const STTModal = ({ isOpen, onClose }: STTModalProps) => {
 
   return (
     <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={handleClose}
-          />
-          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-            <motion.div
-              variants={modalVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Mic className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h2 className="text-2xl font-semibold text-gray-900">
-                    Erzähl deine Geschichte
-                  </h2>
-                </div>
-                <button
-                  onClick={handleClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Waveform */}
-              <div className="mb-6">
-                <Waveform
-                  audioData={audioData}
-                  isRecording={isRecording}
-                  isPaused={isPaused}
-                />
-              </div>
-
-              {/* Controls */}
-              <Controls
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="mt-6 p-6 bg-white rounded-xl border-2 border-blue-200 shadow-lg"
+      >
+        {isTranscribing ? (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+            <p className="text-gray-600">Transkribiere Audio...</p>
+          </div>
+        ) : (
+          <>
+            {/* Waveform */}
+            <div className="mb-6">
+              <Waveform
+                audioData={audioData}
                 isRecording={isRecording}
                 isPaused={isPaused}
-                onStart={startRecording}
-                onPause={pauseRecording}
-                onResume={resumeRecording}
-                onStop={stopRecording}
-                duration={formatTime(duration)}
               />
+            </div>
 
-              {/* Live Transcript */}
-              {transcript && (
-                <div className="mt-6">
-                  <LiveTranscript text={transcript} />
-                </div>
-              )}
-
-              {/* Finish Button */}
-              {transcript && (
-                <motion.button
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  onClick={handleFinish}
-                  className="mt-6 w-full px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
-                >
-                  Fertig
-                </motion.button>
-              )}
-            </motion.div>
-          </div>
-        </>
-      )}
+            {/* Controls */}
+            <Controls
+              isRecording={isRecording}
+              isPaused={isPaused}
+              onStart={startRecording}
+              onPause={pauseRecording}
+              onResume={resumeRecording}
+              onStop={stopRecording}
+              duration={formatTime(duration)}
+            />
+          </>
+        )}
+      </motion.div>
     </AnimatePresence>
   )
 }

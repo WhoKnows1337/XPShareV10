@@ -8,8 +8,7 @@ import { CardPreview } from './CardPreview'
 import { SummaryEditor } from './SummaryEditor'
 import { ProgressBar } from '../shared/ProgressBar'
 import { NavigationButtons } from '../shared/NavigationButtons'
-import * as Collapsible from '@radix-ui/react-collapsible'
-import { Sparkles, Eye, EyeOff, RotateCcw, Check, ChevronDown, Database } from 'lucide-react'
+import { Sparkles, Eye, EyeOff, RotateCcw, Check } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -45,7 +44,6 @@ export const ReviewEnrich = () => {
 
   const [isGenerating, setIsGenerating] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
-  const [isStructuredDataOpen, setIsStructuredDataOpen] = useState(false)
 
   // Auto-generate enriched text on mount
   useEffect(() => {
@@ -211,58 +209,6 @@ export const ReviewEnrich = () => {
             >
               <SummaryEditor />
             </motion.div>
-
-            {/* Section D: Structured Data (Collapsed) */}
-            {Object.keys(answers).length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Collapsible.Root
-                  open={isStructuredDataOpen}
-                  onOpenChange={setIsStructuredDataOpen}
-                >
-                  <Collapsible.Trigger asChild>
-                    <button className="w-full flex items-center justify-between p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <Database className="w-5 h-5 text-gray-600" />
-                        <span className="font-semibold text-gray-900">Strukturierte Daten</span>
-                        <span className="text-sm text-gray-500">
-                          ({Object.keys(answers).length} Antworten)
-                        </span>
-                      </div>
-                      <motion.div
-                        animate={{ rotate: isStructuredDataOpen ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronDown className="w-5 h-5 text-gray-600" />
-                      </motion.div>
-                    </button>
-                  </Collapsible.Trigger>
-
-                  <Collapsible.Content>
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-4 bg-white rounded-xl border-2 border-gray-200 overflow-hidden"
-                    >
-                      <div className="divide-y divide-gray-200">
-                        {Object.entries(answers).map(([question, answer], index) => (
-                          <div key={index} className="p-4">
-                            <p className="text-sm font-medium text-gray-700 mb-2">
-                              {question}
-                            </p>
-                            <p className="text-gray-900">{answer}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  </Collapsible.Content>
-                </Collapsible.Root>
-              </motion.div>
-            )}
           </div>
 
           {/* RIGHT: Card Preview */}

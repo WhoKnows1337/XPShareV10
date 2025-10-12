@@ -10,8 +10,7 @@ import { LocationQuestion } from './LocationQuestion'
 import { MultiChoice } from './MultiChoice'
 import { EmotionalTags } from './EmotionalTags'
 import { TextQuestion } from './TextQuestion'
-import * as Collapsible from '@radix-ui/react-collapsible'
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, FileText } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -54,6 +53,7 @@ export const QuestionFlow = () => {
   const { rawText, extractedData, answers, currentStep, answerQuestion, nextStep, prevStep } = useSubmitStore()
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [isTextExpanded, setIsTextExpanded] = useState(false)
 
   useEffect(() => {
     // Generate questions on mount
@@ -122,6 +122,65 @@ export const QuestionFlow = () => {
         {/* Overall Progress Bar */}
         <ProgressBar currentStep={currentStep} />
 
+        {/* Collapsible Text Preview */}
+        {rawText && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <motion.button
+              onClick={() => setIsTextExpanded(!isTextExpanded)}
+              className="w-full bg-white rounded-xl border-2 border-gray-200 p-4 text-left hover:border-gray-300 transition-colors"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Dein Text:</p>
+                  <motion.p
+                    className="text-gray-900 text-sm"
+                    initial={false}
+                    animate={{
+                      maxHeight: isTextExpanded ? '1000px' : '24px',
+                    }}
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: isTextExpanded ? 'unset' : 1,
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {rawText}
+                  </motion.p>
+                </div>
+                <motion.div
+                  animate={{ rotate: isTextExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="ml-4"
+                >
+                  <ArrowRight className="w-5 h-5 text-gray-400 transform rotate-90" />
+                </motion.div>
+              </div>
+            </motion.button>
+          </motion.div>
+        )}
+
+        {/* Step Title & Description */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 text-center"
+        >
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            Zusatzfragen
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Beantworte ein paar kurze Fragen, um deine Erfahrung zu vervollständigen und anderen zu helfen, ähnliche Erlebnisse zu finden.
+          </p>
+        </motion.div>
+
         {/* Question Progress Bar */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -147,40 +206,6 @@ export const QuestionFlow = () => {
             />
           </div>
         </motion.div>
-
-        {/* Original Text Display - Collapsible */}
-        <Collapsible.Root defaultOpen={false} className="mb-6">
-          <Collapsible.Trigger asChild>
-            <motion.button
-              className="w-full flex items-center justify-between p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 transition-colors"
-              whileHover={{ scale: 1.01 }}
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-gray-600" />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-900">Dein ursprünglicher Text</p>
-                  <p className="text-sm text-gray-500">
-                    {rawText.length > 80 ? `"${rawText.slice(0, 80)}..."` : `"${rawText}"`}
-                  </p>
-                </div>
-              </div>
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            </motion.button>
-          </Collapsible.Trigger>
-
-          <Collapsible.Content>
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-3 p-6 bg-gray-50 rounded-xl border-2 border-gray-200"
-            >
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {rawText}
-              </p>
-            </motion.div>
-          </Collapsible.Content>
-        </Collapsible.Root>
 
         {/* Question Card */}
         <AnimatePresence mode="wait">

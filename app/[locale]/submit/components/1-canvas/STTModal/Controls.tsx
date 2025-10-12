@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Mic, Pause, Play, Square } from 'lucide-react'
+import { Mic, Pause, Play, Check } from 'lucide-react'
 
 interface ControlsProps {
   isRecording: boolean
@@ -69,9 +69,10 @@ export const Controls = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onStop}
-          className="p-4 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+          className="p-4 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+          title="Aufnahme beenden"
         >
-          <Square className="w-6 h-6" />
+          <Check className="w-6 h-6" />
         </motion.button>
       </div>
 
