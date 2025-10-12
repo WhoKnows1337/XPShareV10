@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
-import { EnhancementToggle } from './EnhancementToggle';
 import { SummarySection } from './SummarySection';
 import { MetadataSection } from './MetadataSection';
 import { EnhancedTextEditor } from './EnhancedTextEditor';
@@ -104,13 +103,14 @@ export function EnhancedTextScreen() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Enhancement Toggle */}
-      <div className="glass-card p-6">
-        <EnhancementToggle
-          enabled={screen3.enhancementEnabled}
-          onToggle={toggleEnhancement}
-          isLoading={isEnhancing}
-        />
+      {/* Title */}
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-text-primary mb-2">
+          {t('title', 'Zusammenfassung & Verbesserung')}
+        </h1>
+        <p className="text-text-secondary">
+          {t('subtitle', 'Überprüfe und verfeinere deinen Beitrag')}
+        </p>
       </div>
 
       {/* Summary Section */}
@@ -119,15 +119,42 @@ export function EnhancedTextScreen() {
       {/* Metadata Section (Compact) */}
       <MetadataSection />
 
-      {/* Enhanced Text Editor */}
+      {/* Enhanced Text Editor with Brain Button */}
       <div className="glass-card p-8">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-text-primary">
-            {t('textEditor.title', 'Dein Text')}
-          </h3>
-          <p className="text-sm text-text-secondary mt-1">
-            {t('textEditor.description', 'KI-Verbesserungen sind hervorgehoben')}
-          </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">
+              {t('textEditor.title', 'Dein Text')}
+            </h3>
+            <p className="text-sm text-text-secondary mt-1">
+              {screen3.enhancementEnabled
+                ? t('textEditor.description', 'KI-Verbesserungen sind hervorgehoben')
+                : t('textEditor.descriptionOff', 'Originaltext')}
+            </p>
+          </div>
+          {/* Brain Button for Enhancement Toggle */}
+          <button
+            onClick={toggleEnhancement}
+            disabled={isEnhancing}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+              screen3.enhancementEnabled
+                ? 'bg-success-soft/20 border-2 border-success-soft text-success-soft'
+                : 'bg-text-primary/5 border-2 border-text-primary/20 text-text-secondary hover:bg-text-primary/10'
+            } ${isEnhancing ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isEnhancing ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <span className="text-xl">🧠</span>
+            )}
+            <span className="text-sm">
+              {isEnhancing
+                ? t('enhancement.loading', 'Verbessere...')
+                : screen3.enhancementEnabled
+                ? t('enhancement.active', 'KI aktiv')
+                : t('enhancement.inactive', 'KI aktivieren')}
+            </span>
+          </button>
         </div>
         <EnhancedTextEditor />
       </div>

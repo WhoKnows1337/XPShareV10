@@ -190,7 +190,9 @@
       "enhancement": {
         "label": "AI Enhancements",
         "description": "Let AI improve your text grammatically and stylistically",
-        "loading": "Enhancing text..."
+        "loading": "Enhancing text...",
+        "active": "AI Active",
+        "inactive": "Activate AI"
       },
       "summary": {
         "title": "Summary",
@@ -203,6 +205,11 @@
       },
       "metadata": {
         "edit": "✏️"
+      },
+      "textEditor": {
+        "title": "Your Text",
+        "description": "AI improvements are highlighted",
+        "descriptionOff": "Original text"
       },
       "editor": {
         "legend": {

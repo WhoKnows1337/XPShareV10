@@ -233,7 +233,9 @@
       "enhancement": {
         "label": "KI-Verbesserungen",
         "description": "Lasse KI deinen Text grammatikalisch und stilistisch verbessern",
-        "loading": "Verbessere Text..."
+        "loading": "Verbessere Text...",
+        "active": "KI aktiv",
+        "inactive": "KI aktivieren"
       },
       "summary": {
         "title": "Zusammenfassung",
@@ -254,7 +256,8 @@
       },
       "textEditor": {
         "title": "Dein Text",
-        "description": "KI-Verbesserungen sind hervorgehoben"
+        "description": "KI-Verbesserungen sind hervorgehoben",
+        "descriptionOff": "Originaltext"
       },
       "editor": {
         "legend": {
