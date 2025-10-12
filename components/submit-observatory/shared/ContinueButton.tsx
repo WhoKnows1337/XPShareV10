@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 interface ContinueButtonProps {
@@ -15,6 +16,26 @@ export function ContinueButton({
   label = 'Continue →',
   loading = false,
 }: ContinueButtonProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Only render on client after mount to avoid hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Don't render until mounted on client
+  if (!isMounted) {
+    return (
+      <button
+        disabled
+        className="btn-observatory flex items-center gap-2 group opacity-50"
+      >
+        <span>{label}</span>
+        <ArrowRight className="w-4 h-4" />
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={onClick}
