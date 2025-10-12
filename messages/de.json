@@ -155,12 +155,18 @@
       "title": "Details & Kontext",
       "subtitle": "Hilf uns deine Erfahrung zu verstehen",
       "analyzing": "Analysiere deinen Text...",
+      "analyzingDesc": "KI extrahiert Titel, Kategorie und Tags",
       "aiResults": {
         "title": "KI-Erkennung",
         "badge": "✨ Automatisch erkannt",
         "category": "Kategorie",
         "tags": "Tags",
         "editTitle": "Titel bearbeiten",
+        "titlePlaceholder": "Titel eingeben...",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "noTitle": "Kein Titel",
+        "noCategory": "Keine Kategorie",
         "change": "Ändern",
         "addTag": "Tag hinzufügen"
       },
@@ -181,6 +187,7 @@
         "more5min": "> 5 Minuten"
       },
       "extraQuestions": {
+        "title": "Zusätzliche Fragen",
         "promptTitle": "Möchtest du mehr Details teilen?",
         "promptSubtitle": "Beantworte zusätzliche Fragen um Muster zu erkennen",
         "benefits": "Was du bekommst:",
@@ -191,10 +198,15 @@
         "accept": "Ja, gerne!",
         "decline": "Nein, danke",
         "skip": "Alle überspringen",
+        "skipAll": "Alle überspringen",
         "question": "Frage {current} von {total}",
         "answered": "Beantwortet",
         "typeText": "Deine Antwort...",
         "typeScale": "Wert: {value}"
+      },
+      "question": {
+        "skip": "Überspringen",
+        "next": "Weiter →"
       },
       "extraPrompt": {
         "title": "Möchtest du mehr Details teilen?",
@@ -214,6 +226,10 @@
       "summarizing": "Erstelle Zusammenfassung...",
       "summarizingDesc": "KI erstellt eine prägnante Zusammenfassung",
       "continue": "Weiter →",
+      "toggle": {
+        "title": "🎚️ KI-Anreicherungen",
+        "description": "Hervorhebungen im Text zeigen"
+      },
       "enhancement": {
         "label": "KI-Verbesserungen",
         "description": "Lasse KI deinen Text grammatikalisch und stilistisch verbessern",
@@ -224,12 +240,17 @@
         "generating": "Generiere Zusammenfassung...",
         "regenerate": "Neu generieren",
         "edit": "Bearbeiten",
+        "placeholder": "Schreibe eine kurze Zusammenfassung...",
+        "save": "Speichern",
+        "noSummary": "Keine Zusammenfassung",
+        "info": "Diese Zusammenfassung erscheint als Preview in der Liste und Suche.",
         "charCount": "{count} / 250 Zeichen",
         "optimal": "Optimal",
         "tooLong": "Zu lang"
       },
       "metadata": {
-        "edit": "✏️"
+        "edit": "✏️",
+        "editTags": "✏️"
       },
       "textEditor": {
         "title": "Dein Text",

@@ -11,13 +11,16 @@ interface VoiceButtonProps {
 
 export function VoiceButton({ onTranscript }: VoiceButtonProps) {
   const t = useTranslations('submit.screen1.voice');
+  const [isMounted, setIsMounted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Check if browser supports voice recording
-  const isSupported = typeof window !== 'undefined' && 'mediaDevices' in navigator;
+  // Only render on client after mount to avoid hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -27,6 +30,9 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
       }
     };
   }, [isRecording]);
+
+  // Check if browser supports voice recording
+  const isSupported = typeof window !== 'undefined' && 'mediaDevices' in navigator;
 
   const startRecording = async () => {
     if (!isSupported) {
@@ -102,8 +108,8 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
     }
   };
 
-  // Don't render on server to avoid hydration mismatch
-  if (typeof window === 'undefined' || !isSupported) {
+  // Don't render until mounted on client to avoid hydration mismatch
+  if (!isMounted || !isSupported) {
     return null;
   }
 
