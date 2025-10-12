@@ -96,46 +96,195 @@
   },
   "submit": {
     "title": "Share Your Experience",
-    "steps": {
-      "category": "Category",
-      "details": "Details",
-      "media": "Media",
-      "review": "Review"
+    "progress": {
+      "step": "Step {current} of {total}",
+      "percentage": "Progress {progress}%",
+      "screen1": "Text Input",
+      "screen2": "Questions",
+      "screen3": "Summary",
+      "screen4": "Media & Witnesses"
     },
-    "category": {
-      "title": "What type of experience?",
-      "description": "Select the category that best describes your experience"
+    "screen1": {
+      "title": "Your Experience",
+      "subtitle": "Describe what happened",
+      "placeholder": "Start writing your story here...\n\nWhat happened? When and where? What did you feel?",
+      "continue": "Continue",
+      "wordCounter": {
+        "words": "{count} Words",
+        "minimum": "Minimum 50 words required",
+        "bronze": "Bronze reached! (+20 XP)",
+        "silver": "Silver reached! (+50 XP)",
+        "gold": "Gold reached! (+100 XP)",
+        "platinum": "Platinum reached! (+200 XP)",
+        "nextMilestone": "{count} more words until {milestone}",
+        "optimal": "✓ OPTIMAL",
+        "detailed": "✓ DETAILED",
+        "comprehensive": "✓ COMPREHENSIVE",
+        "exceptional": "✓ EXCEPTIONAL"
+      },
+      "voice": {
+        "button": "Voice",
+        "recording": "Recording...",
+        "processing": "Processing...",
+        "error": "Recording failed",
+        "success": "Text successfully transcribed!"
+      },
+      "ocr": {
+        "button": "Extract Text",
+        "modal": {
+          "title": "Extract Text from Image",
+          "camera": "Camera",
+          "upload": "Upload File",
+          "processing": "Extracting text...",
+          "edit": "Edit Text",
+          "insert": "Insert Text",
+          "cancel": "Cancel"
+        }
+      },
+      "privacy": "Your draft is automatically saved every 30 seconds."
     },
-    "details": {
-      "title": "Title",
-      "titlePlaceholder": "Brief title for your experience",
-      "description": "Description",
-      "descriptionPlaceholder": "Describe what happened in detail...",
-      "date": "When did this happen?",
-      "location": "Location",
-      "locationPlaceholder": "Where did this happen?",
-      "witnesses": "Were there any witnesses?",
-      "witnessCount": "Number of witnesses"
+    "screen2": {
+      "title": "Details & Context",
+      "subtitle": "Help us understand your experience",
+      "analyzing": "Analyzing your text...",
+      "aiResults": {
+        "title": "AI Detection",
+        "badge": "✨ Automatically detected",
+        "category": "Category",
+        "tags": "Tags",
+        "editTitle": "Edit title"
+      },
+      "required": {
+        "title": "Required Information",
+        "date": "Date",
+        "datePlaceholder": "When did this happen?",
+        "time": "Time",
+        "timePlaceholder": "Approximate time",
+        "location": "Location",
+        "locationPlaceholder": "Where did this happen?",
+        "duration": "Duration",
+        "lessThan1min": "< 1 minute",
+        "1to5min": "1-5 minutes",
+        "moreThan5min": "> 5 minutes"
+      },
+      "extraQuestions": {
+        "promptTitle": "Would you like to share more details?",
+        "promptSubtitle": "Answer additional questions to recognize patterns",
+        "benefits": "What you get:",
+        "benefit1": "+100 XP Bonus",
+        "benefit2": "Pattern Seeker Badge",
+        "benefit3": "Better pattern recognition",
+        "timeEstimate": "~5-8 minutes",
+        "accept": "Yes, please!",
+        "decline": "No, thanks",
+        "skip": "Skip all",
+        "question": "Question {current} of {total}",
+        "answered": "Answered",
+        "typeText": "Your answer...",
+        "typeScale": "Value: {value}"
+      }
     },
-    "media": {
-      "title": "Add Media (Optional)",
-      "photos": "Photos",
-      "audio": "Audio",
-      "sketch": "Sketch",
-      "upload": "Upload",
-      "uploading": "Uploading..."
+    "screen3": {
+      "title": "Summary & Enhancement",
+      "subtitle": "Review and refine your post",
+      "enhancement": {
+        "label": "AI Enhancements",
+        "description": "Let AI improve your text grammatically and stylistically",
+        "loading": "Enhancing text..."
+      },
+      "summary": {
+        "title": "Summary",
+        "generating": "Generating summary...",
+        "regenerate": "Regenerate",
+        "edit": "Edit",
+        "charCount": "{count} / 250 characters",
+        "optimal": "Optimal",
+        "tooLong": "Too long"
+      },
+      "metadata": {
+        "edit": "✏️"
+      },
+      "editor": {
+        "legend": {
+          "added": "AI Additions",
+          "enhanced": "AI Improvements"
+        }
+      }
     },
-    "review": {
-      "title": "Review Your Experience",
-      "submit": "Submit Experience",
-      "saveDraft": "Save as Draft",
-      "submitting": "Submitting..."
+    "screen4": {
+      "title": "Media & Witnesses",
+      "subtitle": "Add files and invite witnesses (optional)",
+      "files": {
+        "title": "Add Files",
+        "subtitle": "Photos, videos or sketches (optional)",
+        "optional": "Optional",
+        "photo": "Photo",
+        "photoDesc": "JPG, PNG, HEIC",
+        "video": "Video",
+        "videoDesc": "MP4, MOV, AVI",
+        "sketch": "Sketch",
+        "sketchDesc": "Drawing, diagram",
+        "uploaded": "Uploaded Files",
+        "info": "Files are stored securely and can be edited later. Maximum file size: 50 MB per file."
+      },
+      "witnesses": {
+        "title": "Invite Witnesses",
+        "subtitle": "Other people who were present (optional)",
+        "optional": "Optional",
+        "searchUser": "Search User",
+        "emailInvite": "Email Invite",
+        "shareLink": "Share Link",
+        "searchPlaceholder": "Username or email...",
+        "emailPlaceholder": "witness@example.com",
+        "send": "Send",
+        "cancel": "Cancel",
+        "close": "Close",
+        "linkDescription": "Share this link with witnesses via WhatsApp, SMS or other channels",
+        "copyLink": "Copy Link",
+        "linkCopied": "✓ Link copied!",
+        "invited": "Invited Witnesses",
+        "info": "Witnesses will receive a notification and can confirm the experience or add their own details."
+      },
+      "publish": {
+        "publish": "Publish",
+        "tooltipTitle": "Tip: Choose Visibility",
+        "tooltipDesc": "Click the arrow to change visibility: Public, Anonymous or Private.",
+        "selectVisibility": "Select Visibility",
+        "public": "Public",
+        "publicDesc": "Everyone can see this experience",
+        "anonymous": "Anonymous",
+        "anonymousDesc": "Public, but without your name",
+        "private": "Private",
+        "privateDesc": "Only you can see this experience",
+        "current": "Current"
+      }
     },
     "success": {
-      "title": "Experience Shared!",
-      "message": "Your experience has been successfully shared with the community.",
-      "viewExperience": "View Experience",
-      "shareAnother": "Share Another"
+      "title": "Experience Published!",
+      "subtitle": "Your experience has been successfully saved and can be viewed by others.",
+      "publishing": "Publishing experience...",
+      "publishingDesc": "Your experience is being saved and compared with similar patterns.",
+      "error": "Error publishing",
+      "retry": "Try again",
+      "view": "View Experience",
+      "share": "Share Link",
+      "submitAnother": "Submit Another",
+      "rewards": {
+        "title": "Rewards",
+        "xpEarned": "Experience points earned",
+        "levelUp": "Level Up!",
+        "newLevel": "New Level",
+        "badge": "Badge",
+        "keepGoing": "Share more experiences to unlock levels and badges!",
+        "progressInfo": "Your contributions help the community recognize patterns",
+        "thankYou": "Thank you!"
+      },
+      "similar": {
+        "title": "Similar Experiences",
+        "description": "These experiences have similar patterns or characteristics to yours. Explore them to learn more.",
+        "loading": "Searching for similar patterns...",
+        "noSimilar": "Your experience is unique! No similar patterns found yet."
+      }
     }
   },
   "experience": {

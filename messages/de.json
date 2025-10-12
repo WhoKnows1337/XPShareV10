@@ -96,46 +96,195 @@
   },
   "submit": {
     "title": "Teile Deine Erfahrung",
-    "steps": {
-      "category": "Kategorie",
-      "details": "Details",
-      "media": "Medien",
-      "review": "Überprüfung"
+    "progress": {
+      "step": "Schritt {current} von {total}",
+      "percentage": "Fortschritt {progress}%",
+      "screen1": "Text Eingabe",
+      "screen2": "Fragen",
+      "screen3": "Zusammenfassung",
+      "screen4": "Medien & Zeugen"
     },
-    "category": {
-      "title": "Welche Art von Erfahrung?",
-      "description": "Wähle die Kategorie, die deine Erfahrung am besten beschreibt"
+    "screen1": {
+      "title": "Deine Erfahrung",
+      "subtitle": "Beschreibe was passiert ist",
+      "placeholder": "Beginne deine Geschichte hier zu schreiben...\n\nWas ist passiert? Wann und wo? Was hast du gefühlt?",
+      "continue": "Weiter",
+      "wordCounter": {
+        "words": "{count} Wörter",
+        "minimum": "Mindestens 50 Wörter erforderlich",
+        "bronze": "Bronze erreicht! (+20 XP)",
+        "silver": "Silber erreicht! (+50 XP)",
+        "gold": "Gold erreicht! (+100 XP)",
+        "platinum": "Platin erreicht! (+200 XP)",
+        "nextMilestone": "Noch {count} Wörter bis {milestone}",
+        "optimal": "✓ OPTIMAL",
+        "detailed": "✓ DETAILLIERT",
+        "comprehensive": "✓ UMFASSEND",
+        "exceptional": "✓ AUSSERGEWÖHNLICH"
+      },
+      "voice": {
+        "button": "Sprache",
+        "recording": "Aufnahme...",
+        "processing": "Verarbeite...",
+        "error": "Aufnahme fehlgeschlagen",
+        "success": "Text erfolgreich transkribiert!"
+      },
+      "ocr": {
+        "button": "Text extrahieren",
+        "modal": {
+          "title": "Text aus Bild extrahieren",
+          "camera": "Kamera",
+          "upload": "Datei hochladen",
+          "processing": "Extrahiere Text...",
+          "edit": "Text bearbeiten",
+          "insert": "Text einfügen",
+          "cancel": "Abbrechen"
+        }
+      },
+      "privacy": "Dein Entwurf wird automatisch alle 30 Sekunden gespeichert."
     },
-    "details": {
-      "title": "Titel",
-      "titlePlaceholder": "Kurzer Titel für deine Erfahrung",
-      "description": "Beschreibung",
-      "descriptionPlaceholder": "Beschreibe detailliert, was passiert ist...",
-      "date": "Wann ist das passiert?",
-      "location": "Ort",
-      "locationPlaceholder": "Wo ist das passiert?",
-      "witnesses": "Gab es Zeugen?",
-      "witnessCount": "Anzahl der Zeugen"
+    "screen2": {
+      "title": "Details & Kontext",
+      "subtitle": "Hilf uns deine Erfahrung zu verstehen",
+      "analyzing": "Analysiere deinen Text...",
+      "aiResults": {
+        "title": "KI-Erkennung",
+        "badge": "✨ Automatisch erkannt",
+        "category": "Kategorie",
+        "tags": "Tags",
+        "editTitle": "Titel bearbeiten"
+      },
+      "required": {
+        "title": "Erforderliche Angaben",
+        "date": "Datum",
+        "datePlaceholder": "Wann ist das passiert?",
+        "time": "Uhrzeit",
+        "timePlaceholder": "Ungefähre Uhrzeit",
+        "location": "Ort",
+        "locationPlaceholder": "Wo ist das passiert?",
+        "duration": "Dauer",
+        "lessThan1min": "< 1 Minute",
+        "1to5min": "1-5 Minuten",
+        "moreThan5min": "> 5 Minuten"
+      },
+      "extraQuestions": {
+        "promptTitle": "Möchtest du mehr Details teilen?",
+        "promptSubtitle": "Beantworte zusätzliche Fragen um Muster zu erkennen",
+        "benefits": "Was du bekommst:",
+        "benefit1": "+100 XP Bonus",
+        "benefit2": "Pattern Seeker Badge",
+        "benefit3": "Bessere Mustererkennung",
+        "timeEstimate": "~5-8 Minuten",
+        "accept": "Ja, gerne!",
+        "decline": "Nein, danke",
+        "skip": "Alle überspringen",
+        "question": "Frage {current} von {total}",
+        "answered": "Beantwortet",
+        "typeText": "Deine Antwort...",
+        "typeScale": "Wert: {value}"
+      }
     },
-    "media": {
-      "title": "Medien Hinzufügen (Optional)",
-      "photos": "Fotos",
-      "audio": "Audio",
-      "sketch": "Skizze",
-      "upload": "Hochladen",
-      "uploading": "Wird hochgeladen..."
+    "screen3": {
+      "title": "Zusammenfassung & Verbesserung",
+      "subtitle": "Überprüfe und verfeinere deinen Beitrag",
+      "enhancement": {
+        "label": "KI-Verbesserungen",
+        "description": "Lasse KI deinen Text grammatikalisch und stilistisch verbessern",
+        "loading": "Verbessere Text..."
+      },
+      "summary": {
+        "title": "Zusammenfassung",
+        "generating": "Generiere Zusammenfassung...",
+        "regenerate": "Neu generieren",
+        "edit": "Bearbeiten",
+        "charCount": "{count} / 250 Zeichen",
+        "optimal": "Optimal",
+        "tooLong": "Zu lang"
+      },
+      "metadata": {
+        "edit": "✏️"
+      },
+      "editor": {
+        "legend": {
+          "added": "KI Ergänzungen",
+          "enhanced": "KI Verbesserungen"
+        }
+      }
     },
-    "review": {
-      "title": "Überprüfe Deine Erfahrung",
-      "submit": "Erfahrung Einreichen",
-      "saveDraft": "Als Entwurf Speichern",
-      "submitting": "Wird eingereicht..."
+    "screen4": {
+      "title": "Medien & Zeugen",
+      "subtitle": "Füge Dateien hinzu und lade Zeugen ein (optional)",
+      "files": {
+        "title": "Dateien hinzufügen",
+        "subtitle": "Fotos, Videos oder Skizzen (optional)",
+        "optional": "Optional",
+        "photo": "Foto",
+        "photoDesc": "JPG, PNG, HEIC",
+        "video": "Video",
+        "videoDesc": "MP4, MOV, AVI",
+        "sketch": "Skizze",
+        "sketchDesc": "Zeichnung, Diagramm",
+        "uploaded": "Hochgeladene Dateien",
+        "info": "Dateien werden sicher gespeichert und können später bearbeitet werden. Maximale Dateigröße: 50 MB pro Datei."
+      },
+      "witnesses": {
+        "title": "Zeugen einladen",
+        "subtitle": "Andere Personen, die dabei waren (optional)",
+        "optional": "Optional",
+        "searchUser": "Nutzer suchen",
+        "emailInvite": "E-Mail Einladung",
+        "shareLink": "Link teilen",
+        "searchPlaceholder": "Nutzername oder E-Mail...",
+        "emailPlaceholder": "zeuge@example.com",
+        "send": "Senden",
+        "cancel": "Abbrechen",
+        "close": "Schließen",
+        "linkDescription": "Teile diesen Link mit Zeugen per WhatsApp, SMS oder anderen Kanälen",
+        "copyLink": "Link kopieren",
+        "linkCopied": "✓ Link kopiert!",
+        "invited": "Eingeladene Zeugen",
+        "info": "Zeugen erhalten eine Benachrichtigung und können die Erfahrung bestätigen oder eigene Details hinzufügen."
+      },
+      "publish": {
+        "publish": "Veröffentlichen",
+        "tooltipTitle": "Tipp: Sichtbarkeit wählen",
+        "tooltipDesc": "Klicke auf den Pfeil um die Sichtbarkeit zu ändern: Öffentlich, Anonym oder Privat.",
+        "selectVisibility": "Sichtbarkeit wählen",
+        "public": "Öffentlich",
+        "publicDesc": "Alle können diese Erfahrung sehen",
+        "anonymous": "Anonym",
+        "anonymousDesc": "Öffentlich, aber ohne deinen Namen",
+        "private": "Privat",
+        "privateDesc": "Nur du kannst diese Erfahrung sehen",
+        "current": "Aktuell"
+      }
     },
     "success": {
-      "title": "Erfahrung Geteilt!",
-      "message": "Deine Erfahrung wurde erfolgreich mit der Community geteilt.",
-      "viewExperience": "Erfahrung Ansehen",
-      "shareAnother": "Weitere Teilen"
+      "title": "Erfahrung veröffentlicht!",
+      "subtitle": "Deine Erfahrung wurde erfolgreich gespeichert und kann von anderen gesehen werden.",
+      "publishing": "Veröffentliche Erfahrung...",
+      "publishingDesc": "Deine Erfahrung wird gespeichert und mit ähnlichen Mustern verglichen.",
+      "error": "Fehler beim Veröffentlichen",
+      "retry": "Erneut versuchen",
+      "view": "Erfahrung ansehen",
+      "share": "Link teilen",
+      "submitAnother": "Weitere eintragen",
+      "rewards": {
+        "title": "Belohnungen",
+        "xpEarned": "Erfahrungspunkte verdient",
+        "levelUp": "Level Up!",
+        "newLevel": "Neues Level",
+        "badge": "Abzeichen",
+        "keepGoing": "Teile mehr Erfahrungen um Level und Abzeichen freizuschalten!",
+        "progressInfo": "Deine Beiträge helfen der Community, Muster zu erkennen",
+        "thankYou": "Vielen Dank!"
+      },
+      "similar": {
+        "title": "Ähnliche Erfahrungen",
+        "description": "Diese Erfahrungen haben ähnliche Muster oder Merkmale wie deine. Erkunde sie, um mehr zu erfahren.",
+        "loading": "Suche ähnliche Muster...",
+        "noSimilar": "Deine Erfahrung ist einzigartig! Noch keine ähnlichen Muster gefunden."
+      }
     }
   },
   "experience": {
