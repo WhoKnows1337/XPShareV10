@@ -1,24 +1,35 @@
-'use client'
+'use client';
 
-import { Canvas } from './components/1-canvas/Canvas'
-import { QuestionFlow } from './components/2-questions/QuestionFlow'
-import { MediaUpload } from './components/3-media/MediaUpload'
-import { ReviewEnrich } from './components/4-review/ReviewEnrich'
-import { PrivacyWitnesses } from './components/5-privacy/PrivacyWitnesses'
-import { Discovery } from './components/6-discovery/Discovery'
-import { useSubmitStore } from '@/lib/stores/submitStore'
+import { useEffect } from 'react';
+import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
+import { ProgressIndicator } from '@/components/submit-observatory/ProgressIndicator';
+import { TextInputScreen } from '@/components/submit-observatory/screen1/TextInputScreen';
+import { AIAnalysisScreen } from '@/components/submit-observatory/screen2/AIAnalysisScreen';
+import { EnhancedTextScreen } from '@/components/submit-observatory/screen3/EnhancedTextScreen';
+import { FilesWitnessesScreen } from '@/components/submit-observatory/screen4/FilesWitnessesScreen';
+import { SuccessScreen } from '@/components/submit-observatory/success/SuccessScreen';
 
 export default function ExperienceSubmitPage() {
-  const { currentStep } = useSubmitStore()
+  const { currentStep, loadDraft } = useSubmitFlowStore();
+
+  // Load draft on mount
+  useEffect(() => {
+    loadDraft();
+  }, [loadDraft]);
 
   return (
-    <div className="min-h-screen">
-      {currentStep === 1 && <Canvas />}
-      {currentStep === 2 && <QuestionFlow />}
-      {currentStep === 3 && <MediaUpload />}
-      {currentStep === 4 && <ReviewEnrich />}
-      {currentStep === 5 && <PrivacyWitnesses />}
-      {currentStep === 6 && <Discovery />}
+    <div className="min-h-screen bg-space-deep relative">
+      {/* Progress Indicator - hide on success screen */}
+      {currentStep <= 4 && <ProgressIndicator />}
+
+      {/* Content Area - with top padding for fixed progress bar */}
+      <div className={currentStep <= 4 ? 'pt-32 pb-20 px-4' : 'pt-20 pb-20 px-4'}>
+        {currentStep === 1 && <TextInputScreen />}
+        {currentStep === 2 && <AIAnalysisScreen />}
+        {currentStep === 3 && <EnhancedTextScreen />}
+        {currentStep === 4 && <FilesWitnessesScreen />}
+        {currentStep === 5 && <SuccessScreen />}
+      </div>
     </div>
-  )
+  );
 }

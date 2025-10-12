@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
 import { AuthProvider } from "@/lib/auth/context";
-import { Navbar } from "@/components/layout/navbar";
+import { ConditionalNavbar } from "@/components/layout/conditional-navbar";
 import { RootLayoutClient } from "@/components/layout/root-layout-client";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "sonner";
@@ -10,6 +10,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
+import { Starfield } from '@/components/layout/Starfield';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -70,11 +71,12 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
+        <Starfield />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
               <RootLayoutClient>
-                <Navbar />
+                <ConditionalNavbar />
                 {children}
                 <Toaster position="top-right" richColors />
               </RootLayoutClient>
