@@ -82,8 +82,8 @@ export function TextInputScreen() {
         </div>
       </div>
 
-      {/* Privacy Notice - Ultra Compact */}
-      <div className="p-2 bg-glass-bg border border-glass-border rounded flex items-center gap-2 text-xs text-text-tertiary leading-tight">
+      {/* Privacy Notice - Hidden */}
+      {/* <div className="p-2 bg-glass-bg border border-glass-border rounded flex items-center gap-2 text-xs text-text-tertiary leading-tight">
         <Lock className="w-3 h-3 flex-shrink-0" />
         <span>
           {t(
@@ -91,7 +91,7 @@ export function TextInputScreen() {
             'Dein Entwurf wird automatisch alle 30 Sekunden gespeichert.'
           )}
         </span>
-      </div>
+      </div> */}
 
       {/* Navigation */}
       <NavigationButtons

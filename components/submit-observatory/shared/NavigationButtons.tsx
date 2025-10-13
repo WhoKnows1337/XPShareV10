@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Loader2, RotateCcw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface NavigationButtonsProps {
   onBack?: () => void;
@@ -33,39 +34,25 @@ export function NavigationButtons({
   resetConfirm = false,
 }: NavigationButtonsProps) {
   const { lastSaved, isDraft } = useSubmitFlowStore();
-  const [timeAgo, setTimeAgo] = useState<string>('');
+  const [showSaveStatus, setShowSaveStatus] = useState(false);
 
-  // Update time ago every 10 seconds
+  // Show save status briefly when lastSaved changes
   useEffect(() => {
-    const updateTimeAgo = () => {
-      if (!lastSaved) {
-        setTimeAgo('');
-        return;
-      }
+    if (!lastSaved || !isDraft) {
+      setShowSaveStatus(false);
+      return;
+    }
 
-      const now = new Date();
-      const saved = new Date(lastSaved);
-      const diffMs = now.getTime() - saved.getTime();
-      const diffSec = Math.floor(diffMs / 1000);
-      const diffMin = Math.floor(diffSec / 60);
-      const diffHour = Math.floor(diffMin / 60);
+    // Show the status
+    setShowSaveStatus(true);
 
-      if (diffSec < 10) {
-        setTimeAgo('Gerade gespeichert');
-      } else if (diffSec < 60) {
-        setTimeAgo(`Vor ${diffSec}s gespeichert`);
-      } else if (diffMin < 60) {
-        setTimeAgo(`Vor ${diffMin} Min`);
-      } else {
-        setTimeAgo(`Vor ${diffHour}h ${diffMin % 60}m`);
-      }
-    };
+    // Hide after 3 seconds
+    const timeout = setTimeout(() => {
+      setShowSaveStatus(false);
+    }, 3000);
 
-    updateTimeAgo();
-    const interval = setInterval(updateTimeAgo, 10000); // Update every 10s
-
-    return () => clearInterval(interval);
-  }, [lastSaved]);
+    return () => clearTimeout(timeout);
+  }, [lastSaved, isDraft]);
 
   return (
     <div className="grid grid-cols-3 gap-4 pt-6">
@@ -98,12 +85,20 @@ export function NavigationButtons({
 
       {/* Center Column: Draft Status */}
       <div className="flex items-center justify-center">
-        {isDraft && timeAgo && (
-          <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
-            <Save className="w-3 h-3" />
-            <span>{timeAgo}</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {showSaveStatus && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center gap-1.5 text-xs text-success-soft"
+            >
+              <Save className="w-3 h-3" />
+              <span>Gespeichert</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Right Column: Next Button */}
