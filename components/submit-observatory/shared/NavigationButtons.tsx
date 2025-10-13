@@ -1,10 +1,7 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Loader2, RotateCcw, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
-import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 
 interface NavigationButtonsProps {
   onBack?: () => void;
@@ -33,26 +30,7 @@ export function NavigationButtons({
   showReset = false,
   resetConfirm = false,
 }: NavigationButtonsProps) {
-  const { lastSaved, isDraft } = useSubmitFlowStore();
-  const [showSaveStatus, setShowSaveStatus] = useState(false);
-
-  // Show save status briefly when lastSaved changes
-  useEffect(() => {
-    if (!lastSaved || !isDraft) {
-      setShowSaveStatus(false);
-      return;
-    }
-
-    // Show the status
-    setShowSaveStatus(true);
-
-    // Hide after 3 seconds
-    const timeout = setTimeout(() => {
-      setShowSaveStatus(false);
-    }, 3000);
-
-    return () => clearTimeout(timeout);
-  }, [lastSaved, isDraft]);
+  // Save status functionality removed per user request
 
   return (
     <div className="grid grid-cols-3 gap-4 pt-6">
@@ -85,20 +63,7 @@ export function NavigationButtons({
 
       {/* Center Column: Draft Status */}
       <div className="flex items-center justify-center">
-        <AnimatePresence>
-          {showSaveStatus && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="flex items-center gap-1.5 text-xs text-success-soft"
-            >
-              <Save className="w-3 h-3" />
-              <span>Gespeichert</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Save status hidden per user request */}
       </div>
 
       {/* Right Column: Next Button */}
