@@ -118,6 +118,10 @@
         "silver": "Silber erreicht! (+50 XP)",
         "gold": "Gold erreicht! (+100 XP)",
         "platinum": "Platin erreicht! (+200 XP)",
+        "bronzeAchieved": "+{xp} XP für detaillierte Beschreibung!",
+        "silverAchieved": "+{xp} XP! Excellent Detail Level!",
+        "goldAchieved": "+{xp} XP! Exceptional Story Depth!",
+        "platinumAchieved": "+{xp} XP! Legendary Detail Reached!",
         "nextMilestone": "Noch {count} Wörter bis {milestone}",
         "optimal": "✓ OPTIMAL",
         "detailed": "✓ DETAILLIERT",
@@ -149,7 +153,10 @@
           "cancel": "Abbrechen"
         }
       },
-      "privacy": "Dein Entwurf wird automatisch alle 30 Sekunden gespeichert."
+      "privacy": "Dein Entwurf wird automatisch alle 30 Sekunden gespeichert.",
+      "privacyDetail": "Lokal gesichert • Niemand sieht deine Notizen bis zur Veröffentlichung",
+      "minWordsHint": "⚠️ Mindestens 50 Wörter für bessere Analyse empfohlen",
+      "aiAnalysisButton": "Zur AI-Analyse →"
     },
     "screen2": {
       "title": "Details & Kontext",
@@ -158,7 +165,9 @@
       "analyzingDesc": "KI extrahiert Titel, Kategorie und Tags",
       "aiResults": {
         "title": "KI-Erkennung",
-        "badge": "✨ Automatisch erkannt",
+        "badge": "🎯 KI-Analyse abgeschlossen",
+        "celebrationText": "Deine Erfahrung wurde analysiert! Wir haben automatisch Titel, Kategorie und {count} relevante Tags erkannt.",
+        "confidence": "Konfidenz: {score}%",
         "category": "Kategorie",
         "tags": "Tags",
         "editTitle": "Titel bearbeiten",
@@ -209,14 +218,14 @@
         "next": "Weiter →"
       },
       "extraPrompt": {
-        "title": "Möchtest du mehr Details teilen?",
-        "description": "Beantworte zusätzliche Fragen um Muster zu erkennen",
-        "benefit1": "+100 XP Bonus",
-        "benefit2": "Pattern Seeker Badge",
-        "benefit3": "Bessere Mustererkennung",
-        "time": "~5-8 Minuten",
-        "accept": "Ja, gerne!",
-        "decline": "Nein, danke"
+        "title": "💎 Noch mehr Details? Verdiene Extra-Punkte!",
+        "description": "XP-Share lebt von den oft irrelevant wirkenden Details. Beantworte optionale Zusatzfragen für bessere Pattern-Matches!",
+        "benefit1": "🔮 Präzisere Ähnlichkeits-Matches finden",
+        "benefit2": "+50 XP für jede vollständige Fragen-Seite",
+        "benefit3": "🏆 Chance auf \"Pattern Seeker\" Badge",
+        "time": "⏱️ 3-5 Minuten · Überspringbar",
+        "accept": "🎯 Ja, Extra-Punkte verdienen!",
+        "decline": "Später"
       },
       "continue": "Weiter"
     },
@@ -233,19 +242,23 @@
       "enhancement": {
         "label": "KI-Verbesserungen",
         "description": "Lasse KI deinen Text grammatikalisch und stilistisch verbessern",
-        "loading": "Verbessere Text...",
+        "loading": "Verbessere...",
         "active": "KI aktiv",
-        "inactive": "KI aktivieren"
+        "inactive": "KI aktivieren",
+        "tooltip": "💡 KI verbessert Lesbarkeit und Struktur. Deine Geschichte bleibt unverändert - nur besser formuliert!",
+        "tooltipDetail": "Du kannst jederzeit zwischen Original und Enhanced umschalten.",
+        "activeInfo": "✅ Text wurde mit KI optimiert. Die KI hat Struktur und Lesbarkeit verbessert, basierend auf deinen Zusatzinformationen."
       },
       "summary": {
-        "title": "Zusammenfassung",
+        "title": "📋 Kurzzusammenfassung",
         "generating": "Generiere Zusammenfassung...",
-        "regenerate": "Neu generieren",
-        "edit": "Bearbeiten",
+        "regenerate": "KI neu generieren",
+        "edit": "Edit",
         "placeholder": "Schreibe eine kurze Zusammenfassung...",
         "save": "Speichern",
         "noSummary": "Keine Zusammenfassung",
-        "info": "Diese Zusammenfassung erscheint als Preview in der Liste und Suche.",
+        "info": "👁️ Diese Zusammenfassung erscheint als Preview in Feed und Suchergebnissen.",
+        "infoDetail": "Empfohlen: 150-200 Zeichen für optimale Lesbarkeit",
         "charCount": "{count} / 250 Zeichen",
         "optimal": "Optimal",
         "tooLong": "Zu lang"
@@ -256,8 +269,8 @@
       },
       "textEditor": {
         "title": "Dein Text",
-        "description": "KI-Verbesserungen sind hervorgehoben",
-        "descriptionOff": "Originaltext"
+        "description": "✨ KI-Verbesserungen sind grün hervorgehoben",
+        "descriptionOff": "Originaltext ohne Änderungen"
       },
       "editor": {
         "legend": {
@@ -283,9 +296,11 @@
         "info": "Dateien werden sicher gespeichert und können später bearbeitet werden. Maximale Dateigröße: 50 MB pro Datei."
       },
       "witnesses": {
-        "title": "Zeugen einladen",
-        "subtitle": "Andere Personen, die dabei waren (optional)",
+        "title": "🤝 Augenzeugen & Glaubwürdigkeit",
+        "subtitle": "War jemand dabei? Lade Zeugen ein die deine Erfahrung bestätigen können!",
         "optional": "Optional",
+        "xpBonus": "+30 XP pro bestätigtem Zeugen!",
+        "credibility": "Augenzeugen erhöhen die Glaubwürdigkeit deiner Erfahrung erheblich.",
         "searchUser": "Nutzer suchen",
         "emailInvite": "E-Mail Einladung",
         "shareLink": "Link teilen",
@@ -298,7 +313,10 @@
         "copyLink": "Link kopieren",
         "linkCopied": "✓ Link kopiert!",
         "invited": "Eingeladene Zeugen",
-        "info": "Zeugen erhalten eine Benachrichtigung und können die Erfahrung bestätigen oder eigene Details hinzufügen."
+        "info": "💡 Eingeladene Zeugen erhalten eine Benachrichtigung und können:",
+        "infoPoint1": "Die Erfahrung bestätigen",
+        "infoPoint2": "Eigene Details und Perspektiven hinzufügen",
+        "infoPoint3": "Dir +30 XP verschaffen wenn sie bestätigen"
       },
       "publish": {
         "publish": "Veröffentlichen",
@@ -325,14 +343,18 @@
       "share": "Link teilen",
       "submitAnother": "Weitere eintragen",
       "rewards": {
-        "title": "Belohnungen",
-        "xpEarned": "Erfahrungspunkte verdient",
-        "levelUp": "Level Up!",
-        "newLevel": "Neues Level",
+        "title": "🎁 Deine Belohnungen",
+        "xpEarned": "XP Verdient",
+        "xpSubtext": "💪 Du wirst stärker!",
+        "levelUp": "🎉 Level Up!",
+        "newLevel": "Level",
+        "levelUpSubtext": "Neue Möglichkeiten freigeschaltet!",
+        "badgeEarned": "Neue Badges",
         "badge": "Abzeichen",
-        "keepGoing": "Teile mehr Erfahrungen um Level und Abzeichen freizuschalten!",
-        "progressInfo": "Deine Beiträge helfen der Community, Muster zu erkennen",
-        "thankYou": "Vielen Dank!"
+        "keepGoing": "🎯 Weiter so! Teile mehr Erfahrungen um Level und Badges freizuschalten!",
+        "nextMilestone": "Nächstes Level bei 500 XP",
+        "progressInfo": "💫 Deine Beiträge helfen der Community, Muster zu erkennen",
+        "thankYou": "🙏 Danke!"
       },
       "similar": {
         "title": "Ähnliche Erfahrungen",
