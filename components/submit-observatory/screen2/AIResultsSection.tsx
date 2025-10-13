@@ -46,8 +46,21 @@ export function AIResultsSection({
   const getCategoryTranslation = (category: string) => {
     // Normalize to lowercase and handle edge cases
     const normalizedCategory = category.toLowerCase();
+
+    // Map legacy/shortened category names to full keys
+    const categoryKeyMap: Record<string, string> = {
+      'ufo': 'ufo_sighting',
+      'spiritual': 'spiritual_experience',
+      'nde': 'near_death_experience',
+      'psychic': 'psychic_experience',
+      'cryptid': 'cryptid_encounter',
+    };
+
+    // Use mapped key if available, otherwise use normalized category
+    const translationKey = categoryKeyMap[normalizedCategory] || normalizedCategory;
+
     try {
-      return tCategories(normalizedCategory);
+      return tCategories(translationKey);
     } catch (error) {
       // Fallback if translation not found
       return category;
