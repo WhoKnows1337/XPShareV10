@@ -30,14 +30,14 @@ export function TextInputScreen() {
       {/* Main Card */}
       <div className="glass-card p-8 md:p-12">
         {/* Header Section */}
-        <div className="mb-8">
+        <div className="mb-8 animate-fly-in-up">
           <h1 className="section-title-observatory">
-            {t('title', 'Dokumentiere deine Erfahrung')}
+            {t('title', 'Deine außergewöhnliche Erfahrung')}
           </h1>
           <p className="text-text-secondary text-base leading-relaxed max-w-2xl mt-4">
             {t(
               'subtitle',
-              'Beschreibe was passiert ist. Je detaillierter, desto besser kann das System Muster erkennen.'
+              'Was hast du erlebt, das die Realität in Frage stellt? Erzähle deine Geschichte - jedes Detail könnte wichtig sein.'
             )}
           </p>
         </div>
@@ -49,7 +49,7 @@ export function TextInputScreen() {
             onChange={setText}
             placeholder={t(
               'placeholder',
-              'Last night at 3:33 AM, I observed...'
+              '3:33 Uhr nachts... Ich sah ein Licht am Himmel...\n\nOder beginne mit: "Es war ein ganz normaler Dienstag, bis..."'
             )}
           />
         </div>
@@ -66,22 +66,32 @@ export function TextInputScreen() {
         </div>
 
         {/* Privacy Notice */}
-        <div className="mt-8 p-5 bg-text-primary/5 border border-text-primary/10 rounded-lg flex items-start gap-3">
-          <Lock className="w-4 h-4 text-text-tertiary flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-text-tertiary leading-relaxed">
-            {t(
-              'privacy',
-              'Deine Daten bleiben verschlüsselt und werden nur mit deiner Zustimmung geteilt.'
-            )}
-          </p>
+        <div className="mt-8 p-5 bg-text-primary/5 border border-text-primary/10 rounded-lg flex items-start gap-3 hover:bg-text-primary/8 transition-all">
+          <Lock className="w-4 h-4 text-observatory-gold flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {t(
+                'privacy',
+                'Deine Geschichte gehört dir. Du entscheidest am Ende: Öffentlich, Anonym oder Privat.'
+              )}
+            </p>
+            <p className="text-xs text-text-tertiary mt-1">
+              {t('privacyDetail', 'Entwürfe werden automatisch gespeichert und bleiben privat.')}
+            </p>
+          </div>
         </div>
 
         {/* Continue Button */}
-        <div className="flex justify-end mt-8">
+        <div className="flex flex-col items-end gap-2 mt-8">
+          {screen1.wordCount > 0 && screen1.wordCount < 50 && (
+            <p className="text-xs text-warning-soft animate-shake-subtle">
+              💡 {t('minWordsHint', 'Empfehlung: Mindestens 50 Wörter für bessere Pattern-Erkennung')}
+            </p>
+          )}
           <ContinueButton
             onClick={goNext}
             disabled={!canGoNext()}
-            label={t('continue', 'Weiter →')}
+            label={t('continue', 'Zur AI-Analyse →')}
           />
         </div>
       </div>

@@ -49,10 +49,11 @@ export function TextInputArea({ value, onChange, placeholder }: TextInputAreaPro
         placeholder={placeholder}
         className="w-full min-h-[220px] bg-space-deep/80 border border-text-primary/20 rounded-lg
                    px-4 pt-10 pb-4 text-text-primary text-base leading-relaxed
-                   resize-none outline-none transition-all duration-200
+                   resize-none outline-none transition-all duration-300
                    placeholder:text-text-primary/30
                    focus:border-observatory-gold/50 focus:shadow-[0_0_0_3px_rgba(212,165,116,0.1),0_4px_12px_rgba(0,0,0,0.4)]
-                   hover:border-text-primary/30"
+                   focus:animate-pulse-glow
+                   hover:border-text-primary/30 hover:shadow-[0_0_8px_rgba(212,165,116,0.15)]"
         style={{
           scrollbarWidth: 'thin',
           scrollbarColor: 'rgba(232, 220, 192, 0.2) rgba(15, 20, 25, 0.5)',

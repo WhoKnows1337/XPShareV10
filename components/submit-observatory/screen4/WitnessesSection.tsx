@@ -66,18 +66,29 @@ export function WitnessesSection() {
   return (
     <div className="glass-card p-8 space-y-6">
       {/* Section Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="section-title-observatory flex items-center gap-2">
-            <Users className="w-5 h-5 text-observatory-gold" />
-            {t('title', 'Zeugen einladen')}
-          </h2>
-          <p className="text-sm text-text-tertiary mt-1">
-            {t('subtitle', 'Andere Personen, die dabei waren (optional)')}
-          </p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h2 className="section-title-observatory flex items-center gap-2">
+              <Users className="w-5 h-5 text-observatory-gold" />
+              {t('title', '🤝 Augenzeugen & Glaubwürdigkeit')}
+            </h2>
+            <p className="text-sm text-text-secondary mt-2">
+              {t('subtitle', 'War jemand dabei? Lade Zeugen ein die deine Erfahrung bestätigen können!')}
+            </p>
+          </div>
         </div>
-        <div className="text-xs text-text-tertiary">
-          {t('optional', 'Optional')}
+        {/* XP Motivation Badge */}
+        <div className="flex items-center gap-2 p-3 bg-observatory-gold/10 border border-observatory-gold/30 rounded-lg animate-fly-in-right">
+          <span className="text-lg">⭐</span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-observatory-gold">
+              {t('xpBonus', '+30 XP pro bestätigtem Zeugen!')}
+            </p>
+            <p className="text-xs text-text-tertiary">
+              {t('credibility', 'Augenzeugen erhöhen die Glaubwürdigkeit deiner Erfahrung erheblich.')}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -215,13 +226,20 @@ export function WitnessesSection() {
       )}
 
       {/* Info Note */}
-      <div className="flex items-start gap-3 p-4 bg-observatory-gold/5 border border-observatory-gold/20 rounded-lg">
-        <Users className="w-5 h-5 text-observatory-gold flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-text-secondary">
-          {t(
-            'info',
-            'Zeugen erhalten eine Benachrichtigung und können die Erfahrung bestätigen oder eigene Details hinzufügen.'
-          )}
+      <div className="flex items-start gap-3 p-4 bg-success-soft/10 border border-success-soft/20 rounded-lg">
+        <Users className="w-5 h-5 text-success-soft flex-shrink-0 mt-0.5" />
+        <div className="text-sm">
+          <p className="text-text-secondary">
+            {t(
+              'info',
+              '💡 Eingeladene Zeugen erhalten eine Benachrichtigung und können:'
+            )}
+          </p>
+          <ul className="text-xs text-text-tertiary mt-2 space-y-1 ml-4 list-disc">
+            <li>{t('infoPoint1', 'Die Erfahrung bestätigen')}</li>
+            <li>{t('infoPoint2', 'Eigene Details und Perspektiven hinzufügen')}</li>
+            <li>{t('infoPoint3', 'Dir +30 XP verschaffen wenn sie bestätigen')}</li>
+          </ul>
         </div>
       </div>
     </div>

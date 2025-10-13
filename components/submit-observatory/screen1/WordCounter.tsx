@@ -69,13 +69,13 @@ export function WordCounter({ wordCount }: WordCounterProps) {
           <span className="font-mono text-xs text-text-monospace uppercase tracking-wider">
             WORD_COUNT: {wordCount.toString().padStart(4, '0')}
           </span>
-          <span className={`font-mono text-xs font-semibold uppercase tracking-wider ${getStatusColor()}`}>
+          <span className={`font-mono text-xs font-semibold uppercase tracking-wider ${getStatusColor()} transition-all duration-300`}>
             {getStatusMessage()}
           </span>
         </div>
         {nextMilestone && (
-          <span className="font-mono text-xs text-text-tertiary">
-            {nextMilestone.words} {t('words', 'words')} (+{nextMilestone.xp} XP)
+          <span className="font-mono text-xs text-text-tertiary animate-glow-pulse">
+            🎯 {nextMilestone.words} {t('words', 'words')} (+{nextMilestone.xp} XP)
           </span>
         )}
       </div>
@@ -104,16 +104,26 @@ export function WordCounter({ wordCount }: WordCounterProps) {
 
       {/* Milestones Display (if reached platinum) */}
       {wordCount >= MILESTONES.platinum.words && (
-        <div className="flex items-center gap-2 p-3 bg-success-soft/10 border border-success-soft/20 rounded-lg">
-          <span className="text-2xl">🏆</span>
+        <div className="flex items-center gap-2 p-3 bg-success-soft/10 border border-success-soft/20 rounded-lg animate-fly-in-up">
+          <span className="text-2xl animate-scale-bounce">🏆</span>
           <div>
             <p className="font-semibold text-sm text-success-soft">
-              {t('maxReached', 'Maximum Detail Reached!')}
+              {t('maxReached', 'Legendary Detail Reached!')}
             </p>
             <p className="text-xs text-text-secondary">
-              {t('earnedXP', '+{xp} XP total earned', { xp: MILESTONES.platinum.xp })}
+              {t('earnedXP', '🎁 +{xp} XP werden beim Veröffentlichen gutgeschrieben!', { xp: MILESTONES.platinum.xp })}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Milestone Achievement Badges */}
+      {wordCount >= MILESTONES.bronze.words && wordCount < MILESTONES.silver.words && (
+        <div className="flex items-center gap-2 p-2 bg-observatory-gold/10 border border-observatory-gold/20 rounded-lg animate-fly-in-right">
+          <span className="text-lg">⭐</span>
+          <p className="text-xs text-observatory-gold font-medium">
+            {t('bronzeAchieved', '+{xp} XP für detaillierte Beschreibung!', { xp: MILESTONES.bronze.xp })}
+          </p>
         </div>
       )}
     </div>

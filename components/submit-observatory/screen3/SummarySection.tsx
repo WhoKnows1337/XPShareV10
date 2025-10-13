@@ -90,9 +90,16 @@ export function SummarySection({ onRegenerate, isLoading = false }: SummarySecti
           </div>
 
           {/* Info */}
-          <div className="flex items-start gap-2 text-sm text-text-tertiary">
-            <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span>{t('info', 'Diese Zusammenfassung erscheint als Preview in der Liste und Suche.')}</span>
+          <div className="flex items-start gap-2 p-3 bg-observatory-gold/10 border border-observatory-gold/20 rounded-lg text-sm">
+            <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-observatory-gold" />
+            <div>
+              <p className="text-text-secondary">
+                {t('info', '👁️ Diese Zusammenfassung erscheint als Preview in Feed und Suchergebnissen.')}
+              </p>
+              <p className="text-text-tertiary text-xs mt-1">
+                {t('infoDetail', 'Empfohlen: 150-200 Zeichen für optimale Lesbarkeit')}
+              </p>
+            </div>
           </div>
         </>
       )}

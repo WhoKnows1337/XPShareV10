@@ -122,40 +122,65 @@ export function EnhancedTextScreen() {
       {/* Enhanced Text Editor with Brain Button */}
       <div className="glass-card p-8">
         <div className="flex items-center justify-between mb-4">
-          <div>
+          <div className="flex-1">
             <h3 className="text-lg font-semibold text-text-primary">
               {t('textEditor.title', 'Dein Text')}
             </h3>
             <p className="text-sm text-text-secondary mt-1">
               {screen3.enhancementEnabled
-                ? t('textEditor.description', 'KI-Verbesserungen sind hervorgehoben')
-                : t('textEditor.descriptionOff', 'Originaltext')}
+                ? t('textEditor.description', '✨ KI-Verbesserungen sind grün hervorgehoben')
+                : t('textEditor.descriptionOff', 'Originaltext ohne Änderungen')}
             </p>
           </div>
           {/* Brain Button for Enhancement Toggle */}
-          <button
-            onClick={toggleEnhancement}
-            disabled={isEnhancing}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-              screen3.enhancementEnabled
-                ? 'bg-success-soft/20 border-2 border-success-soft text-success-soft'
-                : 'bg-text-primary/5 border-2 border-text-primary/20 text-text-secondary hover:bg-text-primary/10'
-            } ${isEnhancing ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isEnhancing ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <span className="text-xl">🧠</span>
-            )}
-            <span className="text-sm">
-              {isEnhancing
-                ? t('enhancement.loading', 'Verbessere...')
-                : screen3.enhancementEnabled
-                ? t('enhancement.active', 'KI aktiv')
-                : t('enhancement.inactive', 'KI aktivieren')}
-            </span>
-          </button>
+          <div className="relative group">
+            <button
+              onClick={toggleEnhancement}
+              disabled={isEnhancing}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                screen3.enhancementEnabled
+                  ? 'bg-success-soft/20 border-2 border-success-soft text-success-soft shadow-[0_0_15px_rgba(127,176,105,0.3)] animate-pulse-glow'
+                  : 'bg-text-primary/5 border-2 border-text-primary/20 text-text-secondary hover:bg-text-primary/10 hover:scale-105'
+              } ${isEnhancing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isEnhancing ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <span className="text-xl">{screen3.enhancementEnabled ? '🧠✓' : '🧠'}</span>
+              )}
+              <span className="text-sm">
+                {isEnhancing
+                  ? t('enhancement.loading', 'Verbessere...')
+                  : screen3.enhancementEnabled
+                  ? t('enhancement.active', 'KI aktiv')
+                  : t('enhancement.inactive', 'KI aktivieren')}
+              </span>
+            </button>
+            {/* Tooltip */}
+            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-space-mid border border-text-primary/20 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl">
+              <p className="text-xs text-text-secondary leading-relaxed">
+                {t(
+                  'enhancement.tooltip',
+                  '💡 KI verbessert Lesbarkeit und Struktur. Deine Geschichte bleibt unverändert - nur besser formuliert!'
+                )}
+              </p>
+              <p className="text-xs text-text-tertiary mt-2">
+                {t('enhancement.tooltipDetail', 'Du kannst jederzeit zwischen Original und Enhanced umschalten.')}
+              </p>
+            </div>
+          </div>
         </div>
+        {/* Enhancement Info Box */}
+        {screen3.enhancementEnabled && (
+          <div className="mb-4 p-3 bg-success-soft/10 border border-success-soft/20 rounded-lg animate-fly-in-up">
+            <p className="text-xs text-success-soft">
+              {t(
+                'enhancement.activeInfo',
+                '✅ Text wurde mit KI optimiert. Die KI hat Struktur und Lesbarkeit verbessert, basierend auf deinen Zusatzinformationen.'
+              )}
+            </p>
+          </div>
+        )}
         <EnhancedTextEditor />
       </div>
 
