@@ -3,20 +3,45 @@
 import { useEffect, useState } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { AIResultsSection } from './AIResultsSection';
+import { LoadingState } from '../shared/LoadingState';
 import { RequiredQuestions } from './RequiredQuestions';
 import { ExtraQuestionsPrompt } from './ExtraQuestionsPrompt';
 import { ExtraQuestionsFlow } from './ExtraQuestionsFlow';
-import { ContinueButton } from '../shared/ContinueButton';
 import { NavigationButtons } from '../shared/NavigationButtons';
 import { useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 export function AIAnalysisScreen() {
   const t = useTranslations('submit.screen2');
-  const { screen1, screen2, updateScreen2, setAIResults, setAnalyzing, isAnalyzing, canGoNext, goNext, goBack } =
+  const { screen1, screen2, updateScreen2, setAIResults, setAnalyzing, isAnalyzing, canGoNext, goNext, goBack, reset, isDraft, saveDraft } =
     useSubmitFlowStore();
   const [showExtraQuestions, setShowExtraQuestions] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Auto-save every 30 seconds if there are changes
+  useEffect(() => {
+    if (!isDraft) return;
+
+    const interval = setInterval(() => {
+      saveDraft();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [isDraft, saveDraft]);
+
+  const handleReset = () => {
+    if (showResetConfirm) {
+      reset();
+      setShowResetConfirm(false);
+    } else {
+      setShowResetConfirm(true);
+      setTimeout(() => setShowResetConfirm(false), 5000);
+    }
+  };
 
   // Run AI analysis on mount if not already analyzed
   useEffect(() => {
@@ -27,6 +52,7 @@ export function AIAnalysisScreen() {
 
   const analyzeText = async () => {
     setAnalyzing(true);
+    setAnalysisError(null);
     try {
       const response = await fetch('/api/submit/analyze', {
         method: 'POST',
@@ -41,6 +67,7 @@ export function AIAnalysisScreen() {
       setHasAnalyzed(true);
     } catch (error) {
       console.error('AI Analysis error:', error);
+      setAnalysisError(t('error', 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'));
     } finally {
       setAnalyzing(false);
     }
@@ -49,57 +76,98 @@ export function AIAnalysisScreen() {
   // Show loading state during analysis
   if (isAnalyzing) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="glass-card p-12">
-          <div className="flex flex-col items-center gap-6 py-12">
-            <Loader2 className="w-16 h-16 text-observatory-gold animate-spin" />
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-text-primary mb-2">
-                {t('analyzing', 'Analysiere deine Erfahrung...')}
-              </h2>
-              <p className="text-text-secondary">
-                {t('analyzingDesc', 'KI extrahiert Titel, Kategorie und Tags')}
-              </p>
-            </div>
+      <LoadingState
+        icon="telescope"
+        title={t('analyzing', 'Analysiere deine XP...')}
+        description={t('analyzingDesc', 'KI erkennt Muster, erstellt Titel und bereitet Folgefragen vor')}
+      />
+    );
+  }
+
+  // Show error state with retry option
+  if (analysisError && !hasAnalyzed) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center gap-4 py-8"
+      >
+        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex flex-col items-center gap-3 max-w-md">
+          <AlertCircle className="w-12 h-12 text-destructive" />
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-destructive mb-1">
+              {t('errorTitle', 'Fehler bei der Analyse')}
+            </h2>
+            <p className="text-text-secondary text-xs">
+              {analysisError}
+            </p>
+          </div>
+          <div className="flex gap-2 mt-2">
+            <Button
+              onClick={analyzeText}
+              variant="default"
+              size="default"
+              className="group"
+            >
+              <RefreshCw className="w-4 h-4 transition-transform group-hover:rotate-180" />
+              {t('retry', 'Erneut versuchen')}
+            </Button>
+            <Button
+              onClick={goBack}
+              variant="ghost"
+              size="default"
+            >
+              {t('back', 'Zurück')}
+            </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* AI Results Section */}
-      <AIResultsSection />
+    <AnimatePresence mode="wait">
+      <div className="grid grid-cols-1 lg:grid-cols-[70%,30%] gap-4">
+        {/* Left Column: Questions (70%) */}
+        <div className="space-y-4">
+          {/* Required Questions */}
+          <div>
+            <div className="mb-3">
+              <h2 className="section-title-observatory">{t('required.title', 'Pflichtangaben')}</h2>
+              <p className="text-text-secondary text-xs mt-1">
+                {t('required.description', 'Diese Angaben helfen bei der Mustererkennung')}
+              </p>
+            </div>
+            <RequiredQuestions />
+          </div>
 
-      {/* Required Questions */}
-      <div className="glass-card p-8">
-        <div className="mb-6">
-          <h2 className="section-title-observatory">{t('required.title', 'Pflichtangaben')}</h2>
-          <p className="text-text-secondary text-sm mt-2">
-            {t('required.description', 'Diese Angaben helfen bei der Mustererkennung')}
-          </p>
+          {/* Extra Questions Prompt */}
+          {!showExtraQuestions && !screen2.completedExtraQuestions && (
+            <ExtraQuestionsPrompt onAccept={() => setShowExtraQuestions(true)} />
+          )}
+
+          {/* Extra Questions Flow */}
+          {showExtraQuestions && (
+            <ExtraQuestionsFlow onComplete={() => setShowExtraQuestions(false)} />
+          )}
+
+          {/* Navigation */}
+          <NavigationButtons
+            onBack={goBack}
+            onNext={goNext}
+            onReset={handleReset}
+            canGoNext={canGoNext()}
+            nextLabel={t('continue', 'Weiter')}
+            showReset={true}
+            resetConfirm={showResetConfirm}
+          />
         </div>
-        <RequiredQuestions />
+
+        {/* Right Column: KI Analysis Sidebar (30%) */}
+        <div className="lg:sticky lg:top-4 lg:self-start">
+          <AIResultsSection />
+        </div>
       </div>
-
-      {/* Extra Questions Prompt */}
-      {!showExtraQuestions && !screen2.completedExtraQuestions && (
-        <ExtraQuestionsPrompt onAccept={() => setShowExtraQuestions(true)} />
-      )}
-
-      {/* Extra Questions Flow */}
-      {showExtraQuestions && (
-        <ExtraQuestionsFlow onComplete={() => setShowExtraQuestions(false)} />
-      )}
-
-      {/* Navigation */}
-      <NavigationButtons
-        onBack={goBack}
-        onNext={goNext}
-        canGoNext={canGoNext()}
-        nextLabel={t('continue', 'Weiter →')}
-      />
-    </div>
+    </AnimatePresence>
   );
 }

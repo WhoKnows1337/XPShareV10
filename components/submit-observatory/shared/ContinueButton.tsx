@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
 interface ContinueButtonProps {
   onClick: () => void;
@@ -18,41 +20,47 @@ export function ContinueButton({
 }: ContinueButtonProps) {
   const [isMounted, setIsMounted] = useState(false);
 
-  // Only render on client after mount to avoid hydration mismatch
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Don't render until mounted on client
   if (!isMounted) {
     return (
-      <button
+      <Button
         disabled
-        className="btn-observatory flex items-center gap-2 group opacity-50"
+        size="default"
+        className="opacity-50"
       >
-        <span>{label}</span>
+        {label}
         <ArrowRight className="w-4 h-4" />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled || loading}
-      className="btn-observatory flex items-center gap-2 group"
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
     >
-      {loading ? (
-        <>
-          <div className="w-4 h-4 border-2 border-space-deep border-t-transparent rounded-full animate-spin" />
-          <span>Processing...</span>
-        </>
-      ) : (
-        <>
-          <span>{label}</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-        </>
-      )}
-    </button>
+      <Button
+        onClick={onClick}
+        disabled={disabled || loading}
+        size="default"
+        className="group"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            {label}
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </>
+        )}
+      </Button>
+    </motion.div>
   );
 }

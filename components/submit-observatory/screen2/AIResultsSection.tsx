@@ -3,136 +3,212 @@
 import { useState } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
-import { Edit2, FileText, Tag, Folder } from 'lucide-react';
+import { Edit2, FileText, RotateCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
-export function AIResultsSection() {
+interface AIResultsSectionProps {
+  onRegenerateSummary?: () => void;
+  isSummarizing?: boolean;
+}
+
+export function AIResultsSection({
+  onRegenerateSummary,
+  isSummarizing = false
+}: AIResultsSectionProps = {}) {
   const t = useTranslations('submit.screen2.aiResults');
-  const { screen2, updateScreen2 } = useSubmitFlowStore();
+  const tSummary = useTranslations('submit.screen3.summary');
+  const { screen2, screen3, updateScreen2, setSummary } = useSubmitFlowStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(screen2.title);
+  const [isEditingSummary, setIsEditingSummary] = useState(false);
+  const [editedSummary, setEditedSummary] = useState(screen3?.summary || '');
 
   const handleSaveTitle = () => {
     updateScreen2({ title: editedTitle });
     setIsEditingTitle(false);
   };
 
+  const handleSaveSummary = () => {
+    setSummary(editedSummary);
+    setIsEditingSummary(false);
+  };
+
+  const charCount = editedSummary.length;
+  const isOptimal = charCount >= 150 && charCount <= 200;
+  const isWarning = charCount > 200 && charCount <= 250;
+  const isError = charCount > 250;
+
   return (
-    <div className="glass-card-accent p-8">
-      {/* Celebration Header */}
-      <div className="mb-6 pb-6 border-b border-text-primary/10 animate-fly-in-up">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-observatory-gold/15 border border-observatory-gold/30 rounded-md animate-glow-pulse">
-            <span className="text-sm font-semibold text-observatory-gold uppercase tracking-wide">
-              🎯 {t('badge', 'KI-Analyse abgeschlossen')}
-            </span>
-          </div>
+    <div className="p-3 bg-glass-bg border border-glass-border rounded space-y-3 max-h-[calc(100vh-180px)] overflow-y-auto custom-scrollbar">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-glass-border">
+        <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wide">
+          ✓ KI-Analyse
+        </h3>
+      </div>
+
+      {/* Category */}
+      <div>
+        <label className="text-[10px] font-medium text-text-tertiary uppercase mb-1 block">
+          Kategorie
+        </label>
+        <div className="px-2 py-1 bg-observatory-accent/10 border border-observatory-accent/20 rounded text-xs text-observatory-accent text-center">
+          {screen2.category || 'Unknown'}
         </div>
-        <p className="text-text-secondary text-sm">
-          {/* Temporarily hardcoded due to browser cache issue */}
-          Deine Erfahrung wurde analysiert! Wir haben automatisch Titel, Kategorie und {screen2.tags.length} relevante Tags erkannt.
-        </p>
       </div>
 
       {/* Title */}
-      <div className="mb-6 animate-fly-in-right" style={{ animationDelay: '100ms' }}>
-        <div className="flex items-center justify-between mb-3">
-          <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            <FileText className="w-4 h-4" />
-            {t('title', 'TITEL')}
-            <span className="text-[10px] px-2 py-0.5 bg-success-soft/20 text-success-soft rounded-full">95% Genauigkeit</span>
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] font-medium text-text-tertiary uppercase">
+            Titel
           </label>
           {!isEditingTitle && (
             <button
               onClick={() => setIsEditingTitle(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-secondary
-                         bg-text-primary/5 hover:bg-text-primary/10 border border-text-primary/10 rounded-md transition-colors"
+              className="text-text-tertiary hover:text-text-secondary"
             >
               <Edit2 className="w-3 h-3" />
-              Edit
             </button>
           )}
         </div>
 
         {isEditingTitle ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <input
               type="text"
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
-              className="input-observatory"
-              placeholder={t('titlePlaceholder', 'Enter experience title...')}
+              className="input-observatory text-xs"
+              placeholder={t('titlePlaceholder', 'Titel eingeben...')}
             />
             <div className="flex gap-2">
-              <button onClick={handleSaveTitle} className="btn-observatory">
-                {t('save', 'Save')}
+              <button onClick={handleSaveTitle} className="btn-observatory text-xs py-1 px-2">
+                Save
               </button>
               <button
                 onClick={() => {
                   setEditedTitle(screen2.title);
                   setIsEditingTitle(false);
                 }}
-                className="px-4 py-2 text-sm text-text-secondary bg-text-primary/5 border border-text-primary/20 rounded-lg
-                           hover:bg-text-primary/10 transition-colors"
+                className="text-xs text-text-tertiary hover:text-text-secondary"
               >
-                {t('cancel', 'Cancel')}
+                Cancel
               </button>
             </div>
           </div>
         ) : (
           <div
-            className="p-4 bg-text-primary/5 border border-text-primary/10 rounded-lg cursor-pointer
-                       hover:bg-text-primary/8 hover:border-text-primary/20 transition-all"
+            className="p-2 bg-space-mid/40 border border-glass-border rounded text-xs text-text-primary cursor-pointer hover:border-observatory-accent/30 leading-snug"
             onClick={() => setIsEditingTitle(true)}
           >
-            <p className="text-xl font-bold text-text-primary">{screen2.title || t('noTitle', 'Untitled')}</p>
+            {screen2.title || t('noTitle', 'Untitled')}
           </div>
         )}
       </div>
 
-      {/* Category */}
-      <div className="mb-6 animate-fly-in-right" style={{ animationDelay: '200ms' }}>
-        <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">
-          <Folder className="w-4 h-4" />
-          {t('category', 'KATEGORIE')}
-          <span className="text-[10px] px-2 py-0.5 bg-success-soft/20 text-success-soft rounded-full">92% Genauigkeit</span>
-        </label>
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="px-4 py-2 bg-observatory-gold/15 border-2 border-observatory-gold/30 rounded-lg text-observatory-gold font-semibold animate-scale-bounce">
-            ⭐ {screen2.category || t('noCategory', 'Unknown')}
-          </span>
-          <button className="text-sm text-text-tertiary hover:text-text-secondary transition-colors">
-            {t('change', 'Ändern ▼')}
-          </button>
+      {/* Summary Section (only show in Screen 3) */}
+      {screen3?.summary !== undefined && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="flex items-center gap-1.5 text-[10px] font-medium text-text-tertiary uppercase">
+              <FileText className="w-3 h-3" />
+              Summary
+            </label>
+            {!isEditingSummary && (
+              <button
+                onClick={() => setIsEditingSummary(true)}
+                className="text-text-tertiary hover:text-text-secondary"
+              >
+                <Edit2 className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          {isEditingSummary ? (
+            <div className="space-y-2">
+              <textarea
+                value={editedSummary}
+                onChange={(e) => setEditedSummary(e.target.value)}
+                className="w-full min-h-[80px] p-2 bg-space-mid/90 border border-glass-border rounded text-xs text-text-primary resize-none outline-none focus:border-observatory-accent/40"
+                placeholder={tSummary('placeholder', 'Schreibe eine kurze Zusammenfassung...')}
+              />
+
+              {/* Character Counter */}
+              <div className={`text-right text-xs font-mono ${isError ? 'text-error-soft' : isWarning ? 'text-warning-soft' : isOptimal ? 'text-success-soft' : 'text-text-tertiary'}`}>
+                {charCount}/250 {isOptimal && '✓'}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                {onRegenerateSummary && (
+                  <Button
+                    onClick={onRegenerateSummary}
+                    disabled={isSummarizing}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    <RotateCw className={`w-3 h-3 ${isSummarizing ? 'animate-spin' : ''}`} />
+                  </Button>
+                )}
+                <Button
+                  onClick={handleSaveSummary}
+                  variant="default"
+                  size="sm"
+                  className="flex-1 text-xs"
+                >
+                  Save
+                </Button>
+                <Button
+                  onClick={() => {
+                    setEditedSummary(screen3.summary);
+                    setIsEditingSummary(false);
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="p-2 bg-space-mid/40 border border-glass-border rounded text-xs text-text-primary cursor-pointer hover:border-observatory-accent/30 leading-snug"
+              onClick={() => setIsEditingSummary(true)}
+            >
+              {screen3.summary || tSummary('noSummary', 'Keine Zusammenfassung')}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Tags */}
-      <div className="animate-fly-in-right" style={{ animationDelay: '300ms' }}>
-        <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">
-          <Tag className="w-4 h-4" />
-          {t('tags', 'TAGS')}
-          <span className="text-[10px] text-text-tertiary">🔗 {screen2.tags.length} Tags erkannt</span>
+      <div>
+        <label className="text-[10px] font-medium text-text-tertiary uppercase mb-1 block">
+          Tags
         </label>
-        <div className="flex flex-wrap gap-2">
-          {screen2.tags.slice(0, 3).map((tag, index) => (
-            <span
+        <div className="flex flex-wrap gap-1">
+          {screen2.tags.map((tag, index) => (
+            <motion.span
               key={index}
-              className="px-3 py-1.5 bg-observatory-gold/15 border-2 border-observatory-gold/30 rounded-full text-sm text-observatory-gold font-semibold"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                duration: 0.2,
+                delay: index * 0.05,
+                ease: 'easeOut'
+              }}
+              className="px-2 py-0.5 bg-glass-bg border border-glass-border rounded text-[10px] text-text-tertiary"
             >
               #{tag}
-            </span>
+            </motion.span>
           ))}
-          {screen2.tags.slice(3).map((tag, index) => (
-            <span
-              key={index + 3}
-              className="px-3 py-1.5 bg-text-primary/10 border border-text-primary/20 rounded-full text-sm text-text-primary"
-            >
-              #{tag}
-            </span>
-          ))}
-          <button className="px-3 py-1.5 bg-text-primary/5 border border-text-primary/15 rounded-full text-sm text-text-tertiary hover:text-text-secondary hover:bg-text-primary/10 transition-all hover:scale-105">
-            + {t('addTag', 'Hinzufügen')}
-          </button>
+          {screen2.tags.length === 0 && (
+            <span className="text-xs text-text-tertiary italic">No tags</span>
+          )}
         </div>
       </div>
     </div>

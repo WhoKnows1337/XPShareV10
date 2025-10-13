@@ -161,8 +161,8 @@
     "screen2": {
       "title": "Details & Kontext",
       "subtitle": "Hilf uns deine Erfahrung zu verstehen",
-      "analyzing": "Analysiere deinen Text...",
-      "analyzingDesc": "KI extrahiert Titel, Kategorie und Tags",
+      "analyzing": "Analysiere deine XP...",
+      "analyzingDesc": "KI erkennt Muster, erstellt Titel und bereitet Folgefragen vor",
       "aiResults": {
         "title": "KI-Erkennung",
         "badge": "🎯 KI-Analyse abgeschlossen",
@@ -232,8 +232,8 @@
     "screen3": {
       "title": "Zusammenfassung & Verbesserung",
       "subtitle": "Überprüfe und verfeinere deinen Beitrag",
-      "summarizing": "Erstelle Zusammenfassung...",
-      "summarizingDesc": "KI erstellt eine prägnante Zusammenfassung",
+      "summarizing": "Erstelle Preview...",
+      "summarizingDesc": "KI generiert eine kompakte Zusammenfassung für den Feed",
       "continue": "Weiter →",
       "toggle": {
         "title": "🎚️ KI-Anreicherungen",

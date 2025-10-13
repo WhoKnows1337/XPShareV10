@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 import { FileUploadSection } from './FileUploadSection';
@@ -9,7 +10,18 @@ import { NavigationButtons } from '../shared/NavigationButtons';
 
 export function FilesWitnessesScreen() {
   const t = useTranslations('submit.screen4');
-  const { screen4, goNext, goBack } = useSubmitFlowStore();
+  const { screen4, goNext, goBack, reset } = useSubmitFlowStore();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const handleReset = () => {
+    if (showResetConfirm) {
+      reset();
+      setShowResetConfirm(false);
+    } else {
+      setShowResetConfirm(true);
+      setTimeout(() => setShowResetConfirm(false), 5000);
+    }
+  };
 
   const handlePublish = async (visibility: 'public' | 'anonymous' | 'private') => {
     // Update visibility in store
@@ -22,28 +34,31 @@ export function FilesWitnessesScreen() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold text-text-primary">
+    <div className="space-y-4">
+      {/* Compact Header */}
+      <div className="mb-3">
+        <h1 className="section-title-observatory">
           {t('title', 'Medien & Zeugen')}
         </h1>
-        <p className="text-text-secondary text-lg">
+        <p className="text-text-secondary text-xs mt-1">
           {t('subtitle', 'Füge Dateien hinzu und lade Zeugen ein (optional)')}
         </p>
       </div>
 
-      {/* File Upload Section */}
+      {/* File Upload Section - Compact */}
       <FileUploadSection />
 
-      {/* Witnesses Section */}
+      {/* Witnesses Section - Compact */}
       <WitnessesSection />
 
-      {/* Navigation */}
-      <div className="flex items-center justify-between pt-6">
+      {/* Navigation - Compact */}
+      <div className="flex items-center justify-between pt-3">
         <NavigationButtons
           onBack={goBack}
+          onReset={handleReset}
           showNext={false}
+          showReset={true}
+          resetConfirm={showResetConfirm}
         />
 
         <SplitPublishButton onPublish={handlePublish} />

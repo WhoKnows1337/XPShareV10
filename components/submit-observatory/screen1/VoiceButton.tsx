@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface VoiceButtonProps {
   onTranscript: (transcript: string) => void;
@@ -114,38 +115,29 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
   }
 
   return (
-    <button
+    <Button
       onClick={handleClick}
       disabled={isProcessing}
-      className={`
-        flex items-center gap-2 px-5 py-3 rounded-lg
-        font-mono text-sm font-medium tracking-wide
-        transition-all duration-200
-        ${
-          isRecording
-            ? 'bg-observatory-gold/15 border-observatory-gold/40 text-observatory-gold'
-            : 'bg-text-primary/5 border-text-primary/20 text-text-secondary hover:bg-text-primary/8 hover:border-text-primary/30'
-        }
-        border
-        ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}
-      `}
+      variant={isRecording ? "destructive" : "outline"}
+      size="sm"
+      className="text-xs"
     >
       {isProcessing ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>{t('processing', 'Processing...')}</span>
+          <Loader2 className="w-3 h-3 animate-spin" />
+          {t('processing', 'Processing...')}
         </>
       ) : isRecording ? (
         <>
-          <MicOff className="w-4 h-4" />
-          <span>{t('stop', 'Stop Recording')}</span>
+          <MicOff className="w-3 h-3" />
+          {t('stop', 'Stop')}
         </>
       ) : (
         <>
-          <Mic className="w-4 h-4" />
-          <span>{t('start', '🎤 Diktat')}</span>
+          <Mic className="w-3 h-3" />
+          {t('start', 'Diktat')}
         </>
       )}
-    </button>
+    </Button>
   );
 }

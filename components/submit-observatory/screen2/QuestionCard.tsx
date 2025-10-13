@@ -50,37 +50,29 @@ export function QuestionCard({
   };
 
   return (
-    <div className="p-6 bg-space-mid/40 border border-glass-border rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="font-mono text-xs text-text-monospace uppercase tracking-wider">
-          → Q{questionNumber}
-        </span>
-        <span className="badge-observatory">+{question.xp} XP</span>
-      </div>
-
-      {/* Question Title */}
-      <h4 className="text-lg font-semibold text-text-primary mb-6">{question.title}</h4>
+    <div className="space-y-3">
+      {/* Question Title - Compact */}
+      <h4 className="text-sm font-medium text-text-primary">{question.title}</h4>
 
       {/* Question Input */}
-      <div className="mb-6">
+      <div>
         {question.type === 'text' && (
           <input
             type="text"
             value={answer || ''}
             onChange={(e) => setAnswer(e.target.value)}
             placeholder={question.placeholder}
-            className="input-observatory"
+            className="input-observatory text-xs"
           />
         )}
 
         {question.type === 'checkbox' && (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {question.options?.map((option) => (
               <label
                 key={option}
-                className="flex items-center gap-3 p-3 bg-text-primary/5 border border-text-primary/10 rounded-lg
-                           hover:bg-text-primary/10 cursor-pointer transition-all"
+                className="flex items-center gap-2 p-2 bg-glass-bg border border-glass-border rounded
+                           hover:border-observatory-accent/30 cursor-pointer transition-all"
               >
                 <input
                   type="checkbox"
@@ -93,18 +85,18 @@ export function QuestionCard({
                       setAnswer(currentAnswers.filter((a: string) => a !== option));
                     }
                   }}
-                  className="w-4 h-4 accent-observatory-gold"
+                  className="w-3 h-3 accent-observatory-accent"
                 />
-                <span className="text-text-primary">{option}</span>
+                <span className="text-xs text-text-primary">{option}</span>
               </label>
             ))}
           </div>
         )}
 
         {question.type === 'scale' && (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Labels */}
-            <div className="flex justify-between text-sm text-text-secondary">
+            <div className="flex justify-between text-[10px] text-text-tertiary">
               <span>{question.minLabel}</span>
               <span>{question.maxLabel}</span>
             </div>
@@ -117,56 +109,41 @@ export function QuestionCard({
                 max={question.max}
                 value={answer || question.min}
                 onChange={(e) => setAnswer(parseInt(e.target.value))}
-                className="w-full h-2 bg-text-tertiary/20 rounded-full appearance-none cursor-pointer
-                           [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
-                           [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-observatory-gold
-                           [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(212,165,116,0.6)]
-                           [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform
-                           [&::-webkit-slider-thumb]:hover:scale-110"
+                className="w-full h-1.5 bg-text-tertiary/20 rounded-full appearance-none cursor-pointer
+                           [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+                           [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-observatory-accent
+                           [&::-webkit-slider-thumb]:cursor-pointer"
               />
               {/* Value Display */}
-              <div className="flex justify-center mt-2">
-                <span className="px-3 py-1 bg-observatory-gold/15 border border-observatory-gold/30 rounded-md text-observatory-gold font-mono font-semibold">
+              <div className="flex justify-center mt-1.5">
+                <span className="px-2 py-0.5 bg-observatory-accent/20 border border-observatory-accent/40 rounded text-xs text-observatory-accent">
                   {answer || question.min}
                 </span>
               </div>
-            </div>
-
-            {/* Scale Numbers */}
-            <div className="flex justify-between text-xs text-text-monospace font-mono">
-              {Array.from({ length: (question.max || 10) - (question.min || 1) + 1 }, (_, i) => i + (question.min || 1)).map(
-                (num) => (
-                  <span key={num} className={answer === num ? 'text-observatory-gold font-bold' : ''}>
-                    {num}
-                  </span>
-                )
-              )}
             </div>
           </div>
         )}
       </div>
 
-      {/* Tip */}
+      {/* Tip - Compact */}
       {question.tip && (
-        <div className="flex items-start gap-3 p-3 bg-observatory-gold/5 border-l-3 border-observatory-gold/30 rounded-lg mb-6">
-          <Lightbulb className="w-4 h-4 text-observatory-gold flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-text-secondary">{question.tip}</p>
-        </div>
+        <p className="text-[10px] text-text-tertiary italic leading-relaxed">
+          💡 {question.tip}
+        </p>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-3">
+      {/* Actions - Compact */}
+      <div className="flex gap-2 pt-1">
         <button
           onClick={onSkip}
-          className="flex-1 px-4 py-2.5 bg-text-primary/5 border border-text-primary/20 rounded-lg
-                     text-text-secondary font-medium hover:bg-text-primary/10 transition-colors"
+          className="px-3 py-1.5 text-xs text-text-tertiary hover:text-text-secondary border border-glass-border rounded hover:border-observatory-accent/30"
         >
-          {t('skip', 'Überspringen')}
+          {t('skip', 'Skip')}
         </button>
         <button
           onClick={handleSubmit}
           disabled={!canSubmit()}
-          className="flex-1 btn-observatory"
+          className="flex-1 btn-observatory text-xs py-1.5"
         >
           {t('next', 'Weiter →')}
         </button>

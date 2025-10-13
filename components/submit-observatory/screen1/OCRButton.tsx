@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FileText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { OCRModal } from './OCRModal';
+import { Button } from '@/components/ui/button';
 
 interface OCRButtonProps {
   onTextExtracted: (text: string) => void;
@@ -20,17 +21,15 @@ export function OCRButton({ onTextExtracted }: OCRButtonProps) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setIsModalOpen(true)}
-        className="flex items-center gap-2 px-5 py-3 rounded-lg
-                   bg-text-primary/5 border border-text-primary/20 text-text-secondary
-                   font-mono text-sm font-medium tracking-wide
-                   transition-all duration-200
-                   hover:bg-text-primary/8 hover:border-text-primary/30 hover:scale-[1.02]"
+        variant="outline"
+        size="sm"
+        className="text-xs"
       >
-        <FileText className="w-4 h-4" />
-        <span>{t('button', '📄 Notiz einscannen')}</span>
-      </button>
+        <FileText className="w-3 h-3" />
+        {t('button', 'Notiz einscannen')}
+      </Button>
 
       {isModalOpen && (
         <OCRModal

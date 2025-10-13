@@ -19,7 +19,7 @@ export function TextInputArea({ value, onChange, placeholder }: TextInputAreaPro
       if (value.trim()) {
         saveDraft();
       }
-    }, 30000); // 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [value, saveDraft]);
@@ -35,29 +35,25 @@ export function TextInputArea({ value, onChange, placeholder }: TextInputAreaPro
   return (
     <div className="relative">
       {/* ENTRY.TXT Label */}
-      <div className="absolute left-3 top-3 pointer-events-none z-10">
-        <span className="font-mono text-[10px] text-text-monospace uppercase tracking-wider">
+      <div className="absolute left-3 top-2 pointer-events-none z-10">
+        <span className="font-mono text-[9px] text-text-monospace uppercase tracking-wider">
           ENTRY.TXT
         </span>
       </div>
 
-      {/* Textarea */}
+      {/* Textarea - Compact */}
       <textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-h-[220px] bg-space-deep/80 border border-text-primary/20 rounded-lg
-                   px-4 pt-10 pb-4 text-text-primary text-base leading-relaxed
-                   resize-none outline-none transition-all duration-300
-                   placeholder:text-text-primary/30
-                   focus:border-observatory-gold/50 focus:shadow-[0_0_0_3px_rgba(212,165,116,0.1),0_4px_12px_rgba(0,0,0,0.4)]
-                   focus:animate-pulse-glow
-                   hover:border-text-primary/30 hover:shadow-[0_0_8px_rgba(212,165,116,0.15)]"
-        style={{
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(232, 220, 192, 0.2) rgba(15, 20, 25, 0.5)',
-        }}
+        className="w-full min-h-[180px] bg-space-mid/90 border border-glass-border rounded-md
+                   px-3 pt-8 pb-3 text-text-primary text-sm leading-relaxed
+                   resize-none outline-none transition-all duration-200
+                   placeholder:text-text-tertiary/40
+                   focus:border-observatory-accent/40 focus:shadow-[0_0_0_2px_rgba(139,157,195,0.1)]
+                   hover:border-glass-border hover:shadow-[0_2px_8px_rgba(139,157,195,0.08)]
+                   custom-scrollbar"
       />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function ProgressIndicator() {
   const { currentStep, totalSteps } = useSubmitFlowStore();
@@ -25,33 +26,54 @@ export function ProgressIndicator() {
   };
 
   return (
-    <div className="fixed top-[60px] left-0 right-0 z-50 bg-glass-bg backdrop-blur-obs border-b border-glass-border px-5 py-4">
-      <div className="max-w-3xl mx-auto">
-        {/* Step Counter */}
-        <div className="flex justify-between items-center mb-2">
-          <span className="font-mono text-xs text-text-tertiary uppercase tracking-wider">
-            {t('progress.step', { current: currentStep, total: totalSteps }, `Step ${currentStep} of ${totalSteps}`)}
-          </span>
-          <span className="font-mono text-xs text-text-tertiary uppercase tracking-wider">
-            {t('progress.percentage', { progress: Math.round(progress) }, `Progress ${Math.round(progress)}%`)}
-          </span>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="relative h-0.5 bg-text-tertiary/20 rounded-full overflow-hidden">
-          <div
-            className="absolute left-0 top-0 h-full bg-gradient-to-r from-observatory-gold to-observatory-light transition-all duration-800 ease-in-out"
-            style={{ width: `${progress}%` }}
+    <div className="mb-4 pb-4 border-b border-glass-border">
+      {/* Compact Step Counter + Label */}
+      <div className="flex items-center justify-between mb-2">
+        <motion.span
+          key={`step-${currentStep}`}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="font-mono text-xs text-text-tertiary uppercase tracking-wider"
+        >
+          {t('progress.step', { current: currentStep, total: totalSteps }, `Step ${currentStep}/${totalSteps}`)}
+        </motion.span>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={currentStep}
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            transition={{ duration: 0.2 }}
+            className="text-xs text-text-secondary font-mono"
           >
-            {/* Glowing Dot */}
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1 bg-observatory-light rounded-full shadow-[0_0_8px_rgba(232,220,192,0.6)]" />
-          </div>
-        </div>
+            {getStepLabel(currentStep)}
+          </motion.span>
+        </AnimatePresence>
+      </div>
 
-        {/* Current Step Label */}
-        <div className="mt-2 text-sm text-text-secondary font-medium">
-          {getStepLabel(currentStep)}
-        </div>
+      {/* Progress Bar with Animated Gradient */}
+      <div className="relative h-1 bg-observatory-accent-dim rounded-full overflow-hidden">
+        <motion.div
+          className="absolute left-0 top-0 h-full bg-gradient-to-r from-observatory-accent via-[#9badcc] to-observatory-accent-soft"
+          initial={{ width: 0 }}
+          animate={{
+            width: `${progress}%`,
+            boxShadow: [
+              '0 0 8px rgba(139, 157, 195, 0.3)',
+              '0 0 16px rgba(139, 157, 195, 0.5)',
+              '0 0 8px rgba(139, 157, 195, 0.3)',
+            ]
+          }}
+          transition={{
+            width: { duration: 0.5, ease: 'easeOut' },
+            boxShadow: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+          }}
+          style={{
+            backgroundSize: '200% 100%',
+            animation: 'gradient-shift 3s ease-in-out infinite',
+          }}
+        />
       </div>
     </div>
   );

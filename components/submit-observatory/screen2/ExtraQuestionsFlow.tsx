@@ -115,30 +115,24 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
   };
 
   return (
-    <div className="glass-card p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-text-primary">
-          💎 {t('title', 'Extra Questions')}
-        </h3>
-        <span className="font-mono text-sm text-text-tertiary">
-          {currentIndex + 1}/{EXTRA_QUESTIONS.length}
-        </span>
-      </div>
-
-      {/* Completed Questions (Collapsed) */}
-      {EXTRA_QUESTIONS.slice(0, currentIndex).map((q, i) => (
-        <div
-          key={q.id}
-          className="flex items-center justify-between p-3 mb-2 bg-success-soft/5 border border-success-soft/20 rounded-lg cursor-pointer
-                     hover:bg-success-soft/8 transition-colors"
-        >
-          <span className="text-sm text-text-secondary">
-            ✓ Q{i + 1}: {q.title}
+    <div className="p-3 bg-glass-bg border border-glass-border rounded">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-observatory-accent">
+            Q{currentIndex + 1}/{EXTRA_QUESTIONS.length}
           </span>
-          <span className="badge-observatory">+{q.xp} XP ✓</span>
+          <span className="text-[10px] text-text-tertiary uppercase tracking-wide">
+            +{currentQuestion.xp} XP
+          </span>
         </div>
-      ))}
+        <button
+          onClick={handleSkipAll}
+          className="text-[10px] text-text-tertiary hover:text-text-secondary uppercase tracking-wide"
+        >
+          {t('skipAll', 'Alle Skip')}
+        </button>
+      </div>
 
       {/* Current Question */}
       <QuestionCard
@@ -149,30 +143,20 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
         currentAnswer={screen2.extraQuestions[currentQuestion.id]}
       />
 
-      {/* Progress Dots */}
-      <div className="flex justify-center gap-2 mt-6 mb-4">
+      {/* Compact Progress Dots */}
+      <div className="flex justify-center gap-1.5 mt-3">
         {EXTRA_QUESTIONS.map((_, i) => (
           <div
             key={i}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+            className={`w-1.5 h-1.5 rounded-full transition-all ${
               i < currentIndex
-                ? 'bg-success-soft shadow-[0_0_8px_rgba(127,176,105,0.5)]'
+                ? 'bg-success-soft'
                 : i === currentIndex
-                ? 'bg-observatory-gold shadow-[0_0_8px_rgba(212,165,116,0.5)] scale-125'
+                ? 'bg-observatory-accent scale-125'
                 : 'bg-text-tertiary/30'
             }`}
           />
         ))}
-      </div>
-
-      {/* Skip All Button */}
-      <div className="text-center">
-        <button
-          onClick={handleSkipAll}
-          className="text-sm text-text-tertiary hover:text-text-secondary transition-colors"
-        >
-          {t('skipAll', 'Alle überspringen')}
-        </button>
       </div>
     </div>
   );

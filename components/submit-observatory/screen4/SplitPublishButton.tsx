@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Globe, UserX, Lock, Send, Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SplitPublishButtonProps {
   onPublish: (visibility: 'public' | 'anonymous' | 'private') => void;
@@ -121,27 +123,38 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
       )}
 
       {/* Split Button */}
-      <div className="flex items-stretch overflow-hidden rounded-lg shadow-lg">
+      <motion.div
+        className="flex items-stretch overflow-hidden rounded-lg shadow-lg"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
         {/* Main Publish Button */}
-        <button
+        <Button
           onClick={handlePublish}
-          className="btn-observatory px-8 py-4 rounded-r-none border-r border-observatory-gold/30 hover:bg-gradient-to-r hover:from-observatory-gold/30 hover:to-observatory-gold/20 transition-all group"
+          variant="default"
+          size="lg"
+          className="rounded-r-none border-r border-primary/30 group"
         >
-          <Send className="w-5 h-5 mr-2 group-hover:translate-x-0.5 transition-transform" />
-          <span className="font-semibold">{t('publish', 'Veröffentlichen')}</span>
-        </button>
+          <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+          {t('publish', 'Veröffentlichen')}
+        </Button>
 
         {/* Dropdown Toggle */}
-        <button
+        <Button
           onClick={handleMenuToggle}
-          className="btn-observatory px-4 py-4 rounded-l-none hover:bg-gradient-to-r hover:from-observatory-gold/20 hover:to-observatory-gold/30 transition-all"
+          variant="default"
+          size="lg"
+          className="rounded-l-none px-3"
           aria-label="Select visibility"
         >
-          <ChevronDown
-            className={`w-5 h-5 transition-transform ${showMenu ? 'rotate-180' : ''}`}
-          />
-        </button>
-      </div>
+          <motion.div
+            animate={{ rotate: showMenu ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="w-4 h-4" />
+          </motion.div>
+        </Button>
+      </motion.div>
 
       {/* Visibility Menu */}
       {showMenu && (
