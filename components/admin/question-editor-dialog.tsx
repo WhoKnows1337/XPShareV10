@@ -61,6 +61,7 @@ export function QuestionEditorDialog({
   const [questionText, setQuestionText] = useState('')
   const [questionType, setQuestionType] = useState<QuestionType>('text')
   const [options, setOptions] = useState<QuestionOption[]>([])
+  const [priority, setPriority] = useState(1)
   const [helpText, setHelpText] = useState('')
   const [placeholder, setPlaceholder] = useState('')
   const [isOptional, setIsOptional] = useState(true)
@@ -79,6 +80,7 @@ export function QuestionEditorDialog({
       setQuestionText(question.question_text)
       setQuestionType(question.question_type)
       setOptions(question.options || [])
+      setPriority(question.priority || 1)
       setHelpText(question.help_text || '')
       setPlaceholder(question.placeholder || '')
       setIsOptional(question.is_optional)
@@ -93,6 +95,7 @@ export function QuestionEditorDialog({
       setQuestionText('')
       setQuestionType('text')
       setOptions([])
+      setPriority(1)
       setHelpText('')
       setPlaceholder('')
       setIsOptional(true)
@@ -157,6 +160,7 @@ export function QuestionEditorDialog({
         question_text: questionText,
         question_type: questionType,
         options,
+        priority,
         is_optional: isOptional,
         help_text: helpText || null,
         placeholder: placeholder || null,
@@ -234,23 +238,42 @@ export function QuestionEditorDialog({
               />
             </div>
 
-            {/* Question Type */}
-            <div className="space-y-2">
-              <Label htmlFor="question_type">
-                Question Type <span className="text-red-500">*</span>
-              </Label>
-              <Select value={questionType} onValueChange={(val) => setQuestionType(val as QuestionType)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {questionTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Question Type & Priority */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="question_type">
+                  Question Type <span className="text-red-500">*</span>
+                </Label>
+                <Select value={questionType} onValueChange={(val) => setQuestionType(val as QuestionType)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {questionTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">
+                  Priority
+                </Label>
+                <Input
+                  id="priority"
+                  type="number"
+                  min={1}
+                  value={priority}
+                  onChange={(e) => setPriority(parseInt(e.target.value) || 1)}
+                  placeholder="1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Lower number = shown first
+                </p>
+              </div>
             </div>
 
             {/* Options Editor (for chips/chips-multi/slider) */}

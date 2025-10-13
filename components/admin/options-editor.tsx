@@ -24,8 +24,10 @@ export function OptionsEditor({
   const [optionIcon, setOptionIcon] = useState('')
 
   // For slider type
-  const [minValue, setMinValue] = useState('0')
-  const [maxValue, setMaxValue] = useState('10')
+  const [sliderMin, setSliderMin] = useState('0')
+  const [sliderMax, setSliderMax] = useState('100')
+  const [sliderStep, setSliderStep] = useState('1')
+  const [sliderUnit, setSliderUnit] = useState('%')
 
   const handleAddOption = () => {
     if (!optionValue.trim() || !optionLabel.trim()) return
@@ -46,51 +48,92 @@ export function OptionsEditor({
     onChange(options.filter((_, i) => i !== index))
   }
 
-  const handleSetSliderRange = () => {
-    const min = parseInt(minValue, 10)
-    const max = parseInt(maxValue, 10)
+  const handleSetSliderConfig = () => {
+    const min = parseInt(sliderMin, 10)
+    const max = parseInt(sliderMax, 10)
+    const step = parseInt(sliderStep, 10)
 
-    if (isNaN(min) || isNaN(max) || min >= max) return
+    if (isNaN(min) || isNaN(max) || isNaN(step) || min >= max || step <= 0) {
+      return
+    }
 
+    // Store slider config as special format
     onChange([
-      { value: 'min', label: minValue },
-      { value: 'max', label: maxValue },
-    ])
+      {
+        value: '__slider_config__',
+        label: JSON.stringify({ min, max, step, unit: sliderUnit })
+      }
+    ] as any)
   }
 
   if (questionType === 'slider') {
+    // Parse current config if exists
+    const currentConfig = options.find(o => o.value === '__slider_config__')
+    let parsedConfig = null
+    if (currentConfig) {
+      try {
+        parsedConfig = JSON.parse(currentConfig.label)
+      } catch {
+        parsedConfig = null
+      }
+    }
+
     return (
       <div className="space-y-4 rounded-lg border p-4">
-        <Label>Slider Range</Label>
+        <Label>Slider Configuration</Label>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="min_value">Minimum</Label>
+            <Label htmlFor="slider_min">Minimum</Label>
             <Input
-              id="min_value"
+              id="slider_min"
               type="number"
-              value={minValue}
-              onChange={(e) => setMinValue(e.target.value)}
+              value={sliderMin}
+              onChange={(e) => setSliderMin(e.target.value)}
               placeholder="0"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="max_value">Maximum</Label>
+            <Label htmlFor="slider_max">Maximum</Label>
             <Input
-              id="max_value"
+              id="slider_max"
               type="number"
-              value={maxValue}
-              onChange={(e) => setMaxValue(e.target.value)}
-              placeholder="10"
+              value={sliderMax}
+              onChange={(e) => setSliderMax(e.target.value)}
+              placeholder="100"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="slider_step">Step</Label>
+            <Input
+              id="slider_step"
+              type="number"
+              value={sliderStep}
+              onChange={(e) => setSliderStep(e.target.value)}
+              placeholder="1"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="slider_unit">Unit</Label>
+            <Input
+              id="slider_unit"
+              value={sliderUnit}
+              onChange={(e) => setSliderUnit(e.target.value)}
+              placeholder="% or km, etc."
             />
           </div>
         </div>
-        <Button type="button" onClick={handleSetSliderRange} className="w-full">
-          Set Range
+        <Button type="button" onClick={handleSetSliderConfig} className="w-full">
+          <Plus className="mr-2 h-4 w-4" />
+          Save Slider Config
         </Button>
-        {options.length > 0 && (
-          <div className="text-sm text-muted-foreground">
-            Current range: {options.find((o) => o.value === 'min')?.label} -{' '}
-            {options.find((o) => o.value === 'max')?.label}
+        {parsedConfig && (
+          <div className="rounded-lg bg-muted p-3 text-sm">
+            <p className="font-medium mb-1">Current Config:</p>
+            <ul className="space-y-1 text-muted-foreground">
+              <li>• Range: {parsedConfig.min} - {parsedConfig.max}</li>
+              <li>• Step: {parsedConfig.step}</li>
+              <li>• Unit: {parsedConfig.unit || 'none'}</li>
+            </ul>
           </div>
         )}
       </div>

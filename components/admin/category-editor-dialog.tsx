@@ -31,6 +31,8 @@ export function CategoryEditorDialog({
   const [name, setName] = useState(category.name)
   const [description, setDescription] = useState(category.description || '')
   const [icon, setIcon] = useState(category.icon || '')
+  const [emoji, setEmoji] = useState((category as any).emoji || category.icon || '')
+  const [color, setColor] = useState((category as any).color || 'from-blue-500 to-purple-500')
   const [isActive, setIsActive] = useState(category.is_active)
   const [sortOrder, setSortOrder] = useState(category.sort_order)
   const [isSaving, setIsSaving] = useState(false)
@@ -43,6 +45,8 @@ export function CategoryEditorDialog({
     setName(category.name)
     setDescription(category.description || '')
     setIcon(category.icon || '')
+    setEmoji((category as any).emoji || category.icon || '')
+    setColor((category as any).color || 'from-blue-500 to-purple-500')
     setIsActive(category.is_active)
     setSortOrder(category.sort_order)
   }, [category])
@@ -66,7 +70,9 @@ export function CategoryEditorDialog({
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || null,
-          icon: icon.trim() || null,
+          icon: icon.trim() || emoji.trim() || null,
+          emoji: emoji.trim() || null,
+          color: color.trim() || null,
           is_active: isActive,
           sort_order: sortOrder,
         }),
@@ -116,22 +122,47 @@ export function CategoryEditorDialog({
             />
           </div>
 
-          {/* Icon */}
-          <div className="space-y-2">
-            <Label htmlFor="category_icon">Icon (Emoji)</Label>
-            <div className="flex items-center gap-2">
-              {icon && <span className="text-4xl">{icon}</span>}
-              <Input
-                id="category_icon"
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                placeholder="🛸"
-                className="flex-1"
-              />
+          {/* Emoji & Color */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category_emoji">Emoji</Label>
+              <div className="flex items-center gap-2">
+                {emoji && <span className="text-4xl">{emoji}</span>}
+                <Input
+                  id="category_emoji"
+                  value={emoji}
+                  onChange={(e) => {
+                    setEmoji(e.target.value)
+                    if (!icon) setIcon(e.target.value)
+                  }}
+                  placeholder="🛸"
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Use an emoji for this category
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Use an emoji to represent this category
-            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="category_color">Color Gradient</Label>
+              <Input
+                id="category_color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                placeholder="from-blue-500 to-purple-500"
+              />
+              <p className="text-xs text-muted-foreground">
+                Tailwind gradient classes
+              </p>
+            </div>
+          </div>
+
+          {/* Color Preview */}
+          <div className="rounded-lg overflow-hidden">
+            <div className={`h-16 bg-gradient-to-r ${color} flex items-center justify-center`}>
+              <span className="text-4xl drop-shadow-lg">{emoji}</span>
+            </div>
           </div>
 
           {/* Description */}

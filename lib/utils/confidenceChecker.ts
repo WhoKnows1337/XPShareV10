@@ -1,13 +1,22 @@
 import { SubmitStore, Question as StoreQuestion } from '@/lib/stores/submitStore'
+import {
+  fetchQuestionsForCategory,
+  mapLegacyCategoryToSlug,
+  type QuestionForUI
+} from '@/lib/api/questions'
 
 export interface Question extends Omit<StoreQuestion, 'type'> {
-  type: 'date' | 'location' | 'multiChoice' | 'emotionalTags' | 'text'
+  type: 'date' | 'location' | 'multiChoice' | 'emotionalTags' | 'text' | 'boolean' | 'slider'
   field: string // which extracted field this relates to
   currentValue?: string | string[]
   confidence?: number
+  xpBonus?: number
+  helpText?: string
+  placeholder?: string
+  sliderConfig?: { min: number; max: number; step: number; unit: string }
 }
 
-const CONFIDENCE_THRESHOLD = 80
+const CONFIDENCE_THRESHOLD = 60 // Lowered from 80 to reduce unnecessary questions
 
 /**
  * Category-specific question templates
@@ -207,35 +216,39 @@ export function shouldShowQuestions(extractedData: SubmitStore['extractedData'])
 }
 
 /**
- * Generate questions based on category and low-confidence fields
+ * Generate questions based on category and low-confidence fields (ASYNC - DB-driven)
  */
-export function generateQuestions(
+export async function generateQuestions(
   extractedData: SubmitStore['extractedData']
-): Question[] {
-  const category = extractedData.category.value || 'Other'
-  const categoryQuestions = CATEGORY_QUESTIONS[category] || CATEGORY_QUESTIONS['Other']
-
+): Promise<Question[]> {
   const questions: Question[] = []
 
-  // Always add category-specific questions
-  categoryQuestions.forEach((q) => {
-    const questionCopy = { ...q }
+  // Step 1: Add low-confidence field questions FIRST
+  if (extractedData.category.confidence < CONFIDENCE_THRESHOLD && !extractedData.category.isManuallyEdited) {
+    questions.push({
+      id: 'category_clarify',
+      type: 'multiChoice',
+      question: 'Welche Kategorie passt am besten zu deiner Erfahrung?',
+      field: 'category',
+      options: [
+        'Himmelsphänomene & UAP',
+        'Bewusstsein & Erwachen',
+        'Paranormales & Geister',
+        'PSI & Übersinnliches',
+        'Wesen & Begegnungen',
+        'Synchronizität & Zeichen',
+        'Heilung & Energie',
+        'Natur-Anomalien',
+      ],
+      required: true,
+      currentValue: extractedData.category.value,
+      confidence: extractedData.category.confidence,
+      xpBonus: 0,
+    })
+  }
 
-    // If this question relates to an extracted field, add current value and confidence
-    if (q.field === 'date' && extractedData.date.value) {
-      questionCopy.currentValue = extractedData.date.value
-      questionCopy.confidence = extractedData.date.confidence
-    } else if (q.field === 'location' && extractedData.location.value) {
-      questionCopy.currentValue = extractedData.location.value
-      questionCopy.confidence = extractedData.location.confidence
-    }
-
-    questions.push(questionCopy)
-  })
-
-  // Add low-confidence field questions
   if (extractedData.title.confidence < CONFIDENCE_THRESHOLD && !extractedData.title.isManuallyEdited) {
-    questions.unshift({
+    questions.push({
       id: 'title_clarify',
       type: 'text',
       question: 'Wie würdest du deine Erfahrung in einem Satz zusammenfassen?',
@@ -243,27 +256,105 @@ export function generateQuestions(
       required: true,
       currentValue: extractedData.title.value,
       confidence: extractedData.title.confidence,
+      xpBonus: 0,
+      placeholder: 'z.B. "Ich sah ein unbekanntes Flugobjekt über Berlin"',
     })
   }
 
-  if (extractedData.category.confidence < CONFIDENCE_THRESHOLD && !extractedData.category.isManuallyEdited) {
-    questions.unshift({
-      id: 'category_clarify',
-      type: 'multiChoice',
-      question: 'Welche Kategorie passt am besten?',
-      field: 'category',
-      options: [
-        'UAP Sighting',
-        'Spiritual Experience',
-        'Synchronicity',
-        'Paranormal',
-        'Dream/Vision',
-        'Consciousness',
-        'Other',
-      ],
+  // Step 2: Fetch category-specific questions from DB
+  try {
+    const category = extractedData.category.value || 'Other'
+    const categorySlug = mapLegacyCategoryToSlug(category)
+    const dbQuestions = await fetchQuestionsForCategory(categorySlug)
+
+    // Step 3: Filter and add DB questions intelligently
+    dbQuestions.forEach((dbQ) => {
+      const question: Question = {
+        id: dbQ.id,
+        type: dbQ.type,
+        question: dbQ.question,
+        field: dbQ.field,
+        options: dbQ.options,
+        required: dbQ.required,
+        xpBonus: dbQ.xpBonus,
+        helpText: dbQ.helpText,
+        placeholder: dbQ.placeholder,
+        sliderConfig: dbQ.sliderConfig,
+      }
+
+      // Add current value and confidence if field matches extracted data
+      if (dbQ.field === 'date' && extractedData.date.value) {
+        // Only ask date if confidence is low
+        if (extractedData.date.confidence < CONFIDENCE_THRESHOLD) {
+          question.currentValue = extractedData.date.value
+          question.confidence = extractedData.date.confidence
+          questions.push(question)
+        } else if (!dbQ.required) {
+          // Optional question, add anyway for XP bonus
+          question.currentValue = extractedData.date.value
+          question.confidence = extractedData.date.confidence
+          questions.push(question)
+        }
+      } else if (dbQ.field === 'location' && extractedData.location.value) {
+        // Only ask location if confidence is low
+        if (extractedData.location.confidence < CONFIDENCE_THRESHOLD) {
+          question.currentValue = extractedData.location.value
+          question.confidence = extractedData.location.confidence
+          questions.push(question)
+        } else if (!dbQ.required) {
+          // Optional question, add anyway for XP bonus
+          question.currentValue = extractedData.location.value
+          question.confidence = extractedData.location.confidence
+          questions.push(question)
+        }
+      } else {
+        // For all other questions, add if required OR if optional (for XP)
+        if (dbQ.required) {
+          questions.push(question)
+        } else {
+          // Optional questions: add for gamification
+          questions.push(question)
+        }
+      }
+    })
+  } catch (error) {
+    console.error('Error loading questions from DB, using fallback:', error)
+    // Fallback to basic questions if DB fails
+    const fallbackQuestions = getFallbackQuestions(extractedData)
+    questions.push(...fallbackQuestions)
+  }
+
+  return questions
+}
+
+/**
+ * Fallback questions if DB is unavailable
+ */
+function getFallbackQuestions(extractedData: SubmitStore['extractedData']): Question[] {
+  const questions: Question[] = []
+
+  if (extractedData.date.confidence < CONFIDENCE_THRESHOLD) {
+    questions.push({
+      id: 'date_fallback',
+      type: 'date',
+      question: 'Wann ist das passiert?',
+      field: 'date',
       required: true,
-      currentValue: extractedData.category.value,
-      confidence: extractedData.category.confidence,
+      currentValue: extractedData.date.value,
+      confidence: extractedData.date.confidence,
+    })
+  }
+
+  if (extractedData.location.confidence < CONFIDENCE_THRESHOLD) {
+    questions.push({
+      id: 'location_fallback',
+      type: 'text',
+      question: 'Wo warst du?',
+      field: 'location',
+      required: true,
+      currentValue: extractedData.location.value,
+      confidence: extractedData.location.confidence,
+      placeholder: 'z.B. Berlin, Deutschland',
     })
   }
 

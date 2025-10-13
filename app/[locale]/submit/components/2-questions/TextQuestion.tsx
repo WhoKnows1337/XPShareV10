@@ -7,9 +7,10 @@ interface TextQuestionProps {
   value?: string
   onChange: (value: string) => void
   currentValue?: string
+  placeholder?: string
 }
 
-export const TextQuestion = ({ value, onChange, currentValue }: TextQuestionProps) => {
+export const TextQuestion = ({ value, onChange, currentValue, placeholder }: TextQuestionProps) => {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -53,7 +54,7 @@ export const TextQuestion = ({ value, onChange, currentValue }: TextQuestionProp
           ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Deine Antwort..."
+          placeholder={placeholder || "Deine Antwort..."}
           rows={4}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
         />

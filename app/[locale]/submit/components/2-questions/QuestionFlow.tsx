@@ -10,7 +10,9 @@ import { LocationQuestion } from './LocationQuestion'
 import { MultiChoice } from './MultiChoice'
 import { EmotionalTags } from './EmotionalTags'
 import { TextQuestion } from './TextQuestion'
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { BooleanQuestion } from './BooleanQuestion'
+import { SliderQuestion } from './SliderQuestion'
+import { ArrowLeft, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -56,9 +58,12 @@ export const QuestionFlow = () => {
   const [isTextExpanded, setIsTextExpanded] = useState(false)
 
   useEffect(() => {
-    // Generate questions on mount
-    const generatedQuestions = generateQuestions(extractedData)
-    setQuestions(generatedQuestions)
+    // Generate questions on mount (async)
+    async function loadQuestions() {
+      const generatedQuestions = await generateQuestions(extractedData)
+      setQuestions(generatedQuestions)
+    }
+    loadQuestions()
   }, [extractedData])
 
   const currentQuestion = questions[currentQuestionIndex]
@@ -228,26 +233,55 @@ export const QuestionFlow = () => {
                 >
                   {currentQuestion.question}
                 </motion.h2>
-                {!currentQuestion.required && (
+
+                {/* Badges Row */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  {!currentQuestion.required && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 border border-gray-300 rounded-full text-xs text-gray-600"
+                    >
+                      Optional
+                    </motion.span>
+                  )}
+
+                  {currentQuestion.xpBonus && currentQuestion.xpBonus > 0 && (
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.25 }}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 border border-amber-300 rounded-full text-xs text-amber-700 font-medium"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      +{currentQuestion.xpBonus} XP
+                    </motion.span>
+                  )}
+
+                  {currentQuestion.confidence !== undefined && currentQuestion.confidence < 60 && (
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 border border-orange-300 rounded-full text-xs text-orange-700"
+                    >
+                      <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                      AI unsicher
+                    </motion.span>
+                  )}
+                </div>
+
+                {/* Help Text */}
+                {currentQuestion.helpText && (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-sm text-gray-500"
+                    transition={{ delay: 0.35 }}
+                    className="text-sm text-gray-500 mt-2 italic"
                   >
-                    Optional – du kannst diese Frage überspringen
+                    💡 {currentQuestion.helpText}
                   </motion.p>
-                )}
-                {currentQuestion.confidence !== undefined && currentQuestion.confidence < 80 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-orange-100 border border-orange-300 rounded-full text-sm text-orange-700"
-                  >
-                    <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                    Unsicher: {currentQuestion.confidence}% Konfidenz
-                  </motion.div>
                 )}
               </div>
 
@@ -290,6 +324,22 @@ export const QuestionFlow = () => {
                     value={currentAnswer}
                     onChange={handleAnswer}
                     currentValue={currentQuestion.currentValue as string}
+                    placeholder={currentQuestion.placeholder}
+                  />
+                )}
+                {currentQuestion.type === 'boolean' && (
+                  <BooleanQuestion
+                    value={currentAnswer}
+                    onChange={handleAnswer}
+                    currentValue={currentQuestion.currentValue as boolean}
+                  />
+                )}
+                {currentQuestion.type === 'slider' && currentQuestion.sliderConfig && (
+                  <SliderQuestion
+                    value={currentAnswer}
+                    onChange={handleAnswer}
+                    sliderConfig={currentQuestion.sliderConfig}
+                    currentValue={currentQuestion.currentValue as number}
                   />
                 )}
               </motion.div>

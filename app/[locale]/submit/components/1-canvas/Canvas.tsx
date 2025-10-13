@@ -5,8 +5,9 @@ import { motion } from 'framer-motion'
 import { MainInput } from './MainInput'
 import { ExtractionSidebar } from './ExtractionSidebar'
 import { InlineSTT } from './InlineSTT'
+import { QuestionPrompt } from '../shared/QuestionPrompt'
 import { useSubmitStore } from '@/lib/stores/submitStore'
-import { shouldShowQuestions, generateQuestions } from '@/lib/utils/confidenceChecker'
+import { shouldShowQuestions, generateQuestions, type Question } from '@/lib/utils/confidenceChecker'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Mic, RotateCcw } from 'lucide-react'
 
@@ -25,26 +26,44 @@ const mediaButtonVariants = {
 export const Canvas = () => {
   const { charCount, extractedData, setText, nextStep } = useSubmitStore()
   const [isSTTActive, setIsSTTActive] = useState(false)
+  const [showQuestionPrompt, setShowQuestionPrompt] = useState(false)
+  const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([])
 
-  const handleContinue = () => {
-    // Check if questions are needed
-    const needsQuestions = shouldShowQuestions(extractedData)
+  const handleContinue = async () => {
+    // Generate questions first
+    const questions = await generateQuestions(extractedData)
 
-    if (needsQuestions) {
-      // Generate and store questions
-      const questions = generateQuestions(extractedData)
-      useSubmitStore.setState({
-        needsQuestions: true,
-        questions
-      })
-      nextStep() // Go to Screen 2
+    // Check if there are any questions to show
+    if (questions.length > 0) {
+      // Store questions and show prompt dialog
+      setGeneratedQuestions(questions)
+      setShowQuestionPrompt(true)
     } else {
-      // Skip Screen 2, go directly to Screen 3 (Media)
+      // No questions needed, skip directly to Screen 3 (Media)
       useSubmitStore.setState({
         needsQuestions: false,
         currentStep: 3 as 3
       })
     }
+  }
+
+  const handleStartQuestions = () => {
+    // User chose to answer questions
+    useSubmitStore.setState({
+      needsQuestions: true,
+      questions: generatedQuestions
+    })
+    setShowQuestionPrompt(false)
+    nextStep() // Go to Screen 2
+  }
+
+  const handleSkipQuestions = () => {
+    // User chose to skip questions
+    setShowQuestionPrompt(false)
+    useSubmitStore.setState({
+      needsQuestions: false,
+      currentStep: 3 as 3  // Skip to Screen 3 (Media)
+    })
   }
 
   const mediaButtons = [
@@ -66,6 +85,15 @@ export const Canvas = () => {
   return (
     <TooltipProvider>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
+        {/* Question Prompt Dialog */}
+        {showQuestionPrompt && (
+          <QuestionPrompt
+            questions={generatedQuestions}
+            onStart={handleStartQuestions}
+            onSkip={handleSkipQuestions}
+          />
+        )}
+
         <div className="max-w-4xl mx-auto">
           {/* Main Input Area */}
           <div className="relative">
