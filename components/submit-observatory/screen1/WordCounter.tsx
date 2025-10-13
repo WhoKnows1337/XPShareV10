@@ -17,6 +17,7 @@ const MILESTONES = {
 
 export function WordCounter({ wordCount }: WordCounterProps) {
   const t = useTranslations('submit.screen1.wordCounter');
+  // Force rebuild to clear browser cache
 
   const currentMilestone = useMemo(() => {
     if (wordCount >= MILESTONES.platinum.words) return MILESTONES.platinum;
@@ -117,15 +118,15 @@ export function WordCounter({ wordCount }: WordCounterProps) {
         </div>
       )}
 
-      {/* Milestone Achievement Badges */}
-      {wordCount >= MILESTONES.bronze.words && wordCount < MILESTONES.silver.words && (
+      {/* Milestone Achievement Badges - TEMPORARILY DISABLED due to browser cache issue */}
+      {/* {wordCount >= MILESTONES.bronze.words && wordCount < MILESTONES.silver.words && (
         <div className="flex items-center gap-2 p-2 bg-observatory-gold/10 border border-observatory-gold/20 rounded-lg animate-fly-in-right">
           <span className="text-lg">⭐</span>
           <p className="text-xs text-observatory-gold font-medium">
             {t('bronzeAchieved', '+{xp} XP für detaillierte Beschreibung!', { xp: MILESTONES.bronze.xp })}
           </p>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

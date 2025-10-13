@@ -28,7 +28,8 @@ export function AIResultsSection() {
           </div>
         </div>
         <p className="text-text-secondary text-sm">
-          {t('celebrationText', 'Deine Erfahrung wurde analysiert! Wir haben automatisch Titel, Kategorie und {count} relevante Tags erkannt.', { count: screen2.tags.length })}
+          {/* Temporarily hardcoded due to browser cache issue */}
+          Deine Erfahrung wurde analysiert! Wir haben automatisch Titel, Kategorie und {screen2.tags.length} relevante Tags erkannt.
         </p>
       </div>
 
