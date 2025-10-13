@@ -5,6 +5,7 @@ import { persist } from 'zustand/middleware';
 export interface Screen1Data {
   text: string;
   wordCount: number;
+  charCount: number;
 }
 
 // Screen 2: AI Analysis + Questions
@@ -13,6 +14,7 @@ export interface Screen2Data {
   title: string;
   category: string;
   tags: string[];
+  aiConfidence: number; // AI confidence percentage (0-100)
 
   // Required Questions
   date: string;
@@ -83,7 +85,11 @@ export interface SubmitFlowState {
 
   // Screen 2 Actions
   updateScreen2: (data: Partial<Screen2Data>) => void;
-  setAIResults: (title: string, category: string, tags: string[]) => void;
+  setAIResults: (title: string, category: string, tags: string[], confidence?: number) => void;
+  setTitle: (title: string) => void;
+  setCategory: (category: string) => void;
+  addTag: (tag: string) => void;
+  removeTag: (tag: string) => void;
   setExtraQuestion: (questionId: string, answer: any) => void;
 
   // Screen 3 Actions
@@ -124,12 +130,14 @@ export interface SubmitFlowState {
 const initialScreen1: Screen1Data = {
   text: '',
   wordCount: 0,
+  charCount: 0,
 };
 
 const initialScreen2: Screen2Data = {
   title: '',
   category: '',
   tags: [],
+  aiConfidence: 0,
   date: '',
   time: '',
   location: '',
@@ -184,8 +192,9 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
 
       setText: (text) => {
         const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+        const charCount = text.length;
         set((state) => ({
-          screen1: { ...state.screen1, text, wordCount },
+          screen1: { ...state.screen1, text, wordCount, charCount },
           isDraft: true,
         }));
       },
@@ -197,9 +206,45 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           isDraft: true,
         })),
 
-      setAIResults: (title, category, tags) =>
+      setAIResults: (title, category, tags, confidence = 85) =>
         set((state) => ({
-          screen2: { ...state.screen2, title, category, tags },
+          screen2: { ...state.screen2, title, category, tags, aiConfidence: confidence },
+        })),
+
+      setTitle: (title) =>
+        set((state) => ({
+          screen2: { ...state.screen2, title },
+          isDraft: true,
+        })),
+
+      setCategory: (category) =>
+        set((state) => ({
+          screen2: { ...state.screen2, category },
+          isDraft: true,
+        })),
+
+      addTag: (tag) =>
+        set((state) => {
+          // Max 10 tags, no duplicates
+          if (state.screen2.tags.length >= 10) return state;
+          if (state.screen2.tags.includes(tag)) return state;
+
+          return {
+            screen2: {
+              ...state.screen2,
+              tags: [...state.screen2.tags, tag],
+            },
+            isDraft: true,
+          };
+        }),
+
+      removeTag: (tag) =>
+        set((state) => ({
+          screen2: {
+            ...state.screen2,
+            tags: state.screen2.tags.filter((t) => t !== tag),
+          },
+          isDraft: true,
         })),
 
       setExtraQuestion: (questionId, answer) =>
@@ -325,8 +370,8 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         const state = get();
         switch (state.currentStep) {
           case 1:
-            // Minimum 50 words required
-            return state.screen1.wordCount >= 50;
+            // Minimum 50 characters required
+            return state.screen1.charCount >= 50;
           case 2:
             // Required questions must be filled
             return (

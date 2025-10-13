@@ -12,26 +12,59 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const { text, metadata } = await request.json();
 
     if (!text || text.trim().length < 50) {
       return NextResponse.json(
-        { error: 'Text is too short for summarization (minimum 50 words)' },
+        { error: 'Text is too short for summarization (minimum 50 characters)' },
         { status: 400 }
       );
     }
 
-    const prompt = `Erstelle eine prägnante Zusammenfassung des folgenden Erfahrungsberichts.
+    // Build context from metadata if available
+    let contextInfo = '';
+    if (metadata) {
+      const parts = [];
+
+      if (metadata.category) {
+        parts.push(`Kategorie: ${metadata.category}`);
+      }
+
+      if (metadata.date && metadata.time) {
+        parts.push(`Datum/Zeit: ${metadata.date} um ${metadata.time}`);
+      } else if (metadata.date) {
+        parts.push(`Datum: ${metadata.date}`);
+      }
+
+      if (metadata.location) {
+        parts.push(`Ort: ${metadata.location}`);
+      }
+
+      if (metadata.duration) {
+        const durationMap: Record<string, string> = {
+          'less_than_1min': 'unter 1 Minute',
+          '1_to_5min': '1-5 Minuten',
+          'more_than_5min': 'über 5 Minuten'
+        };
+        parts.push(`Dauer: ${durationMap[metadata.duration] || metadata.duration}`);
+      }
+
+      if (parts.length > 0) {
+        contextInfo = `\n\nStrukturierte Informationen:\n${parts.join('\n')}`;
+      }
+    }
+
+    const prompt = `Erstelle eine prägnante Zusammenfassung des folgenden Erfahrungsberichts.${contextInfo}
 
 Anforderungen:
-- Maximal 3-4 Sätze
-- 150-200 Zeichen ideal (max 250)
+- Maximal 3-4 Sätze (150-200 Zeichen ideal, max 250)
 - Objektiv und sachlich
-- Wichtigste Details: Was, Wann, Wo
-- Für Preview/Snippet geeignet
+- Beginne mit den wichtigsten Fakten (Wann, Wo falls vorhanden)
+- Fokus auf Kern-Ereignisse
+- Für Preview/Snippet in Feed geeignet
 - In derselben Sprache wie der Originaltext
 
-Text:
+Detaillierter Bericht:
 """
 ${text}
 """

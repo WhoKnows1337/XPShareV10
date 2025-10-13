@@ -15,6 +15,7 @@ export function EnhancedTextScreen() {
   const t = useTranslations('submit.screen3');
   const {
     screen1,
+    screen2,
     screen3,
     setSummary,
     setEnhancedText,
@@ -73,7 +74,16 @@ export function EnhancedTextScreen() {
       const response = await fetch('/api/submit/generate-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: screen1.text }),
+        body: JSON.stringify({
+          text: screen1.text,
+          metadata: {
+            category: screen2.category,
+            date: screen2.date,
+            time: screen2.time,
+            location: screen2.location,
+            duration: screen2.duration,
+          }
+        }),
       });
 
       if (!response.ok) throw new Error('Summary generation failed');

@@ -148,9 +148,17 @@
           "camera": "Kamera",
           "upload": "Datei hochladen",
           "processing": "Extrahiere Text...",
-          "edit": "Text bearbeiten",
-          "insert": "Text einfügen",
-          "cancel": "Abbrechen"
+          "analyzing": "Analysiere Text...",
+          "recognized": "Text erkannt",
+          "extracted": "Erkannter Text:",
+          "edit": "Bearbeiten",
+          "doneEditing": "Fertig",
+          "insert": "Übernehmen",
+          "cancel": "Abbrechen",
+          "success": "Text erfolgreich erkannt!",
+          "error": "Fehler beim Erkennen",
+          "errorMessage": "Fehler beim Erkennen",
+          "retry": "Erneut versuchen"
         }
       },
       "privacy": "Dein Entwurf wird automatisch alle 30 Sekunden gespeichert.",

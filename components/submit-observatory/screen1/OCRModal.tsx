@@ -14,7 +14,7 @@ interface OCRModalProps {
 type OCRStatus = 'idle' | 'processing' | 'complete' | 'error';
 
 export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
-  const t = useTranslations('submit.screen1.ocr');
+  const t = useTranslations('submit.screen1.ocr.modal');
   const [status, setStatus] = useState<OCRStatus>('idle');
   const [extractedText, setExtractedText] = useState('');
   const [isEditing, setIsEditing] = useState(false);

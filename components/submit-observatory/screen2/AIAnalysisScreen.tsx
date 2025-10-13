@@ -54,6 +54,7 @@ export function AIAnalysisScreen() {
     setAnalyzing(true);
     setAnalysisError(null);
     try {
+      // Step 1: Analyze text for title, category, tags
       const response = await fetch('/api/submit/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,6 +66,10 @@ export function AIAnalysisScreen() {
       const data = await response.json();
       setAIResults(data.title, data.category, data.tags);
       setHasAnalyzed(true);
+
+      // Step 2: Generate summary with metadata (waits for completion)
+      // This runs AFTER analysis so we have category available
+      await generateSummary(data.category);
     } catch (error) {
       console.error('AI Analysis error:', error);
       setAnalysisError(t('error', 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'));
@@ -73,13 +78,50 @@ export function AIAnalysisScreen() {
     }
   };
 
+  const generateSummary = async (category: string) => {
+    const { setSummary, setSummarizing, screen2 } = useSubmitFlowStore.getState();
+
+    // Don't regenerate if summary already exists
+    if (useSubmitFlowStore.getState().screen3.summary) {
+      return;
+    }
+
+    setSummarizing(true);
+    try {
+      const response = await fetch('/api/submit/generate-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: screen1.text,
+          metadata: {
+            category: category,
+            date: screen2.date,
+            time: screen2.time,
+            location: screen2.location,
+            duration: screen2.duration,
+          }
+        }),
+      });
+
+      if (!response.ok) throw new Error('Summary generation failed');
+
+      const summaryData = await response.json();
+      setSummary(summaryData.summary);
+    } catch (error) {
+      console.error('Summary generation error:', error);
+      // Don't show error to user, they can regenerate in Step 3
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
   // Show loading state during analysis
   if (isAnalyzing) {
     return (
       <LoadingState
         icon="telescope"
-        title={t('analyzing', 'Analysiere deine XP...')}
-        description={t('analyzingDesc', 'KI erkennt Muster, erstellt Titel und bereitet Folgefragen vor')}
+        title={t('analyzing')}
+        description="KI erkennt Kategorie & Tags, erstellt Titel & Preview-Zusammenfassung"
       />
     );
   }
