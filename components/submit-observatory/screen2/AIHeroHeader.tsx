@@ -35,25 +35,43 @@ export function AIHeroHeader() {
   // Icon mapping for each category
   const categoryIcons: Record<string, LucideIcon> = {
     paranormal: Ghost,
+    'paranormales': Ghost,
     ufo_sighting: Telescope,
+    'ufo-uap': Telescope,
     synchronicity: Sparkles,
+    'synchronizitaet': Sparkles,
     spiritual_experience: Heart,
+    'spirituelles': Heart,
     near_death_experience: Zap,
+    'nahtod': Zap,
     psychic_experience: Brain,
+    'psychisches': Brain,
     cryptid_encounter: Footprints,
+    'kryptid': Footprints,
+    'gesundheit': Heart,
     other: HelpCircle,
+    'andere': HelpCircle,
   };
 
   // Color mapping for categories
   const categoryColors: Record<string, string> = {
     paranormal: 'bg-purple-500',
+    'paranormales': 'bg-purple-500',
     ufo_sighting: 'bg-blue-500',
+    'ufo-uap': 'bg-blue-500',
     synchronicity: 'bg-pink-500',
+    'synchronizitaet': 'bg-pink-500',
     spiritual_experience: 'bg-green-500',
+    'spirituelles': 'bg-green-500',
     near_death_experience: 'bg-yellow-500',
+    'nahtod': 'bg-yellow-500',
     psychic_experience: 'bg-indigo-500',
+    'psychisches': 'bg-indigo-500',
     cryptid_encounter: 'bg-orange-500',
+    'kryptid': 'bg-orange-500',
+    'gesundheit': 'bg-green-500',
     other: 'bg-gray-500',
+    'andere': 'bg-gray-500',
   };
 
   const categorySlug = screen2.categorySlug || 'other';
@@ -103,7 +121,7 @@ export function AIHeroHeader() {
                 {categoryName}
               </span>
               <span className="text-xs text-text-tertiary">
-                {confidencePercent}% Zuversicht
+                {confidencePercent}% Sicher
               </span>
             </div>
 
@@ -213,7 +231,7 @@ export function AIHeroHeader() {
                         </div>
                         {typeof attr === 'object' && attr.confidence && (
                           <div className="mt-1 text-[10px] text-text-tertiary">
-                            {attr.confidence}% Zuversicht
+                            {attr.confidence}% Sicher
                           </div>
                         )}
                       </div>

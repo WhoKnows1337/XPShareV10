@@ -22,6 +22,14 @@
         "@browsermcp/mcp@latest"
       ],
       "env": {}
+    },
+    "shadcn": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jpisnice/shadcn-ui-mcp-server"
+      ]
     }
   }
 }
