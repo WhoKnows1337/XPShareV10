@@ -10,19 +10,34 @@ import { ApplyTemplateDialog } from '@/components/admin/apply-template-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Edit, Trash2, Maximize, FileInput, FilePlus2 } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2, Maximize, FileInput, FilePlus2, Tag, TrendingUp, CheckCircle2, AlertCircle, Circle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 
+interface AttributeSchema {
+  key: string
+  display_name: string
+  data_type: string
+  allowed_values: string[] | null
+  is_filterable: boolean
+  is_searchable: boolean
+}
+
 interface CategoryDetailClientProps {
   category: QuestionCategory
   initialQuestions: DynamicQuestion[]
+  attributes?: AttributeSchema[]
+  attributeUsageCounts?: Record<string, number>
+  completionPercentage?: number
 }
 
 export function CategoryDetailClient({
   category,
   initialQuestions,
+  attributes = [],
+  attributeUsageCounts = {},
+  completionPercentage = 0,
 }: CategoryDetailClientProps) {
   const [questions, setQuestions] = useState(initialQuestions)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -446,6 +461,198 @@ export function CategoryDetailClient({
           )}
         </CardContent>
       </Card>
+
+      {/* Completion Stats & Attributes Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Completion Status */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              {completionPercentage === 100 ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : completionPercentage >= 50 ? (
+                <AlertCircle className="w-5 h-5 text-yellow-500" />
+              ) : (
+                <Circle className="w-5 h-5 text-gray-300" />
+              )}
+              Configuration Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Completion</span>
+                  <span className="font-medium">{completionPercentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      completionPercentage === 100
+                        ? 'bg-green-500'
+                        : completionPercentage >= 50
+                        ? 'bg-yellow-500'
+                        : 'bg-gray-400'
+                    }`}
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Questions:</span>
+                  <Badge variant={questions.length > 0 ? 'default' : 'outline'}>
+                    {questions.length}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Attributes:</span>
+                  <Badge variant={attributes.length > 0 ? 'default' : 'outline'}>
+                    {attributes.length}
+                  </Badge>
+                </div>
+              </div>
+              {completionPercentage < 100 && (
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-orange-600 dark:text-orange-400">
+                    {questions.length === 0 && '⚠️ No questions configured'}
+                    {questions.length > 0 && attributes.length === 0 && '⚠️ No attributes configured'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Questions Stats */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-500" />
+              Questions Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Questions:</span>
+                <span className="font-medium">{questions.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Active:</span>
+                <span className="font-medium text-green-600">
+                  {questions.filter(q => q.is_active).length}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Inactive:</span>
+                <span className="font-medium text-gray-500">
+                  {questions.filter(q => !q.is_active).length}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">With Attribute Mapping:</span>
+                <span className="font-medium">
+                  {questions.filter(q => q.maps_to_attribute).length}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Attributes Stats */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Tag className="w-5 h-5 text-purple-500" />
+              Attributes Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Attributes:</span>
+                <span className="font-medium">{attributes.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Enum Types:</span>
+                <span className="font-medium">
+                  {attributes.filter(a => a.data_type === 'enum').length}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Text Types:</span>
+                <span className="font-medium">
+                  {attributes.filter(a => a.data_type === 'text').length}
+                </span>
+              </div>
+              {attributes.length > 0 && (
+                <div className="pt-2 border-t">
+                  <Link href="/admin/attributes">
+                    <Button variant="ghost" size="sm" className="w-full">
+                      <Tag className="w-3 h-3 mr-1" />
+                      Manage Attributes
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Attributes List (if any) */}
+      {attributes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Configured Attributes ({attributes.length})</CardTitle>
+              <Link href="/admin/attributes">
+                <Button variant="outline" size="sm">
+                  <Tag className="w-4 h-4 mr-2" />
+                  Edit Attributes
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {attributes.map((attr) => (
+                <div
+                  key={attr.key}
+                  className="border rounded-lg p-3 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{attr.display_name}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{attr.key}</div>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {attr.data_type}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {attr.is_filterable && <span>🔍 Filterable</span>}
+                    {attr.is_searchable && <span>🔎 Searchable</span>}
+                  </div>
+                  {attr.allowed_values && attr.allowed_values.length > 0 && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {attr.allowed_values.length} allowed values
+                    </div>
+                  )}
+                  {attributeUsageCounts[attr.key] && (
+                    <div className="mt-2 pt-2 border-t">
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        Used in {attributeUsageCounts[attr.key]} experiences
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-2">
