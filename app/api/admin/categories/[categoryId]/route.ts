@@ -155,20 +155,47 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // First, get the category to check its slug
+    const { data: category, error: fetchError } = await supabase
+      .from('question_categories')
+      .select('slug')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !category) {
+      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    }
+
     // Check if category has questions
-    const { count } = await supabase
+    const { count: questionCount } = await supabase
       .from('dynamic_questions')
       .select('*', { count: 'exact', head: true })
       .eq('category_id', id)
 
-    if (count && count > 0) {
+    if (questionCount && questionCount > 0) {
       return NextResponse.json(
-        { error: `Cannot delete category with ${count} questions. Delete questions first.` },
+        { error: `Cannot delete category with ${questionCount} questions. Delete questions first.` },
         { status: 400 }
       )
     }
 
-    // Delete category
+    // Check if category has attributes
+    const { data: attributes, error: attrError } = await supabase
+      .from('attribute_schema')
+      .select('key')
+      .eq('category_slug', category.slug)
+
+    if (!attrError && attributes && attributes.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete category with ${attributes.length} attributes. Delete attributes first.`,
+          attribute_keys: attributes.map((a) => a.key),
+        },
+        { status: 400 }
+      )
+    }
+
+    // Delete category (only if no questions AND no attributes)
     const { error } = await supabase.from('question_categories').delete().eq('id', id)
 
     if (error) {

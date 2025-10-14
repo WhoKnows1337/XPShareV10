@@ -20,7 +20,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Save, X, Monitor, Smartphone, Sparkles, Link2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Save, X, Monitor, Smartphone, Sparkles, Link2, Globe } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { QuestionPreview } from './question-preview'
 import { OptionsEditor } from './options-editor'
@@ -37,7 +39,7 @@ interface QuestionEditorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   question: DynamicQuestion | null
-  categoryId: string
+  categoryId: string | null  // null = Universal Question
   onSave: () => void
 }
 
@@ -45,10 +47,19 @@ const questionTypes: QuestionType[] = [
   'chips',
   'chips-multi',
   'text',
+  'textarea',
   'boolean',
   'slider',
   'date',
   'time',
+  'dropdown',
+  'dropdown-multi',
+  'image-select',
+  'image-multi',
+  'rating',
+  'color',
+  'range',
+  'ai-text',
 ]
 
 export function QuestionEditorDialog({
@@ -209,18 +220,34 @@ export function QuestionEditorDialog({
 
   console.log('QuestionEditorDialog render - open:', open, 'question:', question?.id)
 
+  const isUniversal = categoryId === null
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
             {question ? 'Edit Question' : 'Create New Question'}
+            {isUniversal && (
+              <Badge variant="default" className="ml-2">
+                🌍 Universal
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-6 overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 120px)' }}>
           {/* Left: Editor */}
           <div className="space-y-4">
+            {/* Universal Question Info */}
+            {isUniversal && (
+              <Alert className="border-blue-200 bg-blue-50">
+                <Globe className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-xs">
+                  This is a <strong>Universal Question</strong> and will be shown for ALL categories.
+                </AlertDescription>
+              </Alert>
+            )}
             {/* Question Text */}
             <div className="space-y-2">
               <Label htmlFor="question_text">
@@ -257,10 +284,16 @@ export function QuestionEditorDialog({
               </p>
             </div>
 
-            {/* Options Editor (for chips/chips-multi/slider) */}
+            {/* Options Editor (for chips/dropdowns/sliders/images/ratings) */}
             {(questionType === 'chips' ||
               questionType === 'chips-multi' ||
-              questionType === 'slider') && (
+              questionType === 'slider' ||
+              questionType === 'dropdown' ||
+              questionType === 'dropdown-multi' ||
+              questionType === 'image-select' ||
+              questionType === 'image-multi' ||
+              questionType === 'rating' ||
+              questionType === 'color') && (
               <OptionsEditor
                 questionType={questionType}
                 options={options}
@@ -281,7 +314,7 @@ export function QuestionEditorDialog({
             </div>
 
             {/* Placeholder */}
-            {questionType === 'text' && (
+            {(questionType === 'text' || questionType === 'textarea' || questionType === 'ai-text') && (
               <div className="space-y-2">
                 <Label htmlFor="placeholder">Placeholder</Label>
                 <Input
@@ -360,7 +393,11 @@ export function QuestionEditorDialog({
               </div>
 
               {/* Value Mapping Preview */}
-              {mapsToAttribute && mapsToAttribute !== '__none__' && (questionType === 'chips' || questionType === 'chips-multi') && options.length > 0 && (
+              {mapsToAttribute && mapsToAttribute !== '__none__' &&
+               (questionType === 'chips' || questionType === 'chips-multi' ||
+                questionType === 'dropdown' || questionType === 'dropdown-multi' ||
+                questionType === 'image-select' || questionType === 'image-multi') &&
+               options.length > 0 && (
                 <div className="rounded border border-blue-100 bg-blue-50/50 p-3 space-y-2">
                   <h4 className="font-medium text-sm text-blue-900">Value Mapping Preview</h4>
                   <p className="text-xs text-blue-700">
@@ -383,7 +420,11 @@ export function QuestionEditorDialog({
               {mapsToAttribute && mapsToAttribute !== '__none__' && (
                 <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 p-2 rounded">
                   <Sparkles className="h-4 w-4" />
-                  <span>AI will pre-fill this question if the attribute is detected</span>
+                  <span>
+                    {questionType === 'ai-text'
+                      ? 'AI will extract this attribute from user\'s free-text answer'
+                      : 'Smart-Filtering: Question hidden if AI detects this attribute in text'}
+                  </span>
                 </div>
               )}
             </div>

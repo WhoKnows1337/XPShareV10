@@ -33,9 +33,15 @@ export async function GET(request: Request) {
       .select('*')
       .order('priority', { ascending: true })
 
-    if (categoryId) {
+    // B+F System: Support loading Universal Questions
+    if (categoryId === 'universal') {
+      // Load Universal Questions only (category_id IS NULL)
+      query = query.is('category_id', null)
+    } else if (categoryId) {
+      // Load specific category questions
       query = query.eq('category_id', categoryId)
     }
+    // If no categoryId provided, load ALL questions (including Universal)
 
     if (questionType) {
       query = query.eq('question_type', questionType)
@@ -102,10 +108,21 @@ export async function POST(request: Request) {
     }
 
     // Validate question_type
-    const validTypes = ['chips', 'chips-multi', 'text', 'boolean', 'slider', 'date', 'time']
+    const validTypes = [
+      'chips', 'chips-multi', 'text', 'textarea', 'boolean', 'slider', 'date', 'time',
+      'dropdown', 'dropdown-multi', 'image-select', 'image-multi', 'rating', 'color', 'range', 'ai-text'
+    ]
     if (!validTypes.includes(question_type)) {
       return NextResponse.json(
         { error: `Invalid question_type. Must be one of: ${validTypes.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    // Validate: ai-text requires maps_to_attribute
+    if (question_type === 'ai-text' && !maps_to_attribute) {
+      return NextResponse.json(
+        { error: 'AI-text questions require attribute mapping (maps_to_attribute)' },
         { status: 400 }
       )
     }

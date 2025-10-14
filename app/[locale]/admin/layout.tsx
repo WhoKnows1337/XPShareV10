@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/admin-auth'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Shield, FileQuestion, Flag, Users, BarChart, TrendingUp, FileText, History } from 'lucide-react'
+import { Shield, FileQuestion, Flag, Users, BarChart, TrendingUp, FileText, History, Globe, Sparkles, FolderTree } from 'lucide-react'
 
 export default async function AdminLayout({
   children,
@@ -38,10 +38,36 @@ export default async function AdminLayout({
                   Dashboard
                 </Button>
               </Link>
+
+              {/* Categories Section */}
+              <div className="px-2 py-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Categories
+                </p>
+              </div>
+              <Link href="/admin/categories/new-wizard">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI Category Wizard
+                </Button>
+              </Link>
+
+              {/* Questions Section */}
+              <div className="px-2 py-2 mt-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Questions
+                </p>
+              </div>
+              <Link href="/admin/universal-questions">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Globe className="mr-2 h-4 w-4" />
+                  Universal Questions
+                </Button>
+              </Link>
               <Link href="/admin/questions">
                 <Button variant="ghost" className="w-full justify-start">
                   <FileQuestion className="mr-2 h-4 w-4" />
-                  Questions
+                  Category Questions
                 </Button>
               </Link>
               <Link href="/admin/analytics">

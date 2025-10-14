@@ -3,7 +3,25 @@
 // Type definitions for the admin questions system
 // =====================================================
 
-export type QuestionType = 'chips' | 'chips-multi' | 'text' | 'boolean' | 'slider' | 'date' | 'time'
+export type QuestionType =
+  // Existing types
+  | 'chips'              // Single choice (radio buttons)
+  | 'chips-multi'        // Multiple choice (checkboxes)
+  | 'text'               // Short text input
+  | 'boolean'            // Yes/No
+  | 'slider'             // Numeric slider
+  | 'date'               // Date picker
+  | 'time'               // Time picker
+  // Enhanced types
+  | 'dropdown'           // Single dropdown select
+  | 'dropdown-multi'     // Multi-select dropdown
+  | 'image-select'       // Select from images (single)
+  | 'image-multi'        // Select from images (multiple)
+  | 'rating'             // Star rating (1-5)
+  | 'color'              // Color picker
+  | 'range'              // Min-Max range
+  | 'ai-text'            // AI extracts attribute from free text
+  | 'textarea'           // Long text input
 
 export type ChangeType = 'created' | 'updated' | 'deleted' | 'reordered' | 'activated' | 'deactivated'
 
@@ -40,6 +58,10 @@ export interface QuestionOption {
   value: string
   label: string
   icon?: string
+  image_url?: string        // For image-select/image-multi types
+  image_id?: string         // Reference to media library
+  color?: string            // For color options
+  description?: string      // Optional description/tooltip
 }
 
 export interface ConditionalLogic {

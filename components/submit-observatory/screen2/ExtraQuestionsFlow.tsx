@@ -6,11 +6,19 @@ import { useTranslations } from 'next-intl';
 import { QuestionCard } from './QuestionCard';
 import { Loader2 } from 'lucide-react';
 
+interface QuestionOption {
+  value: string;
+  label: string;
+  image_url?: string;
+  icon?: string;
+  description?: string;
+}
+
 interface DynamicQuestion {
   id: string;
-  type: 'checkbox' | 'radio' | 'scale' | 'text';
+  type: 'checkbox' | 'radio' | 'scale' | 'text' | 'textarea' | 'dropdown' | 'dropdown-multi' | 'image-select' | 'image-multi' | 'rating' | 'ai-text' | 'date';
   question: string;
-  options: string[];
+  options: QuestionOption[];
   required: boolean;
   helpText?: string;
   maps_to_attribute?: string | null;

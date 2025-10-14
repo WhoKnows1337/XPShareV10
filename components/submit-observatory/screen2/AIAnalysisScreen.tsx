@@ -21,7 +21,6 @@ export function AIAnalysisScreen() {
     setAIResults,
     setAnalyzing,
     isAnalyzing,
-    isSummarizing,
     canGoNext,
     goNext,
     goBack,
@@ -107,11 +106,13 @@ export function AIAnalysisScreen() {
         updateScreen2({ attributes: formattedAttributes });
       }
 
-      setHasAnalyzed(true);
+      // Store summary directly from analyze-complete (no separate API call needed!)
+      if (data.summary) {
+        const { setSummary } = useSubmitFlowStore.getState();
+        setSummary(data.summary);
+      }
 
-      // Step 2: Generate summary with metadata (waits for completion)
-      // This runs AFTER analysis so we have category available
-      await generateSummary(data.category);
+      setHasAnalyzed(true);
     } catch (error) {
       console.error('AI Analysis error:', error);
       setAnalysisError(t('error', 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'));
@@ -120,52 +121,9 @@ export function AIAnalysisScreen() {
     }
   };
 
-  const generateSummary = async (category: string) => {
-    const { setSummary, setSummarizing, screen2 } = useSubmitFlowStore.getState();
-
-    // Don't regenerate if summary already exists
-    if (useSubmitFlowStore.getState().screen3.summary) {
-      return;
-    }
-
-    setSummarizing(true);
-    try {
-      const response = await fetch('/api/submit/generate-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: screen1.text,
-          metadata: {
-            category: category,
-            date: screen2.date,
-            time: screen2.time,
-            location: screen2.location,
-            duration: screen2.duration,
-          }
-        }),
-      });
-
-      if (!response.ok) throw new Error('Summary generation failed');
-
-      const summaryData = await response.json();
-      setSummary(summaryData.summary);
-    } catch (error) {
-      console.error('Summary generation error:', error);
-      // Don't show error to user, they can regenerate in Step 3
-    } finally {
-      setSummarizing(false);
-    }
-  };
 
   // Handle navigation to next step - enrich text first
   const handleNext = async () => {
-    // If summary is still being generated, wait for it
-    if (isSummarizing) {
-      setIsTransitioning(true);
-      // Will auto-advance via useEffect below
-      return;
-    }
-
     // Start transitioning - we'll enrich the text now
     setIsTransitioning(true);
 
@@ -202,14 +160,6 @@ export function AIAnalysisScreen() {
     setIsTransitioning(false);
     goNext();
   };
-
-  // Auto-advance once summary is ready (when waiting for summary)
-  useEffect(() => {
-    if (isTransitioning && !isSummarizing && screen3.summary && !screen3.enhancedText) {
-      // Summary is ready, now enrich text
-      handleNext();
-    }
-  }, [isTransitioning, isSummarizing, screen3.summary, screen3.enhancedText]);
 
   // Show loading state during analysis
   if (isAnalyzing) {
