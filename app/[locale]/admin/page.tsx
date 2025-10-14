@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, FileText, Flag, BadgeCheck, FolderOpen, MessageSquare, Plus, TrendingUp, Download } from 'lucide-react'
+import { Users, FileText, Flag, BadgeCheck, FolderOpen, MessageSquare, Plus, TrendingUp, Download, AlertTriangle, Tag } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
 export default async function AdminDashboard() {
@@ -47,6 +48,21 @@ export default async function AdminDashboard() {
     .select('category_id, answer_rate_percent')
     .in('category_id', categoryIds)
 
+  // Fetch attribute counts per category from attribute_schema
+  const categorySlugs = categories?.map(c => c.slug) || []
+  const { data: attributeCounts } = await supabase
+    .from('attribute_schema')
+    .select('category_slug')
+    .in('category_slug', categorySlugs)
+
+  // Count attributes per category
+  const attributeCountByCategory = (attributeCounts || []).reduce((acc, attr) => {
+    if (attr.category_slug) {
+      acc[attr.category_slug] = (acc[attr.category_slug] || 0) + 1
+    }
+    return acc
+  }, {} as Record<string, number>)
+
   // Map analytics to categories
   const categoriesWithAnalytics = categories?.map(category => {
     const questionCount = (category.questions as any)?.[0]?.count || 0
@@ -58,7 +74,8 @@ export default async function AdminDashboard() {
     return {
       ...category,
       questionCount,
-      answerRate: avgRate
+      answerRate: avgRate,
+      attributeCount: attributeCountByCategory[category.slug] || 0
     }
   })
 
@@ -185,28 +202,68 @@ export default async function AdminDashboard() {
               categoriesWithAnalytics.map((category) => (
                 <div
                   key={category.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className={`rounded-lg border p-3 ${
+                    category.questionCount === 0 ? 'border-orange-300 bg-orange-50/50' : ''
+                  }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{category.icon}</span>
-                    <div>
-                      <p className="font-medium">{category.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {category.questionCount} Fragen | {category.answerRate}% Rate
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="text-2xl">{category.icon}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{category.name}</p>
+                          {category.questionCount === 0 && (
+                            <Badge variant="destructive" className="text-xs gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              No Questions
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-3 mt-1">
+                          <div className="flex items-center gap-1 text-xs">
+                            <MessageSquare className="w-3 h-3 text-muted-foreground" />
+                            <span className={category.questionCount === 0 ? 'text-orange-600 font-medium' : 'text-muted-foreground'}>
+                              {category.questionCount} Questions
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs">
+                            <Tag className="w-3 h-3 text-muted-foreground" />
+                            <span className={category.attributeCount > 0 ? 'text-muted-foreground' : 'text-gray-400'}>
+                              {category.attributeCount} Attributes
+                            </span>
+                          </div>
+                          {category.answerRate > 0 && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <TrendingUp className="w-3 h-3" />
+                              {category.answerRate}% Rate
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Link href={`/admin/categories/${category.slug}`}>
-                      <Button variant="ghost" size="sm">
-                        Bearbeiten
-                      </Button>
-                    </Link>
-                    <Link href={`/admin/analytics?category=${category.id}`}>
-                      <Button variant="ghost" size="sm">
-                        Analytics
-                      </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                      {category.questionCount === 0 ? (
+                        <Link href={`/admin/categories/${category.slug}`}>
+                          <Button variant="default" size="sm" className="bg-orange-500 hover:bg-orange-600">
+                            <Plus className="w-3 h-3 mr-1" />
+                            Add Questions
+                          </Button>
+                        </Link>
+                      ) : (
+                        <>
+                          <Link href={`/admin/categories/${category.slug}`}>
+                            <Button variant="ghost" size="sm">
+                              Edit
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/analytics?category=${category.id}`}>
+                            <Button variant="ghost" size="sm">
+                              Analytics
+                            </Button>
+                          </Link>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

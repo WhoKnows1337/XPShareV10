@@ -56,6 +56,7 @@ export const QuestionFlow = () => {
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isTextExpanded, setIsTextExpanded] = useState(false)
+  const [showConfirmAllSuccess, setShowConfirmAllSuccess] = useState(false)
 
   useEffect(() => {
     // Generate questions on mount (async)
@@ -70,6 +71,21 @@ export const QuestionFlow = () => {
   const isLastQuestion = currentQuestionIndex === questions.length - 1
   const isFirstQuestion = currentQuestionIndex === 0
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined
+
+  // Count AI pre-filled questions
+  const aiPrefilledQuestions = questions.filter(q => q.isAISuggestion && q.currentValue)
+  const aiPrefilledCount = aiPrefilledQuestions.length
+
+  // Confirm all AI pre-fills at once
+  const handleConfirmAll = () => {
+    aiPrefilledQuestions.forEach(q => {
+      if (!answers[q.id]) {
+        answerQuestion(q.id, q.currentValue)
+      }
+    })
+    setShowConfirmAllSuccess(true)
+    setTimeout(() => setShowConfirmAllSuccess(false), 3000)
+  }
 
   const handleNext = () => {
     if (isLastQuestion) {
@@ -186,6 +202,58 @@ export const QuestionFlow = () => {
           </p>
         </motion.div>
 
+        {/* AI Pre-fill Banner */}
+        {aiPrefilledCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    🤖 KI hat {aiPrefilledCount} {aiPrefilledCount === 1 ? 'Attribut' : 'Attribute'} erkannt
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Bestätige die Vorschläge oder beantworte sie einzeln
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleConfirmAll}
+                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors shadow-md"
+              >
+                ✓ Alle bestätigen
+              </motion.button>
+            </div>
+
+            {/* Success Message */}
+            <AnimatePresence>
+              {showConfirmAllSuccess && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-3 pt-3 border-t border-indigo-200"
+                >
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      Alle {aiPrefilledCount} Vorschläge wurden bestätigt! +{aiPrefilledCount * 5} XP
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+
         {/* Question Progress Bar */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -247,6 +315,24 @@ export const QuestionFlow = () => {
                     </motion.span>
                   )}
 
+                  {currentQuestion.isAISuggestion && currentQuestion.confidence !== undefined && (
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.22 }}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${
+                        currentQuestion.confidence >= 80
+                          ? 'bg-green-100 border-green-300 text-green-700'
+                          : currentQuestion.confidence >= 60
+                          ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                          : 'bg-orange-100 border-orange-300 text-orange-700'
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      🤖 KI erkannt ({currentQuestion.confidence}%)
+                    </motion.span>
+                  )}
+
                   {currentQuestion.xpBonus && currentQuestion.xpBonus > 0 && (
                     <motion.span
                       initial={{ opacity: 0, scale: 0.9 }}
@@ -256,18 +342,6 @@ export const QuestionFlow = () => {
                     >
                       <Sparkles className="w-3 h-3" />
                       +{currentQuestion.xpBonus} XP
-                    </motion.span>
-                  )}
-
-                  {currentQuestion.confidence !== undefined && currentQuestion.confidence < 60 && (
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 border border-orange-300 rounded-full text-xs text-orange-700"
-                    >
-                      <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                      AI unsicher
                     </motion.span>
                   )}
                 </div>
@@ -311,6 +385,8 @@ export const QuestionFlow = () => {
                     onChange={handleAnswer}
                     options={currentQuestion.options || []}
                     currentValue={currentQuestion.currentValue as string}
+                    confidence={currentQuestion.confidence}
+                    isAISuggestion={currentQuestion.isAISuggestion}
                   />
                 )}
                 {currentQuestion.type === 'emotionalTags' && (
@@ -325,6 +401,8 @@ export const QuestionFlow = () => {
                     onChange={handleAnswer}
                     currentValue={currentQuestion.currentValue as string}
                     placeholder={currentQuestion.placeholder}
+                    confidence={currentQuestion.confidence}
+                    isAISuggestion={currentQuestion.isAISuggestion}
                   />
                 )}
                 {currentQuestion.type === 'boolean' && (
@@ -332,6 +410,8 @@ export const QuestionFlow = () => {
                     value={currentAnswer}
                     onChange={handleAnswer}
                     currentValue={currentQuestion.currentValue as boolean}
+                    confidence={currentQuestion.confidence}
+                    isAISuggestion={currentQuestion.isAISuggestion}
                   />
                 )}
                 {currentQuestion.type === 'slider' && currentQuestion.sliderConfig && (
@@ -340,6 +420,8 @@ export const QuestionFlow = () => {
                     onChange={handleAnswer}
                     sliderConfig={currentQuestion.sliderConfig}
                     currentValue={currentQuestion.currentValue as number}
+                    confidence={currentQuestion.confidence}
+                    isAISuggestion={currentQuestion.isAISuggestion}
                   />
                 )}
               </motion.div>

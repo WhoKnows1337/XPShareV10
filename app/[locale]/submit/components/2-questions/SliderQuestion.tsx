@@ -13,9 +13,11 @@ interface SliderQuestionProps {
     unit: string
   }
   currentValue?: number
+  confidence?: number
+  isAISuggestion?: boolean
 }
 
-export const SliderQuestion = ({ value, onChange, sliderConfig, currentValue }: SliderQuestionProps) => {
+export const SliderQuestion = ({ value, onChange, sliderConfig, currentValue, confidence, isAISuggestion }: SliderQuestionProps) => {
   const [internalValue, setInternalValue] = useState(value || currentValue || sliderConfig.min)
 
   useEffect(() => {
@@ -34,10 +36,42 @@ export const SliderQuestion = ({ value, onChange, sliderConfig, currentValue }: 
 
   return (
     <div className="space-y-6">
-      {/* Current AI Suggestion */}
-      {currentValue !== undefined && (
+      {/* AI Suggestion Display */}
+      {currentValue !== undefined && isAISuggestion && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-4 rounded-lg border-2 ${
+            confidence && confidence >= 80
+              ? 'bg-green-50 border-green-300'
+              : confidence && confidence >= 60
+              ? 'bg-blue-50 border-blue-300'
+              : 'bg-orange-50 border-orange-300'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-700">🤖 KI-Vorschlag:</div>
+            {confidence && (
+              <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
+                confidence >= 80
+                  ? 'bg-green-200 text-green-800'
+                  : confidence >= 60
+                  ? 'bg-blue-200 text-blue-800'
+                  : 'bg-orange-200 text-orange-800'
+              }`}>
+                {confidence}% sicher
+              </span>
+            )}
+          </div>
+          <div className="text-lg font-medium text-gray-900">
+            {currentValue}{unit}
+          </div>
+        </motion.div>
+      )}
+      {/* Non-AI current value */}
+      {currentValue !== undefined && !isAISuggestion && (
         <div className="text-sm text-gray-600">
-          <span className="font-medium">AI-Vorschlag:</span>{' '}
+          <span className="font-medium">Bisherige Angabe:</span>{' '}
           <span className="text-blue-600">{currentValue}{unit}</span>
         </div>
       )}

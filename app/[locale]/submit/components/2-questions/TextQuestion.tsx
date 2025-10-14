@@ -8,9 +8,11 @@ interface TextQuestionProps {
   onChange: (value: string) => void
   currentValue?: string
   placeholder?: string
+  confidence?: number
+  isAISuggestion?: boolean
 }
 
-export const TextQuestion = ({ value, onChange, currentValue, placeholder }: TextQuestionProps) => {
+export const TextQuestion = ({ value, onChange, currentValue, placeholder, confidence, isAISuggestion }: TextQuestionProps) => {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -36,14 +38,44 @@ export const TextQuestion = ({ value, onChange, currentValue, placeholder }: Tex
 
   return (
     <div className="space-y-4">
-      {/* Existing Value Display */}
-      {currentValue && (
+      {/* AI Suggestion Display */}
+      {currentValue && isAISuggestion && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-4 rounded-lg border-2 ${
+            confidence && confidence >= 80
+              ? 'bg-green-50 border-green-300'
+              : confidence && confidence >= 60
+              ? 'bg-blue-50 border-blue-300'
+              : 'bg-orange-50 border-orange-300'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-700">🤖 KI-Vorschlag:</div>
+            {confidence && (
+              <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${
+                confidence >= 80
+                  ? 'bg-green-200 text-green-800'
+                  : confidence >= 60
+                  ? 'bg-blue-200 text-blue-800'
+                  : 'bg-orange-200 text-orange-800'
+              }`}>
+                {confidence}% sicher
+              </span>
+            )}
+          </div>
+          <div className="text-lg font-medium text-gray-900">{currentValue}</div>
+        </motion.div>
+      )}
+      {/* Non-AI current value */}
+      {currentValue && !isAISuggestion && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="p-4 bg-blue-50 border border-blue-200 rounded-lg"
         >
-          <div className="text-sm text-blue-700 mb-1">Unsere Vermutung:</div>
+          <div className="text-sm text-blue-700 mb-1">Bisherige Angabe:</div>
           <div className="text-lg font-medium text-blue-900">{currentValue}</div>
         </motion.div>
       )}

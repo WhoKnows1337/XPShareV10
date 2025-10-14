@@ -25,8 +25,16 @@ import { QuestionPreview } from './question-preview'
 import { OptionsEditor } from './options-editor'
 import { ConditionalLogicBuilder } from './conditional-logic-builder'
 import { FollowUpBuilder } from './follow-up-builder'
-import { Save, X, ChevronDown, ChevronUp, Monitor, Smartphone, Sparkles } from 'lucide-react'
+import { Save, X, ChevronDown, ChevronUp, Monitor, Smartphone, Sparkles, Link2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+
+interface AttributeSchema {
+  key: string
+  display_name: string
+  display_name_de?: string
+  data_type: string
+  category_slug?: string
+}
 
 interface QuestionEditorDialogProps {
   open: boolean
@@ -73,6 +81,30 @@ export function QuestionEditorDialog({
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [aiAdaptive, setAIAdaptive] = useState(false)
   const [adaptiveConditions, setAdaptiveConditions] = useState<any>({})
+  const [mapsToAttribute, setMapsToAttribute] = useState<string>('')
+
+  // Attribute schema
+  const [availableAttributes, setAvailableAttributes] = useState<AttributeSchema[]>([])
+  const [loadingAttributes, setLoadingAttributes] = useState(false)
+
+  // Load available attributes
+  useEffect(() => {
+    async function loadAttributes() {
+      setLoadingAttributes(true)
+      try {
+        const response = await fetch('/api/admin/attributes')
+        if (response.ok) {
+          const data = await response.json()
+          setAvailableAttributes(data.attributes || [])
+        }
+      } catch (error) {
+        console.error('Failed to load attributes:', error)
+      } finally {
+        setLoadingAttributes(false)
+      }
+    }
+    loadAttributes()
+  }, [])
 
   // Initialize form when question changes
   useEffect(() => {
@@ -90,6 +122,7 @@ export function QuestionEditorDialog({
       setFollowUpQuestion(question.follow_up_question || null)
       setAIAdaptive((question as any).ai_adaptive || false)
       setAdaptiveConditions((question as any).adaptive_conditions || {})
+      setMapsToAttribute((question as any).maps_to_attribute || '')
     } else {
       // Reset for new question
       setQuestionText('')
@@ -107,6 +140,7 @@ export function QuestionEditorDialog({
       setShowAdvanced(false)
       setAIAdaptive(false)
       setAdaptiveConditions({})
+      setMapsToAttribute('')
     }
   }, [question])
 
@@ -170,6 +204,7 @@ export function QuestionEditorDialog({
         follow_up_question: followUpQuestion,
         ai_adaptive: aiAdaptive,
         adaptive_conditions: adaptiveConditions,
+        maps_to_attribute: mapsToAttribute || null,
       }
 
       const url = question
@@ -340,6 +375,71 @@ export function QuestionEditorDialog({
                 checked={isActive}
                 onCheckedChange={setIsActive}
               />
+            </div>
+
+            {/* Attribute Mapping */}
+            <div className="rounded-lg border border-blue-200 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-blue-600" />
+                <Label className="text-base font-medium">Attribute Mapping</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Link this question to a structured attribute for pattern analysis
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="maps_to_attribute">Maps to Attribute</Label>
+                <Select
+                  value={mapsToAttribute}
+                  onValueChange={setMapsToAttribute}
+                  disabled={loadingAttributes}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {availableAttributes.map((attr) => (
+                      <SelectItem key={attr.key} value={attr.key}>
+                        {attr.display_name} ({attr.key})
+                        {attr.category_slug && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            · {attr.category_slug}
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Value Mapping Preview */}
+              {mapsToAttribute && (questionType === 'chips' || questionType === 'chips-multi') && options.length > 0 && (
+                <div className="rounded border border-blue-100 bg-blue-50/50 p-3 space-y-2">
+                  <h4 className="font-medium text-sm text-blue-900">Value Mapping Preview</h4>
+                  <p className="text-xs text-blue-700">
+                    Question options will be auto-mapped to lowercase canonical values
+                  </p>
+                  <div className="space-y-1 mt-2">
+                    {options.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <span className="font-mono text-gray-700">{opt.label}</span>
+                        <span className="text-gray-400">→</span>
+                        <code className="bg-white px-2 py-0.5 rounded text-blue-600 font-mono text-xs">
+                          {opt.value.toLowerCase().replace(/\s+/g, '_')}
+                        </code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {mapsToAttribute && (
+                <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 p-2 rounded">
+                  <Sparkles className="h-4 w-4" />
+                  <span>AI will pre-fill this question if the attribute is detected</span>
+                </div>
+              )}
             </div>
 
             {/* Tags */}

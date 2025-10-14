@@ -16,6 +16,13 @@ export interface Screen2Data {
   tags: string[];
   aiConfidence: number; // AI confidence percentage (0-100)
 
+  // Attributes (AI-extracted structured data)
+  attributes: Record<string, {
+    value: string;
+    confidence: number; // 0-100
+    isManuallyEdited: boolean;
+  }>;
+
   // Required Questions
   date: string;
   time: string;
@@ -138,6 +145,7 @@ const initialScreen2: Screen2Data = {
   category: '',
   tags: [],
   aiConfidence: 0,
+  attributes: {},
   date: '',
   time: '',
   location: '',

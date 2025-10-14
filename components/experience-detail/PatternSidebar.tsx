@@ -30,6 +30,7 @@ import type { ExternalEvent } from '@/lib/api/external-events'
 import { motion } from 'framer-motion'
 import { useScrollAnimation } from '@/lib/hooks/useScrollAnimation'
 import { ScientificDetailsDialog } from './ScientificDetailsDialog'
+import { PatternInsights } from './PatternInsights'
 
 
 interface PatternMatch {
@@ -83,6 +84,9 @@ export function PatternSidebar({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
     >
+      {/* AI Pattern Insights - New Attribute-based Analysis */}
+      <PatternInsights experienceId={experienceId} />
+
       {/* Pattern Summary Card */}
       <Card>
         <CardHeader>

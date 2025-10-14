@@ -54,8 +54,8 @@ export function AIAnalysisScreen() {
     setAnalyzing(true);
     setAnalysisError(null);
     try {
-      // Step 1: Analyze text for title, category, tags
-      const response = await fetch('/api/submit/analyze', {
+      // Step 1: Complete analysis including title, category, tags, AND attributes
+      const response = await fetch('/api/submit/analyze-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: screen1.text }),
@@ -64,7 +64,26 @@ export function AIAnalysisScreen() {
       if (!response.ok) throw new Error('Analysis failed');
 
       const data = await response.json();
-      setAIResults(data.title, data.category, data.tags);
+
+      // Store AI results including attributes
+      setAIResults(data.title, data.category, data.tags, data.confidence);
+
+      // Store extracted attributes in the correct format for the store
+      if (data.attributes && Object.keys(data.attributes).length > 0) {
+        const formattedAttributes: Record<string, { value: string; confidence: number; isManuallyEdited: boolean }> = {};
+
+        for (const [key, attr] of Object.entries(data.attributes)) {
+          const attrData = attr as { value: string; confidence: number };
+          formattedAttributes[key] = {
+            value: attrData.value,
+            confidence: Math.round(attrData.confidence * 100), // Convert 0.0-1.0 to 0-100
+            isManuallyEdited: false,
+          };
+        }
+
+        updateScreen2({ attributes: formattedAttributes });
+      }
+
       setHasAnalyzed(true);
 
       // Step 2: Generate summary with metadata (waits for completion)

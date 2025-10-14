@@ -358,6 +358,7 @@ export default async function ExperiencePage({
         currentUserId={user?.id}
         isFollowing={isFollowing}
         authorTimeline={authorExperiences || []}
+        experienceId={experience.id}
       />
     </Suspense>
   )

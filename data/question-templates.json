@@ -1,0 +1,288 @@
+{
+  "ufo-uap": {
+    "category_name": "UFO/UAP Sichtungen",
+    "questions": [
+      {
+        "question_text": "Welche Form hatte das Objekt?",
+        "question_type": "chips",
+        "priority": 10,
+        "is_optional": false,
+        "maps_to_attribute": "shape",
+        "options": [
+          { "label": "Dreieck", "value": "triangle" },
+          { "label": "Scheibe", "value": "disc" },
+          { "label": "Kugel", "value": "orb" },
+          { "label": "Zigarre", "value": "cigar" },
+          { "label": "Zylinder", "value": "cylinder" },
+          { "label": "Sphäre", "value": "sphere" },
+          { "label": "Andere", "value": "other" }
+        ],
+        "help_text": "Beschreibe die grundlegende Form des Objekts"
+      },
+      {
+        "question_text": "Wie war die Oberfläche beschaffen?",
+        "question_type": "chips",
+        "priority": 20,
+        "is_optional": true,
+        "maps_to_attribute": "surface",
+        "options": [
+          { "label": "Metallisch", "value": "metallic" },
+          { "label": "Leuchtend", "value": "glowing" },
+          { "label": "Matt", "value": "matte" },
+          { "label": "Durchscheinend", "value": "translucent" },
+          { "label": "Reflektierend", "value": "reflective" }
+        ],
+        "help_text": "Wie sah die Oberfläche des Objekts aus?"
+      },
+      {
+        "question_text": "Welche Farbe hatten die Lichter?",
+        "question_type": "chips-multi",
+        "priority": 30,
+        "is_optional": true,
+        "maps_to_attribute": "light_color",
+        "options": [
+          { "label": "Rot", "value": "red" },
+          { "label": "Blau", "value": "blue" },
+          { "label": "Weiß", "value": "white" },
+          { "label": "Grün", "value": "green" },
+          { "label": "Orange", "value": "orange" },
+          { "label": "Gelb", "value": "yellow" },
+          { "label": "Mehrfarbig", "value": "multicolor" }
+        ],
+        "help_text": "Wähle alle Farben, die du gesehen hast (Mehrfachauswahl möglich)"
+      },
+      {
+        "question_text": "Wie bewegte sich das Objekt?",
+        "question_type": "chips",
+        "priority": 40,
+        "is_optional": false,
+        "maps_to_attribute": "movement",
+        "options": [
+          { "label": "Schwebend", "value": "hovering" },
+          { "label": "Schnell", "value": "fast" },
+          { "label": "Unregelmäßig", "value": "erratic" },
+          { "label": "Gleichmäßig", "value": "smooth" },
+          { "label": "Zickzack", "value": "zigzag" },
+          { "label": "Aufsteigend", "value": "ascending" },
+          { "label": "Absteigend", "value": "descending" }
+        ],
+        "help_text": "Beschreibe die Bewegung des Objekts"
+      },
+      {
+        "question_text": "Hat das Objekt Geräusche gemacht?",
+        "question_type": "chips",
+        "priority": 50,
+        "is_optional": true,
+        "maps_to_attribute": "sound",
+        "options": [
+          { "label": "Lautlos", "value": "silent" },
+          { "label": "Summend", "value": "humming" },
+          { "label": "Brummend", "value": "buzzing" },
+          { "label": "Dröhnend", "value": "roaring" },
+          { "label": "Pfeifend", "value": "whistling" },
+          { "label": "Andere Geräusche", "value": "other" }
+        ],
+        "help_text": "Welche Geräusche hast du wahrgenommen?"
+      },
+      {
+        "question_text": "Wie groß schien das Objekt zu sein?",
+        "question_type": "chips",
+        "priority": 60,
+        "is_optional": true,
+        "maps_to_attribute": "size",
+        "options": [
+          { "label": "Winzig (< 1m)", "value": "tiny" },
+          { "label": "Klein (1-5m)", "value": "small" },
+          { "label": "Mittel (5-20m)", "value": "medium" },
+          { "label": "Groß (20-50m)", "value": "large" },
+          { "label": "Riesig (> 50m)", "value": "huge" }
+        ],
+        "help_text": "Geschätzte Größe des Objekts"
+      },
+      {
+        "question_text": "In welcher Höhe befand sich das Objekt?",
+        "question_type": "chips",
+        "priority": 70,
+        "is_optional": true,
+        "maps_to_attribute": "altitude",
+        "options": [
+          { "label": "Am Boden", "value": "ground_level" },
+          { "label": "Niedrig (< 100m)", "value": "low" },
+          { "label": "Mittel (100-1000m)", "value": "medium" },
+          { "label": "Hoch (1-10km)", "value": "high" },
+          { "label": "Sehr hoch (> 10km)", "value": "very_high" }
+        ],
+        "help_text": "Geschätzte Höhe über dem Boden"
+      },
+      {
+        "question_text": "Wie verschwand das Objekt?",
+        "question_type": "chips",
+        "priority": 80,
+        "is_optional": true,
+        "maps_to_attribute": "disappearance",
+        "options": [
+          { "label": "Sofort/Blitzartig", "value": "instant" },
+          { "label": "Allmählich", "value": "gradual" },
+          { "label": "Weggeflogen", "value": "flew_away" },
+          { "label": "Verblasst", "value": "faded" },
+          { "label": "Ausgeblinkt", "value": "blinked_out" },
+          { "label": "Noch sichtbar", "value": "still_visible" }
+        ],
+        "help_text": "Wie endete die Sichtung?"
+      }
+    ]
+  },
+  "dreams": {
+    "category_name": "Träume & Luzides Träumen",
+    "questions": [
+      {
+        "question_text": "War der Traum luzide (hattest du Kontrolle)?",
+        "question_type": "boolean",
+        "priority": 10,
+        "is_optional": false,
+        "maps_to_attribute": "lucidity",
+        "help_text": "Warst du dir bewusst, dass du träumst?"
+      },
+      {
+        "question_text": "Wie lebhaft war der Traum?",
+        "question_type": "slider",
+        "priority": 20,
+        "is_optional": false,
+        "maps_to_attribute": "vividness",
+        "options": [
+          { "min": 1, "max": 10, "step": 1, "default": 5 }
+        ],
+        "help_text": "1 = verschwommen, 10 = kristallklar wie Realität"
+      },
+      {
+        "question_text": "Welche Emotionen waren vorherrschend?",
+        "question_type": "chips-multi",
+        "priority": 30,
+        "is_optional": true,
+        "maps_to_attribute": "dream_emotion",
+        "options": [
+          { "label": "Freude", "value": "joy" },
+          { "label": "Angst", "value": "fear" },
+          { "label": "Frieden", "value": "peace" },
+          { "label": "Verwirrung", "value": "confusion" },
+          { "label": "Aufregung", "value": "excitement" },
+          { "label": "Trauer", "value": "sadness" },
+          { "label": "Neutral", "value": "neutral" }
+        ],
+        "help_text": "Mehrfachauswahl möglich"
+      },
+      {
+        "question_text": "Gab es wiederkehrende Symbole oder Muster?",
+        "question_type": "text",
+        "priority": 40,
+        "is_optional": true,
+        "placeholder": "z.B. Wasser, Fliegen, bestimmte Personen...",
+        "help_text": "Beschreibe auffällige Symbole oder Muster"
+      }
+    ]
+  },
+  "ghost-spirit": {
+    "category_name": "Geister & Spuk",
+    "questions": [
+      {
+        "question_text": "Welche Art von Manifestation hast du wahrgenommen?",
+        "question_type": "chips-multi",
+        "priority": 10,
+        "is_optional": false,
+        "maps_to_attribute": "manifestation_type",
+        "options": [
+          { "label": "Visuelle Erscheinung", "value": "visual" },
+          { "label": "Geräusche", "value": "auditory" },
+          { "label": "Gefühl/Präsenz", "value": "feeling" },
+          { "label": "Berührung", "value": "touch" },
+          { "label": "Temperaturänderung", "value": "temperature" },
+          { "label": "Geruch", "value": "smell" },
+          { "label": "Bewegte Objekte", "value": "moved_objects" }
+        ],
+        "help_text": "Mehrfachauswahl möglich"
+      },
+      {
+        "question_text": "Wie würdest du die Atmosphäre beschreiben?",
+        "question_type": "chips",
+        "priority": 20,
+        "is_optional": true,
+        "maps_to_attribute": "atmosphere",
+        "options": [
+          { "label": "Bedrohlich", "value": "threatening" },
+          { "label": "Neutral", "value": "neutral" },
+          { "label": "Friedlich", "value": "peaceful" },
+          { "label": "Traurig", "value": "sad" },
+          { "label": "Spielerisch", "value": "playful" },
+          { "label": "Verwirrt", "value": "confused" }
+        ],
+        "help_text": "Die emotionale Qualität der Begegnung"
+      },
+      {
+        "question_text": "Hattest du das Gefühl von Intelligenz oder Absicht?",
+        "question_type": "boolean",
+        "priority": 30,
+        "is_optional": true,
+        "maps_to_attribute": "intelligent_presence",
+        "help_text": "Schien die Entität bewusst oder zielgerichtet zu handeln?"
+      },
+      {
+        "question_text": "War es eine einmalige oder wiederkehrende Erfahrung?",
+        "question_type": "chips",
+        "priority": 40,
+        "is_optional": true,
+        "maps_to_attribute": "recurrence",
+        "options": [
+          { "label": "Einmalig", "value": "single" },
+          { "label": "Mehrfach", "value": "recurring" },
+          { "label": "Häufig/Regelmäßig", "value": "frequent" }
+        ],
+        "help_text": "Wie oft kam es zu ähnlichen Erfahrungen?"
+      }
+    ]
+  },
+  "consciousness-inner": {
+    "category_name": "Bewusstsein & Innere Erfahrungen",
+    "questions": [
+      {
+        "question_text": "Welche Art von Bewusstseinserfahrung war es?",
+        "question_type": "chips",
+        "priority": 10,
+        "is_optional": false,
+        "maps_to_attribute": "consciousness_type",
+        "options": [
+          { "label": "Erweitert", "value": "expanded" },
+          { "label": "Verändert", "value": "altered" },
+          { "label": "Einheitserfahrung", "value": "unity" },
+          { "label": "Außerkörperlich", "value": "out_of_body" },
+          { "label": "Zeitlos", "value": "timeless" },
+          { "label": "Transzendent", "value": "transcendent" }
+        ],
+        "help_text": "Wähle die passendste Beschreibung"
+      },
+      {
+        "question_text": "Wie intensiv war die Erfahrung?",
+        "question_type": "slider",
+        "priority": 20,
+        "is_optional": false,
+        "maps_to_attribute": "intensity",
+        "options": [
+          { "min": 1, "max": 10, "step": 1, "default": 5 }
+        ],
+        "help_text": "1 = subtil, 10 = lebensverändernd"
+      },
+      {
+        "question_text": "Warst du allein oder in einer Gruppe?",
+        "question_type": "chips",
+        "priority": 30,
+        "is_optional": true,
+        "maps_to_attribute": "social_context",
+        "options": [
+          { "label": "Allein", "value": "alone" },
+          { "label": "Mit anderen", "value": "group" },
+          { "label": "Gemeinsame Erfahrung", "value": "shared" }
+        ],
+        "help_text": "War es eine individuelle oder geteilte Erfahrung?"
+      }
+    ]
+  }
+}

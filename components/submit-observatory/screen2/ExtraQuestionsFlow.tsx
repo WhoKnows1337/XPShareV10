@@ -1,9 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 import { QuestionCard } from './QuestionCard';
+
+// Mapping between question IDs and attribute keys for pre-filling
+const QUESTION_TO_ATTRIBUTE_MAP: Record<string, string> = {
+  'object_characteristics': 'shape',
+  'movement_pattern': 'movement',
+  'sound': 'sound',
+};
+
+// Mapping attribute values (English) to German question options
+const ATTRIBUTE_TO_OPTION_MAP: Record<string, Record<string, string>> = {
+  'shape': {
+    'disc': 'Scheibe/Disk',
+    'triangle': 'Dreieck',
+    'cigar': 'Zigarre',
+    'orb': 'Kugel/Orb',
+    'sphere': 'Kugel/Orb',
+  },
+  'movement': {
+    'hovering': 'Schwebend/stationär',
+    'gliding': 'Langsam gleitend',
+    'zigzag': 'Zick-Zack',
+    'rapid': 'Extrem schnell',
+    'instant_disappearance': 'Plötzlich verschwunden',
+  },
+  'sound': {
+    'humming': 'Summen/Brummen',
+    'high_frequency': 'Hochfrequent',
+    'metallic': 'Metallisch',
+    'whistling': 'Pfeifend',
+    'silent': 'Völlige Stille',
+  },
+};
 
 // Extra questions optimized for UFO sightings and paranormal experiences
 const EXTRA_QUESTIONS = [
@@ -87,6 +119,41 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
 
   const currentQuestion = EXTRA_QUESTIONS[currentIndex];
   const progress = ((currentIndex + 1) / EXTRA_QUESTIONS.length) * 100;
+
+  // Auto-fill question from AI-extracted attributes
+  useEffect(() => {
+    const questionId = currentQuestion.id;
+
+    // Skip if question already answered
+    if (screen2.extraQuestions[questionId]) {
+      return;
+    }
+
+    // Check if this question maps to an attribute
+    const attributeKey = QUESTION_TO_ATTRIBUTE_MAP[questionId];
+    if (!attributeKey) {
+      return;
+    }
+
+    // Check if we have this attribute
+    const attribute = screen2.attributes[attributeKey];
+    if (!attribute) {
+      return;
+    }
+
+    // Translate attribute value to question option
+    const optionMap = ATTRIBUTE_TO_OPTION_MAP[attributeKey];
+    if (!optionMap) {
+      return;
+    }
+
+    const germanOption = optionMap[attribute.value];
+    if (germanOption) {
+      // Pre-fill the question with the AI-extracted value
+      setExtraQuestion(questionId, [germanOption]);
+      console.log(`Pre-filled question "${questionId}" with "${germanOption}" from attribute "${attributeKey}"`);
+    }
+  }, [currentIndex, currentQuestion.id, screen2.attributes, screen2.extraQuestions, setExtraQuestion]);
 
   const handleNext = (answer: any) => {
     setExtraQuestion(currentQuestion.id, answer);

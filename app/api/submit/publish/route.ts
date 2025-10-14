@@ -50,6 +50,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save experience', details: insertError.message }, { status: 500 });
     }
 
+    // Save attributes to experience_attributes table
+    if (experienceData.attributes && Object.keys(experienceData.attributes).length > 0) {
+      const attributeRecords = Object.entries(experienceData.attributes).map(([key, attr]: [string, any]) => ({
+        experience_id: experience.id,
+        attribute_key: key,
+        attribute_value: attr.value,
+        confidence: attr.confidence / 100, // Convert from 0-100 to 0.0-1.0
+        source: attr.isManuallyEdited ? 'user_confirmed' : 'ai_extracted',
+        verified_by_user: attr.isManuallyEdited || false,
+        created_by: user.id,
+      }));
+
+      const { error: attributesError } = await supabase
+        .from('experience_attributes')
+        .insert(attributeRecords);
+
+      if (attributesError) {
+        console.error('Error saving attributes:', attributesError);
+        // Don't fail the entire publish if attributes fail
+      }
+    }
+
     // Calculate XP earned based on contribution
     let xpEarned = 50; // Base XP
 
@@ -62,6 +84,12 @@ export async function POST(request: NextRequest) {
     // Bonus for extra questions
     if (experienceData.extraQuestions && Object.keys(experienceData.extraQuestions).length > 0) {
       xpEarned += 100;
+    }
+
+    // Bonus for attributes (5 XP per confirmed attribute)
+    if (experienceData.attributes && Object.keys(experienceData.attributes).length > 0) {
+      const attributeCount = Object.keys(experienceData.attributes).length;
+      xpEarned += attributeCount * 5;
     }
 
     // Award XP to user

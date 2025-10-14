@@ -45,6 +45,7 @@ export function SuccessScreen() {
         title: screen2.title,
         category: screen2.category,
         tags: screen2.tags,
+        attributes: screen2.attributes, // AI-extracted attributes
         date: screen2.date,
         time: screen2.time,
         location: screen2.location,
@@ -78,6 +79,20 @@ export function SuccessScreen() {
 
       const result = await response.json();
       setPublishResult(result);
+
+      // Trigger pattern analysis in background (don't wait for it)
+      try {
+        fetch('/api/patterns/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ experienceId: result.experienceId }),
+        }).catch(err => {
+          console.warn('Pattern analysis failed (non-critical):', err);
+        });
+      } catch (patternErr) {
+        // Non-critical - don't fail the publish
+        console.warn('Pattern analysis trigger failed:', patternErr);
+      }
     } catch (err: any) {
       console.error('Publish error:', err);
       setError(err.message || 'Publishing failed');

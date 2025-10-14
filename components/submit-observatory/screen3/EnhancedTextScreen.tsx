@@ -100,18 +100,23 @@ export function EnhancedTextScreen() {
   const enhanceText = async () => {
     setEnhancing(true);
     try {
-      const response = await fetch('/api/submit/enhance-text', {
+      const response = await fetch('/api/submit/enrich-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: screen1.text }),
+        body: JSON.stringify({
+          text: screen1.text,
+          attributes: screen2.attributes,
+          answers: screen2.extraQuestions,
+          language: 'de',
+        }),
       });
 
-      if (!response.ok) throw new Error('Text enhancement failed');
+      if (!response.ok) throw new Error('Text enrichment failed');
 
       const data = await response.json();
-      setEnhancedText(data.enhancedText, data.highlights);
+      setEnhancedText(data.enrichedText, data.highlights);
     } catch (error) {
-      console.error('Text enhancement error:', error);
+      console.error('Text enrichment error:', error);
     } finally {
       setEnhancing(false);
     }

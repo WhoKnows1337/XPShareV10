@@ -120,6 +120,7 @@ export interface SubmitStore {
     date: ExtractedField
     tags: ExtractedField<string[]>
     category: ExtractedField
+    attributes: Record<string, ExtractedField> // New: Structured attributes
   }
   isExtracting: boolean
   lastExtractionTime: Date | null
@@ -238,6 +239,7 @@ const initialState = {
     date: { value: '', confidence: 0, isManuallyEdited: false },
     tags: { value: [] as string[], confidence: 0, isManuallyEdited: false },
     category: { value: '', confidence: 0, isManuallyEdited: false },
+    attributes: {} as Record<string, ExtractedField>,
   },
   isExtracting: false,
   lastExtractionTime: null,
@@ -332,31 +334,64 @@ export const useSubmitStore = create<SubmitStore>()(
           set({ isExtracting: true, error: null })
 
           try {
-            // TODO: Call API endpoint
-            const response = await fetch('/api/extract', {
+            // Call new complete analysis API
+            const response = await fetch('/api/submit/analyze-complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: rawText }),
+              body: JSON.stringify({ text: rawText, language: 'de' }),
             })
 
-            if (!response.ok) throw new Error('Extraction failed')
+            if (!response.ok) throw new Error('Analysis failed')
 
             const data = await response.json()
 
+            // Transform attributes into ExtractedField format
+            const attributesTransformed: Record<string, ExtractedField> = {}
+            for (const [key, attr] of Object.entries(data.attributes || {})) {
+              const a = attr as any
+              attributesTransformed[key] = {
+                value: a.value,
+                confidence: Math.round(a.confidence * 100),
+                isManuallyEdited: false,
+              }
+            }
+
             set({
               extractedData: {
-                title: { ...data.title, isManuallyEdited: false },
-                location: { ...data.location, isManuallyEdited: false },
-                date: { ...data.date, isManuallyEdited: false },
-                tags: { ...data.tags, isManuallyEdited: false },
-                category: { ...data.category, isManuallyEdited: false },
+                title: {
+                  value: data.title || '',
+                  confidence: 90,
+                  isManuallyEdited: false
+                },
+                location: {
+                  value: '', // Will be filled from questions
+                  confidence: 0,
+                  isManuallyEdited: false
+                },
+                date: {
+                  value: '', // Will be filled from questions
+                  confidence: 0,
+                  isManuallyEdited: false
+                },
+                tags: {
+                  value: data.tags || [],
+                  confidence: 85,
+                  isManuallyEdited: false
+                },
+                category: {
+                  value: data.category || '',
+                  confidence: Math.round((data.categoryConfidence || 0) * 100),
+                  isManuallyEdited: false
+                },
+                attributes: attributesTransformed,
               },
               lastExtractionTime: new Date(),
               isExtracting: false,
             })
           } catch (error) {
+            console.error('Extraction error:', error)
             set({
-              error: error instanceof Error ? error.message : 'Extraction failed',
+              error: error instanceof Error ? error.message : 'Analysis failed',
               isExtracting: false,
             })
           }

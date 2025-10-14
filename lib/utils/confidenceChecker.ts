@@ -8,12 +8,14 @@ import {
 export interface Question extends Omit<StoreQuestion, 'type'> {
   type: 'date' | 'location' | 'multiChoice' | 'emotionalTags' | 'text' | 'boolean' | 'slider'
   field: string // which extracted field this relates to
-  currentValue?: string | string[]
+  currentValue?: string | string[] | boolean | number
   confidence?: number
   xpBonus?: number
   helpText?: string
   placeholder?: string
   sliderConfig?: { min: number; max: number; step: number; unit: string }
+  mapsToAttribute?: string // Attribute key from attribute_schema
+  isAISuggestion?: boolean // True if pre-filled from AI attribute extraction
 }
 
 const CONFIDENCE_THRESHOLD = 60 // Lowered from 80 to reduce unnecessary questions
@@ -280,10 +282,19 @@ export async function generateQuestions(
         helpText: dbQ.helpText,
         placeholder: dbQ.placeholder,
         sliderConfig: dbQ.sliderConfig,
+        mapsToAttribute: dbQ.mapsToAttribute,
       }
 
-      // Add current value and confidence if field matches extracted data
-      if (dbQ.field === 'date' && extractedData.date.value) {
+      // Check if question maps to an AI-extracted attribute
+      if (dbQ.mapsToAttribute && extractedData.attributes[dbQ.mapsToAttribute]) {
+        const attribute = extractedData.attributes[dbQ.mapsToAttribute]
+        question.currentValue = attribute.value
+        question.confidence = attribute.confidence
+        question.isAISuggestion = !attribute.isManuallyEdited
+        // Boost XP for confirming AI suggestions
+        question.xpBonus = (question.xpBonus || 0) + 5
+        questions.push(question)
+      } else if (dbQ.field === 'date' && extractedData.date.value) {
         // Only ask date if confidence is low
         if (extractedData.date.confidence < CONFIDENCE_THRESHOLD) {
           question.currentValue = extractedData.date.value

@@ -17,6 +17,7 @@ import { UserPlus, UserCheck, MapPin, Calendar, Sparkles, TrendingUp, ChevronLef
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { TimelinePreviewChart } from './TimelinePreviewChart'
+import { AttributeBasedSimilar } from './AttributeBasedSimilar'
 import { toggleFollow } from '@/app/actions/follow'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -59,6 +60,7 @@ interface RelatedSidebarProps {
   currentUserId?: string
   isFollowing?: boolean
   authorTimeline?: Array<{ created_at: string; date_occurred?: string }>
+  experienceId?: string
 }
 
 const categoryIcons: Record<string, string> = {
@@ -78,6 +80,7 @@ export function RelatedSidebar({
   currentUserId,
   isFollowing = false,
   authorTimeline = [],
+  experienceId,
 }: RelatedSidebarProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -254,6 +257,11 @@ export function RelatedSidebar({
       {/* Timeline Preview Chart */}
       {authorTimeline.length > 0 && (
         <TimelinePreviewChart experiences={authorTimeline} />
+      )}
+
+      {/* Attribute-Based Similar Experiences (NEW!) */}
+      {experienceId && (
+        <AttributeBasedSimilar experienceId={experienceId} limit={8} />
       )}
 
       {/* Similar Experiences */}

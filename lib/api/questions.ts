@@ -27,6 +27,7 @@ export interface DynamicQuestion {
   placeholder: string | null
   conditional_logic: Record<string, any>
   ai_adaptive: boolean
+  maps_to_attribute: string | null
 }
 
 export interface QuestionForUI {
@@ -40,6 +41,7 @@ export interface QuestionForUI {
   helpText?: string
   placeholder?: string
   xpBonus: number
+  mapsToAttribute?: string // Links to attribute_schema key
 }
 
 // ============================================
@@ -193,6 +195,11 @@ function mapQuestionToUI(dbQuestion: DynamicQuestion): QuestionForUI {
 
   if (dbQuestion.placeholder) {
     question.placeholder = dbQuestion.placeholder
+  }
+
+  // Add attribute mapping
+  if (dbQuestion.maps_to_attribute) {
+    question.mapsToAttribute = dbQuestion.maps_to_attribute
   }
 
   return question

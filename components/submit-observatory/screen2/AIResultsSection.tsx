@@ -20,6 +20,7 @@ export function AIResultsSection({
   const t = useTranslations('submit.screen2.aiResults');
   const tSummary = useTranslations('submit.screen3.summary');
   const tCategories = useTranslations('categories');
+  const tAttributes = useTranslations('attributes');
   const { screen2, screen3, setTitle, setCategory, addTag, removeTag, setSummary } = useSubmitFlowStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(screen2.title);
@@ -317,6 +318,66 @@ export function AIResultsSection({
           </div>
         )}
       </div>
+
+      {/* AI-Extracted Attributes */}
+      {Object.keys(screen2.attributes).length > 0 && (
+        <div>
+          <label className="text-[10px] font-medium text-text-tertiary uppercase mb-1 block">
+            KI-Attribute ({Object.keys(screen2.attributes).length})
+          </label>
+          <div className="space-y-1.5">
+            {Object.entries(screen2.attributes).map(([key, attr]) => {
+              const confidenceColor =
+                attr.confidence >= 80 ? 'text-success-soft' :
+                attr.confidence >= 60 ? 'text-warning-soft' :
+                'text-error-soft';
+
+              // Use translation or fallback to formatted key
+              let attributeLabel = key;
+              try {
+                attributeLabel = tAttributes(key);
+              } catch {
+                attributeLabel = key.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+              }
+
+              // Use translation or fallback to value
+              let attributeValue = attr.value;
+              try {
+                attributeValue = tAttributes(`values.${attr.value}`);
+              } catch {
+                attributeValue = attr.value;
+              }
+
+              return (
+                <motion.div
+                  key={key}
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-2 bg-space-mid/40 border border-glass-border rounded hover:border-observatory-accent/30"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-[10px] font-medium text-text-tertiary">
+                      {attributeLabel}
+                      {attr.isManuallyEdited && (
+                        <span className="ml-1 text-observatory-accent">✓</span>
+                      )}
+                    </span>
+                    <span className={`text-[9px] font-mono font-semibold ${confidenceColor}`}>
+                      {attr.confidence}%
+                    </span>
+                  </div>
+                  <div className="text-xs text-text-primary capitalize">
+                    {attributeValue}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+          <p className="text-[9px] text-text-tertiary mt-2 italic">
+            💡 Attribute werden automatisch aus deinem Text extrahiert
+          </p>
+        </div>
+      )}
     </div>
   );
 }
