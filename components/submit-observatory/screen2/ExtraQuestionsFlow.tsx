@@ -110,6 +110,12 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
     }
   };
 
+  const handleBack = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
   const handleSkipAll = () => {
     updateScreen2({ completedExtraQuestions: false });
     onComplete();
@@ -173,12 +179,6 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
             +{questionForCard.xp} XP
           </span>
         </div>
-        <button
-          onClick={handleSkipAll}
-          className="text-[10px] text-text-tertiary hover:text-text-secondary uppercase tracking-wide"
-        >
-          {t('skipAll', 'Alle Skip')}
-        </button>
       </div>
 
       {/* Current Question */}
@@ -187,8 +187,21 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
         questionNumber={currentIndex + 1}
         onNext={handleNext}
         onSkip={handleSkip}
+        onBack={handleBack}
+        isFirstQuestion={currentIndex === 0}
+        isRequired={currentQuestion.required}
         currentAnswer={screen2.extraQuestions[currentQuestion.id]}
       />
+
+      {/* Skip All - Below buttons */}
+      <div className="flex justify-center mt-2">
+        <button
+          onClick={handleSkipAll}
+          className="text-[10px] text-text-tertiary hover:text-text-secondary uppercase tracking-wide"
+        >
+          {t('skipAll', 'Alle überspringen')}
+        </button>
+      </div>
 
       {/* Compact Progress Dots */}
       <div className="flex justify-center gap-1.5 mt-3">

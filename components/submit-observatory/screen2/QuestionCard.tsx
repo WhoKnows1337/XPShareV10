@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Star, Calendar as CalendarIcon } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
@@ -46,6 +47,9 @@ interface QuestionCardProps {
   questionNumber: number;
   onNext: (answer: any) => void;
   onSkip: () => void;
+  onBack?: () => void;
+  isFirstQuestion?: boolean;
+  isRequired?: boolean;
   currentAnswer?: any;
 }
 
@@ -54,10 +58,14 @@ export function QuestionCard({
   questionNumber,
   onNext,
   onSkip,
+  onBack,
+  isFirstQuestion = false,
+  isRequired = false,
   currentAnswer,
 }: QuestionCardProps) {
   const t = useTranslations('submit.screen2.question');
   const [answer, setAnswer] = useState<any>(currentAnswer || (question.type === 'checkbox' || question.type === 'dropdown-multi' || question.type === 'image-multi' ? [] : ''));
+  const [dateOpen, setDateOpen] = useState(false);
 
   const handleSubmit = () => {
     if (answer !== null && answer !== undefined) {
@@ -287,24 +295,28 @@ export function QuestionCard({
       case 'date':
         const selectedDate = answer ? new Date(answer) : undefined;
         return (
-          <Popover>
+          <Popover open={dateOpen} onOpenChange={setDateOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="w-full flex items-center gap-2 p-2 bg-glass-bg border border-glass-border rounded hover:border-observatory-accent/30 cursor-pointer transition-all text-left"
+                className="w-full flex items-center justify-between gap-2 p-2 bg-glass-bg border border-glass-border rounded hover:border-observatory-accent/30 cursor-pointer transition-all text-left text-xs"
               >
-                <CalendarIcon className="w-4 h-4 text-observatory-accent" />
-                <span className="text-xs text-text-primary">
-                  {selectedDate ? format(selectedDate, 'PPP') : (question.placeholder || 'Datum auswählen...')}
+                <span className="text-text-primary">
+                  {selectedDate ? format(selectedDate, 'PPP', { locale: de }) : (question.placeholder || 'Datum auswählen...')}
                 </span>
+                <CalendarIcon className="w-4 h-4 text-observatory-accent" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto overflow-hidden p-0" align="center">
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => setAnswer(date ? date.toISOString() : null)}
-                initialFocus
+                captionLayout="dropdown"
+                locale={de}
+                onSelect={(date) => {
+                  setAnswer(date ? date.toISOString() : null);
+                  setDateOpen(false);
+                }}
               />
             </PopoverContent>
           </Popover>
@@ -327,16 +339,34 @@ export function QuestionCard({
       )}
 
       <div className="flex gap-2 pt-1">
+        {/* Back Button - Left */}
+        {!isFirstQuestion && onBack ? (
+          <button
+            onClick={onBack}
+            className="w-24 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-secondary border border-glass-border rounded hover:border-observatory-accent/30 transition-all"
+            title={t('back', 'Zurück')}
+          >
+            ← {t('back', 'Zurück')}
+          </button>
+        ) : (
+          <div className="w-24" />
+        )}
+
+        {/* Skip Button - Center */}
         <button
           onClick={onSkip}
-          className="px-3 py-1.5 text-xs text-text-tertiary hover:text-text-secondary border border-glass-border rounded hover:border-observatory-accent/30"
+          disabled={isRequired}
+          className="flex-1 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-secondary border border-glass-border rounded hover:border-observatory-accent/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-text-tertiary"
+          title={isRequired ? t('requiredQuestion', 'Diese Frage muss beantwortet werden') : t('skip', 'Überspringen')}
         >
-          {t('skip', 'Skip')}
+          {t('skip', 'Überspringen')}
         </button>
+
+        {/* Next Button - Right */}
         <button
           onClick={handleSubmit}
           disabled={!canSubmit()}
-          className="flex-1 btn-observatory text-xs py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-24 btn-observatory text-xs py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('next', 'Weiter →')}
         </button>

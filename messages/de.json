@@ -226,7 +226,9 @@
       },
       "question": {
         "skip": "Überspringen",
-        "next": "Weiter →"
+        "next": "Weiter →",
+        "back": "Zurück",
+        "requiredQuestion": "Diese Frage muss beantwortet werden"
       },
       "extraPrompt": {
         "title": "💎 Noch mehr Details? Verdiene Extra-Punkte!",
