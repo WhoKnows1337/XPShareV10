@@ -92,21 +92,32 @@ Return JSON:
     const detectedCategory = categoryResult.category;
 
     // Get attribute schema for detected category
-    const { data: attributeSchema } = await supabase
+    const { data: attributeSchema, error: schemaError } = await supabase
       .from('attribute_schema')
       .select('*')
       .or(`category_slug.is.null,category_slug.eq.${detectedCategory}`)
-      .eq('is_searchable', true)
       .order('sort_order');
 
-    if (!attributeSchema || attributeSchema.length === 0) {
+    if (schemaError) {
+      console.error('Attribute schema query error:', schemaError);
       return NextResponse.json(
-        { error: 'No attribute schema found for category' },
+        { error: 'Failed to load attribute schema', details: schemaError.message },
         { status: 500 }
       );
     }
 
+    // Continue even if no attributes found - not all categories have attributes yet
+    const hasAttributes = attributeSchema && attributeSchema.length > 0;
+
     // Step 2: Complete Analysis with Attributes
+    const attributeInstructions = hasAttributes
+      ? `Extract these attributes (return in canonical English lowercase):
+${attributeSchema.map(attr => {
+  const values = attr.allowed_values ? JSON.parse(attr.allowed_values as any).join(', ') : 'free text';
+  return `- ${attr.key} (${attr.data_type}): ${values}`;
+}).join('\n')}`
+      : 'No specific attributes defined for this category yet.';
+
     const analysisPrompt = `Analyze this experience and extract structured information.
 
 Text Language: ${language}
@@ -114,11 +125,7 @@ Text: "${text}"
 
 Category: ${detectedCategory}
 
-Extract these attributes (return in canonical English lowercase):
-${attributeSchema.map(attr => {
-  const values = attr.allowed_values ? JSON.parse(attr.allowed_values as any).join(', ') : 'free text';
-  return `- ${attr.key} (${attr.data_type}): ${values}`;
-}).join('\n')}
+${attributeInstructions}
 
 IMPORTANT FOR ATTRIBUTES:
 - Return attribute values in CANONICAL FORM (lowercase English)
@@ -163,12 +170,13 @@ Return JSON:
       : '';
     const analysisResult = JSON.parse(analysisText);
 
-    // Validate attributes against schema
+    // Validate attributes against schema (only if we have schema)
     const validatedAttributes: Record<string, ExtractedAttribute> = {};
 
-    for (const [key, attr] of Object.entries(analysisResult.attributes || {})) {
-      const schema = attributeSchema.find(s => s.key === key);
-      if (!schema) continue;
+    if (hasAttributes) {
+      for (const [key, attr] of Object.entries(analysisResult.attributes || {})) {
+        const schema = attributeSchema.find(s => s.key === key);
+        if (!schema) continue;
 
       const extractedAttr = attr as ExtractedAttribute;
 
@@ -197,6 +205,7 @@ Return JSON:
         validatedAttributes[key] = extractedAttr;
       }
     }
+    }
 
     // Return complete analysis
     return NextResponse.json({
@@ -207,9 +216,11 @@ Return JSON:
       tags: analysisResult.tags || [],
       attributes: validatedAttributes,
       missing_info: analysisResult.missing_info || [],
+      confidence: categoryResult.confidence || 0.8,
       _debug: {
-        attributeSchemaCount: attributeSchema.length,
-        extractedCount: Object.keys(validatedAttributes).length
+        attributeSchemaCount: hasAttributes ? attributeSchema.length : 0,
+        extractedCount: Object.keys(validatedAttributes).length,
+        hasAttributes
       }
     });
 
