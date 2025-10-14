@@ -171,6 +171,8 @@
       "subtitle": "Hilf uns deine Erfahrung zu verstehen",
       "analyzing": "Analysiere deine XP...",
       "analyzingDesc": "KI erkennt Muster, erstellt Titel und bereitet Folgefragen vor",
+      "enriching": "Reichere Text an...",
+      "enrichingDesc": "KI fügt deine Antworten aus den Fragen in den Text ein",
       "aiResults": {
         "title": "KI-Erkennung",
         "badge": "🎯 KI-Analyse abgeschlossen",
@@ -510,6 +512,7 @@
   "categories": {
     "paranormal": "Paranormal",
     "ufo_sighting": "UFO-Sichtung",
+    "ufo-uap": "UFO-Sichtung",
     "synchronicity": "Synchronizität",
     "spiritual_experience": "Spirituelle Erfahrung",
     "near_death_experience": "Nahtoderfahrung",
@@ -543,6 +546,10 @@
     "altitude": "Höhe",
     "speed": "Geschwindigkeit",
     "distance": "Entfernung",
+    "visibility": "Sichtbarkeit",
+    "disappearance": "Verschwinden",
+    "afterwards_feeling": "Gefühl danach",
+    "repeatability": "Wiederholbarkeit",
     "entity_type": "Art des Wesens",
     "entity_appearance": "Erscheinung",
     "entity_behavior": "Verhalten",
@@ -712,7 +719,14 @@
       "fatigue": "Müdigkeit",
       "insomnia": "Schlaflosigkeit",
       "missing_time": "Fehlende Zeit",
-      "skin_irritation": "Hautreizung"
+      "skin_irritation": "Hautreizung",
+      "first_time": "Erstes Mal",
+      "free text": "Freitext",
+      "gradual": "Allmählich",
+      "flew_away": "Davongeflogen",
+      "faded": "Verblasst",
+      "blinked_out": "Ausgeblinkt",
+      "still_visible": "Noch sichtbar"
     }
   }
 }

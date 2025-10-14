@@ -44,14 +44,14 @@ export async function POST(request: NextRequest) {
       .map(([key, value]) => `- ${key}: ${value}`)
       .join('\n');
 
-    const prompt = `Integriere die zusätzlichen Informationen natürlich in den Text, sodass er vollständiger wird.
+    const prompt = `Integriere die zusätzlichen Informationen natürlich in den Text.
 
 **Original-Text:**
 """
 ${text}
 """
 
-**Zusätzliche Informationen:**
+**Zusätzliche Informationen aus Fragen:**
 
 Attribute:
 ${attributesList || '(keine)'}
@@ -59,17 +59,20 @@ ${attributesList || '(keine)'}
 Antworten:
 ${answersList || '(keine)'}
 
-**Regeln:**
-1. Behalte den persönlichen Stil und die Ich-Perspektive bei
-2. Füge nur Informationen hinzu, die noch nicht im Text stehen
-3. Verändere keine bestehenden Aussagen
+**Wichtige Regeln:**
+1. ÄNDERE NICHTS am Original-Text - Füge nur neue Informationen hinzu
+2. Füge NUR Informationen hinzu, die noch nicht im Text stehen
+3. Behalte den persönlichen Stil und die Ich-Perspektive exakt bei
 4. Schreibe in der gleichen Sprache wie das Original (${language})
-5. Bleibe authentisch und natürlich
+5. Füge die Infos natürlich ein, nicht als Liste
+6. KEINE Verbesserungen, KEINE Umformulierungen, KEINE Stiländerungen
 
-Beispiel:
+Beispiele:
 - Original: "Ich sah ein Licht am Himmel."
-- Mit Datum/Ort: "Am 15. März 2024 in München sah ich ein Licht am Himmel."
-- Mit Form: "Ich sah ein dreieckiges Licht am Himmel."
+  Mit Datum/Ort: "Am 15. März 2024 gegen 22:30 Uhr in München sah ich ein Licht am Himmel."
+
+- Original: "Es schwebte dort für einige Minuten."
+  Mit Dauer: "Es schwebte dort für etwa 10 Minuten."
 
 Gib NUR den angereicherten Text zurück, keine Erklärungen.`;
 
@@ -78,14 +81,14 @@ Gib NUR den angereicherten Text zurück, keine Erklärungen.`;
       messages: [
         {
           role: 'system',
-          content: 'Du bist ein Assistent, der Erfahrungsberichte anreichert, ohne den Originalstil zu verändern.',
+          content: 'Du fügst fehlende Fakten in Erfahrungsberichte ein, OHNE irgendetwas zu verändern oder zu verbessern.',
         },
         {
           role: 'user',
           content: prompt,
         },
       ],
-      temperature: 0.3,
+      temperature: 0.1, // Lower temperature for more factual additions
       max_tokens: 2000,
     });
 

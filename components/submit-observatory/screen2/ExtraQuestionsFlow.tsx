@@ -116,9 +116,19 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
   const t = useTranslations('submit.screen2.extraQuestions');
   const { screen2, setExtraQuestion, updateScreen2 } = useSubmitFlowStore();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showAllConfirm, setShowAllConfirm] = useState(false);
 
   const currentQuestion = EXTRA_QUESTIONS[currentIndex];
   const progress = ((currentIndex + 1) / EXTRA_QUESTIONS.length) * 100;
+
+  // Check how many questions are pre-filled
+  const prefilledQuestions = EXTRA_QUESTIONS.filter((q) => {
+    const attributeKey = QUESTION_TO_ATTRIBUTE_MAP[q.id];
+    return attributeKey && screen2.attributes[attributeKey];
+  });
+
+  const prefilledCount = prefilledQuestions.length;
+  const totalXPBonus = prefilledQuestions.reduce((sum, q) => sum + q.xp, 0);
 
   // Auto-fill question from AI-extracted attributes
   useEffect(() => {
@@ -181,6 +191,29 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
     onComplete();
   };
 
+  const handleConfirmAll = () => {
+    // Confirm all pre-filled questions at once
+    prefilledQuestions.forEach((question) => {
+      const attributeKey = QUESTION_TO_ATTRIBUTE_MAP[question.id];
+      if (attributeKey && screen2.attributes[attributeKey]) {
+        const attribute = screen2.attributes[attributeKey];
+        const optionMap = ATTRIBUTE_TO_OPTION_MAP[attributeKey];
+        const germanOption = optionMap[attribute.value];
+
+        if (germanOption && !screen2.extraQuestions[question.id]) {
+          setExtraQuestion(question.id, [germanOption]);
+        }
+      }
+    });
+
+    // Award bonus XP
+    console.log(`Alle bestätigen: +${totalXPBonus} XP Bonus`);
+
+    // Mark as completed and continue
+    updateScreen2({ completedExtraQuestions: true });
+    onComplete();
+  };
+
   return (
     <div className="p-3 bg-glass-bg border border-glass-border rounded">
       {/* Compact Header */}
@@ -200,6 +233,28 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
           {t('skipAll', 'Alle Skip')}
         </button>
       </div>
+
+      {/* "Alle bestätigen" Button - Show if there are pre-filled questions */}
+      {prefilledCount > 0 && (
+        <div className="mb-4 p-3 bg-success-soft/10 border border-success-soft/30 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-sm font-semibold text-success-soft">
+                ✨ {prefilledCount} {prefilledCount === 1 ? 'Frage' : 'Fragen'} wurden automatisch ausgefüllt
+              </p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Bestätige alle auf einmal und erhalte +{totalXPBonus} XP Bonus
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleConfirmAll}
+            className="w-full py-2 px-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg font-semibold text-sm transition-all shadow-lg hover:shadow-xl"
+          >
+            Alle bestätigen (+{totalXPBonus} XP)
+          </button>
+        </div>
+      )}
 
       {/* Current Question */}
       <QuestionCard

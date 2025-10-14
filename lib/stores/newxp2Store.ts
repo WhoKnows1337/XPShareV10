@@ -19,6 +19,13 @@ export interface FloatingCard {
   isEditing: boolean
 }
 
+export interface AttributeData {
+  value: string
+  confidence: number
+  evidence?: string
+  isManuallyEdited?: boolean
+}
+
 export interface ExtractedData {
   title: string
   category: string
@@ -29,6 +36,9 @@ export interface ExtractedData {
   size: string
   duration: string
   emotions: string[]
+  attributes?: Record<string, AttributeData>
+  summary?: string
+  missing_info?: string[]
 }
 
 export interface Witness {
@@ -123,6 +133,8 @@ export interface NewXP2Store {
   updateCard: (cardId: string, value: any) => void
   addFloatingCard: (field: keyof ExtractedData, value: any, confidence: number) => void
   removeFloatingCard: (cardId: string) => void
+  updateAttribute: (key: string, value: string) => void
+  updateBasicField: (field: keyof ExtractedData, value: any) => void
 
   // ========================================
   // WITNESSES (Phase 3)
@@ -350,45 +362,49 @@ export const useNewXP2Store = create<NewXP2Store>()(
           set({ isExtracting: true, orbState: 'thinking' })
 
           try {
-            const response = await fetch('/api/extract', {
+            // Use the complete analysis API that extracts attributes
+            const response = await fetch('/api/submit/analyze-complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: rawText }),
+              body: JSON.stringify({ text: rawText, language: 'de' }),
             })
 
             if (!response.ok) throw new Error('Extraction failed')
 
             const data = await response.json()
 
-            // Update extracted data
+            // Update extracted data with attributes
             const extractedData: ExtractedData = {
-              title: data.title?.value || '',
-              category: data.category?.value || '',
-              location: data.location?.value || '',
-              date: data.date?.value || '',
-              time: data.time?.value || '',
-              tags: data.tags?.value || [],
-              size: data.size?.value || '',
-              duration: data.duration?.value || '',
-              emotions: data.emotions?.value || [],
+              title: data.title || '',
+              category: data.category || '',
+              location: '',
+              date: '',
+              time: '',
+              tags: data.tags || [],
+              size: '',
+              duration: '',
+              emotions: [],
+              attributes: data.attributes || {},
+              summary: data.summary || '',
+              missing_info: data.missing_info || [],
             }
 
             set({ extractedData, isExtracting: false, orbState: 'celebrating' })
 
-            // Create floating cards for high-confidence fields
-            Object.entries(data).forEach(([field, fieldData]: [string, any]) => {
-              if (fieldData.confidence > 60 && fieldData.value) {
-                get().addFloatingCard(field as keyof ExtractedData, fieldData.value, fieldData.confidence)
-              }
-            })
+            // Create floating cards for basic fields (title, category, tags)
+            if (data.title) {
+              get().addFloatingCard('title', data.title, data.categoryConfidence * 100)
+            }
+            if (data.category) {
+              get().addFloatingCard('category', data.category, data.categoryConfidence * 100)
+            }
 
             get().calculateCompletion()
             get().triggerConfetti()
             get().addXP(20, 'Extraction completed')
 
-            // Auto-proceed to phase 2 if we have ANY extracted data
-            // Less strict: category OR location OR at least one floating card
-            const hasData = extractedData.category || extractedData.location || get().floatingCards.length > 0
+            // Auto-proceed to phase 2 if we have extracted data
+            const hasData = extractedData.category || Object.keys(extractedData.attributes || {}).length > 0
 
             if (hasData) {
               console.log('[newxp2] Auto-proceeding to Phase 2 (extracted data found)')
@@ -461,6 +477,33 @@ export const useNewXP2Store = create<NewXP2Store>()(
           set((state) => ({
             floatingCards: state.floatingCards.filter((c) => c.id !== cardId),
           }))
+        },
+
+        updateAttribute: (key, value) => {
+          set((state) => ({
+            extractedData: {
+              ...state.extractedData,
+              attributes: {
+                ...state.extractedData.attributes,
+                [key]: {
+                  ...(state.extractedData.attributes?.[key] || { confidence: 1, evidence: '' }),
+                  value,
+                  isManuallyEdited: true,
+                },
+              },
+            },
+          }))
+          get().addXP(5, 'Attribute edited')
+        },
+
+        updateBasicField: (field, value) => {
+          set((state) => ({
+            extractedData: {
+              ...state.extractedData,
+              [field]: value,
+            },
+          }))
+          get().addXP(3, 'Field updated')
         },
 
         // ========================================

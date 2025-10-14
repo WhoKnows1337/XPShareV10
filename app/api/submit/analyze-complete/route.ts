@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -10,11 +10,11 @@ import { createClient } from '@/lib/supabase/server';
  * - Structured Attributes (based on category)
  * - Missing info detection
  *
- * Uses Anthropic Claude for semantic attribute extraction
+ * Uses OpenAI GPT-4o-mini for semantic attribute extraction
  */
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 interface AttributeSchema {
@@ -76,18 +76,17 @@ Return JSON:
   "reasoning": "why this category"
 }`;
 
-    const categoryResponse = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 300,
+    const categoryResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       messages: [{
         role: 'user',
         content: categoryPrompt
-      }]
+      }],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
     });
 
-    const categoryText = categoryResponse.content[0].type === 'text'
-      ? categoryResponse.content[0].text
-      : '';
+    const categoryText = categoryResponse.choices[0].message.content || '{}';
     const categoryResult = JSON.parse(categoryText);
     const detectedCategory = categoryResult.category;
 
@@ -113,7 +112,7 @@ Return JSON:
     const attributeInstructions = hasAttributes
       ? `Extract these attributes (return in canonical English lowercase):
 ${attributeSchema.map(attr => {
-  const values = attr.allowed_values ? JSON.parse(attr.allowed_values as any).join(', ') : 'free text';
+  const values = attr.allowed_values ? (Array.isArray(attr.allowed_values) ? attr.allowed_values.join(', ') : JSON.parse(attr.allowed_values as any).join(', ')) : 'free text';
   return `- ${attr.key} (${attr.data_type}): ${values}`;
 }).join('\n')}`
       : 'No specific attributes defined for this category yet.';
@@ -156,18 +155,17 @@ Return JSON:
   "missing_info": ["date", "exact_location"]
 }`;
 
-    const analysisResponse = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
+    const analysisResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       messages: [{
         role: 'user',
         content: analysisPrompt
-      }]
+      }],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
     });
 
-    const analysisText = analysisResponse.content[0].type === 'text'
-      ? analysisResponse.content[0].text
-      : '';
+    const analysisText = analysisResponse.choices[0].message.content || '{}';
     const analysisResult = JSON.parse(analysisText);
 
     // Validate attributes against schema (only if we have schema)
@@ -182,7 +180,7 @@ Return JSON:
 
       // For enum types, validate against allowed_values
       if (schema.data_type === 'enum' && schema.allowed_values) {
-        const allowedValues = JSON.parse(schema.allowed_values as any);
+        const allowedValues = Array.isArray(schema.allowed_values) ? schema.allowed_values : JSON.parse(schema.allowed_values as any);
 
         if (allowedValues.includes(extractedAttr.value)) {
           validatedAttributes[key] = extractedAttr;
@@ -229,7 +227,7 @@ Return JSON:
 
     if (error?.status === 401) {
       return NextResponse.json(
-        { error: 'Anthropic API key invalid or missing' },
+        { error: 'OpenAI API key invalid or missing' },
         { status: 500 }
       );
     }

@@ -15,12 +15,27 @@ import { Button } from '@/components/ui/button';
 
 export function AIAnalysisScreen() {
   const t = useTranslations('submit.screen2');
-  const { screen1, screen2, updateScreen2, setAIResults, setAnalyzing, isAnalyzing, canGoNext, goNext, goBack, reset, isDraft, saveDraft } =
-    useSubmitFlowStore();
+  const {
+    screen1,
+    screen2,
+    screen3,
+    updateScreen2,
+    setAIResults,
+    setAnalyzing,
+    isAnalyzing,
+    isSummarizing,
+    canGoNext,
+    goNext,
+    goBack,
+    reset,
+    isDraft,
+    saveDraft
+  } = useSubmitFlowStore();
   const [showExtraQuestions, setShowExtraQuestions] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Auto-save every 30 seconds if there are changes
   useEffect(() => {
@@ -134,6 +149,60 @@ export function AIAnalysisScreen() {
     }
   };
 
+  // Handle navigation to next step - enrich text first
+  const handleNext = async () => {
+    // If summary is still being generated, wait for it
+    if (isSummarizing) {
+      setIsTransitioning(true);
+      // Will auto-advance via useEffect below
+      return;
+    }
+
+    // Start transitioning - we'll enrich the text now
+    setIsTransitioning(true);
+
+    try {
+      // Enrich text with attributes and answers from questions
+      const { setEnhancedText, setEnhancing } = useSubmitFlowStore.getState();
+      setEnhancing(true);
+
+      const response = await fetch('/api/submit/enrich-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: screen1.text,
+          attributes: screen2.attributes,
+          answers: screen2.extraQuestions,
+          language: 'de',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEnhancedText(data.enrichedText, data.highlights);
+      }
+
+      setEnhancing(false);
+    } catch (error) {
+      console.error('Text enrichment error:', error);
+      const { setEnhancing } = useSubmitFlowStore.getState();
+      setEnhancing(false);
+      // Continue anyway with original text
+    }
+
+    // Now proceed to next step
+    setIsTransitioning(false);
+    goNext();
+  };
+
+  // Auto-advance once summary is ready (when waiting for summary)
+  useEffect(() => {
+    if (isTransitioning && !isSummarizing && screen3.summary && !screen3.enhancedText) {
+      // Summary is ready, now enrich text
+      handleNext();
+    }
+  }, [isTransitioning, isSummarizing, screen3.summary, screen3.enhancedText]);
+
   // Show loading state during analysis
   if (isAnalyzing) {
     return (
@@ -141,6 +210,17 @@ export function AIAnalysisScreen() {
         icon="telescope"
         title={t('analyzing')}
         description="KI erkennt Kategorie & Tags, erstellt Titel & Preview-Zusammenfassung"
+      />
+    );
+  }
+
+  // Show loading state when transitioning to step 3
+  if (isTransitioning) {
+    return (
+      <LoadingState
+        icon="sparkles"
+        title={t('enriching', 'Reichere Text an...')}
+        description={t('enrichingDesc', 'KI fügt deine Antworten aus den Fragen in den Text ein')}
       />
     );
   }
@@ -215,7 +295,7 @@ export function AIAnalysisScreen() {
           {/* Navigation */}
           <NavigationButtons
             onBack={goBack}
-            onNext={goNext}
+            onNext={handleNext}
             onReset={handleReset}
             canGoNext={canGoNext()}
             nextLabel={t('continue', 'Weiter')}

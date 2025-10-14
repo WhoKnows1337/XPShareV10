@@ -122,7 +122,7 @@ export function QuestionEditorDialog({
       setFollowUpQuestion(question.follow_up_question || null)
       setAIAdaptive((question as any).ai_adaptive || false)
       setAdaptiveConditions((question as any).adaptive_conditions || {})
-      setMapsToAttribute((question as any).maps_to_attribute || '')
+      setMapsToAttribute((question as any).maps_to_attribute || '__none__')
     } else {
       // Reset for new question
       setQuestionText('')
@@ -140,7 +140,7 @@ export function QuestionEditorDialog({
       setShowAdvanced(false)
       setAIAdaptive(false)
       setAdaptiveConditions({})
-      setMapsToAttribute('')
+      setMapsToAttribute('__none__')
     }
   }, [question])
 
@@ -204,7 +204,7 @@ export function QuestionEditorDialog({
         follow_up_question: followUpQuestion,
         ai_adaptive: aiAdaptive,
         adaptive_conditions: adaptiveConditions,
-        maps_to_attribute: mapsToAttribute || null,
+        maps_to_attribute: mapsToAttribute && mapsToAttribute !== '__none__' ? mapsToAttribute : null,
       }
 
       const url = question
@@ -398,7 +398,7 @@ export function QuestionEditorDialog({
                     <SelectValue placeholder="None (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="__none__">None</SelectItem>
                     {availableAttributes.map((attr) => (
                       <SelectItem key={attr.key} value={attr.key}>
                         {attr.display_name} ({attr.key})
@@ -414,7 +414,7 @@ export function QuestionEditorDialog({
               </div>
 
               {/* Value Mapping Preview */}
-              {mapsToAttribute && (questionType === 'chips' || questionType === 'chips-multi') && options.length > 0 && (
+              {mapsToAttribute && mapsToAttribute !== '__none__' && (questionType === 'chips' || questionType === 'chips-multi') && options.length > 0 && (
                 <div className="rounded border border-blue-100 bg-blue-50/50 p-3 space-y-2">
                   <h4 className="font-medium text-sm text-blue-900">Value Mapping Preview</h4>
                   <p className="text-xs text-blue-700">
@@ -434,7 +434,7 @@ export function QuestionEditorDialog({
                 </div>
               )}
 
-              {mapsToAttribute && (
+              {mapsToAttribute && mapsToAttribute !== '__none__' && (
                 <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 p-2 rounded">
                   <Sparkles className="h-4 w-4" />
                   <span>AI will pre-fill this question if the attribute is detected</span>
