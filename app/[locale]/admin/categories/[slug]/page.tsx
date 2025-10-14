@@ -54,11 +54,21 @@ export default async function CategoryDetailPage({ params }: PageProps) {
   })
 
   // Fetch attributes for this category
-  const { data: attributes } = await supabase
+  const { data: attributesRaw } = await supabase
     .from('attribute_schema')
     .select('*')
     .eq('category_slug', slug)
     .order('sort_order')
+
+  // Parse allowed_values from JSON string to array
+  const attributes = attributesRaw?.map(attr => ({
+    ...attr,
+    allowed_values: attr.allowed_values
+      ? (typeof attr.allowed_values === 'string'
+        ? JSON.parse(attr.allowed_values)
+        : attr.allowed_values)
+      : null
+  })) || []
 
   // Get attribute usage counts from experience_attributes
   const attributeKeys = attributes?.map(attr => attr.key) || []
