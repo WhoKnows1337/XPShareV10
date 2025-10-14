@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
-import { AIResultsSection } from './AIResultsSection';
+import { AIHeroHeader } from './AIHeroHeader';
 import { LoadingState } from '../shared/LoadingState';
-import { RequiredQuestions } from './RequiredQuestions';
-import { ExtraQuestionsPrompt } from './ExtraQuestionsPrompt';
 import { ExtraQuestionsFlow } from './ExtraQuestionsFlow';
 import { NavigationButtons } from '../shared/NavigationButtons';
 import { useTranslations } from 'next-intl';
@@ -31,7 +29,6 @@ export function AIAnalysisScreen() {
     isDraft,
     saveDraft
   } = useSubmitFlowStore();
-  const [showExtraQuestions, setShowExtraQuestions] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -279,46 +276,35 @@ export function AIAnalysisScreen() {
 
   return (
     <AnimatePresence mode="wait">
-      <div className="grid grid-cols-1 lg:grid-cols-[70%,30%] gap-4">
-        {/* Left Column: Questions (70%) */}
-        <div className="space-y-4">
-          {/* Required Questions */}
-          <div>
-            <div className="mb-3">
-              <h2 className="section-title-observatory">{t('required.title', 'Pflichtangaben')}</h2>
-              <p className="text-text-secondary text-xs mt-1">
-                {t('required.description', 'Diese Angaben helfen bei der Mustererkennung')}
-              </p>
-            </div>
-            <RequiredQuestions />
+      <div className="space-y-6">
+        {/* Hero Header: AI Analysis Results */}
+        <AIHeroHeader />
+
+        {/* Questions Section */}
+        <div>
+          <div className="mb-4">
+            <h2 className="section-title-observatory">
+              {t('questions.title', 'Fragen zur Experience')}
+            </h2>
+            <p className="text-text-secondary text-xs mt-1">
+              {t('questions.description', 'Beantworte die Fragen um Pattern-Matching zu verbessern')}
+            </p>
           </div>
 
-          {/* Extra Questions Prompt */}
-          {!showExtraQuestions && !screen2.completedExtraQuestions && (
-            <ExtraQuestionsPrompt onAccept={() => setShowExtraQuestions(true)} />
-          )}
-
-          {/* Extra Questions Flow */}
-          {showExtraQuestions && (
-            <ExtraQuestionsFlow onComplete={() => setShowExtraQuestions(false)} />
-          )}
-
-          {/* Navigation */}
-          <NavigationButtons
-            onBack={goBack}
-            onNext={handleNext}
-            onReset={handleReset}
-            canGoNext={canGoNext()}
-            nextLabel={t('continue', 'Weiter')}
-            showReset={true}
-            resetConfirm={showResetConfirm}
-          />
+          {/* Dynamic Questions Flow (Universal + Category) */}
+          <ExtraQuestionsFlow onComplete={() => {}} />
         </div>
 
-        {/* Right Column: KI Analysis Sidebar (30%) */}
-        <div className="lg:sticky lg:top-4 lg:self-start">
-          <AIResultsSection />
-        </div>
+        {/* Navigation */}
+        <NavigationButtons
+          onBack={goBack}
+          onNext={handleNext}
+          onReset={handleReset}
+          canGoNext={canGoNext()}
+          nextLabel={t('continue', 'Weiter zum Editor')}
+          showReset={true}
+          resetConfirm={showResetConfirm}
+        />
       </div>
     </AnimatePresence>
   );

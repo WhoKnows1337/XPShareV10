@@ -237,6 +237,13 @@
         "accept": "🎯 Ja, Extra-Punkte verdienen!",
         "decline": "Später"
       },
+      "questions": {
+        "title": "Fragen zur Experience",
+        "description": "Beantworte die Fragen um Pattern-Matching zu verbessern"
+      },
+      "attributesFound": "KI-Attribute erkannt",
+      "untitled": "Ohne Titel",
+      "noAttributes": "Keine spezifischen Attribute im Text erkannt",
       "error": "KI-Analyse fehlgeschlagen. Bitte versuche es erneut.",
       "errorTitle": "Fehler bei der Analyse",
       "retry": "Erneut versuchen",

@@ -42,11 +42,11 @@ export async function GET(request: Request) {
       )
     }
 
-    // Get questions for this category
+    // Get questions for this category + universal questions (category_id IS NULL)
     const { data: questions, error: questionsError } = await supabase
       .from('dynamic_questions')
       .select('*')
-      .eq('category_id', category.id)
+      .or(`category_id.is.null,category_id.eq.${category.id}`)
       .eq('is_active', true)
       .order('priority', { ascending: true })
 
@@ -158,11 +158,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get questions for this category
+    // Get questions for this category + universal questions (category_id IS NULL)
     const { data: questions, error: questionsError } = await supabase
       .from('dynamic_questions')
       .select('*')
-      .eq('category_id', category.id)
+      .or(`category_id.is.null,category_id.eq.${category.id}`)
       .eq('is_active', true)
       .order('priority', { ascending: true })
 
