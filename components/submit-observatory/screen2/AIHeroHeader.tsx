@@ -74,7 +74,7 @@ export function AIHeroHeader() {
     'andere': 'bg-gray-500',
   };
 
-  const categorySlug = screen2.categorySlug || 'other';
+  const categorySlug = screen2.category || 'other';
   const CategoryIcon = categoryIcons[categorySlug] || HelpCircle;
   const categoryColor = categoryColors[categorySlug] || 'bg-gray-500';
   const categoryName = tCategories(categorySlug, categorySlug);
