@@ -3,381 +3,360 @@
 import { useState } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
-import { Edit2, FileText, RotateCw, X, Plus, Check } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { CategoryPicker } from './CategoryPicker';
+import {
+  Pencil,
+  Sparkles,
+  ChevronDown,
+  Check,
+  X,
+  Ghost,
+  Telescope,
+  Heart,
+  Zap,
+  Brain,
+  Footprints,
+  HelpCircle,
+  LucideIcon,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Separator } from '@/components/ui/separator';
 
-interface AIResultsSectionProps {
-  onRegenerateSummary?: () => void;
-  isSummarizing?: boolean;
-}
+// Icon mapping for each category
+const categoryIcons: Record<string, LucideIcon> = {
+  paranormal: Ghost,
+  ufo_sighting: Telescope,
+  synchronicity: Sparkles,
+  spiritual_experience: Heart,
+  near_death_experience: Zap,
+  psychic_experience: Brain,
+  cryptid_encounter: Footprints,
+  other: HelpCircle,
+};
 
-export function AIResultsSection({
-  onRegenerateSummary,
-  isSummarizing = false
-}: AIResultsSectionProps = {}) {
+// Color mapping for categories
+const categoryColors: Record<string, string> = {
+  paranormal: 'bg-purple-500',
+  ufo_sighting: 'bg-blue-500',
+  synchronicity: 'bg-pink-500',
+  spiritual_experience: 'bg-green-500',
+  near_death_experience: 'bg-yellow-500',
+  psychic_experience: 'bg-indigo-500',
+  cryptid_encounter: 'bg-orange-500',
+  other: 'bg-gray-500',
+};
+
+export function AIResultsSection() {
   const t = useTranslations('submit.screen2.aiResults');
-  const tSummary = useTranslations('submit.screen3.summary');
   const tCategories = useTranslations('categories');
-  const tAttributes = useTranslations('attributes');
-  const { screen2, screen3, setTitle, setCategory, addTag, removeTag, setSummary } = useSubmitFlowStore();
+  const { screen2, screen3, updateScreen2, currentStep } = useSubmitFlowStore();
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(screen2.title);
-  const [isEditingSummary, setIsEditingSummary] = useState(false);
-  const [editedSummary, setEditedSummary] = useState(screen3?.summary || '');
-  const [newTagInput, setNewTagInput] = useState('');
-  const [showTagInput, setShowTagInput] = useState(false);
+  const [titleInput, setTitleInput] = useState(screen2.title || '');
 
-  const handleSaveTitle = () => {
-    setTitle(editedTitle);
+  const handleTitleSave = () => {
+    if (titleInput.trim()) {
+      updateScreen2({ title: titleInput.trim() });
+    }
     setIsEditingTitle(false);
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = newTagInput.trim().toLowerCase();
-    if (trimmedTag && trimmedTag.length > 0) {
-      addTag(trimmedTag);
-      setNewTagInput('');
-      setShowTagInput(false);
-    }
-  };
+  // Get category info
+  const CategoryIcon = categoryIcons[screen2.category] || HelpCircle;
+  const categoryColor = categoryColors[screen2.category] || 'bg-gray-500';
+  const categoryName = screen2.category ? tCategories(screen2.category) : 'Unknown';
+  const attributeCount = screen2.attributes ? Object.keys(screen2.attributes).length : 0;
+  const confidencePercent = screen2.confidence ? Math.round(screen2.confidence * 100) : 0;
 
-  // Helper to safely get category translation
-  const getCategoryTranslation = (category: string) => {
-    // Normalize to lowercase and handle edge cases
-    const normalizedCategory = category.toLowerCase();
+  // Step 2: Minimal Card Design
+  if (currentStep === 2) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-glass-bg border border-glass-border rounded-lg overflow-hidden"
+      >
+        {/* Compact Header with Status */}
+        <div className="p-4 border-b border-glass-border">
+          <div className="flex items-start gap-3">
+            {/* Category Icon */}
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${categoryColor}`}>
+              <CategoryIcon className="w-5 h-5 text-white" />
+            </div>
 
-    // Map legacy/shortened category names to full keys
-    const categoryKeyMap: Record<string, string> = {
-      'ufo': 'ufo_sighting',
-      'spiritual': 'spiritual_experience',
-      'nde': 'near_death_experience',
-      'psychic': 'psychic_experience',
-      'cryptid': 'cryptid_encounter',
-    };
+            {/* Category + Confidence */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-medium text-observatory-accent uppercase tracking-wide">
+                  {categoryName}
+                </span>
+                <span className="text-[10px] text-text-tertiary">
+                  {confidencePercent}% Zuversicht
+                </span>
+              </div>
 
-    // Use mapped key if available, otherwise use normalized category
-    const translationKey = categoryKeyMap[normalizedCategory] || normalizedCategory;
+              {/* Editable Title */}
+              {!isEditingTitle ? (
+                <button
+                  onClick={() => {
+                    setTitleInput(screen2.title || '');
+                    setIsEditingTitle(true);
+                  }}
+                  className="text-left text-sm font-medium text-text-primary hover:text-observatory-accent transition-colors group w-full"
+                >
+                  {screen2.title || t('untitled', 'Ohne Titel')}
+                  <Pencil className="inline-block ml-2 w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={titleInput}
+                    onChange={(e) => setTitleInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleTitleSave();
+                      if (e.key === 'Escape') setIsEditingTitle(false);
+                    }}
+                    className="flex-1 text-sm font-medium bg-glass-bg border border-observatory-accent rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-observatory-accent/50"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleTitleSave}
+                    className="p-1.5 bg-observatory-accent hover:bg-observatory-accent/80 rounded text-white transition-colors"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setIsEditingTitle(false)}
+                    className="p-1.5 bg-glass-border hover:bg-glass-border/80 rounded text-text-secondary transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-    try {
-      return tCategories(translationKey);
-    } catch (error) {
-      // Fallback if translation not found
-      return category;
-    }
-  };
+        {/* Collapsible Attributes Section */}
+        <div>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full px-4 py-3 flex items-center justify-between hover:bg-glass-border/30 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-observatory-accent" />
+              <span className="text-xs font-medium text-text-secondary">
+                {attributeCount} {t('attributesFound', 'Attribute erkannt')}
+              </span>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          </button>
 
-  const handleSaveSummary = () => {
-    setSummary(editedSummary);
-    setIsEditingSummary(false);
-  };
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden border-t border-glass-border"
+              >
+                <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+                  {attributeCount > 0 ? (
+                    Object.entries(screen2.attributes || {}).map(([key, attr]) => (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between py-1.5 px-2 bg-glass-border/20 rounded text-xs"
+                      >
+                        <span className="text-text-secondary font-medium">
+                          {t(`attributes.${key}`, key)}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-text-primary">
+                            {t(`attributes.values.${attr.value}`, attr.value)}
+                          </span>
+                          <span className="text-[10px] text-text-tertiary">
+                            {attr.confidence}%
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-text-tertiary text-center py-2">
+                      {t('noAttributes', 'Keine Attribute erkannt')}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    );
+  }
 
-  const charCount = editedSummary.length;
-  const isOptimal = charCount >= 180 && charCount <= 220;
-  const isWarning = charCount > 220 && charCount <= 250;
-  const isError = charCount > 250;
-
-  // AI Confidence color coding
-  const confidence = screen2.aiConfidence;
-  const confidenceColor =
-    confidence >= 80 ? 'text-success-soft' :
-    confidence >= 60 ? 'text-warning-soft' :
-    'text-error-soft';
-
+  // Step 3: Full Sidebar (keep existing design)
   return (
-    <div className="p-3 bg-glass-bg border border-glass-border rounded space-y-3 max-h-[calc(100vh-180px)] overflow-y-auto custom-scrollbar">
-      {/* Header with AI Confidence */}
-      <div className="flex items-center justify-between pb-2 border-b border-glass-border">
-        <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wide">
-          ✓ KI-Analyse
-        </h3>
-        {confidence > 0 && (
-          <span className={`text-[10px] font-mono font-semibold ${confidenceColor}`}>
-            {confidence}% Zuversicht
-          </span>
-        )}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-glass-bg border border-glass-border rounded-lg p-6 space-y-6"
+    >
+      {/* Category Section */}
+      <div>
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${categoryColor}`}>
+            <CategoryIcon className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">
+              {t('category', 'Kategorie')}
+            </p>
+            <p className="text-sm font-semibold text-text-primary">
+              {categoryName}
+            </p>
+            <p className="text-xs text-text-tertiary mt-0.5">
+              {confidencePercent}% Zuversicht
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Category Picker */}
-      <CategoryPicker
-        currentCategory={screen2.category}
-        onSelect={setCategory}
-        getCategoryTranslation={getCategoryTranslation}
-      />
+      <Separator />
 
-      {/* Title */}
+      {/* Title Section (Editable) */}
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-[10px] font-medium text-text-tertiary uppercase">
-            Titel
-          </label>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-text-tertiary uppercase tracking-wider">
+            {t('title', 'Titel')}
+          </p>
           {!isEditingTitle && (
             <button
-              onClick={() => setIsEditingTitle(true)}
-              className="text-text-tertiary hover:text-text-secondary"
+              onClick={() => {
+                setTitleInput(screen2.title || '');
+                setIsEditingTitle(true);
+              }}
+              className="p-1 hover:bg-glass-border rounded transition-colors"
             >
-              <Edit2 className="w-3 h-3" />
+              <Pencil className="w-3 h-3 text-text-secondary" />
             </button>
           )}
         </div>
 
-        {isEditingTitle ? (
-          <div className="space-y-1.5">
+        {!isEditingTitle ? (
+          <p className="text-sm text-text-primary font-medium">
+            {screen2.title || t('untitled', 'Ohne Titel')}
+          </p>
+        ) : (
+          <div className="space-y-2">
             <input
               type="text"
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-              className="w-full p-2 bg-space-mid/90 border border-glass-border rounded text-xs text-text-primary outline-none focus:border-observatory-accent/40 leading-snug"
+              value={titleInput}
+              onChange={(e) => setTitleInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleTitleSave();
+                if (e.key === 'Escape') setIsEditingTitle(false);
+              }}
+              className="w-full text-sm bg-glass-bg border border-glass-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-observatory-accent"
               placeholder={t('titlePlaceholder', 'Titel eingeben...')}
+              autoFocus
             />
-            <div className="flex gap-1.5 justify-end">
+            <div className="flex gap-2">
               <button
-                onClick={handleSaveTitle}
-                className="p-1 rounded bg-success-soft/20 hover:bg-success-soft/30 text-success-soft transition-colors"
+                onClick={handleTitleSave}
+                className="flex-1 px-3 py-1.5 bg-observatory-accent hover:bg-observatory-accent/80 text-white text-xs rounded transition-colors"
               >
-                <Check className="w-3 h-3" />
+                <Check className="inline w-3 h-3 mr-1" />
+                {t('save', 'Speichern')}
               </button>
               <button
-                onClick={() => {
-                  setEditedTitle(screen2.title);
-                  setIsEditingTitle(false);
-                }}
-                className="p-1 rounded bg-error-soft/20 hover:bg-error-soft/30 text-error-soft transition-colors"
+                onClick={() => setIsEditingTitle(false)}
+                className="px-3 py-1.5 bg-glass-border hover:bg-glass-border/80 text-text-secondary text-xs rounded transition-colors"
               >
-                <X className="w-3 h-3" />
+                <X className="inline w-3 h-3" />
               </button>
             </div>
-          </div>
-        ) : (
-          <div
-            className="p-2 bg-space-mid/40 border border-glass-border rounded text-xs text-text-primary cursor-pointer hover:border-observatory-accent/30 leading-snug min-h-[2.25rem]"
-            onClick={() => setIsEditingTitle(true)}
-          >
-            {screen2.title || t('noTitle', 'Untitled')}
           </div>
         )}
       </div>
 
-      {/* Summary Section (only show in Screen 3) */}
-      {screen3 !== undefined && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-[10px] font-medium text-text-tertiary uppercase">
-              Summary
-            </label>
-            {!isEditingSummary && !isSummarizing && (
-              <button
-                onClick={() => setIsEditingSummary(true)}
-                className="text-text-tertiary hover:text-text-secondary"
-              >
-                <Edit2 className="w-3 h-3" />
-              </button>
-            )}
+      <Separator />
+
+      {/* Summary Section (Step 3 only) */}
+      {screen3.summary && (
+        <>
+          <div>
+            <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
+              {t('summary', 'Zusammenfassung')}
+            </p>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {screen3.summary}
+            </p>
           </div>
-
-          {isSummarizing && !screen3.summary ? (
-            <div className="flex items-center gap-2 p-3 bg-space-mid/40 border border-glass-border rounded text-xs text-text-secondary">
-              <RotateCw className="w-3 h-3 animate-spin text-observatory-accent" />
-              <span>Generiere Zusammenfassung...</span>
-            </div>
-          ) : isEditingSummary ? (
-            <div className="space-y-1.5">
-              <textarea
-                value={editedSummary}
-                onChange={(e) => setEditedSummary(e.target.value)}
-                className="w-full h-[80px] p-2 bg-space-mid/90 border border-glass-border rounded text-xs text-text-primary resize-none outline-none focus:border-observatory-accent/40 leading-snug"
-                placeholder={tSummary('placeholder', 'Schreibe eine kurze Zusammenfassung...')}
-              />
-
-              {/* Character Counter and Actions */}
-              <div className="flex items-center justify-between">
-                <div className={`text-xs font-mono ${isError ? 'text-error-soft' : isWarning ? 'text-warning-soft' : isOptimal ? 'text-success-soft' : 'text-text-tertiary'}`}>
-                  {charCount}/250 {isOptimal && '✓'}
-                </div>
-                <div className="flex gap-1.5">
-                  {onRegenerateSummary && (
-                    <button
-                      onClick={onRegenerateSummary}
-                      disabled={isSummarizing}
-                      className="p-1 rounded bg-observatory-accent/20 hover:bg-observatory-accent/30 text-observatory-accent transition-colors disabled:opacity-50"
-                    >
-                      <RotateCw className={`w-3 h-3 ${isSummarizing ? 'animate-spin' : ''}`} />
-                    </button>
-                  )}
-                  <button
-                    onClick={handleSaveSummary}
-                    className="p-1 rounded bg-success-soft/20 hover:bg-success-soft/30 text-success-soft transition-colors"
-                  >
-                    <Check className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditedSummary(screen3.summary);
-                      setIsEditingSummary(false);
-                    }}
-                    className="p-1 rounded bg-error-soft/20 hover:bg-error-soft/30 text-error-soft transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div
-              className="p-2 bg-space-mid/40 border border-glass-border rounded text-xs text-text-primary cursor-pointer hover:border-observatory-accent/30 leading-snug max-h-[120px] overflow-y-auto custom-scrollbar"
-              onClick={() => setIsEditingSummary(true)}
-            >
-              {screen3.summary || tSummary('noSummary', 'Keine Zusammenfassung')}
-            </div>
-          )}
-        </div>
+          <Separator />
+        </>
       )}
 
-      {/* Tags with Remove & Add */}
+      {/* Tags Section */}
       <div>
-        <label className="text-[10px] font-medium text-text-tertiary uppercase mb-1 block">
-          Tags {screen2.tags.length > 0 && `(${screen2.tags.length}/10)`}
-        </label>
-        <div className="flex flex-wrap gap-1 mb-2">
-          {screen2.tags.map((tag, index) => (
-            <motion.span
-              key={index}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{
-                duration: 0.2,
-                delay: index * 0.05,
-                ease: 'easeOut'
-              }}
-              className="group px-2 py-0.5 bg-glass-bg border border-glass-border rounded text-[10px] text-text-tertiary flex items-center gap-1 hover:border-error-soft/30"
-            >
-              {tag}
-              <button
-                onClick={() => removeTag(tag)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-error-soft"
+        <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
+          {t('tags', 'Tags')}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {screen2.tags && screen2.tags.length > 0 ? (
+            screen2.tags.map((tag, index) => (
+              <motion.div
+                key={index}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="px-2 py-1 bg-observatory-accent/10 text-observatory-accent text-xs rounded-full border border-observatory-accent/30"
               >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            </motion.span>
-          ))}
-          {screen2.tags.length === 0 && (
-            <span className="text-xs text-text-tertiary italic">Keine Tags</span>
-          )}
-
-          {/* Add Tag Bubble - inline with tags */}
-          {screen2.tags.length < 10 && !showTagInput && (
-            <button
-              onClick={() => setShowTagInput(true)}
-              className="px-2 py-0.5 bg-glass-bg border border-glass-border hover:border-observatory-accent/40 rounded text-[10px] text-text-tertiary hover:text-observatory-accent transition-all flex items-center"
-            >
-              <Plus className="w-2.5 h-2.5" />
-            </button>
+                {tag}
+              </motion.div>
+            ))
+          ) : (
+            <p className="text-xs text-text-tertiary">{t('noTags', 'Keine Tags')}</p>
           )}
         </div>
-
-        {/* Add Tag Input - shows below when active */}
-        {showTagInput && screen2.tags.length < 10 && (
-          <div className="space-y-1.5">
-            <input
-              type="text"
-              value={newTagInput}
-              onChange={(e) => setNewTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddTag();
-                } else if (e.key === 'Escape') {
-                  setNewTagInput('');
-                  setShowTagInput(false);
-                }
-              }}
-              autoFocus
-              className="w-full h-7 px-2 bg-space-mid/90 border border-observatory-accent/40 rounded text-xs text-text-primary outline-none"
-              placeholder="Tag eingeben..."
-              maxLength={20}
-            />
-            <div className="flex gap-1.5 justify-end">
-              <button
-                onClick={handleAddTag}
-                disabled={!newTagInput.trim()}
-                className="p-1 rounded bg-success-soft/20 hover:bg-success-soft/30 text-success-soft transition-colors disabled:opacity-50"
-              >
-                <Check className="w-3 h-3" />
-              </button>
-              <button
-                onClick={() => {
-                  setNewTagInput('');
-                  setShowTagInput(false);
-                }}
-                className="p-1 rounded bg-error-soft/20 hover:bg-error-soft/30 text-error-soft transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* AI-Extracted Attributes */}
-      {Object.keys(screen2.attributes).length > 0 && (
-        <div>
-          <label className="text-[10px] font-medium text-text-tertiary uppercase mb-1 block">
-            KI-Attribute ({Object.keys(screen2.attributes).length})
-          </label>
-          <div className="space-y-1.5">
-            {Object.entries(screen2.attributes).map(([key, attr]) => {
-              const confidenceColor =
-                attr.confidence >= 80 ? 'text-success-soft' :
-                attr.confidence >= 60 ? 'text-warning-soft' :
-                'text-error-soft';
+      <Separator />
 
-              // Use translation or fallback to formatted key
-              let attributeLabel = key;
-              try {
-                attributeLabel = tAttributes(key);
-              } catch {
-                attributeLabel = key.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-              }
-
-              // Use translation or fallback to value
-              let attributeValue = attr.value;
-              try {
-                attributeValue = tAttributes(`values.${attr.value}`);
-              } catch {
-                attributeValue = attr.value;
-              }
-
-              return (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-2 bg-space-mid/40 border border-glass-border rounded hover:border-observatory-accent/30"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="text-[10px] font-medium text-text-tertiary">
-                      {attributeLabel}
-                      {attr.isManuallyEdited && (
-                        <span className="ml-1 text-observatory-accent">✓</span>
-                      )}
-                    </span>
-                    <span className={`text-[9px] font-mono font-semibold ${confidenceColor}`}>
+      {/* Attributes Section */}
+      <div>
+        <p className="text-xs text-text-tertiary uppercase tracking-wider mb-3">
+          {t('attributes', 'Erkannte Attribute')}
+        </p>
+        <div className="space-y-2">
+          {attributeCount > 0 ? (
+            Object.entries(screen2.attributes || {}).map(([key, attr]) => (
+              <div
+                key={key}
+                className="p-3 bg-glass-border/20 rounded-lg border border-glass-border"
+              >
+                <div className="flex items-start justify-between mb-1">
+                  <span className="text-xs font-medium text-text-secondary">
+                    {t(`attributes.${key}`, key)}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${attr.confidence >= 80 ? 'bg-success-soft' : attr.confidence >= 60 ? 'bg-warning' : 'bg-destructive'}`} />
+                    <span className="text-[10px] text-text-tertiary">
                       {attr.confidence}%
                     </span>
                   </div>
-                  <div className="text-xs text-text-primary capitalize">
-                    {attributeValue}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-          <p className="text-[9px] text-text-tertiary mt-2 italic">
-            💡 Attribute werden automatisch aus deinem Text extrahiert
-          </p>
+                </div>
+                <p className="text-sm text-text-primary">
+                  {t(`attributes.values.${attr.value}`, attr.value)}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-text-tertiary text-center py-4">
+              {t('noAttributes', 'Keine Attribute erkannt')}
+            </p>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </motion.div>
   );
 }

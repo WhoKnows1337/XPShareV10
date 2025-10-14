@@ -26,7 +26,6 @@ export async function GET(request: Request) {
     const categoryId = searchParams.get('category_id')
     const questionType = searchParams.get('question_type')
     const isActive = searchParams.get('is_active')
-    const tag = searchParams.get('tag')
 
     // Build query
     let query = supabase
@@ -44,10 +43,6 @@ export async function GET(request: Request) {
 
     if (isActive !== null) {
       query = query.eq('is_active', isActive === 'true')
-    }
-
-    if (tag) {
-      query = query.contains('tags', [tag])
     }
 
     const { data: questions, error } = await query
@@ -94,9 +89,7 @@ export async function POST(request: Request) {
       is_optional = true,
       help_text,
       placeholder,
-      conditional_logic = {},
-      follow_up_question,
-      tags = [],
+      maps_to_attribute,
       is_active = true,
     } = body
 
@@ -143,9 +136,7 @@ export async function POST(request: Request) {
         is_optional,
         help_text,
         placeholder,
-        conditional_logic,
-        follow_up_question,
-        tags,
+        maps_to_attribute,
         is_active,
         created_by: user.id,
         updated_by: user.id,

@@ -7,6 +7,7 @@ import { QuestionEditorDialog } from '@/components/admin/question-editor-dialog'
 import { CategoryEditorDialog } from '@/components/admin/category-editor-dialog'
 import { FullscreenPreviewDialog } from '@/components/admin/fullscreen-preview-dialog'
 import { ApplyTemplateDialog } from '@/components/admin/apply-template-dialog'
+import { AttributeQuestionMatrix } from '@/components/admin/AttributeQuestionMatrix'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -151,6 +152,30 @@ export function CategoryDetailClient({
     setEditingQuestion(null)
     setIsEditorOpen(true)
     console.log('States set - isEditorOpen should now be true')
+  }
+
+  const handleCreateQuestionForAttribute = (attributeKey: string) => {
+    // Open editor with attribute pre-mapped
+    // For now, just open the editor - the user can map manually
+    // Future enhancement: Pre-fill the maps_to_attribute field
+    toast({
+      title: 'Create Question',
+      description: `Opening editor to create a question for attribute: ${attributeKey}`,
+    })
+    handleAddQuestion()
+  }
+
+  const handleScrollToQuestion = (questionId: string) => {
+    // Scroll to question in the list
+    const element = document.getElementById(`question-${questionId}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // Highlight briefly
+      element.classList.add('ring-2', 'ring-blue-500')
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-blue-500')
+      }, 2000)
+    }
   }
 
   const toggleSelectAll = () => {
@@ -600,6 +625,16 @@ export function CategoryDetailClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* Attribute-Question Matrix */}
+      {(attributes.length > 0 || questions.length > 0) && (
+        <AttributeQuestionMatrix
+          attributes={attributes}
+          questions={questions}
+          onCreateQuestion={handleCreateQuestionForAttribute}
+          onScrollToQuestion={handleScrollToQuestion}
+        />
+      )}
 
       {/* Attributes List (if any) */}
       {attributes.length > 0 && (

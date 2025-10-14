@@ -88,12 +88,23 @@ export function AIAnalysisScreen() {
         const formattedAttributes: Record<string, { value: string; confidence: number; isManuallyEdited: boolean }> = {};
 
         for (const [key, attr] of Object.entries(data.attributes)) {
-          const attrData = attr as { value: string; confidence: number };
-          formattedAttributes[key] = {
-            value: attrData.value,
-            confidence: Math.round(attrData.confidence * 100), // Convert 0.0-1.0 to 0-100
-            isManuallyEdited: false,
-          };
+          // Handle both new format (simple strings) and old format (objects with value/confidence)
+          if (typeof attr === 'string') {
+            // New Structured Outputs format: direct string value
+            formattedAttributes[key] = {
+              value: attr,
+              confidence: 95, // Structured Outputs = very reliable (schema-compliant)
+              isManuallyEdited: false,
+            };
+          } else {
+            // Old format or object with confidence (backwards compatibility)
+            const attrData = attr as { value: string; confidence?: number };
+            formattedAttributes[key] = {
+              value: attrData.value,
+              confidence: attrData.confidence ? Math.round(attrData.confidence * 100) : 95,
+              isManuallyEdited: false,
+            };
+          }
         }
 
         updateScreen2({ attributes: formattedAttributes });

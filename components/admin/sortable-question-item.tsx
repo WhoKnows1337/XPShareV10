@@ -21,6 +21,8 @@ import {
   Calendar,
   Clock,
   TrendingUp,
+  Link2,
+  Sparkles,
 } from 'lucide-react'
 
 interface SortableQuestionItemProps {
@@ -149,17 +151,23 @@ export function SortableQuestionItem({
                 {question.question_type}
               </Badge>
 
-              {/* Priority */}
-              <Badge variant="outline" className="text-xs">
-                Priority: {question.priority}
-              </Badge>
-
-              {/* Tags */}
-              {question.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
+              {/* Attribute Mapping - PROMINENT */}
+              {question.maps_to_attribute ? (
+                <Badge className="bg-blue-500 text-white">
+                  <Link2 className="mr-1 h-3 w-3" />
+                  → {question.maps_to_attribute}
+                  <Sparkles className="ml-1 h-3 w-3" />
                 </Badge>
-              ))}
+              ) : (
+                <Badge variant="outline" className="text-xs text-gray-400">
+                  No attribute mapping
+                </Badge>
+              )}
+
+              {/* Priority - now less prominent */}
+              <Badge variant="secondary" className="text-xs">
+                #{question.priority}
+              </Badge>
 
               {/* Options Count */}
               {(question.question_type === 'chips' ||

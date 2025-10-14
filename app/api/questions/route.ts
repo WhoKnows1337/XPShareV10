@@ -15,6 +15,7 @@ interface ExtractedData {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const categorySlug = searchParams.get('category')
+  const extractedAttributesJson = searchParams.get('extractedAttributes')
 
   if (!categorySlug) {
     return NextResponse.json(
@@ -53,8 +54,41 @@ export async function GET(request: Request) {
       throw questionsError
     }
 
-    // Transform to match the expected format (no pre-fills in GET)
-    const transformedQuestions = (questions || []).map((q: any) => ({
+    // Parse extracted attributes if provided (for smart filtering)
+    let extractedAttributes: Record<string, any> | null = null
+    if (extractedAttributesJson) {
+      try {
+        extractedAttributes = JSON.parse(extractedAttributesJson)
+      } catch (e) {
+        console.error('Failed to parse extractedAttributes:', e)
+      }
+    }
+
+    // Transform and filter questions
+    let filteredQuestions = questions || []
+
+    // Smart filtering: Only show questions if:
+    // 1. Required AND attribute is missing (AI didn't find it)
+    // 2. Optional (always show for deep-dive)
+    if (extractedAttributes) {
+      filteredQuestions = filteredQuestions.filter((q: any) => {
+        // Optional questions: always show (deep-dive)
+        if (q.is_optional) {
+          return true
+        }
+
+        // Required questions: only show if attribute is missing
+        if (q.maps_to_attribute) {
+          const hasAttribute = extractedAttributes![q.maps_to_attribute]
+          return !hasAttribute // Show only if AI didn't find it
+        }
+
+        // Required question without attribute mapping: always show
+        return true
+      })
+    }
+
+    const transformedQuestions = filteredQuestions.map((q: any) => ({
       id: q.id,
       type: mapQuestionType(q.question_type),
       question: q.question_text,
@@ -64,9 +98,16 @@ export async function GET(request: Request) {
       placeholder: q.placeholder,
       conditionalLogic: q.conditional_logic || undefined,
       maps_to_attribute: q.maps_to_attribute || null,
+      priority: q.priority,
     }))
 
-    return NextResponse.json({ questions: transformedQuestions })
+    return NextResponse.json({
+      questions: transformedQuestions,
+      stats: {
+        total: transformedQuestions.length,
+        filtered: extractedAttributes ? (questions?.length || 0) - transformedQuestions.length : 0
+      }
+    })
   } catch (error) {
     console.error('Error fetching questions:', error)
     return NextResponse.json(

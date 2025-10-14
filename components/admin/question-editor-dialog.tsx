@@ -20,13 +20,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
+import { Save, X, Monitor, Smartphone, Sparkles, Link2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import { QuestionPreview } from './question-preview'
 import { OptionsEditor } from './options-editor'
-import { ConditionalLogicBuilder } from './conditional-logic-builder'
-import { FollowUpBuilder } from './follow-up-builder'
-import { Save, X, ChevronDown, ChevronUp, Monitor, Smartphone, Sparkles, Link2 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
 
 interface AttributeSchema {
   key: string
@@ -73,14 +70,7 @@ export function QuestionEditorDialog({
   const [helpText, setHelpText] = useState('')
   const [placeholder, setPlaceholder] = useState('')
   const [isOptional, setIsOptional] = useState(true)
-  const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
   const [isActive, setIsActive] = useState(true)
-  const [conditionalLogic, setConditionalLogic] = useState<any>({})
-  const [followUpQuestion, setFollowUpQuestion] = useState<any>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [aiAdaptive, setAIAdaptive] = useState(false)
-  const [adaptiveConditions, setAdaptiveConditions] = useState<any>({})
   const [mapsToAttribute, setMapsToAttribute] = useState<string>('')
 
   // Attribute schema
@@ -116,12 +106,7 @@ export function QuestionEditorDialog({
       setHelpText(question.help_text || '')
       setPlaceholder(question.placeholder || '')
       setIsOptional(question.is_optional)
-      setTags(question.tags || [])
       setIsActive(question.is_active)
-      setConditionalLogic(question.conditional_logic || {})
-      setFollowUpQuestion(question.follow_up_question || null)
-      setAIAdaptive((question as any).ai_adaptive || false)
-      setAdaptiveConditions((question as any).adaptive_conditions || {})
       setMapsToAttribute((question as any).maps_to_attribute || '__none__')
     } else {
       // Reset for new question
@@ -132,14 +117,7 @@ export function QuestionEditorDialog({
       setHelpText('')
       setPlaceholder('')
       setIsOptional(true)
-      setTags([])
-      setTagInput('')
       setIsActive(true)
-      setConditionalLogic({})
-      setFollowUpQuestion(null)
-      setShowAdvanced(false)
-      setAIAdaptive(false)
-      setAdaptiveConditions({})
       setMapsToAttribute('__none__')
     }
   }, [question])
@@ -155,25 +133,14 @@ export function QuestionEditorDialog({
     is_optional: isOptional,
     help_text: helpText || null,
     placeholder: placeholder || null,
-    conditional_logic: conditionalLogic,
+    conditional_logic: {},
     follow_up_question: null,
-    tags,
+    tags: [],
     is_active: isActive,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     created_by: null,
     updated_by: null,
-  }
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()])
-      setTagInput('')
-    }
-  }
-
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag))
   }
 
   const handleSave = async () => {
@@ -198,12 +165,7 @@ export function QuestionEditorDialog({
         is_optional: isOptional,
         help_text: helpText || null,
         placeholder: placeholder || null,
-        tags,
         is_active: isActive,
-        conditional_logic: conditionalLogic,
-        follow_up_question: followUpQuestion,
-        ai_adaptive: aiAdaptive,
-        adaptive_conditions: adaptiveConditions,
         maps_to_attribute: mapsToAttribute && mapsToAttribute !== '__none__' ? mapsToAttribute : null,
       }
 
@@ -273,42 +235,26 @@ export function QuestionEditorDialog({
               />
             </div>
 
-            {/* Question Type & Priority */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="question_type">
-                  Question Type <span className="text-red-500">*</span>
-                </Label>
-                <Select value={questionType} onValueChange={(val) => setQuestionType(val as QuestionType)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {questionTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="priority">
-                  Priority
-                </Label>
-                <Input
-                  id="priority"
-                  type="number"
-                  min={1}
-                  value={priority}
-                  onChange={(e) => setPriority(parseInt(e.target.value) || 1)}
-                  placeholder="1"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Lower number = shown first
-                </p>
-              </div>
+            {/* Question Type */}
+            <div className="space-y-2">
+              <Label htmlFor="question_type">
+                Question Type <span className="text-red-500">*</span>
+              </Label>
+              <Select value={questionType} onValueChange={(val) => setQuestionType(val as QuestionType)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {questionTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                💡 Tip: Reorder questions using drag-and-drop in the category page
+              </p>
             </div>
 
             {/* Options Editor (for chips/chips-multi/slider) */}
@@ -438,124 +384,6 @@ export function QuestionEditorDialog({
                 <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 p-2 rounded">
                   <Sparkles className="h-4 w-4" />
                   <span>AI will pre-fill this question if the attribute is detected</span>
-                </div>
-              )}
-            </div>
-
-            {/* Tags */}
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="tags"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                  placeholder="Add tags..."
-                />
-                <Button type="button" onClick={handleAddTag}>
-                  Add
-                </Button>
-              </div>
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-2 hover:text-red-500"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Advanced Section */}
-            <div className="border-t pt-4">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="w-full justify-between"
-              >
-                <span>Advanced Options</span>
-                {showAdvanced ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-
-              {showAdvanced && (
-                <div className="mt-4 space-y-4">
-                  <ConditionalLogicBuilder
-                    value={conditionalLogic}
-                    onChange={setConditionalLogic}
-                  />
-                  <FollowUpBuilder
-                    parentQuestionType={questionType}
-                    parentOptions={options}
-                    value={followUpQuestion}
-                    onChange={setFollowUpQuestion}
-                  />
-
-                  {/* AI-Adaptive Configuration */}
-                  <div className="rounded-lg border border-purple-200 p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-purple-600" />
-                        <Label className="text-base font-medium">AI-Adaptive Follow-Ups</Label>
-                      </div>
-                      <Switch checked={aiAdaptive} onCheckedChange={setAIAdaptive} />
-                    </div>
-
-                    {aiAdaptive && (
-                      <div className="space-y-4 pt-2">
-                        <p className="text-sm text-muted-foreground">
-                          Configure when AI should generate intelligent follow-up questions
-                        </p>
-
-                        <div className="space-y-2">
-                          <Label className="text-sm">Max Follow-Up Questions</Label>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={3}
-                            value={adaptiveConditions.max_questions || 1}
-                            onChange={(e) =>
-                              setAdaptiveConditions({
-                                ...adaptiveConditions,
-                                max_questions: parseInt(e.target.value) || 1,
-                              })
-                            }
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-sm">Min Answer Length (optional)</Label>
-                          <Input
-                            type="number"
-                            placeholder="e.g., 50 characters"
-                            value={adaptiveConditions.min_answer_length || ''}
-                            onChange={(e) =>
-                              setAdaptiveConditions({
-                                ...adaptiveConditions,
-                                min_answer_length: parseInt(e.target.value) || undefined,
-                              })
-                            }
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Only generate if answer is longer than this
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
             </div>

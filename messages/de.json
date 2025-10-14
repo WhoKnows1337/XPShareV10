@@ -550,6 +550,9 @@
     "disappearance": "Verschwinden",
     "afterwards_feeling": "Gefühl danach",
     "repeatability": "Wiederholbarkeit",
+    "phenomenon_color": "Phänomen-Farbe",
+    "sky_location": "Himmelsposition",
+    "movement_type": "Bewegungsart",
     "entity_type": "Art des Wesens",
     "entity_appearance": "Erscheinung",
     "entity_behavior": "Verhalten",
@@ -567,6 +570,7 @@
     "aftereffects": "Nachwirkungen",
     "duration": "Dauer",
     "values": {
+      "undefined": "(nicht erkannt)",
       "triangle": "Dreieck",
       "disc": "Scheibe",
       "orb": "Kugel",
