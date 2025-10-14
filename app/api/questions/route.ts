@@ -68,22 +68,17 @@ export async function GET(request: Request) {
     let filteredQuestions = questions || []
 
     // Smart filtering: Only show questions if:
-    // 1. Required AND attribute is missing (AI didn't find it)
-    // 2. Optional (always show for deep-dive)
+    // 1. Question maps to attribute AND AI didn't find it (regardless of required/optional)
+    // 2. Question has NO attribute mapping (deep-dive questions, always show)
     if (extractedAttributes) {
       filteredQuestions = filteredQuestions.filter((q: any) => {
-        // Optional questions: always show (deep-dive)
-        if (q.is_optional) {
-          return true
-        }
-
-        // Required questions: only show if attribute is missing
+        // If question maps to an attribute, only show if AI didn't find it
         if (q.maps_to_attribute) {
           const hasAttribute = extractedAttributes![q.maps_to_attribute]
           return !hasAttribute // Show only if AI didn't find it
         }
 
-        // Required question without attribute mapping: always show
+        // Question without attribute mapping: always show (deep-dive questions)
         return true
       })
     }

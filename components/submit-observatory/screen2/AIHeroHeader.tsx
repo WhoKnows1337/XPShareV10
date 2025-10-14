@@ -26,6 +26,7 @@ import {
  */
 export function AIHeroHeader() {
   const t = useTranslations('submit.screen2');
+  const tCategories = useTranslations('categories');
   const { screen2, updateScreen2 } = useSubmitFlowStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -58,7 +59,7 @@ export function AIHeroHeader() {
   const categorySlug = screen2.categorySlug || 'other';
   const CategoryIcon = categoryIcons[categorySlug] || HelpCircle;
   const categoryColor = categoryColors[categorySlug] || 'bg-gray-500';
-  const categoryName = t(`categories.${categorySlug}`, categorySlug);
+  const categoryName = tCategories(categorySlug, categorySlug);
   const confidencePercent = Math.round((screen2.confidence || 0.95) * 100);
 
   const attributeCount = screen2.attributes ? Object.keys(screen2.attributes).length : 0;
