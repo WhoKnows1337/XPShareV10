@@ -1,15 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
-import { EnhancedTextEditor } from './EnhancedTextEditor';
+import { InteractiveTextEditor } from './InteractiveTextEditor';
 import { EditableMetadataHero } from './EditableMetadataHero';
 import { NavigationButtons } from '../shared/NavigationButtons';
 import { LoadingState } from '../shared/LoadingState';
+import { EditWarningToast } from './EditWarningToast';
+import { ReAnalysisModal } from './ReAnalysisModal';
+import { useTextChangeDetection } from '@/lib/hooks/useTextChangeDetection';
 import { useTranslations } from 'next-intl';
 import { Loader2, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import type { TextChange } from '@/lib/utils/text-diff';
 
 export function EnhancedTextScreen() {
   const t = useTranslations('submit.screen3');
@@ -19,6 +23,7 @@ export function EnhancedTextScreen() {
     screen3,
     setSummary,
     setEnhancedText,
+    setTextSegments,
     toggleEnhancement,
     setSummarizing,
     setEnhancing,
@@ -30,10 +35,31 @@ export function EnhancedTextScreen() {
     reset,
     isDraft,
     saveDraft,
+    setCategory,
+    setAttributes,
   } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [qualityScore, setQualityScore] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
+
+  // Change detection state
+  const [detectedChange, setDetectedChange] = useState<TextChange | null>(null);
+  const [showReAnalysisModal, setShowReAnalysisModal] = useState(false);
+
+  // Initialize change detection hook
+  const { handleTextChange, triggerAnalysis, resetDetection } = useTextChangeDetection({
+    enabled: true,
+    debounceMs: 2000,
+    onChangeDetected: (change) => {
+      console.log('Change detected:', change);
+      setDetectedChange(change);
+    },
+    onReAnalysisNeeded: (change) => {
+      console.log('Re-analysis needed:', change);
+      setDetectedChange(change);
+      setShowReAnalysisModal(true);
+    },
+  });
 
   // Hydration fix: Only compute canGoNext on client
   useEffect(() => {
@@ -70,7 +96,8 @@ export function EnhancedTextScreen() {
 
   // Generate enhanced text when enhancement is enabled
   useEffect(() => {
-    if (screen3.enhancementEnabled && screen1.text && !screen3.enhancedText) {
+    if (screen3.enhancementEnabled && screen1.text &&
+        (!screen3.enhancedText || !screen3.segments || screen3.segments.length === 0)) {
       enhanceText();
     }
   }, [screen3.enhancementEnabled]);
@@ -121,13 +148,89 @@ export function EnhancedTextScreen() {
       if (!response.ok) throw new Error('Text enrichment failed');
 
       const data = await response.json();
+      console.log('[EnhancedTextScreen] API Response:', {
+        hasSegments: !!data.segments,
+        segmentsLength: data.segments?.length || 0,
+        enrichedLength: data.enrichedText?.length || 0
+      });
+
       setEnhancedText(data.enrichedText, data.highlights);
+
+      // Save segments if available
+      if (data.segments) {
+        console.log('[EnhancedTextScreen] Calling setTextSegments with', data.segments.length, 'segments');
+        setTextSegments(data.segments);
+      } else {
+        console.warn('[EnhancedTextScreen] NO SEGMENTS in API response!');
+      }
     } catch (error) {
       console.error('Text enrichment error:', error);
     } finally {
       setEnhancing(false);
     }
   };
+
+  /**
+   * Handle re-analysis of edited text
+   * Calls incremental analysis API to update category, attributes, and questions
+   */
+  const handleReAnalysis = useCallback(async () => {
+    try {
+      const currentText = screen3.textVersions.current || screen1.text;
+
+      // Call incremental analysis API
+      const response = await fetch('/api/submit/incremental-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalText: screen1.text,
+          editedText: currentText,
+          currentCategory: screen2.category,
+          currentAttributes: screen2.attributes,
+          currentAnswers: screen2.extraQuestions,
+          language: 'de',
+        }),
+      });
+
+      if (!response.ok) throw new Error('Incremental analysis failed');
+
+      const data = await response.json();
+
+      // Update category if changed
+      if (data.category && data.category !== screen2.category) {
+        setCategory(data.category);
+      }
+
+      // Merge new attributes with existing ones
+      if (data.attributes) {
+        setAttributes({ ...screen2.attributes, ...data.attributes });
+      }
+
+      // Re-generate enhancement with new data
+      if (screen3.enhancementEnabled) {
+        await enhanceText();
+      }
+
+      // Reset detection state
+      resetDetection();
+
+      console.log('Re-analysis complete:', data);
+    } catch (error) {
+      console.error('Re-analysis error:', error);
+      // TODO: Show error toast
+    }
+  }, [
+    screen1.text,
+    screen2.category,
+    screen2.attributes,
+    screen2.extraQuestions,
+    screen3.textVersions?.current,
+    screen3.enhancementEnabled,
+    setCategory,
+    setAttributes,
+    enhanceText,
+    resetDetection,
+  ]);
 
   // Show loading state during initial summary generation
   if (isSummarizing && !screen3.summary) {
@@ -185,7 +288,10 @@ export function EnhancedTextScreen() {
               </Button>
             </motion.div>
           </div>
-          <EnhancedTextEditor />
+          <InteractiveTextEditor
+            onTextChange={handleTextChange}
+            onTextBlur={triggerAnalysis}
+          />
         </div>
 
         {/* Navigation */}
@@ -199,6 +305,28 @@ export function EnhancedTextScreen() {
           resetConfirm={showResetConfirm}
         />
       </div>
+
+      {/* Change Detection Toast */}
+      <EditWarningToast
+        change={detectedChange}
+        onReAnalyze={() => setShowReAnalysisModal(true)}
+        onDismiss={() => setDetectedChange(null)}
+      />
+
+      {/* Re-Analysis Modal */}
+      <ReAnalysisModal
+        isOpen={showReAnalysisModal}
+        change={detectedChange}
+        onConfirm={handleReAnalysis}
+        onCancel={() => {
+          setShowReAnalysisModal(false);
+          setDetectedChange(null);
+        }}
+        onSkip={() => {
+          setShowReAnalysisModal(false);
+          resetDetection();
+        }}
+      />
     </div>
   );
 }

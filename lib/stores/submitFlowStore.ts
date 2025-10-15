@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { TextSegment, TextChange } from '@/lib/utils/text-diff';
 
 // Screen 1: Text Input
 export interface Screen1Data {
@@ -45,6 +46,32 @@ export interface Screen3Data {
     start: number;
     end: number;
     type: 'added' | 'enhanced';
+  }>;
+
+  // NEW: Advanced editing features
+  segments: TextSegment[]; // Segments for interactive editing
+  textVersions: {
+    original: string;           // From Screen 1
+    afterAIEnhancement: string; // After first AI pass
+    current: string;            // Current state after user edits
+  };
+  changeLog: TextChange[];      // History of text changes
+
+  // NEW: Re-analysis state
+  reAnalysisNeeded: boolean;
+  reAnalysisOffered: boolean;   // Prevents asking twice
+  pendingReAnalysis: {
+    change: TextChange | null;
+    newAttributes?: Record<string, any>;
+    newQuestions?: any[];
+    invalidatedQuestions?: string[];
+  };
+
+  // NEW: Undo stack
+  undoStack: Array<{
+    action: 'remove-segment' | 'edit-segment' | 'text-edit';
+    timestamp: number;
+    data: any;
   }>;
 }
 
@@ -105,6 +132,16 @@ export interface SubmitFlowState {
   setEnhancedText: (text: string, highlights: Screen3Data['highlights']) => void;
   toggleEnhancement: () => void;
 
+  // NEW: Advanced Screen 3 Actions
+  setTextSegments: (segments: TextSegment[]) => void;
+  removeSegment: (segmentId: string) => void;
+  editSegment: (segmentId: string, newText: string) => void;
+  setCurrentText: (text: string) => void;
+  logTextChange: (change: TextChange) => void;
+  setReAnalysisNeeded: (needed: boolean) => void;
+  setReAnalysisOffered: (offered: boolean) => void;
+  undo: () => boolean; // Returns true if undo was successful
+
   // Screen 4 Actions
   updateScreen4: (data: Partial<Screen4Data>) => void;
   addFile: (file: Screen4Data['files'][0]) => void;
@@ -159,6 +196,19 @@ const initialScreen3: Screen3Data = {
   enhancedText: '',
   enhancementEnabled: true,
   highlights: [],
+  segments: [],
+  textVersions: {
+    original: '',
+    afterAIEnhancement: '',
+    current: '',
+  },
+  changeLog: [],
+  reAnalysisNeeded: false,
+  reAnalysisOffered: false,
+  pendingReAnalysis: {
+    change: null,
+  },
+  undoStack: [],
 };
 
 const initialScreen4: Screen4Data = {
@@ -292,6 +342,152 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
             enhancementEnabled: !state.screen3.enhancementEnabled,
           },
         })),
+
+      // NEW: Advanced Screen 3 Actions
+      setTextSegments: (segments) =>
+        set((state) => ({
+          screen3: { ...state.screen3, segments },
+          isDraft: true,
+        })),
+
+      removeSegment: (segmentId) =>
+        set((state) => {
+          const segment = state.screen3.segments.find((s) => s.id === segmentId);
+          if (!segment) return state;
+
+          // Add to undo stack
+          const undoEntry = {
+            action: 'remove-segment' as const,
+            timestamp: Date.now(),
+            data: segment,
+          };
+
+          // Remove segment and update current text
+          const updatedSegments = state.screen3.segments.map((s) =>
+            s.id === segmentId ? { ...s, type: 'ai-added' as const, text: '' } : s
+          );
+
+          return {
+            screen3: {
+              ...state.screen3,
+              segments: updatedSegments,
+              undoStack: [...state.screen3.undoStack, undoEntry],
+            },
+            isDraft: true,
+          };
+        }),
+
+      editSegment: (segmentId, newText) =>
+        set((state) => {
+          const segment = state.screen3.segments.find((s) => s.id === segmentId);
+          if (!segment) return state;
+
+          // Add to undo stack
+          const undoEntry = {
+            action: 'edit-segment' as const,
+            timestamp: Date.now(),
+            data: { segmentId, oldText: segment.text, newText },
+          };
+
+          // Update segment
+          const updatedSegments = state.screen3.segments.map((s) =>
+            s.id === segmentId
+              ? { ...s, text: newText, type: 'user-edited' as const }
+              : s
+          );
+
+          return {
+            screen3: {
+              ...state.screen3,
+              segments: updatedSegments,
+              undoStack: [...state.screen3.undoStack, undoEntry],
+            },
+            isDraft: true,
+          };
+        }),
+
+      setCurrentText: (text) =>
+        set((state) => ({
+          screen3: {
+            ...state.screen3,
+            textVersions: {
+              ...state.screen3.textVersions,
+              current: text,
+            },
+          },
+          isDraft: true,
+        })),
+
+      logTextChange: (change) =>
+        set((state) => ({
+          screen3: {
+            ...state.screen3,
+            changeLog: [...state.screen3.changeLog, change],
+          },
+        })),
+
+      setReAnalysisNeeded: (needed) =>
+        set((state) => ({
+          screen3: {
+            ...state.screen3,
+            reAnalysisNeeded: needed,
+          },
+        })),
+
+      setReAnalysisOffered: (offered) =>
+        set((state) => ({
+          screen3: {
+            ...state.screen3,
+            reAnalysisOffered: offered,
+          },
+        })),
+
+      undo: () => {
+        const state = get();
+        const undoStack = state.screen3.undoStack;
+
+        if (undoStack.length === 0) return false;
+
+        const lastAction = undoStack[undoStack.length - 1];
+        const newUndoStack = undoStack.slice(0, -1);
+
+        switch (lastAction.action) {
+          case 'remove-segment': {
+            // Restore the removed segment
+            const restoredSegment = lastAction.data as TextSegment;
+            const updatedSegments = state.screen3.segments.map((s) =>
+              s.id === restoredSegment.id ? restoredSegment : s
+            );
+            set({
+              screen3: {
+                ...state.screen3,
+                segments: updatedSegments,
+                undoStack: newUndoStack,
+              },
+            });
+            return true;
+          }
+
+          case 'edit-segment': {
+            // Restore the old text
+            const { segmentId, oldText } = lastAction.data;
+            const updatedSegments = state.screen3.segments.map((s) =>
+              s.id === segmentId ? { ...s, text: oldText } : s
+            );
+            set({
+              screen3: {
+                ...state.screen3,
+                segments: updatedSegments,
+                undoStack: newUndoStack,
+              },
+            });
+            return true;
+          }
+
+          default:
+            return false;
+        }
+      },
 
       // Screen 4 Actions
       updateScreen4: (data) =>

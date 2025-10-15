@@ -185,7 +185,7 @@ function calculateSegments(original: string, enriched: string, attributes: Recor
 
 /**
  * Infer the source of added text based on attributes and answers
- * Simple heuristic: check if added text contains attribute/answer keywords
+ * Returns detailed source information including the original value and context
  */
 function inferSource(addedText: string, attributes: Record<string, any>, answers: Record<string, any>): TextSegment['source'] {
   const lowerText = addedText.toLowerCase();
@@ -197,6 +197,8 @@ function inferSource(addedText: string, attributes: Record<string, any>, answers
         type: 'attribute',
         key,
         label: key.charAt(0).toUpperCase() + key.slice(1),
+        value: attr.value,
+        confidence: attr.confidence || undefined,
       };
     }
   }
@@ -208,6 +210,8 @@ function inferSource(addedText: string, attributes: Record<string, any>, answers
         type: 'question',
         key,
         label: key === 'date' ? 'Date & Time' : key === 'location' ? 'Location' : key.charAt(0).toUpperCase() + key.slice(1),
+        value: value,
+        questionText: getQuestionText(key), // Get human-readable question
       };
     }
   }
@@ -218,6 +222,23 @@ function inferSource(addedText: string, attributes: Record<string, any>, answers
     key: 'general',
     label: 'AI Enhancement',
   };
+}
+
+/**
+ * Get human-readable question text for a given question key
+ */
+function getQuestionText(key: string): string {
+  const questionMap: Record<string, string> = {
+    location: 'Wo ist das passiert?',
+    date: 'Wann ist das passiert?',
+    time: 'Um welche Uhrzeit?',
+    duration: 'Wie lange hat es gedauert?',
+    witnesses: 'Gab es Zeugen?',
+    weather: 'Wie war das Wetter?',
+    emotions: 'Was hast du gefühlt?',
+  };
+
+  return questionMap[key] || `Frage zu ${key}`;
 }
 
 /**

@@ -343,7 +343,7 @@ export function QuestionCard({
         );
 
       case 'date':
-        const selectedDate = answer ? new Date(answer) : undefined;
+        const selectedDate = answer && !isNaN(new Date(answer).getTime()) ? new Date(answer) : undefined;
         return (
           <Popover open={dateOpen} onOpenChange={setDateOpen}>
             <PopoverTrigger asChild>
