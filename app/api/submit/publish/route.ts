@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { generateEmbedding } from '@/lib/openai/client';
 
 /**
  * Publish Experience API - Saves experience and returns rewards
@@ -48,6 +49,22 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('Insert error:', insertError);
       return NextResponse.json({ error: 'Failed to save experience', details: insertError.message }, { status: 500 });
+    }
+
+    // Generate and save embedding for semantic search
+    try {
+      const embeddingText = experienceData.enhancedText || experienceData.text;
+      const embedding = await generateEmbedding(embeddingText);
+
+      await supabase
+        .from('experiences')
+        .update({ embedding: JSON.stringify(embedding) })
+        .eq('id', experience.id);
+
+      console.log(`Generated embedding (${embedding.length} dimensions) for experience ${experience.id}`);
+    } catch (embeddingError) {
+      console.error('Embedding generation error:', embeddingError);
+      // Don't fail the entire publish if embedding fails
     }
 
     // Save attributes to experience_attributes table

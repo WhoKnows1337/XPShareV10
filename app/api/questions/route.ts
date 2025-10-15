@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     }
 
     // Parse extracted attributes if provided (for smart filtering)
-    let extractedAttributes: Record<string, any> | null = null
+    let extractedAttributes: Record<string, { value: string; confidence: number; isManuallyEdited: boolean }> | null = null
     if (extractedAttributesJson) {
       try {
         extractedAttributes = JSON.parse(extractedAttributesJson)
@@ -56,7 +56,31 @@ export async function GET(request: Request) {
     // Transform and filter questions
     let filteredQuestions = questions || []
 
-    // Smart filtering: Only show questions if:
+    // STEP 1: Conditional Logic Filtering
+    // Only show questions where conditional requirements are met
+    if (extractedAttributes) {
+      filteredQuestions = filteredQuestions.filter((q: any) => {
+        // If question has no conditional requirement, it's always shown
+        if (!q.conditional_on_attribute || !q.conditional_value) {
+          return true
+        }
+
+        // If question has conditional requirement, check if condition is met
+        const extractedAttribute = extractedAttributes![q.conditional_on_attribute]
+        
+        // If the required attribute wasn't extracted by AI, don't show the conditional question
+        if (!extractedAttribute) {
+          return false
+        }
+
+        // Check if the extracted attribute value matches the conditional value
+        // Use case-insensitive comparison for robustness
+        return extractedAttribute.value?.toLowerCase() === q.conditional_value.toLowerCase()
+      })
+    }
+
+    // STEP 2: AI Confidence Filtering
+    // Only show questions if:
     // 1. Question maps to attribute AND AI didn't find it (regardless of required/optional)
     // 2. Question has NO attribute mapping (deep-dive questions, always show)
     if (extractedAttributes) {
@@ -105,10 +129,10 @@ export async function GET(request: Request) {
 function mapQuestionType(dbType: string): string {
   const typeMap: Record<string, string> = {
     text: 'text',
-    chips: 'radio',
-    'chips-multi': 'checkbox',
-    boolean: 'radio',
-    slider: 'number',
+    chips: 'chips',
+    'chips-multi': 'chips-multi',
+    boolean: 'boolean',
+    slider: 'scale',
     date: 'date',
     time: 'text',
   }

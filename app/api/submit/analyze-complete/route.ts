@@ -88,7 +88,7 @@ CRITICAL:
     };
 
     const categoryResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [{
         role: 'user',
         content: categoryPrompt
@@ -201,7 +201,7 @@ Return complete JSON with all fields: title, summary, tags[], attributes{}, miss
 
     // Use Structured Outputs for 100% schema compliance
     const analysisResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [{
         role: 'user',
         content: analysisPrompt

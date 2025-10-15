@@ -116,7 +116,7 @@ async function analyzeCategory(text: string): Promise<string | null> {
     const validSlugs = categories.map(cat => cat.slug)
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -149,7 +149,7 @@ IMPORTANT: Use the EXACT slug from the list above. For UFO sightings, use "ufo-s
 async function extractLocation(text: string) {
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -180,7 +180,7 @@ If no clear location is mentioned, return { "name": null, "confidence": 0 }`,
 async function extractTime(text: string) {
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -212,7 +212,7 @@ If no clear time is mentioned, return nulls.`,
 async function analyzeEmotion(text: string): Promise<string | null> {
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -237,7 +237,7 @@ Return ONLY the emotion word, nothing else.`,
 async function extractTags(text: string): Promise<string[]> {
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 import { QuestionCard } from './QuestionCard';
@@ -16,7 +16,7 @@ interface QuestionOption {
 
 interface DynamicQuestion {
   id: string;
-  type: 'checkbox' | 'radio' | 'scale' | 'text' | 'textarea' | 'dropdown' | 'dropdown-multi' | 'image-select' | 'image-multi' | 'rating' | 'ai-text' | 'date';
+  type: 'checkbox' | 'radio' | 'scale' | 'text' | 'textarea' | 'dropdown' | 'dropdown-multi' | 'image-select' | 'image-multi' | 'rating' | 'ai-text' | 'date' | 'boolean' | 'chips' | 'chips-multi';
   question: string;
   options: QuestionOption[];
   required: boolean;
@@ -29,13 +29,19 @@ interface ExtraQuestionsFlowProps {
   onComplete: () => void;
 }
 
-export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
+export interface ExtraQuestionsFlowHandle {
+  reloadQuestions: () => Promise<void>;
+}
+
+export const ExtraQuestionsFlow = forwardRef<ExtraQuestionsFlowHandle, ExtraQuestionsFlowProps>(
+  ({ onComplete }, ref) => {
   const t = useTranslations('submit.screen2.extraQuestions');
   const { screen2, setExtraQuestion, updateScreen2 } = useSubmitFlowStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [questions, setQuestions] = useState<DynamicQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isReloading, setIsReloading] = useState(false);
 
   // Load questions from API on mount and when category changes
   useEffect(() => {
@@ -90,6 +96,62 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
       onComplete();
     }
   }, [isLoading, questions.length, loadError]);
+
+  // Handle attribute updates with smart question reload
+  const handleAttributesUpdate = async () => {
+    if (!screen2.category) return;
+
+    try {
+      setIsReloading(true);
+
+      // Save current answers to preserve them
+      const currentAnswers = { ...screen2.extraQuestions };
+
+      // Reload questions with updated attributes
+      const params = new URLSearchParams({
+        category: screen2.category,
+        extractedAttributes: JSON.stringify(screen2.attributes || {})
+      });
+
+      const response = await fetch(`/api/questions?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to reload questions');
+      }
+
+      const data = await response.json();
+      const newQuestions = data.questions || [];
+
+      // Smart answer preservation: Keep answers for questions that still exist
+      const mergedAnswers: Record<string, any> = {};
+      newQuestions.forEach((q: DynamicQuestion) => {
+        if (currentAnswers[q.id]) {
+          mergedAnswers[q.id] = currentAnswers[q.id];
+        }
+      });
+
+      // Update questions and preserve answers
+      setQuestions(newQuestions);
+      updateScreen2({ extraQuestions: mergedAnswers });
+
+      // Reset to first question if current index is out of bounds
+      if (currentIndex >= newQuestions.length) {
+        setCurrentIndex(0);
+      }
+
+      console.log(`Reloaded ${newQuestions.length} questions after attribute update`);
+      console.log(`Preserved ${Object.keys(mergedAnswers).length} existing answers`);
+    } catch (error) {
+      console.error('Failed to reload questions:', error);
+      setLoadError('Failed to reload questions after attribute change');
+    } finally {
+      setIsReloading(false);
+    }
+  };
+
+  // Expose reload function to parent components via ref
+  useImperativeHandle(ref, () => ({
+    reloadQuestions: handleAttributesUpdate,
+  }));
 
   const currentQuestion = questions[currentIndex];
 
@@ -173,6 +235,18 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
     maxLabel: currentQuestion.type === 'scale' ? 'Max' : undefined,
   };
 
+  // Show loading overlay during reload
+  if (isReloading) {
+    return (
+      <div className="p-6 bg-glass-bg border border-glass-border rounded flex items-center justify-center gap-3">
+        <Loader2 className="h-5 w-5 animate-spin text-observatory-accent" />
+        <span className="text-sm text-text-secondary">
+          {t('reloading', 'Fragen werden aktualisiert...')}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="p-3 bg-glass-bg border border-glass-border rounded">
       {/* Compact Header */}
@@ -226,4 +300,6 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
       </div>
     </div>
   );
-}
+});
+
+ExtraQuestionsFlow.displayName = 'ExtraQuestionsFlow';

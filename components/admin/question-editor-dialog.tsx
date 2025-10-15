@@ -22,7 +22,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Save, X, Monitor, Smartphone, Sparkles, Link2, Globe } from 'lucide-react'
+import { Save, X, Monitor, Smartphone, Sparkles, Link2, Globe, GitBranch } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { QuestionPreview } from './question-preview'
 import { OptionsEditor } from './options-editor'
@@ -84,6 +84,10 @@ export function QuestionEditorDialog({
   const [isActive, setIsActive] = useState(true)
   const [mapsToAttribute, setMapsToAttribute] = useState<string>('')
 
+  // Conditional logic
+  const [conditionalOnAttribute, setConditionalOnAttribute] = useState<string>('')
+  const [conditionalValue, setConditionalValue] = useState<string>('')
+
   // Attribute schema
   const [availableAttributes, setAvailableAttributes] = useState<AttributeSchema[]>([])
   const [loadingAttributes, setLoadingAttributes] = useState(false)
@@ -119,6 +123,8 @@ export function QuestionEditorDialog({
       setIsOptional(question.is_optional)
       setIsActive(question.is_active)
       setMapsToAttribute((question as any).maps_to_attribute || '__none__')
+      setConditionalOnAttribute((question as any).conditional_on_attribute || '__none__')
+      setConditionalValue((question as any).conditional_value || '')
     } else {
       // Reset for new question
       setQuestionText('')
@@ -130,6 +136,8 @@ export function QuestionEditorDialog({
       setIsOptional(true)
       setIsActive(true)
       setMapsToAttribute('__none__')
+      setConditionalOnAttribute('__none__')
+      setConditionalValue('')
     }
   }, [question])
 
@@ -178,6 +186,8 @@ export function QuestionEditorDialog({
         placeholder: placeholder || null,
         is_active: isActive,
         maps_to_attribute: mapsToAttribute && mapsToAttribute !== '__none__' ? mapsToAttribute : null,
+        conditional_on_attribute: conditionalOnAttribute && conditionalOnAttribute !== '__none__' ? conditionalOnAttribute : null,
+        conditional_value: conditionalValue || null,
       }
 
       const url = question
@@ -428,6 +438,66 @@ export function QuestionEditorDialog({
                 </div>
               )}
             </div>
+
+            {/* Conditional Logic */}
+            {!isUniversal && (
+              <div className="rounded-lg border border-orange-200 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4 text-orange-600" />
+                  <Label className="text-base font-medium">Conditional Logic</Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Only show this question when a specific attribute has a certain value
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="conditional_on_attribute">Show Only If</Label>
+                  <Select
+                    value={conditionalOnAttribute}
+                    onValueChange={setConditionalOnAttribute}
+                    disabled={loadingAttributes}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Always show (no condition)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Always show (no condition)</SelectItem>
+                      {availableAttributes
+                        .filter(attr => attr.category_slug !== null && attr.data_type === 'enum')
+                        .map((attr) => (
+                          <SelectItem key={attr.key} value={attr.key}>
+                            {attr.display_name} ({attr.key})
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {conditionalOnAttribute && conditionalOnAttribute !== '__none__' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="conditional_value">Equals Value</Label>
+                    <Input
+                      id="conditional_value"
+                      value={conditionalValue}
+                      onChange={(e) => setConditionalValue(e.target.value)}
+                      placeholder="e.g., ayahuasca, dmt, lucid"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      💡 Enter the exact value from the attribute's options (e.g., for substance: "ayahuasca", "dmt", "lsd")
+                    </p>
+                  </div>
+                )}
+
+                {conditionalOnAttribute && conditionalOnAttribute !== '__none__' && conditionalValue && (
+                  <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-50 p-2 rounded">
+                    <GitBranch className="h-4 w-4" />
+                    <span>
+                      🔶 This question will only appear if <strong>{conditionalOnAttribute}</strong> = "{conditionalValue}"
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-2 pt-4">

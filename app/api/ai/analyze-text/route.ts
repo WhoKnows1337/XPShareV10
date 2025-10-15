@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const [categoryResponse, tagsResponse, emotionResponse] = await Promise.all([
       // 1. Category classification
       openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -42,7 +42,7 @@ Reply with ONLY the category name, nothing else.`,
 
       // 2. Tag extraction
       openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -61,7 +61,7 @@ No additional text or formatting.`,
 
       // 3. Emotion analysis
       openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',

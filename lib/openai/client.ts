@@ -9,7 +9,7 @@ export const openai = new OpenAI({
  */
 export async function analyzeExperienceText(text: string, language: string = 'de') {
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
     messages: [
       {
         role: 'system',
@@ -46,11 +46,11 @@ export async function transcribeAudio(audioFile: File) {
 }
 
 /**
- * Generate embedding for text (1536 dimensions)
+ * Generate embedding for text (3072 dimensions with text-embedding-3-large)
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
+    model: 'text-embedding-3-large',
     input: text,
   })
 

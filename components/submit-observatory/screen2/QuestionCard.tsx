@@ -31,7 +31,7 @@ interface QuestionOption {
 interface Question {
   id: string;
   title: string;
-  type: 'text' | 'textarea' | 'checkbox' | 'radio' | 'scale' | 'dropdown' | 'dropdown-multi' | 'image-select' | 'image-multi' | 'rating' | 'ai-text' | 'date';
+  type: 'text' | 'textarea' | 'checkbox' | 'radio' | 'scale' | 'dropdown' | 'dropdown-multi' | 'image-select' | 'image-multi' | 'rating' | 'ai-text' | 'date' | 'boolean' | 'chips' | 'chips-multi';
   options?: QuestionOption[];
   min?: number;
   max?: number;
@@ -64,7 +64,7 @@ export function QuestionCard({
   currentAnswer,
 }: QuestionCardProps) {
   const t = useTranslations('submit.screen2.question');
-  const [answer, setAnswer] = useState<any>(currentAnswer || (question.type === 'checkbox' || question.type === 'dropdown-multi' || question.type === 'image-multi' ? [] : ''));
+  const [answer, setAnswer] = useState<any>(currentAnswer || (question.type === 'checkbox' || question.type === 'chips-multi' || question.type === 'dropdown-multi' || question.type === 'image-multi' ? [] : ''));
   const [dateOpen, setDateOpen] = useState(false);
 
   const handleSubmit = () => {
@@ -74,7 +74,7 @@ export function QuestionCard({
   };
 
   const canSubmit = () => {
-    if (question.type === 'checkbox' || question.type === 'dropdown-multi' || question.type === 'image-multi') {
+    if (question.type === 'checkbox' || question.type === 'chips-multi' || question.type === 'dropdown-multi' || question.type === 'image-multi') {
       return Array.isArray(answer) && answer.length > 0;
     }
     return answer !== null && answer !== undefined && answer !== '';
@@ -107,6 +107,33 @@ export function QuestionCard({
           />
         );
 
+      case 'boolean':
+        return (
+          <div className="space-y-1.5">
+            {[
+              { value: 'true', label: 'Ja', icon: '✓' },
+              { value: 'false', label: 'Nein', icon: '✗' }
+            ].map((option) => (
+              <label
+                key={option.value}
+                className="flex items-center gap-2 p-2 bg-glass-bg border border-glass-border rounded hover:border-observatory-accent/30 cursor-pointer transition-all"
+              >
+                <input
+                  type="radio"
+                  name={question.id}
+                  value={option.value}
+                  checked={answer === option.value}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  className="w-3 h-3 accent-observatory-accent"
+                />
+                <span className="text-sm">{option.icon}</span>
+                <span className="text-xs text-text-primary">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        );
+
+      case 'chips':
       case 'radio':
         return (
           <div className="space-y-1.5">
@@ -130,6 +157,7 @@ export function QuestionCard({
           </div>
         );
 
+      case 'chips-multi':
       case 'checkbox':
         return (
           <div className="space-y-1.5">
