@@ -36,7 +36,6 @@ export function EnhancedTextScreen() {
     isDraft,
     saveDraft,
     setCategory,
-    setAttributes,
   } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [qualityScore, setQualityScore] = useState<any>(null);
@@ -201,10 +200,11 @@ export function EnhancedTextScreen() {
         setCategory(data.category);
       }
 
-      // Merge new attributes with existing ones
-      if (data.attributes) {
-        setAttributes({ ...screen2.attributes, ...data.attributes });
-      }
+      // TODO: Merge new attributes with existing ones
+      // Note: setAttributes function needs to be implemented in the store
+      // if (data.attributes) {
+      //   setAttributes({ ...screen2.attributes, ...data.attributes });
+      // }
 
       // Re-generate enhancement with new data
       if (screen3.enhancementEnabled) {
@@ -227,7 +227,6 @@ export function EnhancedTextScreen() {
     screen3.textVersions?.current,
     screen3.enhancementEnabled,
     setCategory,
-    setAttributes,
     enhanceText,
     resetDetection,
   ]);
