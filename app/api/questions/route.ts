@@ -107,6 +107,7 @@ export async function GET(request: Request) {
       conditionalLogic: q.conditional_logic || undefined,
       maps_to_attribute: q.maps_to_attribute || null,
       priority: q.priority,
+      allowCustomValue: q.allow_custom_value || false,
     }))
 
     return NextResponse.json({

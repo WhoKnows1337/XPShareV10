@@ -217,6 +217,7 @@
         "accept": "Ja, gerne!",
         "decline": "Nein, danke",
         "loading": "Lade Fragen...",
+        "reloading": "Fragen werden aktualisiert...",
         "skip": "Überspringen",
         "skipAll": "Alle überspringen",
         "question": "Frage {current} von {total}",

@@ -40,6 +40,7 @@ interface Question {
   placeholder?: string;
   tip?: string;
   xp: number;
+  allowCustomValue?: boolean;
 }
 
 interface QuestionCardProps {
@@ -64,12 +65,22 @@ export function QuestionCard({
   currentAnswer,
 }: QuestionCardProps) {
   const t = useTranslations('submit.screen2.question');
-  const [answer, setAnswer] = useState<any>(currentAnswer || (question.type === 'checkbox' || question.type === 'chips-multi' || question.type === 'dropdown-multi' || question.type === 'image-multi' ? [] : ''));
+  const [answer, setAnswer] = useState<any>(currentAnswer?.value || currentAnswer || (question.type === 'checkbox' || question.type === 'chips-multi' || question.type === 'dropdown-multi' || question.type === 'image-multi' ? [] : ''));
+  const [customValue, setCustomValue] = useState<string>(currentAnswer?.customValue || '');
   const [dateOpen, setDateOpen] = useState(false);
 
   const handleSubmit = () => {
     if (answer !== null && answer !== undefined) {
-      onNext(answer);
+      // If "__OTHER__" is selected and custom value provided, return special format
+      if (answer === '__OTHER__' && customValue.trim()) {
+        onNext({
+          value: '__OTHER__',
+          customValue: customValue.trim(),
+          isCustom: true
+        });
+      } else {
+        onNext(answer);
+      }
     }
   };
 
@@ -77,11 +88,22 @@ export function QuestionCard({
     if (question.type === 'checkbox' || question.type === 'chips-multi' || question.type === 'dropdown-multi' || question.type === 'image-multi') {
       return Array.isArray(answer) && answer.length > 0;
     }
+    // For "__OTHER__" selection, require custom value input
+    if (answer === '__OTHER__') {
+      return customValue.trim().length > 0;
+    }
     return answer !== null && answer !== undefined && answer !== '';
   };
 
   const renderInput = () => {
-    const opts = question.options || [];
+    let opts = question.options || [];
+
+    // Add "__OTHER__" option if allowCustomValue is true
+    if (question.allowCustomValue &&
+        (question.type === 'chips' || question.type === 'chips-multi' ||
+         question.type === 'dropdown' || question.type === 'dropdown-multi')) {
+      opts = [...opts, { value: '__OTHER__', label: 'Andere...', icon: '✏️' }];
+    }
 
     switch (question.type) {
       case 'text':
@@ -359,6 +381,27 @@ export function QuestionCard({
     <div className="space-y-3">
       <h4 className="text-sm font-medium text-text-primary">{question.title}</h4>
       <div>{renderInput()}</div>
+
+      {/* Custom Value Input - Shows when "__OTHER__" is selected */}
+      {answer === '__OTHER__' && question.allowCustomValue && (
+        <div className="mt-2 p-3 bg-green-50/50 border border-green-200 rounded-lg space-y-2">
+          <label className="text-xs font-medium text-green-900">
+            Bitte beschreibe genauer:
+          </label>
+          <input
+            type="text"
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            placeholder="z.B. Kreuzförmig, Bumerang, etc..."
+            className="w-full px-3 py-2 text-xs border border-green-300 rounded bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500/50"
+            autoFocus
+            maxLength={50}
+          />
+          <p className="text-[10px] text-green-700 italic">
+            💡 Deine Eingabe hilft uns, das System zu verbessern
+          </p>
+        </div>
+      )}
 
       {question.tip && (
         <p className="text-[10px] text-text-tertiary italic leading-relaxed">

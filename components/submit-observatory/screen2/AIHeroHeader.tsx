@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,11 @@ interface AIHeroHeaderProps {
   onReloadQuestions?: () => Promise<void>;
 }
 
+interface AttributeOption {
+  value: string;
+  label: string;
+}
+
 /**
  * Hero Header for Step 2 - Simplified to show only Category
  * Displays: Category (editable), Attributes (editable & collapsible)
@@ -31,7 +36,11 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [editedAttributes, setEditedAttributes] = useState(screen2.attributes || {});
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [customAttributeValue, setCustomAttributeValue] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [loadedOptions, setLoadedOptions] = useState<Record<string, AttributeOption[]>>({});
+  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [attributeMetadata, setAttributeMetadata] = useState<Record<string, { dataType: string; displayName: string }>>({});
 
   const categorySlug = screen2.category || 'other';
 
@@ -141,25 +150,134 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
     dream_frequency_color: 'Farbtraum-Häufigkeit',
   };
 
-  // Predefined options for enum-type attributes
-  const attributeOptions: Record<string, string[]> = {
-    shape: ['triangle', 'disc', 'orb', 'cigar', 'cylinder', 'rectangle', 'sphere', 'other'],
-    surface: ['metallic', 'glowing', 'translucent', 'matte', 'reflective'],
-    light_color: ['white', 'red', 'blue', 'green', 'orange', 'yellow', 'multicolor'],
-    movement: ['hovering', 'fast', 'erratic', 'smooth', 'zigzag', 'ascending', 'descending'],
-    sound: ['silent', 'humming', 'buzzing', 'roaring', 'whistling', 'other'],
-    size: ['tiny', 'small', 'medium', 'large', 'huge'],
-    entity_type: ['human', 'shadow', 'animal', 'child', 'elderly', 'unknown'],
-    entity_appearance: ['solid', 'transparent', 'shadow', 'mist', 'glowing'],
-    entity_behavior: ['benign', 'aggressive', 'playful', 'sad', 'angry', 'confused'],
-    intensity: ['mild', 'moderate', 'strong', 'overwhelming'],
-    emotional_state: ['peaceful', 'fearful', 'joyful', 'confused', 'awe', 'terror'],
-    time_distortion: ['faster', 'slower', 'stopped', 'backwards', 'loop'],
+  // Load attribute options dynamically from API
+  const loadAttributeOptions = async (key: string) => {
+    if (loadedOptions[key]) {
+      return;
+    }
+
+    setLoadingOptions(true);
+    try {
+      const response = await fetch(`/api/attribute-options?key=${encodeURIComponent(key)}`);
+      if (response.ok) {
+        const data = await response.json();
+        const options = data.options || [];
+        const dataType = data.dataType || 'text';
+        const displayName = data.displayName || key;
+
+        // Save metadata
+        setAttributeMetadata(prev => ({
+          ...prev,
+          [key]: { dataType, displayName },
+        }));
+
+        // Only add options and "other" for enum types
+        if (dataType === 'enum') {
+          const hasOther = options.some((opt: AttributeOption) => opt.value === 'other');
+          if (!hasOther) {
+            options.push({ value: 'other', label: 'Andere...' });
+          }
+
+          setLoadedOptions(prev => ({
+            ...prev,
+            [key]: options,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to load options for ${key}:`, error);
+      setAttributeMetadata(prev => ({
+        ...prev,
+        [key]: { dataType: 'text', displayName: key },
+      }));
+    } finally {
+      setLoadingOptions(false);
+    }
   };
 
-  const handleAttributeClick = (key: string) => {
+  // Render smart input based on attribute type
+  const renderSmartInput = (key: string) => {
+    const metadata = attributeMetadata[key];
+    const dataType = metadata?.dataType || 'text';
+    const displayName = metadata?.displayName || attributeNames[key] || key.replace(/_/g, ' ');
+    const options = loadedOptions[key];
+
+    // Enum type → Dropdown
+    if (dataType === 'enum' && options && options.length > 0) {
+      return (
+        <select
+          value={editedAttributes[key]?.value || ''}
+          onChange={(e) => handleAttributeChange(key, e.target.value)}
+          disabled={isSaving || loadingOptions}
+          className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
+          autoFocus
+        >
+          <option value="">Auswählen...</option>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Date field
+    if (key.includes('date')) {
+      return (
+        <input
+          type="date"
+          value={editedAttributes[key]?.value || ''}
+          onChange={(e) => handleAttributeChange(key, e.target.value)}
+          disabled={isSaving}
+          className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
+          autoFocus
+        />
+      );
+    }
+
+    // Time field
+    if (key.includes('time')) {
+      return (
+        <input
+          type="time"
+          value={editedAttributes[key]?.value || ''}
+          onChange={(e) => handleAttributeChange(key, e.target.value)}
+          disabled={isSaving}
+          className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
+          autoFocus
+        />
+      );
+    }
+
+    // Default: Text input
+    return (
+      <input
+        type="text"
+        value={editedAttributes[key]?.value || ''}
+        onChange={(e) => handleAttributeChange(key, e.target.value)}
+        disabled={isSaving}
+        className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
+        placeholder={`${displayName} eingeben...`}
+        autoFocus
+      />
+    );
+  };
+
+  const handleAttributeClick = async (key: string) => {
     setEditingKey(key);
     setEditedAttributes(screen2.attributes || {});
+
+    // Initialize custom value if current value is "other:something"
+    const currentAttr = screen2.attributes?.[key];
+    if (currentAttr && typeof currentAttr === 'object' && currentAttr.customValue) {
+      setCustomAttributeValue(currentAttr.customValue);
+    } else {
+      setCustomAttributeValue('');
+    }
+
+    // Load options for this attribute if it's a known type with options
+    await loadAttributeOptions(key);
   };
 
   const handleAttributeChange = (key: string, value: string) => {
@@ -177,6 +295,17 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
   const handleSaveAttribute = async (key: string) => {
     setIsSaving(true);
     try {
+      // If "other" is selected and custom value provided, store it
+      const attributeValue = editedAttributes[key]?.value;
+      if (attributeValue === 'other' && customAttributeValue.trim()) {
+        editedAttributes[key] = {
+          ...editedAttributes[key],
+          customValue: customAttributeValue.trim(),
+          isCustom: true,
+          isManuallyEdited: true,
+        };
+      }
+
       // Update attributes in store
       updateScreen2({ attributes: editedAttributes });
 
@@ -186,6 +315,7 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
       }
 
       setEditingKey(null);
+      setCustomAttributeValue('');
     } catch (error) {
       console.error('Failed to save attribute changes:', error);
     } finally {
@@ -196,6 +326,49 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
   const handleCancelEdit = () => {
     setEditedAttributes(screen2.attributes || {});
     setEditingKey(null);
+  };
+
+  // Get confidence color (traffic light system) - dezente Version
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 80) return {
+      text: 'text-green-600',
+      bg: 'bg-green-100/20',
+    };
+    if (confidence >= 60) return {
+      text: 'text-yellow-600',
+      bg: 'bg-yellow-100/20',
+    };
+    return {
+      text: 'text-red-600',
+      bg: 'bg-red-100/20',
+    };
+  };
+
+  // Sortiere Attribute nach logischen Gruppen
+  const sortAttributes = (attributes: Record<string, any>) => {
+    const priorityOrder = [
+      // Zeit & Ort
+      'experience_date', 'event_date', 'event_time', 'location', 'event_location', 'time_of_day',
+      // Dauer & Kontext
+      'duration', 'event_duration', 'witnesses', 'visibility', 'prior_state',
+      // Intensität & Emotionen
+      'intensity', 'emotions', 'emotional_state', 'afterwards_feeling', 'repeatability', 'frequency',
+      // Physische Eigenschaften
+      'shape', 'surface', 'size', 'phenomenon_color', 'light_color', 'light_pattern',
+      // Verhalten & Bewegung
+      'movement', 'movement_type', 'sound', 'altitude', 'sky_location', 'disappearance',
+      // Rest alphabetisch
+    ];
+
+    return Object.entries(attributes).sort((a, b) => {
+      const indexA = priorityOrder.indexOf(a[0]);
+      const indexB = priorityOrder.indexOf(b[0]);
+
+      if (indexA === -1 && indexB === -1) return a[0].localeCompare(b[0]);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
   };
 
   return (
@@ -267,12 +440,17 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
                   className="overflow-hidden"
                 >
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {Object.entries(screen2.attributes || {}).map(([key, attr]) => {
+                    {sortAttributes(screen2.attributes || {}).map(([key, attr]) => {
                       const displayName = attributeNames[key] || key.replace(/_/g, ' ');
                       const attrValue = typeof attr === 'string' ? attr : attr.value;
                       const attrConfidence = typeof attr === 'object' && attr.confidence ? attr.confidence : 0;
-                      const options = attributeOptions[key];
+                      const options = loadedOptions[key];
                       const isEditing = editingKey === key;
+
+                      // Display custom value if present, otherwise show the regular value
+                      const displayValue = typeof attr === 'object' && attr.customValue
+                        ? attr.customValue
+                        : attrValue;
 
                       return (
                         <div
@@ -285,34 +463,26 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
                               onClick={() => handleAttributeClick(key)}
                               className="cursor-pointer hover:bg-glass-bg transition-colors"
                             >
-                              <div className="w-full flex items-center justify-between">
-                                <span className="text-text-tertiary capitalize">
+                              <div className="w-full flex items-center gap-1.5">
+                                <span className="text-text-tertiary text-[11px] min-w-[90px] text-right">
                                   {displayName}:
                                 </span>
-                                <span className="text-text-primary font-medium">
+                                {attrConfidence > 0 && (
+                                  <span className={`px-1 py-0.5 rounded text-[8px] font-semibold ${getConfidenceColor(attrConfidence).bg} ${getConfidenceColor(attrConfidence).text}`}>
+                                    {attrConfidence}%
+                                  </span>
+                                )}
+                                <span className="text-text-primary font-medium text-[11px] flex-1">
                                   {(() => {
-                                    if (!attrValue || attrValue === '') {
+                                    if (!displayValue || displayValue === '') {
                                       return <span className="text-green-400">✓</span>;
                                     }
-                                    if (attrValue === 'true') return 'Ja';
-                                    if (attrValue === 'false') return 'Nein';
-                                    return attrValue;
+                                    if (displayValue === 'true') return 'Ja';
+                                    if (displayValue === 'false') return 'Nein';
+                                    return displayValue;
                                   })()}
                                 </span>
                               </div>
-                              {attrConfidence > 0 && (
-                                <div className="mt-1 flex items-center gap-1">
-                                  <div className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                                    attrConfidence >= 80
-                                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                      : attrConfidence >= 60
-                                      ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                  }`}>
-                                    {attrConfidence}% Sicher
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           )}
 
@@ -322,32 +492,30 @@ export function AIHeroHeader({ onReloadQuestions }: AIHeroHeaderProps) {
                               <label className="block text-text-tertiary font-medium">
                                 {displayName}:
                               </label>
-                              {options ? (
-                                <select
-                                  value={editedAttributes[key]?.value || ''}
-                                  onChange={(e) => handleAttributeChange(key, e.target.value)}
-                                  disabled={isSaving}
-                                  className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
-                                  autoFocus
-                                >
-                                  <option value="">Auswählen...</option>
-                                  {options.map((option) => (
-                                    <option key={option} value={option}>
-                                      {option}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={editedAttributes[key]?.value || ''}
-                                  onChange={(e) => handleAttributeChange(key, e.target.value)}
-                                  disabled={isSaving}
-                                  className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
-                                  placeholder="Wert eingeben..."
-                                  autoFocus
-                                />
+                              {/* Smart input based on type */}
+                              {renderSmartInput(key)}
+
+                              {/* Custom Value Input - Shows when "other" is selected */}
+                              {editedAttributes[key]?.value === 'other' && (
+                                <div className="p-2 bg-glass-bg border border-glass-border rounded space-y-1">
+                                  <label className="text-[10px] font-medium text-text-primary">
+                                    Bitte genauer beschreiben:
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={customAttributeValue}
+                                    onChange={(e) => setCustomAttributeValue(e.target.value)}
+                                    placeholder="z.B. Kreuzförmig, Bumerang..."
+                                    className="w-full px-2 py-1 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50"
+                                    maxLength={50}
+                                    disabled={isSaving}
+                                  />
+                                  <p className="text-[9px] text-text-tertiary italic">
+                                    💡 Deine Eingabe hilft uns das System zu verbessern
+                                  </p>
+                                </div>
                               )}
+
                               {/* Save/Cancel Icons */}
                               <div className="flex items-center gap-1">
                                 <button

@@ -23,6 +23,7 @@ interface DynamicQuestion {
   helpText?: string;
   maps_to_attribute?: string | null;
   priority: number;
+  allowCustomValue?: boolean;
 }
 
 interface ExtraQuestionsFlowProps {
@@ -233,6 +234,7 @@ export const ExtraQuestionsFlow = forwardRef<ExtraQuestionsFlowHandle, ExtraQues
     max: currentQuestion.type === 'scale' ? 10 : undefined,
     minLabel: currentQuestion.type === 'scale' ? 'Min' : undefined,
     maxLabel: currentQuestion.type === 'scale' ? 'Max' : undefined,
+    allowCustomValue: currentQuestion.allowCustomValue || false,
   };
 
   // Show loading overlay during reload

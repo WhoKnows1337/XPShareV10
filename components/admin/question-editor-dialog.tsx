@@ -82,6 +82,7 @@ export function QuestionEditorDialog({
   const [placeholder, setPlaceholder] = useState('')
   const [isOptional, setIsOptional] = useState(true)
   const [isActive, setIsActive] = useState(true)
+  const [allowCustomValue, setAllowCustomValue] = useState(false)
   const [mapsToAttribute, setMapsToAttribute] = useState<string>('')
 
   // Conditional logic
@@ -122,6 +123,7 @@ export function QuestionEditorDialog({
       setPlaceholder(question.placeholder || '')
       setIsOptional(question.is_optional)
       setIsActive(question.is_active)
+      setAllowCustomValue((question as any).allow_custom_value || false)
       setMapsToAttribute((question as any).maps_to_attribute || '__none__')
       setConditionalOnAttribute((question as any).conditional_on_attribute || '__none__')
       setConditionalValue((question as any).conditional_value || '')
@@ -135,6 +137,7 @@ export function QuestionEditorDialog({
       setPlaceholder('')
       setIsOptional(true)
       setIsActive(true)
+      setAllowCustomValue(false)
       setMapsToAttribute('__none__')
       setConditionalOnAttribute('__none__')
       setConditionalValue('')
@@ -185,6 +188,7 @@ export function QuestionEditorDialog({
         help_text: helpText || null,
         placeholder: placeholder || null,
         is_active: isActive,
+        allow_custom_value: allowCustomValue,
         maps_to_attribute: mapsToAttribute && mapsToAttribute !== '__none__' ? mapsToAttribute : null,
         conditional_on_attribute: conditionalOnAttribute && conditionalOnAttribute !== '__none__' ? conditionalOnAttribute : null,
         conditional_value: conditionalValue || null,
@@ -365,6 +369,37 @@ export function QuestionEditorDialog({
                 onCheckedChange={setIsActive}
               />
             </div>
+
+            {/* Allow Custom Value - Only for choice-based questions */}
+            {(questionType === 'chips' ||
+              questionType === 'chips-multi' ||
+              questionType === 'dropdown' ||
+              questionType === 'dropdown-multi') && (
+              <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50/50 p-4">
+                <div>
+                  <Label htmlFor="allow_custom_value" className="text-green-900">
+                    Allow Custom Values
+                  </Label>
+                  <p className="text-sm text-green-700">
+                    Add "Other..." option with text input for custom values
+                  </p>
+                </div>
+                <Switch
+                  id="allow_custom_value"
+                  checked={allowCustomValue}
+                  onCheckedChange={setAllowCustomValue}
+                />
+              </div>
+            )}
+
+            {allowCustomValue && (
+              <Alert className="border-green-200 bg-green-50">
+                <Sparkles className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-xs text-green-800">
+                  <strong>Community-Driven Learning:</strong> User custom values are collected and can be promoted to official options in Admin → Custom Values Review.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Attribute Mapping */}
             <div className="rounded-lg border border-blue-200 p-4 space-y-3">

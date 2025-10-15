@@ -69,15 +69,22 @@ export async function POST(request: NextRequest) {
 
     // Save attributes to experience_attributes table
     if (experienceData.attributes && Object.keys(experienceData.attributes).length > 0) {
-      const attributeRecords = Object.entries(experienceData.attributes).map(([key, attr]: [string, any]) => ({
-        experience_id: experience.id,
-        attribute_key: key,
-        attribute_value: attr.value,
-        confidence: attr.confidence / 100, // Convert from 0-100 to 0.0-1.0
-        source: attr.isManuallyEdited ? 'user_confirmed' : 'ai_extracted',
-        verified_by_user: attr.isManuallyEdited || false,
-        created_by: user.id,
-      }));
+      const attributeRecords = Object.entries(experienceData.attributes).map(([key, attr]: [string, any]) => {
+        const isCustomValue = attr.isCustom || (attr.value === 'other' && attr.customValue);
+        const customValue = attr.customValue || null;
+
+        return {
+          experience_id: experience.id,
+          attribute_key: key,
+          attribute_value: attr.value,
+          custom_value: customValue,
+          is_custom_value: isCustomValue,
+          confidence: attr.confidence / 100, // Convert from 0-100 to 0.0-1.0
+          source: attr.isManuallyEdited ? 'user_confirmed' : 'ai_extracted',
+          verified_by_user: attr.isManuallyEdited || false,
+          created_by: user.id,
+        };
+      });
 
       const { error: attributesError } = await supabase
         .from('experience_attributes')
@@ -86,6 +93,14 @@ export async function POST(request: NextRequest) {
       if (attributesError) {
         console.error('Error saving attributes:', attributesError);
         // Don't fail the entire publish if attributes fail
+      }
+
+      // Track custom values for admin review
+      for (const [key, attr] of Object.entries(experienceData.attributes)) {
+        const typedAttr = attr as any;
+        if (typedAttr.customValue && typedAttr.customValue.trim()) {
+          await trackCustomValue(supabase, key, typedAttr.customValue.trim());
+        }
       }
     }
 
@@ -222,5 +237,50 @@ async function awardBadge(supabase: any, userId: string, badgeSlug: string) {
     });
   } catch (error) {
     console.error('Award badge error:', error);
+  }
+}
+
+// Helper function to track custom attribute values
+async function trackCustomValue(supabase: any, attributeKey: string, customValue: string) {
+  try {
+    // Normalize value for deduplication (lowercase, trimmed)
+    const canonical = customValue.toLowerCase().trim();
+
+    // Check if this custom value already exists
+    const { data: existing } = await supabase
+      .from('custom_attribute_suggestions')
+      .select('id, times_used')
+      .eq('attribute_key', attributeKey)
+      .eq('canonical_value', canonical)
+      .single();
+
+    if (existing) {
+      // Increment times_used counter
+      await supabase
+        .from('custom_attribute_suggestions')
+        .update({
+          times_used: existing.times_used + 1,
+          last_used_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+
+      console.log(`Incremented custom value "${customValue}" for ${attributeKey} (now ${existing.times_used + 1}x)`);
+    } else {
+      // Insert new custom value suggestion
+      await supabase
+        .from('custom_attribute_suggestions')
+        .insert({
+          attribute_key: attributeKey,
+          custom_value: customValue,
+          canonical_value: canonical,
+          times_used: 1,
+          status: 'pending_review',
+        });
+
+      console.log(`New custom value "${customValue}" tracked for ${attributeKey}`);
+    }
+  } catch (error) {
+    console.error('Track custom value error:', error);
+    // Don't fail the entire publish if tracking fails
   }
 }
