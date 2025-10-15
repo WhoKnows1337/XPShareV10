@@ -51,26 +51,41 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to load categories');
     }
 
-    // Step 1: Category Detection
+    // Step 1: Category Detection with Structured Outputs
     const categoryPrompt = `Analyze this experience text and determine the most specific category.
 
 Text Language: ${language}
 Text: "${text}"
 
-Available Categories (choose the most specific subcategory):
-${categories.map(c => `- ${c.slug}: ${c.name}`).join('\n')}
+Available Categories (choose the most specific subcategory BY SLUG):
+${categories.map(c => `- slug: "${c.slug}" (name: ${c.name})`).join('\n')}
 
-IMPORTANT:
+CRITICAL:
+- Return ONLY the slug (e.g., "dreams", not "Träume und Luzides Träumen")
 - Choose the MOST SPECIFIC subcategory that matches
-- Return the slug exactly as listed above
-- Be confident in your choice
+- Be confident in your choice`;
 
-Return JSON:
-{
-  "category": "slug-here",
-  "confidence": 0.92,
-  "reasoning": "why this category"
-}`;
+    // Use Structured Outputs to enforce slug format
+    const categorySchema = {
+      type: 'object' as const,
+      properties: {
+        category: {
+          type: 'string' as const,
+          description: 'The category slug (NOT the name)',
+          enum: categories.map(c => c.slug)
+        },
+        confidence: {
+          type: 'number' as const,
+          description: 'Confidence score between 0 and 1'
+        },
+        reasoning: {
+          type: 'string' as const,
+          description: 'Brief explanation for the category choice'
+        }
+      },
+      required: ['category', 'confidence', 'reasoning'],
+      additionalProperties: false
+    };
 
     const categoryResponse = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -78,7 +93,13 @@ Return JSON:
         role: 'user',
         content: categoryPrompt
       }],
-      response_format: { type: 'json_object' },
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'category_detection',
+          schema: categorySchema
+        }
+      },
       temperature: 0.3,
     });
 

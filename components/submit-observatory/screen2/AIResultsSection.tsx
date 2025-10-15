@@ -9,41 +9,10 @@ import {
   ChevronDown,
   Check,
   X,
-  Ghost,
-  Telescope,
-  Heart,
-  Zap,
-  Brain,
-  Footprints,
-  HelpCircle,
-  LucideIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
-
-// Icon mapping for each category
-const categoryIcons: Record<string, LucideIcon> = {
-  paranormal: Ghost,
-  ufo_sighting: Telescope,
-  synchronicity: Sparkles,
-  spiritual_experience: Heart,
-  near_death_experience: Zap,
-  psychic_experience: Brain,
-  cryptid_encounter: Footprints,
-  other: HelpCircle,
-};
-
-// Color mapping for categories
-const categoryColors: Record<string, string> = {
-  paranormal: 'bg-purple-500',
-  ufo_sighting: 'bg-blue-500',
-  synchronicity: 'bg-pink-500',
-  spiritual_experience: 'bg-green-500',
-  near_death_experience: 'bg-yellow-500',
-  psychic_experience: 'bg-indigo-500',
-  cryptid_encounter: 'bg-orange-500',
-  other: 'bg-gray-500',
-};
+import { getCategoryIcon, getCategoryBgClass } from '@/lib/category-icons';
 
 export function AIResultsSection() {
   const t = useTranslations('submit.screen2.aiResults');
@@ -60,10 +29,21 @@ export function AIResultsSection() {
     setIsEditingTitle(false);
   };
 
-  // Get category info
-  const CategoryIcon = categoryIcons[screen2.category] || HelpCircle;
-  const categoryColor = categoryColors[screen2.category] || 'bg-gray-500';
-  const categoryName = screen2.category ? tCategories(screen2.category) : 'Unknown';
+  // Get category info using central mapping
+  const CategoryIcon = getCategoryIcon(screen2.category || 'other');
+  const categoryColor = getCategoryBgClass(screen2.category || 'other');
+
+  // Try to get translation, fallback to formatted slug
+  let categoryName: string;
+  try {
+    categoryName = screen2.category ? tCategories(screen2.category) : 'Unknown';
+  } catch {
+    categoryName = (screen2.category || 'other')
+      .split(/[-_]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
   const attributeCount = screen2.attributes ? Object.keys(screen2.attributes).length : 0;
   const confidencePercent = screen2.confidence ? Math.round(screen2.confidence * 100) : 0;
 

@@ -37,7 +37,7 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Load questions from API on mount
+  // Load questions from API on mount and when category changes
   useEffect(() => {
     const loadQuestions = async () => {
       if (!screen2.category) {
@@ -47,6 +47,12 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
       }
 
       try {
+        setIsLoading(true);
+        setLoadError(null);
+
+        // Reset current index when category changes
+        setCurrentIndex(0);
+
         // Build query string with extracted attributes for smart filtering
         const params = new URLSearchParams({
           category: screen2.category,
@@ -74,7 +80,7 @@ export function ExtraQuestionsFlow({ onComplete }: ExtraQuestionsFlowProps) {
     };
 
     loadQuestions();
-  }, [screen2.category, screen2.attributes]);
+  }, [screen2.category]); // Only depend on category, not attributes (to avoid reloading on attribute changes)
 
   // If no questions after filtering, complete immediately
   useEffect(() => {

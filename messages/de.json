@@ -443,6 +443,20 @@
   },
   "admin": {
     "title": "Admin-Panel",
+    "backToSite": "Zurück zur Seite",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "categories": "Kategorien",
+      "overview": "Übersicht",
+      "globalConfig": "Globale Konfiguration",
+      "createCategory": "Neue Kategorie erstellen",
+      "toolsAnalytics": "Tools & Analytics",
+      "templates": "Vorlagen",
+      "analytics": "Analytics",
+      "history": "Historie",
+      "moderation": "Moderation",
+      "usersRoles": "Benutzer & Rollen"
+    },
     "tabs": {
       "dashboard": "Dashboard",
       "moderation": "Moderation",
@@ -522,12 +536,19 @@
   "categories": {
     "paranormal": "Paranormal",
     "ufo_sighting": "UFO-Sichtung",
-    "ufo-uap": "UFO-Sichtung",
+    "ufo-uap": "UFO/UAP Sichtungen",
     "synchronicity": "Synchronizität",
     "spiritual_experience": "Spirituelle Erfahrung",
     "near_death_experience": "Nahtoderfahrung",
     "psychic_experience": "Psychische Erfahrung",
     "cryptid_encounter": "Kryptid-Begegnung",
+    "dreams": "Träume & Luzides Träumen",
+    "ghost-spirit": "Geister & Spuk",
+    "consciousness-inner": "Bewusstsein & Innere Erfahrungen",
+    "extraterrestrial-sky": "Außerirdisches & Himmelsphänomene",
+    "entities-apparitions": "Wesen & Erscheinungen",
+    "time-space-sync": "Zeit, Raum & Synchronizität",
+    "gesundheit": "Gesundheit",
     "other": "Andere"
   },
   "time": {

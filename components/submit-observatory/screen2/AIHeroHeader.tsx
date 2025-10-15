@@ -5,20 +5,15 @@ import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Ghost,
-  Telescope,
-  Sparkles,
-  Heart,
-  Zap,
-  Brain,
-  Footprints,
-  HelpCircle,
   ChevronDown,
   Pencil,
   Check,
   X,
-  LucideIcon
+  Edit2,
+  Sparkles,
 } from 'lucide-react';
+import { CategoryPicker } from './CategoryPicker';
+import { getCategoryIcon, getCategoryBgClass } from '@/lib/category-icons';
 
 /**
  * Hero Header for Step 2 - Shows AI Analysis Results
@@ -32,53 +27,65 @@ export function AIHeroHeader() {
   const [editedTitle, setEditedTitle] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Icon mapping for each category
-  const categoryIcons: Record<string, LucideIcon> = {
-    paranormal: Ghost,
-    'paranormales': Ghost,
-    ufo_sighting: Telescope,
-    'ufo-uap': Telescope,
-    synchronicity: Sparkles,
-    'synchronizitaet': Sparkles,
-    spiritual_experience: Heart,
-    'spirituelles': Heart,
-    near_death_experience: Zap,
-    'nahtod': Zap,
-    psychic_experience: Brain,
-    'psychisches': Brain,
-    cryptid_encounter: Footprints,
-    'kryptid': Footprints,
-    'gesundheit': Heart,
-    other: HelpCircle,
-    'andere': HelpCircle,
-  };
-
-  // Color mapping for categories
-  const categoryColors: Record<string, string> = {
-    paranormal: 'bg-purple-500',
-    'paranormales': 'bg-purple-500',
-    ufo_sighting: 'bg-blue-500',
-    'ufo-uap': 'bg-blue-500',
-    synchronicity: 'bg-pink-500',
-    'synchronizitaet': 'bg-pink-500',
-    spiritual_experience: 'bg-green-500',
-    'spirituelles': 'bg-green-500',
-    near_death_experience: 'bg-yellow-500',
-    'nahtod': 'bg-yellow-500',
-    psychic_experience: 'bg-indigo-500',
-    'psychisches': 'bg-indigo-500',
-    cryptid_encounter: 'bg-orange-500',
-    'kryptid': 'bg-orange-500',
-    'gesundheit': 'bg-green-500',
-    other: 'bg-gray-500',
-    'andere': 'bg-gray-500',
-  };
-
   const categorySlug = screen2.category || 'other';
-  const CategoryIcon = categoryIcons[categorySlug] || HelpCircle;
-  const categoryColor = categoryColors[categorySlug] || 'bg-gray-500';
-  const categoryName = tCategories(categorySlug, categorySlug);
+
+  // Get icon and color from central mapping
+  const CategoryIcon = getCategoryIcon(categorySlug);
+  const categoryColor = getCategoryBgClass(categorySlug);
+
+  // Try to get translation, fallback to formatted slug if not found
+  let categoryName: string;
+  try {
+    categoryName = tCategories(categorySlug);
+  } catch {
+    // Fallback: format the slug (e.g., "dreams" -> "Dreams")
+    categoryName = categorySlug
+      .split(/[-_]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
   const confidencePercent = Math.round((screen2.confidence || 0.95) * 100);
+
+  // Category change handler with smart attribute merging
+  const handleCategoryChange = (newCategory: string) => {
+    // Keep only universal attributes that apply to all categories
+    const universalKeys = ['date', 'location', 'time_of_day', 'witnesses', 'duration'];
+
+    const universalAttributes: Record<string, { value: string; confidence: number; isManuallyEdited: boolean }> = {};
+
+    // Filter out category-specific attributes, keep only universal ones
+    if (screen2.attributes) {
+      Object.entries(screen2.attributes).forEach(([key, value]) => {
+        if (universalKeys.includes(key)) {
+          universalAttributes[key] = value;
+        }
+      });
+    }
+
+    console.log(`Category changed from ${screen2.category} to ${newCategory}`);
+    console.log(`Keeping ${Object.keys(universalAttributes).length} universal attributes:`, Object.keys(universalAttributes));
+
+    updateScreen2({
+      category: newCategory,
+      // Keep universal attributes, reset category-specific ones
+      attributes: universalAttributes,
+      // Reset questions when category changes
+      extraQuestions: {},
+      completedExtraQuestions: false
+    });
+  };
+
+  // Helper function to get category translation
+  const getCategoryTranslation = (slug: string): string => {
+    try {
+      return tCategories(slug);
+    } catch {
+      return slug
+        .split(/[-_]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+  };
 
   const attributeCount = screen2.attributes ? Object.keys(screen2.attributes).length : 0;
   const tagCount = screen2.tags ? screen2.tags.length : 0;
@@ -117,9 +124,12 @@ export function AIHeroHeader() {
           {/* Category + Confidence */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-bold text-observatory-accent uppercase tracking-wide">
-                {categoryName}
-              </span>
+              <CategoryPicker
+                currentCategory={categorySlug}
+                onSelect={handleCategoryChange}
+                getCategoryTranslation={getCategoryTranslation}
+                variant="inline"
+              />
               <span className="text-xs text-text-tertiary">
                 {confidencePercent}% Sicher
               </span>

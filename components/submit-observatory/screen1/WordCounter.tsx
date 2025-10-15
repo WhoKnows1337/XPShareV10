@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface WordCounterProps {
   wordCount: number;
+  charCount: number;
 }
 
 // Character Milestones (50 chars minimum)
@@ -16,11 +17,8 @@ const MILESTONES = {
   platinum: { chars: 500, xp: 200, label: '✓ EXCEPTIONAL' },
 };
 
-export function WordCounter({ wordCount }: WordCounterProps) {
+export function WordCounter({ wordCount, charCount }: WordCounterProps) {
   const t = useTranslations('submit.screen1.wordCounter');
-
-  // Estimate char count (rough: 5 chars per word)
-  const charCount = wordCount * 5;
 
   const currentMilestone = useMemo(() => {
     if (charCount >= MILESTONES.platinum.chars) return MILESTONES.platinum;

@@ -75,7 +75,7 @@ export function TextInputScreen() {
 
       {/* Word Counter + Input Methods Row */}
       <div className="flex items-center justify-between gap-3 mb-3">
-        <WordCounter wordCount={screen1.wordCount} />
+        <WordCounter wordCount={screen1.wordCount} charCount={screen1.charCount} />
         <div className="flex gap-2">
           <VoiceButton onTranscript={handleVoiceTranscript} />
           <OCRButton onTextExtracted={handleOCRText} />

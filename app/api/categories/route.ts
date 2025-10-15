@@ -5,11 +5,12 @@ export async function GET() {
   try {
     const supabase = await createClient()
 
-    // Get all active question categories
+    // Get all active question categories with hierarchy support
     const { data: categories, error } = await supabase
       .from('question_categories')
-      .select('id, slug, name, description, icon, emoji, color, is_active')
+      .select('id, slug, name, description, icon, emoji, color, is_active, level, parent_category_id, sort_order')
       .eq('is_active', true)
+      .order('level', { ascending: true })
       .order('sort_order', { ascending: true })
 
     if (error) {

@@ -65,6 +65,11 @@ export function AIAnalysisScreen() {
     setAnalyzing(true);
     setAnalysisError(null);
     try {
+      // Validate text length before sending to API
+      if (!screen1.text || screen1.text.trim().length < 50) {
+        throw new Error('Text ist zu kurz für die Analyse (mindestens 50 Zeichen erforderlich). Bitte gehe zurück und füge mehr Text hinzu.');
+      }
+
       // Step 1: Complete analysis including title, category, tags, AND attributes
       const response = await fetch('/api/submit/analyze-complete', {
         method: 'POST',
@@ -72,7 +77,11 @@ export function AIAnalysisScreen() {
         body: JSON.stringify({ text: screen1.text }),
       });
 
-      if (!response.ok) throw new Error('Analysis failed');
+      if (!response.ok) {
+        // Get the actual error message from the API
+        const errorData = await response.json().catch(() => ({ error: 'Analysis failed' }));
+        throw new Error(errorData.error || `Analysis failed with status ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -115,12 +124,12 @@ export function AIAnalysisScreen() {
       setHasAnalyzed(true);
     } catch (error) {
       console.error('AI Analysis error:', error);
-      setAnalysisError(t('error', 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'));
+      const errorMessage = error instanceof Error ? error.message : 'KI-Analyse fehlgeschlagen';
+      setAnalysisError(errorMessage);
     } finally {
       setAnalyzing(false);
     }
   };
-
 
   // Handle navigation to next step - enrich text first
   const handleNext = async () => {
