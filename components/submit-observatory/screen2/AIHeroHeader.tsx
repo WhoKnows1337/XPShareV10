@@ -6,26 +6,22 @@ import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronDown,
-  Pencil,
-  Check,
-  X,
-  Edit2,
   Sparkles,
 } from 'lucide-react';
 import { CategoryPicker } from './CategoryPicker';
 import { getCategoryIcon, getCategoryBgClass } from '@/lib/category-icons';
 
 /**
- * Hero Header for Step 2 - Shows AI Analysis Results
- * Displays: Category, Title (editable), Tags, Attributes (collapsible)
+ * Hero Header for Step 2 - Simplified to show only Category
+ * Displays: Category (editable), Attributes (collapsible)
+ * Title, Summary, and Tags are now shown in Step 3
  */
 export function AIHeroHeader() {
   const t = useTranslations('submit.screen2');
   const tCategories = useTranslations('categories');
   const { screen2, updateScreen2 } = useSubmitFlowStore();
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const categorySlug = screen2.category || 'other';
 
@@ -73,6 +69,7 @@ export function AIHeroHeader() {
       extraQuestions: {},
       completedExtraQuestions: false
     });
+    setPickerOpen(false);
   };
 
   // Helper function to get category translation
@@ -88,24 +85,6 @@ export function AIHeroHeader() {
   };
 
   const attributeCount = screen2.attributes ? Object.keys(screen2.attributes).length : 0;
-  const tagCount = screen2.tags ? screen2.tags.length : 0;
-
-  const handleStartTitleEdit = () => {
-    setEditedTitle(screen2.title || '');
-    setIsEditingTitle(true);
-  };
-
-  const handleSaveTitle = () => {
-    if (editedTitle.trim()) {
-      updateScreen2({ title: editedTitle.trim() });
-    }
-    setIsEditingTitle(false);
-  };
-
-  const handleCancelTitleEdit = () => {
-    setIsEditingTitle(false);
-    setEditedTitle('');
-  };
 
   return (
     <motion.div
@@ -114,100 +93,50 @@ export function AIHeroHeader() {
       className="bg-glass-bg border border-glass-border rounded-lg overflow-hidden mb-6"
     >
       {/* Category Header */}
-      <div className="p-4 bg-gradient-to-r from-observatory-accent/10 to-transparent border-b border-glass-border">
+      <div className="p-4 bg-gradient-to-r from-observatory-accent/10 to-transparent">
         <div className="flex items-start gap-3">
-          {/* Category Icon */}
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${categoryColor} flex-shrink-0`}>
+          {/* Category Icon - Clickable (Left) - Just a button, no text */}
+          <button
+            onClick={() => setPickerOpen(true)}
+            className={`w-12 h-12 rounded-full flex items-center justify-center ${categoryColor} flex-shrink-0 cursor-pointer hover:scale-105 transition-transform`}
+            aria-label="Kategorie ändern"
+          >
             <CategoryIcon className="w-6 h-6 text-white" />
-          </div>
+          </button>
 
-          {/* Category + Confidence */}
+          {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            {/* Category Name + Confidence (Right) */}
+            <div className="flex items-center gap-2 mb-2">
               <CategoryPicker
                 currentCategory={categorySlug}
                 onSelect={handleCategoryChange}
                 getCategoryTranslation={getCategoryTranslation}
                 variant="inline"
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
               />
               <span className="text-xs text-text-tertiary">
-                {confidencePercent}% Sicher
+                {confidencePercent}% Zuversicht
               </span>
             </div>
 
-            {/* Editable Title */}
-            {!isEditingTitle ? (
-              <button
-                onClick={handleStartTitleEdit}
-                className="group text-left w-full"
-              >
-                <h1 className="text-2xl font-bold text-text-primary leading-tight">
-                  {screen2.title || t('untitled', 'Ohne Titel')}
-                  <Pencil className="inline-block ml-2 w-4 h-4 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
-                </h1>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveTitle();
-                    if (e.key === 'Escape') handleCancelTitleEdit();
-                  }}
-                  className="flex-1 px-2 py-1 bg-glass-bg border border-observatory-accent/40 rounded text-text-primary text-xl font-bold focus:outline-none focus:ring-2 focus:ring-observatory-accent/50"
-                  autoFocus
-                />
-                <button
-                  onClick={handleSaveTitle}
-                  className="p-1.5 bg-observatory-accent/20 hover:bg-observatory-accent/30 rounded transition-colors"
-                >
-                  <Check className="w-4 h-4 text-observatory-accent" />
-                </button>
-                <button
-                  onClick={handleCancelTitleEdit}
-                  className="p-1.5 bg-glass-bg hover:bg-glass-border rounded transition-colors"
-                >
-                  <X className="w-4 h-4 text-text-tertiary" />
-                </button>
-              </div>
-            )}
+            <p className="text-sm text-text-secondary leading-snug">
+              KI hat die Kategorie erkannt. Falls falsch, kannst du sie ändern.
+            </p>
           </div>
         </div>
-      </div>
-
-      {/* Tags & Attributes Summary */}
-      <div className="p-4 space-y-3">
-        {/* Tags */}
-        {tagCount > 0 && (
-          <div>
-            <div className="text-xs text-text-tertiary uppercase tracking-wide mb-1.5">
-              Tags
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {screen2.tags?.map((tag, i) => (
-                <span
-                  key={i}
-                  className="px-2 py-0.5 bg-observatory-accent/10 border border-observatory-accent/30 rounded text-xs text-observatory-accent"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Collapsible Attributes */}
         {attributeCount > 0 && (
-          <div>
+          <div className="mt-4 pt-4 border-t border-glass-border">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary transition-colors w-full"
             >
               <Sparkles className="w-4 h-4 text-observatory-accent" />
               <span>
-                {attributeCount} {t('attributesFound', 'KI-Attribute erkannt')}
+                {attributeCount} {t('attributesFound', 'Details aus deinem Text erkannt')}
               </span>
               <ChevronDown
                 className={`w-4 h-4 ml-auto transition-transform ${
@@ -225,7 +154,7 @@ export function AIHeroHeader() {
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-2 space-y-1.5 pl-6">
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {Object.entries(screen2.attributes || {}).map(([key, attr]) => (
                       <div
                         key={key}
@@ -250,13 +179,6 @@ export function AIHeroHeader() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        )}
-
-        {/* Info when no attributes found */}
-        {attributeCount === 0 && (
-          <div className="text-xs text-text-tertiary italic">
-            {t('noAttributes', 'Keine spezifischen Attribute im Text erkannt')}
           </div>
         )}
       </div>

@@ -32,6 +32,12 @@ export function AIAnalysisScreen() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Hydration fix: Only compute canGoNext on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Auto-save every 30 seconds if there are changes
   useEffect(() => {
@@ -131,17 +137,19 @@ export function AIAnalysisScreen() {
     }
   };
 
-  // Handle navigation to next step - enrich text first
+  // Handle navigation to next step - enrich text and finalize metadata
   const handleNext = async () => {
-    // Start transitioning - we'll enrich the text now
+    // Start transitioning - we'll enrich the text AND generate final metadata
     setIsTransitioning(true);
 
+    let enrichedTextContent = screen1.text; // Fallback to original
+
     try {
-      // Enrich text with attributes and answers from questions
-      const { setEnhancedText, setEnhancing } = useSubmitFlowStore.getState();
+      const { setEnhancedText, setEnhancing, setAIResults, setSummary } = useSubmitFlowStore.getState();
       setEnhancing(true);
 
-      const response = await fetch('/api/submit/enrich-text', {
+      // Step 1: Enrich text with attributes and answers from questions
+      const enrichResponse = await fetch('/api/submit/enrich-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -152,17 +160,51 @@ export function AIAnalysisScreen() {
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setEnhancedText(data.enrichedText, data.highlights);
+      if (enrichResponse.ok) {
+        const enrichData = await enrichResponse.json();
+        enrichedTextContent = enrichData.enrichedText;
+        setEnhancedText(enrichData.enrichedText, enrichData.highlights);
       }
 
       setEnhancing(false);
+
+      // Step 2: Generate final metadata (Title, Summary, Tags) based on enriched text
+      const metadataResponse = await fetch('/api/submit/finalize-metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enhancedText: enrichedTextContent,
+          originalText: screen1.text,
+          category: screen2.category,
+          metadata: {
+            date: screen2.date,
+            time: screen2.time,
+            location: screen2.location,
+            duration: screen2.duration,
+          },
+          attributes: screen2.attributes,
+          language: 'de',
+        }),
+      });
+
+      if (metadataResponse.ok) {
+        const metadataData = await metadataResponse.json();
+
+        // Update title, summary, and tags with final metadata
+        setAIResults(
+          metadataData.title,
+          screen2.category,
+          metadataData.tags,
+          metadataData.qualityScore?.title || 100
+        );
+        setSummary(metadataData.summary);
+      }
+
     } catch (error) {
-      console.error('Text enrichment error:', error);
+      console.error('Transition error:', error);
       const { setEnhancing } = useSubmitFlowStore.getState();
       setEnhancing(false);
-      // Continue anyway with original text
+      // Continue anyway with existing data
     }
 
     // Now proceed to next step
@@ -186,8 +228,8 @@ export function AIAnalysisScreen() {
     return (
       <LoadingState
         icon="sparkles"
-        title={t('enriching', 'Reichere Text an...')}
-        description={t('enrichingDesc', 'KI fügt deine Antworten aus den Fragen in den Text ein')}
+        title={t('enriching', '✨ KI vervollständigt deine Experience...')}
+        description={t('enrichingDesc', 'Text wird angereichert und finale Metadaten (Titel, Zusammenfassung, Tags) werden generiert')}
       />
     );
   }
@@ -259,7 +301,7 @@ export function AIAnalysisScreen() {
           onBack={goBack}
           onNext={handleNext}
           onReset={handleReset}
-          canGoNext={canGoNext()}
+          canGoNext={isClient ? canGoNext() : false}
           nextLabel={t('continue', 'Weiter zum Editor')}
           showReset={true}
           resetConfirm={showResetConfirm}

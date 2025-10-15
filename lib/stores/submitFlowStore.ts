@@ -381,16 +381,12 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
             // Minimum 50 characters required
             return state.screen1.charCount >= 50;
           case 2:
-            // Required questions must be filled
-            return (
-              state.screen2.date !== '' &&
-              state.screen2.time !== '' &&
-              state.screen2.location !== '' &&
-              state.screen2.duration !== ''
-            );
+            // Step 2: Category must be set (questions are optional)
+            // User can skip questions and go directly to Step 3
+            return state.screen2.category !== '';
           case 3:
-            // Summary must exist
-            return state.screen3.summary !== '';
+            // Summary must exist (will be generated automatically)
+            return true; // Always can proceed from Step 3
           case 4:
             // Optional screen, always can proceed
             return true;

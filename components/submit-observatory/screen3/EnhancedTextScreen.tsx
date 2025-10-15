@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { EnhancedTextEditor } from './EnhancedTextEditor';
-import { AIResultsSection } from '../screen2/AIResultsSection';
+import { EditableMetadataHero } from './EditableMetadataHero';
 import { NavigationButtons } from '../shared/NavigationButtons';
 import { LoadingState } from '../shared/LoadingState';
 import { useTranslations } from 'next-intl';
@@ -32,6 +32,13 @@ export function EnhancedTextScreen() {
     saveDraft,
   } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [qualityScore, setQualityScore] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Hydration fix: Only compute canGoNext on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Auto-save every 30 seconds if there are changes
   useEffect(() => {
@@ -134,33 +141,25 @@ export function EnhancedTextScreen() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[70%,30%] gap-4">
-      {/* Left Column: Content (70%) */}
-      <div className="space-y-4">
-        {/* Compact Title */}
-        <div className="mb-3">
-          <h1 className="section-title-observatory">
-            {t('title', 'Überprüfe deinen Text')}
-          </h1>
-          <p className="text-text-secondary text-xs mt-1">
-            {t('subtitle', 'KI-Verbesserungen überprüfen und finalisieren')}
-          </p>
-        </div>
+    <div className="space-y-4">
+      {/* Editable Metadata Hero - Similar to Step 2 */}
+      <EditableMetadataHero />
 
-        {/* Enhanced Text Editor with Brain Button - Compact */}
+      {/* Text Editor Section */}
+      <div className="space-y-4">
         <div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-text-primary">
-                {t('textEditor.title', 'Dein Text')}
+                Dein Text
               </h3>
               <p className="text-xs text-text-secondary mt-0.5">
                 {screen3.enhancementEnabled
-                  ? t('textEditor.description', '✨ KI-Verbesserungen')
-                  : t('textEditor.descriptionOff', 'Originaltext')}
+                  ? '✨ KI-Anreicherungen aktiv'
+                  : 'Originaltext'}
               </p>
             </div>
-            {/* Brain Button - Animated */}
+            {/* Brain Button - Toggle AI Enhancement */}
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -194,18 +193,10 @@ export function EnhancedTextScreen() {
           onBack={goBack}
           onNext={goNext}
           onReset={handleReset}
-          canGoNext={canGoNext()}
+          canGoNext={isClient ? canGoNext() : false}
           nextLabel={t('continue', 'Weiter')}
           showReset={true}
           resetConfirm={showResetConfirm}
-        />
-      </div>
-
-      {/* Right Column: AI Analysis Sidebar (30%) */}
-      <div className="lg:sticky lg:top-4 lg:self-start">
-        <AIResultsSection
-          onRegenerateSummary={generateSummary}
-          isSummarizing={isSummarizing}
         />
       </div>
     </div>

@@ -25,6 +25,9 @@ interface CategoryPickerProps {
   onSelect: (category: string) => void;
   getCategoryTranslation: (category: string) => string;
   variant?: 'default' | 'inline'; // inline = no label, simpler trigger
+  iconTrigger?: React.ReactNode; // Optional icon trigger element
+  open?: boolean; // Control open state externally
+  onOpenChange?: (open: boolean) => void; // Control open state externally
 }
 
 export function CategoryPicker({
@@ -32,11 +35,18 @@ export function CategoryPicker({
   onSelect,
   getCategoryTranslation,
   variant = 'default',
+  iconTrigger,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }: CategoryPickerProps) {
   const t = useTranslations('submit.screen2.aiResults');
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Use external state if provided, otherwise use internal
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalOnOpenChange || setInternalOpen;
 
   const handleSelect = (category: string) => {
     onSelect(category);
@@ -124,49 +134,63 @@ export function CategoryPicker({
   // Mobile: Drawer from bottom
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle className="text-center">Kategorie wählen</DrawerTitle>
-          </DrawerHeader>
-          {searchInput}
-          <div className="max-h-[60vh] overflow-y-auto">
-            <CategoryGrid
-              currentCategory={currentCategory}
-              onSelect={handleSelect}
-              columns={2}
-              searchQuery={searchQuery}
-            />
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <>
+        <Drawer open={open} onOpenChange={handleOpenChange}>
+          <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle className="text-center">Kategorie wählen</DrawerTitle>
+            </DrawerHeader>
+            {searchInput}
+            <div className="max-h-[60vh] overflow-y-auto">
+              <CategoryGrid
+                currentCategory={currentCategory}
+                onSelect={handleSelect}
+                columns={2}
+                searchQuery={searchQuery}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+        {iconTrigger && (
+          <Drawer open={open} onOpenChange={handleOpenChange}>
+            <DrawerTrigger asChild>{iconTrigger}</DrawerTrigger>
+          </Drawer>
+        )}
+      </>
     );
   }
 
   // Desktop: Popover
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent
-        className="w-[420px] p-0 bg-space-mid/95 backdrop-blur-md border-glass-border"
-        align="start"
-      >
-        <div className="p-3 border-b border-glass-border">
-          <h3 className="text-sm font-semibold text-text-primary mb-2">
-            Kategorie wählen
-          </h3>
-        </div>
-        {searchInput}
-        <div className="max-h-[400px] overflow-y-auto">
-          <CategoryGrid
-            currentCategory={currentCategory}
-            onSelect={handleSelect}
-            columns={3}
-            searchQuery={searchQuery}
-          />
-        </div>
-      </PopoverContent>
-    </Popover>
+    <>
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        <PopoverContent
+          className="w-[420px] p-0 bg-space-mid/95 backdrop-blur-md border-glass-border"
+          align="start"
+        >
+          <div className="p-3 border-b border-glass-border">
+            <h3 className="text-sm font-semibold text-text-primary mb-2">
+              Kategorie wählen
+            </h3>
+          </div>
+          {searchInput}
+          <div className="max-h-[400px] overflow-y-auto">
+            <CategoryGrid
+              currentCategory={currentCategory}
+              onSelect={handleSelect}
+              columns={3}
+              searchQuery={searchQuery}
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
+      {iconTrigger && (
+        <Popover open={open} onOpenChange={handleOpenChange}>
+          <PopoverTrigger asChild>{iconTrigger}</PopoverTrigger>
+        </Popover>
+      )}
+    </>
   );
 }

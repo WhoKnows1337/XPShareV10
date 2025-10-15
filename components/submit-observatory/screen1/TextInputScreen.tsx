@@ -14,6 +14,12 @@ export function TextInputScreen() {
   const t = useTranslations('submit.screen1');
   const { screen1, setText, canGoNext, goNext, reset, isDraft, saveDraft } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Hydration fix: Only compute canGoNext on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Auto-save every 30 seconds if there are changes
   useEffect(() => {
@@ -97,7 +103,7 @@ export function TextInputScreen() {
       <NavigationButtons
         onNext={goNext}
         onReset={handleReset}
-        canGoNext={canGoNext()}
+        canGoNext={isClient ? canGoNext() : false}
         nextLabel={t('continue', 'Weiter')}
         showReset={true}
         resetConfirm={showResetConfirm}
