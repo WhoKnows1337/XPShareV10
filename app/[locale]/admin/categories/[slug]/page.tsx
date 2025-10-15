@@ -83,6 +83,30 @@ export default async function CategoryDetailPage({ params }: PageProps) {
     return acc
   }, {} as Record<string, number>)
 
+  // Fetch universal questions (category_id IS NULL)
+  const { data: universalQuestions } = await supabase
+    .from('dynamic_questions')
+    .select('*')
+    .is('category_id', null)
+    .order('priority', { ascending: true })
+
+  // Fetch universal attributes (category_slug IS NULL)
+  const { data: universalAttributesRaw } = await supabase
+    .from('attribute_schema')
+    .select('*')
+    .is('category_slug', null)
+    .order('sort_order', { ascending: true })
+
+  // Parse universal attributes
+  const universalAttributes = universalAttributesRaw?.map(attr => ({
+    ...attr,
+    allowed_values: attr.allowed_values
+      ? (typeof attr.allowed_values === 'string'
+        ? JSON.parse(attr.allowed_values)
+        : attr.allowed_values)
+      : null
+  })) || []
+
   // Calculate completion percentage
   const hasQuestions = (questions?.length || 0) > 0
   const hasAttributes = (attributes?.length || 0) > 0
@@ -95,6 +119,8 @@ export default async function CategoryDetailPage({ params }: PageProps) {
       attributes={attributes || []}
       attributeUsageCounts={usageCounts}
       completionPercentage={completionPercentage}
+      universalQuestions={universalQuestions as any || []}
+      universalAttributes={universalAttributes}
     />
   )
 }

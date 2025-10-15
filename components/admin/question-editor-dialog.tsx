@@ -448,8 +448,8 @@ export function QuestionEditorDialog({
           {/* Right: Live Preview */}
           <div className="space-y-4">
             {/* Preview Header with Device Toggle */}
-            <div className="flex items-center justify-between rounded-lg border bg-slate-50 px-4 py-2">
-              <h3 className="text-sm font-semibold text-slate-700">
+            <div className="flex items-center justify-between rounded-lg border bg-muted px-4 py-2">
+              <h3 className="text-sm font-semibold text-foreground">
                 🎨 Live Preview
               </h3>
               <div className="flex gap-1">
@@ -475,7 +475,7 @@ export function QuestionEditorDialog({
             </div>
 
             {/* Preview Container with responsive width */}
-            <div className="flex justify-center rounded-lg border bg-slate-100 p-4">
+            <div className="flex justify-center rounded-lg border bg-muted/30 p-4">
               <div
                 className={`transition-all ${
                   previewMode === 'mobile' ? 'max-w-md w-full' : 'w-full'

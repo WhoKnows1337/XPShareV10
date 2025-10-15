@@ -1,7 +1,9 @@
 import { requireAdmin } from '@/lib/admin-auth'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Shield, FileQuestion, Flag, Users, BarChart, TrendingUp, FileText, History, Globe, Sparkles, FolderTree } from 'lucide-react'
+import { Shield, FileQuestion, Flag, Users, BarChart, TrendingUp, FileText, History, Globe, Sparkles, FolderTree, Folders, Plus } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import { SidebarCategoryTree } from './sidebar-category-tree'
 
 export default async function AdminLayout({
   children,
@@ -9,6 +11,14 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   await requireAdmin()
+
+  // Fetch categories for sidebar tree
+  const supabase = await createClient()
+  const { data: categories } = await supabase
+    .from('question_categories')
+    .select('id, slug, name, icon, level, parent_category_id')
+    .order('level')
+    .order('sort_order', { ascending: true })
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,41 +55,51 @@ export default async function AdminLayout({
                   Categories
                 </p>
               </div>
-              <Link href="/admin/categories/new-wizard">
+              <Link href="/admin/categories">
                 <Button variant="ghost" className="w-full justify-start">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  AI Category Wizard
+                  <Folders className="mr-2 h-4 w-4" />
+                  Overview
                 </Button>
               </Link>
 
-              {/* Questions Section */}
+              {/* Category Tree */}
+              {categories && categories.length > 0 && (
+                <div className="mt-2">
+                  <SidebarCategoryTree categories={categories} />
+                </div>
+              )}
+
+              <div className="mt-2 space-y-1">
+                <Link href="/admin/global-config">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Globe className="mr-2 h-4 w-4" />
+                    Global Configuration
+                  </Button>
+                </Link>
+                <Link href="/admin/categories/new-wizard">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create New Category
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Tools & Templates Section */}
               <div className="px-2 py-2 mt-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Questions
+                  Tools & Analytics
                 </p>
               </div>
-              <Link href="/admin/universal-questions">
+              <Link href="/admin/templates">
                 <Button variant="ghost" className="w-full justify-start">
-                  <Globe className="mr-2 h-4 w-4" />
-                  Universal Questions
-                </Button>
-              </Link>
-              <Link href="/admin/questions">
-                <Button variant="ghost" className="w-full justify-start">
-                  <FileQuestion className="mr-2 h-4 w-4" />
-                  Category Questions
+                  <FileText className="mr-2 h-4 w-4" />
+                  Templates
                 </Button>
               </Link>
               <Link href="/admin/analytics">
                 <Button variant="ghost" className="w-full justify-start">
                   <TrendingUp className="mr-2 h-4 w-4" />
                   Analytics
-                </Button>
-              </Link>
-              <Link href="/admin/templates">
-                <Button variant="ghost" className="w-full justify-start">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Templates
                 </Button>
               </Link>
               <Link href="/admin/history">

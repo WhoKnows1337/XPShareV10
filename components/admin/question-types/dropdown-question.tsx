@@ -1,6 +1,6 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
+import { DynamicQuestion } from '@/lib/types/admin-questions'
 import {
   Select,
   SelectContent,
@@ -8,33 +8,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { QuestionOption } from '@/lib/types/admin-questions'
 
 interface DropdownQuestionProps {
-  question: string
-  options: QuestionOption[]
-  value: string
-  onChange: (value: string) => void
-  helpText?: string
-  placeholder?: string
+  question: DynamicQuestion
+  value?: unknown
+  onChange?: (value: unknown) => void
+  isPreview?: boolean
 }
 
-export function DropdownQuestion({
-  question,
-  options,
-  value,
-  onChange,
-  helpText,
-  placeholder,
-}: DropdownQuestionProps) {
-  return (
-    <div className="space-y-2">
-      <Label className="text-base">{question}</Label>
-      {helpText && <p className="text-sm text-text-secondary">{helpText}</p>}
+export function DropdownQuestion({ question, value, onChange, isPreview }: DropdownQuestionProps) {
+  const stringValue = (value as string) || ''
+  const options = question.options || []
 
-      <Select value={value} onValueChange={onChange}>
+  return (
+    <div className="space-y-3">
+      {/* Question Text */}
+      <div className="flex items-start gap-2">
+        <h3 className="text-lg font-medium">
+          {question.question_text}
+          {!question.is_optional && <span className="ml-1 text-red-500">*</span>}
+        </h3>
+      </div>
+
+      {/* Help Text */}
+      {question.help_text && (
+        <p className="text-sm text-slate-600">{question.help_text}</p>
+      )}
+
+      {/* Dropdown Select */}
+      <Select
+        value={stringValue}
+        onValueChange={(val) => onChange?.(val)}
+        disabled={isPreview}
+      >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={placeholder || "Auswählen..."} />
+          <SelectValue placeholder={question.placeholder || "Auswählen..."} />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (

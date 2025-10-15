@@ -38,7 +38,7 @@ export function StepBasics({ category, onUpdate, isGenerating, generationError }
   return (
     <div className="space-y-6">
       {/* Info Alert */}
-      <Alert className="border-blue-200 bg-blue-50">
+      <Alert className="border-blue-200 bg-muted">
         <Info className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-sm">
           <strong>How it works:</strong> Describe what you want to track in natural language, and our AI will
@@ -89,7 +89,7 @@ export function StepBasics({ category, onUpdate, isGenerating, generationError }
               onClick={() => onUpdate({ icon })}
               className={`
                 text-2xl p-2 rounded-lg border-2 transition-all hover:scale-110
-                ${category.icon === icon ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
+                ${category.icon === icon ? 'border-blue-500 bg-accent' : 'border-gray-200'}
               `}
             >
               {icon}
@@ -140,7 +140,7 @@ export function StepBasics({ category, onUpdate, isGenerating, generationError }
       )}
 
       {/* Examples */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+      <div className="rounded-lg border border-gray-200 bg-muted p-4 space-y-3">
         <h4 className="font-semibold text-sm">Example Prompts:</h4>
         <div className="space-y-2 text-sm">
           <button
@@ -151,7 +151,7 @@ export function StepBasics({ category, onUpdate, isGenerating, generationError }
                   'Ich will UFO-Sichtungen erfassen. Wichtig sind: Form des Objekts, Farbe, Größe, Bewegungsmuster, Geräusche, Dauer der Sichtung, Wetterbedingungen, gab es Zeugen.',
               })
             }
-            className="block w-full text-left p-2 rounded hover:bg-white transition-colors"
+            className="block w-full text-left p-2 rounded hover:bg-accent transition-colors"
           >
             <span className="font-medium">UFO Sightings:</span> Form, Farbe, Größe, Bewegungsmuster, Geräusche,
             Dauer, Wetterbedingungen, Zeugen...
@@ -164,7 +164,7 @@ export function StepBasics({ category, onUpdate, isGenerating, generationError }
                   'Ich will Geistersichtungen dokumentieren. Wichtig sind: Art der Erscheinung (visuell/akustisch/taktil), Aussehen, Ort, Tageszeit, Temperaturänderungen, elektromagnetische Anomalien, Gefühle dabei.',
               })
             }
-            className="block w-full text-left p-2 rounded hover:bg-white transition-colors"
+            className="block w-full text-left p-2 rounded hover:bg-accent transition-colors"
           >
             <span className="font-medium">Ghost Encounters:</span> Art der Erscheinung, Aussehen, Ort, Tageszeit,
             Temperatur, EM-Anomalien...

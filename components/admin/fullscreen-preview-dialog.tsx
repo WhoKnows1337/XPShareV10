@@ -5,6 +5,8 @@ import { DynamicQuestion } from '@/lib/types/admin-questions'
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { QuestionPreview } from './question-preview'
@@ -87,6 +89,9 @@ export function FullscreenPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 gap-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Preview: {categoryName}</DialogTitle>
+        </DialogHeader>
         {/* Top Bar */}
         <div className="flex items-center justify-between border-b bg-slate-50 px-6 py-4">
           <div className="flex items-center gap-4">

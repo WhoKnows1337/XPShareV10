@@ -137,7 +137,7 @@ export function StepPreview({ category, attributes, questions }: StepPreviewProp
       </Tabs>
 
       {/* How It Works */}
-      <Card className="border-blue-200 bg-blue-50">
+      <Card className="border-blue-200 bg-muted">
         <CardHeader>
           <CardTitle className="text-base">How It Works</CardTitle>
         </CardHeader>

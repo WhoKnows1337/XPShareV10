@@ -37,13 +37,13 @@ export function QuestionPreview({
       <Card
         className={`${
           isFullscreen ? 'max-w-3xl' : 'w-full'
-        } overflow-hidden border-2 border-purple-200 bg-white shadow-lg`}
+        } overflow-hidden border-2 border-primary/20 bg-card shadow-lg`}
       >
         {/* Preview Header */}
-        <div className="flex items-center gap-2 border-b bg-purple-50 px-4 py-3">
-          <Eye className="h-5 w-5 text-purple-600" />
-          <h3 className="font-semibold text-purple-900">Live Preview</h3>
-          <span className="ml-auto rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">
+        <div className="flex items-center gap-2 border-b bg-muted px-4 py-3">
+          <Eye className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-foreground">Live Preview</h3>
+          <span className="ml-auto rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
             {question.question_type}
           </span>
         </div>
@@ -60,19 +60,19 @@ export function QuestionPreview({
           {/* Metadata */}
           <div className="mt-6 space-y-2 border-t pt-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-600">Required:</span>
-              <span className="font-medium">
+              <span className="text-muted-foreground">Required:</span>
+              <span className="font-medium text-foreground">
                 {question.is_optional ? 'No' : 'Yes'}
               </span>
             </div>
             {question.tags.length > 0 && (
               <div className="flex items-start justify-between text-sm">
-                <span className="text-slate-600">Tags:</span>
+                <span className="text-muted-foreground">Tags:</span>
                 <div className="flex flex-wrap gap-1">
                   {question.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-slate-100 px-2 py-0.5 text-xs"
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
                     >
                       {tag}
                     </span>
@@ -85,9 +85,9 @@ export function QuestionPreview({
 
         {/* Preview Value Display */}
         {previewValue !== null && (
-          <div className="border-t bg-slate-50 px-6 py-4">
-            <h4 className="mb-2 text-sm font-semibold text-slate-700">Current Value:</h4>
-            <pre className="rounded-md bg-slate-800 p-3 text-sm text-green-400">
+          <div className="border-t bg-muted/50 px-6 py-4">
+            <h4 className="mb-2 text-sm font-semibold text-foreground">Current Value:</h4>
+            <pre className="rounded-md bg-slate-800 p-3 text-sm text-green-400 dark:bg-slate-900">
               {JSON.stringify(previewValue, null, 2)}
             </pre>
           </div>

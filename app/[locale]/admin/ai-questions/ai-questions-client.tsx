@@ -280,13 +280,13 @@ export function AIQuestionsClient({
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-lg bg-purple-50 p-4">
+                <div className="rounded-lg bg-muted p-4">
                   <p className="font-medium">AI-Generated Question:</p>
                   <p className="mt-2">{q.generated_question_text}</p>
                 </div>
 
                 {q.answer_text && (
-                  <div className="rounded-lg bg-blue-50 p-4">
+                  <div className="rounded-lg bg-muted p-4">
                     <p className="font-medium">User's Answer:</p>
                     <p className="mt-2">{q.answer_text}</p>
                   </div>

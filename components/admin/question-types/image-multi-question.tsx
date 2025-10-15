@@ -4,19 +4,22 @@ import { DynamicQuestion } from '@/lib/types/admin-questions'
 import { Check } from 'lucide-react'
 import Image from 'next/image'
 
-interface ImageSelectQuestionProps {
+interface ImageMultiQuestionProps {
   question: DynamicQuestion
   value?: unknown
   onChange?: (value: unknown) => void
   isPreview?: boolean
 }
 
-export function ImageSelectQuestion({ question, value, onChange, isPreview }: ImageSelectQuestionProps) {
+export function ImageMultiQuestion({ question, value, onChange, isPreview }: ImageMultiQuestionProps) {
   const options = question.options || []
-  const selectedValue = (value as string) || ''
+  const selectedValues = (value as string[]) || []
 
-  const handleSelect = (optionValue: string) => {
-    onChange?.(optionValue)
+  const handleToggle = (optionValue: string) => {
+    const newValue = selectedValues.includes(optionValue)
+      ? selectedValues.filter((v) => v !== optionValue)
+      : [...selectedValues, optionValue]
+    onChange?.(newValue)
   }
 
   return (
@@ -37,13 +40,13 @@ export function ImageSelectQuestion({ question, value, onChange, isPreview }: Im
       {/* Image Options Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {options.map((option) => {
-          const isSelected = selectedValue === option.value
+          const isSelected = selectedValues.includes(option.value)
 
           return (
             <button
               key={option.value}
               type="button"
-              onClick={() => handleSelect(option.value)}
+              onClick={() => handleToggle(option.value)}
               disabled={isPreview}
               className={`relative rounded-lg border-2 overflow-hidden transition-all disabled:cursor-not-allowed ${
                 isSelected
@@ -80,6 +83,13 @@ export function ImageSelectQuestion({ question, value, onChange, isPreview }: Im
           )
         })}
       </div>
+
+      {/* Selection Count */}
+      {selectedValues.length > 0 && (
+        <p className="text-sm text-slate-500">
+          {selectedValues.length} {selectedValues.length === 1 ? 'Option' : 'Optionen'} ausgewählt
+        </p>
+      )}
     </div>
   )
 }

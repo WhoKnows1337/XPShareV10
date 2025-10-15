@@ -163,9 +163,9 @@ export function StepPublish({ wizardState, onSuccess }: StepPublishProps) {
 
       {/* Success State */}
       {publishSuccess && (
-        <Alert className="border-green-200 bg-green-50">
+        <Alert className="border-green-200 bg-muted">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
+          <AlertDescription>
             <strong>Success!</strong> Your category has been published. Redirecting to category page...
           </AlertDescription>
         </Alert>
