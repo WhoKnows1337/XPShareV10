@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await (supabase as any).auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // For now, any authenticated user can access
 
     // Get all custom value suggestions
-    const { data: suggestions, error: suggestionsError } = await supabase
+    const { data: suggestions, error: suggestionsError } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .select('*')
       .order('times_used', { ascending: false });

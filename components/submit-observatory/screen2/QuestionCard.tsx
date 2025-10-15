@@ -415,9 +415,9 @@ export function QuestionCard({
           <button
             onClick={onBack}
             className="w-24 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-secondary border border-glass-border rounded hover:border-observatory-accent/30 transition-all"
-            title={t('back', 'Zurück')}
+            title={t('back')}
           >
-            ← {t('back', 'Zurück')}
+            ← {t('back')}
           </button>
         ) : (
           <div className="w-24" />
@@ -428,9 +428,9 @@ export function QuestionCard({
           onClick={onSkip}
           disabled={isRequired}
           className="flex-1 px-3 py-1.5 text-xs text-text-tertiary hover:text-text-secondary border border-glass-border rounded hover:border-observatory-accent/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-text-tertiary"
-          title={isRequired ? t('requiredQuestion', 'Diese Frage muss beantwortet werden') : t('skip', 'Überspringen')}
+          title={isRequired ? t('requiredQuestion') : t('skip')}
         >
-          {t('skip', 'Überspringen')}
+          {t('skip')}
         </button>
 
         {/* Next Button - Right */}
@@ -439,7 +439,7 @@ export function QuestionCard({
           disabled={!canSubmit()}
           className="w-24 btn-observatory text-xs py-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t('next', 'Weiter →')}
+          {t('next')}
         </button>
       </div>
     </div>

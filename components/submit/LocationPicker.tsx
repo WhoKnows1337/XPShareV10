@@ -27,7 +27,7 @@ export function LocationPicker({ value, coordinates, onSelect, className }: Loca
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Close results when clicking outside

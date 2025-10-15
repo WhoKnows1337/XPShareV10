@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await (supabase as any).auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const experienceData = await request.json();
 
     // Insert experience into database
-    const { data: experience, error: insertError } = await supabase
+    const { data: experience, error: insertError } = await (supabase as any)
       .from('experiences')
       .insert({
         user_id: user.id,
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       const embeddingText = experienceData.enhancedText || experienceData.text;
       const embedding = await generateEmbedding(embeddingText);
 
-      await supabase
+      await (supabase as any)
         .from('experiences')
         .update({ embedding: JSON.stringify(embedding) })
         .eq('id', experience.id);
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         };
       });
 
-      const { error: attributesError } = await supabase
+      const { error: attributesError } = await (supabase as any)
         .from('experience_attributes')
         .insert(attributeRecords);
 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Award XP to user
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('xp, level')
       .eq('id', user.id)
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     const leveledUp = newLevel > currentLevel;
 
     // Update profile
-    await supabase
+    await (supabase as any)
       .from('profiles')
       .update({
         xp: newXP,
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
     const badgesEarned: string[] = [];
 
     // First Experience badge
-    const { count } = await supabase
+    const { count } = await (supabase as any)
       .from('experiences')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id);
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
 async function awardBadge(supabase: any, userId: string, badgeSlug: string) {
   try {
     // Get badge ID
-    const { data: badge } = await supabase
+    const { data: badge } = await (supabase as any)
       .from('badges')
       .select('id, name')
       .eq('slug', badgeSlug)
@@ -212,7 +212,7 @@ async function awardBadge(supabase: any, userId: string, badgeSlug: string) {
     if (!badge) return;
 
     // Check if user already has badge
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('user_badges')
       .select('id')
       .eq('user_id', userId)
@@ -222,13 +222,13 @@ async function awardBadge(supabase: any, userId: string, badgeSlug: string) {
     if (existing) return;
 
     // Award badge
-    await supabase.from('user_badges').insert({
+    await (supabase as any).from('user_badges').insert({
       user_id: userId,
       badge_id: badge.id,
     });
 
     // Create notification
-    await supabase.from('notifications').insert({
+    await (supabase as any).from('notifications').insert({
       user_id: userId,
       type: 'badge_earned',
       title: `Badge Earned: ${badge.name}`,
@@ -247,7 +247,7 @@ async function trackCustomValue(supabase: any, attributeKey: string, customValue
     const canonical = customValue.toLowerCase().trim();
 
     // Check if this custom value already exists
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .select('id, times_used')
       .eq('attribute_key', attributeKey)
@@ -256,7 +256,7 @@ async function trackCustomValue(supabase: any, attributeKey: string, customValue
 
     if (existing) {
       // Increment times_used counter
-      await supabase
+      await (supabase as any)
         .from('custom_attribute_suggestions')
         .update({
           times_used: existing.times_used + 1,
@@ -267,7 +267,7 @@ async function trackCustomValue(supabase: any, attributeKey: string, customValue
       console.log(`Incremented custom value "${customValue}" for ${attributeKey} (now ${existing.times_used + 1}x)`);
     } else {
       // Insert new custom value suggestion
-      await supabase
+      await (supabase as any)
         .from('custom_attribute_suggestions')
         .insert({
           attribute_key: attributeKey,

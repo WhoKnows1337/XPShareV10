@@ -52,39 +52,51 @@ export type Database = {
       }
       question_categories: {
         Row: {
+          color: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
+          emoji: string | null
           icon: string | null
           id: string
           is_active: boolean | null
+          level: number | null
           name: string
+          parent_category_id: string | null
           slug: string
           sort_order: number
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
+          color?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          emoji?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean | null
+          level?: number | null
           name: string
+          parent_category_id?: string | null
           slug: string
           sort_order?: number
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
+          color?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          emoji?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean | null
+          level?: number | null
           name?: string
+          parent_category_id?: string | null
           slug?: string
           sort_order?: number
           updated_at?: string | null
@@ -447,8 +459,11 @@ export type Database = {
         Row: {
           adaptive_conditions: Json | null
           ai_adaptive: boolean | null
+          allow_custom_value: boolean | null
           category_id: string | null
           conditional_logic: Json | null
+          conditional_on_attribute: string | null
+          conditional_value: string | null
           created_at: string | null
           created_by: string | null
           follow_up_question: Json | null
@@ -456,11 +471,13 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_optional: boolean | null
+          maps_to_attribute: string | null
           options: Json | null
           placeholder: string | null
           priority: number
           question_text: string
           question_type: string
+          show_if: Json | null
           tags: string[] | null
           updated_at: string | null
           updated_by: string | null
@@ -468,8 +485,11 @@ export type Database = {
         Insert: {
           adaptive_conditions?: Json | null
           ai_adaptive?: boolean | null
+          allow_custom_value?: boolean | null
           category_id?: string | null
           conditional_logic?: Json | null
+          conditional_on_attribute?: string | null
+          conditional_value?: string | null
           created_at?: string | null
           created_by?: string | null
           follow_up_question?: Json | null
@@ -477,11 +497,13 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_optional?: boolean | null
+          maps_to_attribute?: string | null
           options?: Json | null
           placeholder?: string | null
           priority: number
           question_text: string
           question_type: string
+          show_if?: Json | null
           tags?: string[] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -489,8 +511,11 @@ export type Database = {
         Update: {
           adaptive_conditions?: Json | null
           ai_adaptive?: boolean | null
+          allow_custom_value?: boolean | null
           category_id?: string | null
           conditional_logic?: Json | null
+          conditional_on_attribute?: string | null
+          conditional_value?: string | null
           created_at?: string | null
           created_by?: string | null
           follow_up_question?: Json | null
@@ -498,11 +523,13 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_optional?: boolean | null
+          maps_to_attribute?: string | null
           options?: Json | null
           placeholder?: string | null
           priority?: number
           question_text?: string
           question_type?: string
+          show_if?: Json | null
           tags?: string[] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -716,6 +743,309 @@ export type Database = {
         }
         Relationships: []
       }
+      search_analytics: {
+        Row: {
+          clicked_result_id: string | null
+          created_at: string | null
+          execution_time_ms: number | null
+          filters: Json | null
+          id: string
+          language: string | null
+          query_embedding: string | null
+          query_text: string
+          result_count: number | null
+          search_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_result_id?: string | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          filters?: Json | null
+          id?: string
+          language?: string | null
+          query_embedding?: string | null
+          query_text: string
+          result_count?: number | null
+          search_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_result_id?: string | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          filters?: Json | null
+          id?: string
+          language?: string | null
+          query_embedding?: string | null
+          query_text?: string
+          result_count?: number | null
+          search_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      attribute_schema: {
+        Row: {
+          key: string
+          display_name: string
+          display_name_de: string | null
+          display_name_fr: string | null
+          display_name_es: string | null
+          category_slug: string | null
+          data_type: string | null
+          allowed_values: Json | null
+          description: string | null
+          is_searchable: boolean | null
+          is_filterable: boolean | null
+          sort_order: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          key: string
+          display_name: string
+          display_name_de?: string | null
+          display_name_fr?: string | null
+          display_name_es?: string | null
+          category_slug?: string | null
+          data_type?: string | null
+          allowed_values?: Json | null
+          description?: string | null
+          is_searchable?: boolean | null
+          is_filterable?: boolean | null
+          sort_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          key?: string
+          display_name?: string
+          display_name_de?: string | null
+          display_name_fr?: string | null
+          display_name_es?: string | null
+          category_slug?: string | null
+          data_type?: string | null
+          allowed_values?: Json | null
+          description?: string | null
+          is_searchable?: boolean | null
+          is_filterable?: boolean | null
+          sort_order?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      experience_attributes: {
+        Row: {
+          id: string
+          experience_id: string
+          attribute_key: string
+          attribute_value: string
+          confidence: number | null
+          source: string | null
+          evidence: string | null
+          verified_by_user: boolean | null
+          replaced_by: string | null
+          created_at: string | null
+          created_by: string | null
+          custom_value: string | null
+          is_custom_value: boolean | null
+          promoted_from_custom: string | null
+        }
+        Insert: {
+          id?: string
+          experience_id: string
+          attribute_key: string
+          attribute_value: string
+          confidence?: number | null
+          source?: string | null
+          evidence?: string | null
+          verified_by_user?: boolean | null
+          replaced_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_value?: string | null
+          is_custom_value?: boolean | null
+          promoted_from_custom?: string | null
+        }
+        Update: {
+          id?: string
+          experience_id?: string
+          attribute_key?: string
+          attribute_value?: string
+          confidence?: number | null
+          source?: string | null
+          evidence?: string | null
+          verified_by_user?: boolean | null
+          replaced_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          custom_value?: string | null
+          is_custom_value?: boolean | null
+          promoted_from_custom?: string | null
+        }
+        Relationships: []
+      }
+      experience_answers: {
+        Row: {
+          id: string
+          experience_id: string
+          question_id: string
+          answer_value: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          experience_id: string
+          question_id: string
+          answer_value: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          experience_id?: string
+          question_id?: string
+          answer_value?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      experience_media: {
+        Row: {
+          id: string
+          experience_id: string
+          type: string
+          url: string
+          caption: string | null
+          mime_type: string | null
+          file_size: number | null
+          duration_seconds: number | null
+          width: number | null
+          height: number | null
+          sort_order: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          experience_id: string
+          type: string
+          url: string
+          caption?: string | null
+          mime_type?: string | null
+          file_size?: number | null
+          duration_seconds?: number | null
+          width?: number | null
+          height?: number | null
+          sort_order?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          experience_id?: string
+          type?: string
+          url?: string
+          caption?: string | null
+          mime_type?: string | null
+          file_size?: number | null
+          duration_seconds?: number | null
+          width?: number | null
+          height?: number | null
+          sort_order?: number | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      experience_witnesses: {
+        Row: {
+          id: string
+          experience_id: string
+          name: string
+          contact_info: string | null
+          testimony: string | null
+          is_verified: boolean | null
+          verified_by: string | null
+          verified_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          experience_id: string
+          name: string
+          contact_info?: string | null
+          testimony?: string | null
+          is_verified?: boolean | null
+          verified_by?: string | null
+          verified_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          experience_id?: string
+          name?: string
+          contact_info?: string | null
+          testimony?: string | null
+          is_verified?: boolean | null
+          verified_by?: string | null
+          verified_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      experience_links: {
+        Row: {
+          id: string
+          source_experience_id: string
+          linked_experience_id: string
+          link_type: string | null
+          created_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          source_experience_id: string
+          linked_experience_id: string
+          link_type?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          source_experience_id?: string
+          linked_experience_id?: string
+          link_type?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      experience_shares: {
+        Row: {
+          id: string
+          experience_id: string
+          user_id: string | null
+          platform: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          experience_id: string
+          user_id?: string | null
+          platform: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          experience_id?: string
+          user_id?: string | null
+          platform?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       question_analytics_summary: {
@@ -734,7 +1064,31 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      is_following: {
+        Args: {
+          p_follower_id: string
+          p_following_id: string
+        }
+        Returns: boolean
+      }
+      get_following_feed: {
+        Args: {
+          p_user_id: string
+          p_limit: number
+          p_offset: number
+        }
+        Returns: Json
+      }
+      get_for_you_feed: {
+        Args: {
+          p_user_id: string
+          p_liked_categories: string[]
+          p_user_location: string | null
+          p_limit: number
+          p_offset: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

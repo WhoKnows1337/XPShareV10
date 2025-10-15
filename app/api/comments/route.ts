@@ -29,14 +29,15 @@ export async function GET(request: Request) {
     }
 
     // Fetch user profiles for all comment authors
-    const userIds = [...new Set(comments.map((c) => c.user_id))]
+    const commentsArray = comments as any[]
+    const userIds = [...new Set(commentsArray.map((c) => c.user_id))]
     const { data: profiles } = await supabase
       .from('user_profiles')
       .select('id, username, display_name, avatar_url')
       .in('id', userIds)
 
     // Merge profiles into comments
-    const commentsWithProfiles = comments.map((comment) => ({
+    const commentsWithProfiles = commentsArray.map((comment) => ({
       ...comment,
       user_profiles: profiles?.find((p) => p.id === comment.user_id) || null,
     }))
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
       .single()
 
     const commentWithProfile = {
-      ...comment,
+      ...(comment as any),
       user_profiles: profile,
     }
 
@@ -119,7 +120,7 @@ export async function DELETE(request: Request) {
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -133,7 +134,7 @@ export async function DELETE(request: Request) {
     }
 
     // RLS will ensure user can only delete their own comments
-    const { error } = await supabase.from('comments').delete().eq('id', commentId).eq('user_id', user.id)
+    const { error } = await (supabase as any).from('comments').delete().eq('id', commentId).eq('user_id', user.id)
 
     if (error) {
       console.error('Error deleting comment:', error)

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (authError) {
       console.error('Auth error:', authError)
@@ -157,14 +157,14 @@ export async function POST(request: Request) {
     // Award XP and check badges
     try {
       // Award XP for creating experience (50 XP)
-      await supabase.rpc('award_xp', {
+      await (supabase as any).rpc('award_xp', {
         p_user_id: user.id,
         p_amount: 50,
         p_reason: 'experience_submitted',
       })
 
       // Check and award badges
-      await supabase.rpc('check_and_award_badges', {
+      await (supabase as any).rpc('check_and_award_badges', {
         p_user_id: user.id,
       })
     } catch (xpError) {

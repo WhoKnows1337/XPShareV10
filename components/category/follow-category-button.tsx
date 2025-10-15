@@ -29,7 +29,7 @@ export function FollowCategoryButton({
 
       if (isFollowing) {
         // Unfollow
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('category_follows')
           .delete()
           .eq('user_id', userId)
@@ -44,7 +44,7 @@ export function FollowCategoryButton({
         })
       } else {
         // Follow
-        const { error } = await supabase.from('category_follows').insert({
+        const { error } = await (supabase as any).from('category_follows').insert({
           user_id: userId,
           category_slug: categorySlug,
           notify_new_experiences: true,

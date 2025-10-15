@@ -22,7 +22,7 @@ export function PatternPredictionCard({ category }: PatternPredictionCardProps) 
     queryKey: ['pattern-prediction', category],
     queryFn: async () => {
       const supabase = createClient()
-      const { data, error } = await supabase.rpc('predict_next_wave', {
+      const { data, error } = await (supabase as any).rpc('predict_next_wave', {
         category_param: category,
         days_ahead: 30
       })

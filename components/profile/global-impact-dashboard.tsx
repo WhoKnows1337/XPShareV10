@@ -50,7 +50,7 @@ export function GlobalImpactDashboard({ userId }: GlobalImpactDashboardProps) {
     async function fetchImpact() {
       try {
         const supabase = createClient()
-        const { data, error } = await supabase.rpc('calculate_user_impact', {
+        const { data, error } = await (supabase as any).rpc('calculate_user_impact', {
           target_user_id: userId
         })
 

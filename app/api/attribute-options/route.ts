@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Convert allowed_values array to options format { value, label }
-    const allowedValues = schema?.allowed_values || [];
+    const allowedValues = (schema?.allowed_values as string[]) || [];
     const options = allowedValues.map((value: string) => ({
       value,
       label: value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' '),

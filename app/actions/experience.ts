@@ -92,24 +92,29 @@ export async function exportExperiencePDF(experienceId: string) {
   }
 
   // Generate PDF data (simple JSON for now, can be extended with actual PDF generation)
+  const userProfiles = experience.user_profiles as any
+  const experienceAnswers = experience.experience_answers as any
+  const experienceMedia = experience.experience_media as any
+  const experienceWitnesses = experience.experience_witnesses as any
+
   const pdfData = {
     title: experience.title,
-    author: experience.user_profiles?.display_name || experience.user_profiles?.username,
+    author: userProfiles?.display_name || userProfiles?.username,
     category: experience.category,
     dateOccurred: experience.date_occurred,
     location: experience.location_text,
     story: experience.story_text,
     tags: experience.tags,
-    answers: experience.experience_answers?.map((a: any) => ({
+    answers: experienceAnswers?.map((a: any) => ({
       question: a.dynamic_questions.question_text,
       answer: a.answer_value,
     })),
-    media: experience.experience_media?.map((m: any) => ({
+    media: experienceMedia?.map((m: any) => ({
       type: m.type,
       url: m.url,
       caption: m.caption,
     })),
-    witnesses: experience.experience_witnesses?.map((w: any) => ({
+    witnesses: experienceWitnesses?.map((w: any) => ({
       name: w.name,
       testimony: w.testimony,
     })),

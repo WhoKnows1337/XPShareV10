@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Check if user is admin
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await (supabase as any).auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

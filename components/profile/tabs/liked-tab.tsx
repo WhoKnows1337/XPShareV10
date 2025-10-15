@@ -20,7 +20,7 @@ export function LikedTab({ userId, isOwnProfile }: LikedTabProps) {
     queryKey: ['liked-experiences', userId],
     queryFn: async () => {
       const supabase = createClient()
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('experience_likes')
         .select(`
           created_at,
@@ -48,13 +48,13 @@ export function LikedTab({ userId, isOwnProfile }: LikedTabProps) {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data.map((item) => item.experience)
+      return data.map((item: any) => item.experience)
     },
   })
 
   const handleUnlike = async (experienceId: string) => {
     const supabase = createClient()
-    await supabase
+    await (supabase as any)
       .from('experience_likes')
       .delete()
       .eq('user_id', userId)

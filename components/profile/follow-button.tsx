@@ -30,7 +30,7 @@ export function FollowButton({
   const { data: isFollowing, isLoading } = useQuery({
     queryKey: ['is-following', targetUserId],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('is_following', {
+      const { data, error } = await (supabase as any).rpc('is_following', {
         target_user_id: targetUserId,
       })
 
@@ -47,7 +47,7 @@ export function FollowButton({
   // Follow mutation
   const followMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc('follow_user', {
+      const { data, error } = await (supabase as any).rpc('follow_user', {
         target_user_id: targetUserId,
       })
 
@@ -76,7 +76,7 @@ export function FollowButton({
   // Unfollow mutation
   const unfollowMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc('unfollow_user', {
+      const { data, error } = await (supabase as any).rpc('unfollow_user', {
         target_user_id: targetUserId,
       })
 

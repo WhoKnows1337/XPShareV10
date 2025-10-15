@@ -10,10 +10,10 @@ interface CategoryWithStats {
   id: string
   slug: string
   name: string
-  icon: string
+  icon: string | null
   description: string | null
-  level: number
-  is_active: boolean
+  level: number | null
+  is_active: boolean | null
   parent_category_id: string | null
   questionCount: number
   attributeCount: number

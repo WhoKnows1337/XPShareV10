@@ -30,7 +30,7 @@ export async function toggleFollow(followingId: string) {
 
     if (isFollowingData) {
       // Unfollow
-      const { error } = await supabase.rpc('unfollow_user', {
+      const { error } = await (supabase as any).rpc('unfollow_user', {
         p_follower_id: user.id,
         p_following_id: followingId,
       })
@@ -43,7 +43,7 @@ export async function toggleFollow(followingId: string) {
       return { success: true, isFollowing: false }
     } else {
       // Follow
-      const { error } = await supabase.rpc('follow_user', {
+      const { error } = await (supabase as any).rpc('follow_user', {
         p_follower_id: user.id,
         p_following_id: followingId,
       })

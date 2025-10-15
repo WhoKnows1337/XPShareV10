@@ -14,7 +14,7 @@ export async function POST(
     // Authenticate user (only author or admin can revalidate)
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })

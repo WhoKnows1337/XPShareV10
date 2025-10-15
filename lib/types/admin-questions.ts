@@ -91,6 +91,7 @@ export interface DynamicQuestion {
   follow_up_question: FollowUpQuestion | null
   tags: string[]
   is_active: boolean
+  maps_to_attribute: string | null
   created_at: string
   updated_at: string
   created_by: string | null

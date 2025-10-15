@@ -171,10 +171,11 @@ export default function MapView({ experiences }: MapViewProps) {
         const features = map.current.queryRenderedFeatures(e.point, {
           layers: ['clusters'],
         })
+        if (!features[0] || !features[0].properties) return
         const clusterId = features[0].properties.cluster_id
         const source = map.current.getSource('experiences') as mapboxgl.GeoJSONSource
         source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err || !map.current) return
+          if (err || !map.current || zoom === null) return
           map.current.easeTo({
             center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
             zoom: zoom,
@@ -186,6 +187,7 @@ export default function MapView({ experiences }: MapViewProps) {
       map.current!.on('click', 'unclustered-point', (e) => {
         if (!e.features || !e.features[0]) return
         const props = e.features[0].properties
+        if (!props) return
 
         new mapboxgl.Popup()
           .setLngLat((e.features[0].geometry as GeoJSON.Point).coordinates as [number, number])

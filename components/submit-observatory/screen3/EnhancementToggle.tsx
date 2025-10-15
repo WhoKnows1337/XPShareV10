@@ -20,10 +20,10 @@ export function EnhancementToggle({ enabled, onToggle, isLoading = false }: Enha
         </div>
         <div>
           <h4 className="font-semibold text-text-primary">
-            {t('title', '🎚️ KI-Anreicherungen')}
+            {t('title')}
           </h4>
           <p className="text-sm text-text-secondary">
-            {t('description', 'Hervorhebungen im Text zeigen')}
+            {t('description')}
           </p>
         </div>
       </div>

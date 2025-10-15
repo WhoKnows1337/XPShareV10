@@ -45,7 +45,7 @@ export function AIResultsSection() {
   }
 
   const attributeCount = screen2.attributes ? Object.keys(screen2.attributes).length : 0;
-  const confidencePercent = screen2.confidence ? Math.round(screen2.confidence * 100) : 0;
+  const confidencePercent = screen2.aiConfidence ? Math.round(screen2.aiConfidence * 100) : 0;
 
   // Step 2: Minimal Card Design
   if (currentStep === 2) {
@@ -83,7 +83,7 @@ export function AIResultsSection() {
                   }}
                   className="text-left text-sm font-medium text-text-primary hover:text-observatory-accent transition-colors group w-full"
                 >
-                  {screen2.title || t('untitled', 'Ohne Titel')}
+                  {screen2.title || t('untitled')}
                   <Pencil className="inline-block ml-2 w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               ) : (
@@ -126,7 +126,7 @@ export function AIResultsSection() {
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-observatory-accent" />
               <span className="text-xs font-medium text-text-secondary">
-                {attributeCount} {t('attributesFound', 'Attribute erkannt')}
+                {attributeCount} {t('attributesFound')}
               </span>
             </div>
             <ChevronDown className={`w-4 h-4 text-text-tertiary transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -149,11 +149,11 @@ export function AIResultsSection() {
                         className="flex items-center justify-between py-1.5 px-2 bg-glass-border/20 rounded text-xs"
                       >
                         <span className="text-text-secondary font-medium">
-                          {t(`attributes.${key}`, key)}
+                          {t(`attributes.${key}`)}
                         </span>
                         <div className="flex items-center gap-2">
                           <span className="text-text-primary">
-                            {t(`attributes.values.${attr.value}`, attr.value)}
+                            {t(`attributes.values.${attr.value}`)}
                           </span>
                           <span className="text-[10px] text-text-tertiary">
                             {attr.confidence}%
@@ -163,7 +163,7 @@ export function AIResultsSection() {
                     ))
                   ) : (
                     <p className="text-xs text-text-tertiary text-center py-2">
-                      {t('noAttributes', 'Keine Attribute erkannt')}
+                      {t('noAttributes')}
                     </p>
                   )}
                 </div>
@@ -190,7 +190,7 @@ export function AIResultsSection() {
           </div>
           <div className="flex-1">
             <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">
-              {t('category', 'Kategorie')}
+              {t('category')}
             </p>
             <p className="text-sm font-semibold text-text-primary">
               {categoryName}
@@ -208,7 +208,7 @@ export function AIResultsSection() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs text-text-tertiary uppercase tracking-wider">
-            {t('title', 'Titel')}
+            {t('title')}
           </p>
           {!isEditingTitle && (
             <button
@@ -225,7 +225,7 @@ export function AIResultsSection() {
 
         {!isEditingTitle ? (
           <p className="text-sm text-text-primary font-medium">
-            {screen2.title || t('untitled', 'Ohne Titel')}
+            {screen2.title || t('untitled')}
           </p>
         ) : (
           <div className="space-y-2">
@@ -238,7 +238,7 @@ export function AIResultsSection() {
                 if (e.key === 'Escape') setIsEditingTitle(false);
               }}
               className="w-full text-sm bg-glass-bg border border-glass-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-observatory-accent"
-              placeholder={t('titlePlaceholder', 'Titel eingeben...')}
+              placeholder={t('titlePlaceholder')}
               autoFocus
             />
             <div className="flex gap-2">
@@ -247,7 +247,7 @@ export function AIResultsSection() {
                 className="flex-1 px-3 py-1.5 bg-observatory-accent hover:bg-observatory-accent/80 text-white text-xs rounded transition-colors"
               >
                 <Check className="inline w-3 h-3 mr-1" />
-                {t('save', 'Speichern')}
+                {t('save')}
               </button>
               <button
                 onClick={() => setIsEditingTitle(false)}
@@ -267,7 +267,7 @@ export function AIResultsSection() {
         <>
           <div>
             <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
-              {t('summary', 'Zusammenfassung')}
+              {t('summary')}
             </p>
             <p className="text-sm text-text-secondary leading-relaxed">
               {screen3.summary}
@@ -280,7 +280,7 @@ export function AIResultsSection() {
       {/* Tags Section */}
       <div>
         <p className="text-xs text-text-tertiary uppercase tracking-wider mb-2">
-          {t('tags', 'Tags')}
+          {t('tags')}
         </p>
         <div className="flex flex-wrap gap-2">
           {screen2.tags && screen2.tags.length > 0 ? (
@@ -295,7 +295,7 @@ export function AIResultsSection() {
               </motion.div>
             ))
           ) : (
-            <p className="text-xs text-text-tertiary">{t('noTags', 'Keine Tags')}</p>
+            <p className="text-xs text-text-tertiary">{t('noTags')}</p>
           )}
         </div>
       </div>
@@ -305,7 +305,7 @@ export function AIResultsSection() {
       {/* Attributes Section */}
       <div>
         <p className="text-xs text-text-tertiary uppercase tracking-wider mb-3">
-          {t('attributes', 'Erkannte Attribute')}
+          {t('attributes')}
         </p>
         <div className="space-y-2">
           {attributeCount > 0 ? (
@@ -316,7 +316,7 @@ export function AIResultsSection() {
               >
                 <div className="flex items-start justify-between mb-1">
                   <span className="text-xs font-medium text-text-secondary">
-                    {t(`attributes.${key}`, key)}
+                    {t(`attributes.${key}`)}
                   </span>
                   <div className="flex items-center gap-1">
                     <div className={`w-1.5 h-1.5 rounded-full ${attr.confidence >= 80 ? 'bg-success-soft' : attr.confidence >= 60 ? 'bg-warning' : 'bg-destructive'}`} />
@@ -326,13 +326,13 @@ export function AIResultsSection() {
                   </div>
                 </div>
                 <p className="text-sm text-text-primary">
-                  {t(`attributes.values.${attr.value}`, attr.value)}
+                  {t(`attributes.values.${attr.value}`)}
                 </p>
               </div>
             ))
           ) : (
             <p className="text-xs text-text-tertiary text-center py-4">
-              {t('noAttributes', 'Keine Attribute erkannt')}
+              {t('noAttributes')}
             </p>
           )}
         </div>

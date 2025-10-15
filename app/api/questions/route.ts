@@ -16,12 +16,11 @@ export async function GET(request: Request) {
   try {
     const supabase = await createClient()
 
-    // First, get the category ID from the slug
+    // First, get the category ID from the slug (allow inactive categories)
     const { data: category, error: categoryError } = await supabase
       .from('question_categories')
-      .select('id')
+      .select('id, is_active')
       .eq('slug', categorySlug)
-      .eq('is_active', true)
       .single()
 
     if (categoryError || !category) {
@@ -32,10 +31,13 @@ export async function GET(request: Request) {
     }
 
     // Get questions for this category + universal questions (category_id IS NULL)
+    // For inactive categories: only load universal questions
     const { data: questions, error: questionsError } = await supabase
       .from('dynamic_questions')
       .select('*')
-      .or(`category_id.is.null,category_id.eq.${category.id}`)
+      .or(category.is_active
+        ? `category_id.is.null,category_id.eq.${category.id}`
+        : `category_id.is.null`)
       .eq('is_active', true)
       .order('priority', { ascending: true })
 

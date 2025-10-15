@@ -65,7 +65,7 @@ export async function fetchCategories(): Promise<Category[]> {
     return []
   }
 
-  return data || []
+  return (data as Category[]) || []
 }
 
 /**
@@ -86,7 +86,7 @@ export async function fetchCategoryBySlug(slug: string): Promise<Category | null
     return null
   }
 
-  return data
+  return data as Category
 }
 
 /**
@@ -133,7 +133,7 @@ export async function fetchQuestionsForCategory(categorySlug: string): Promise<Q
   }
 
   // Map to UI format
-  return (data || []).map(mapQuestionToUI)
+  return ((data as DynamicQuestion[]) || []).map(mapQuestionToUI)
 }
 
 /**
@@ -160,7 +160,7 @@ function mapQuestionToUI(dbQuestion: DynamicQuestion): QuestionForUI {
 
   // Add options for multiChoice
   if (dbQuestion.question_type === 'chips' || dbQuestion.question_type === 'chips-multi') {
-    question.options = Array.isArray(dbQuestion.options) ? dbQuestion.options.map(opt =>
+    question.options = Array.isArray(dbQuestion.options) ? dbQuestion.options.map((opt: any) =>
       typeof opt === 'string' ? opt : opt.label || opt.value
     ) : []
   }
@@ -169,7 +169,7 @@ function mapQuestionToUI(dbQuestion: DynamicQuestion): QuestionForUI {
   if (dbQuestion.question_type === 'slider') {
     if (Array.isArray(dbQuestion.options)) {
       // New format: [{value: '__slider_config__', label: JSON.stringify(config)}]
-      const configOption = dbQuestion.options.find((opt: any) => opt.value === '__slider_config__')
+      const configOption: any = dbQuestion.options.find((opt: any) => opt.value === '__slider_config__')
       if (configOption && configOption.label) {
         try {
           question.sliderConfig = JSON.parse(configOption.label)

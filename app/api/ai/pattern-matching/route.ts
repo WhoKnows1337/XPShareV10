@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -103,7 +103,7 @@ async function findSimilarExperiences(
   maxResults: number
 ) {
   try {
-    const { data, error } = await supabase.rpc('find_similar_experiences', {
+    const { data, error } = await (supabase as any).rpc('find_similar_experiences', {
       query_embedding: embedding,
       category_filter: category,
       similarity_threshold: minSimilarity,
@@ -130,7 +130,7 @@ async function findGeographicClusters(
     const [lng, lat] = location.coordinates
     const radius_km = 100 // 100km radius
 
-    const { data, error } = await supabase.rpc('find_geographic_clusters', {
+    const { data, error } = await (supabase as any).rpc('find_geographic_clusters', {
       center_lat: lat,
       center_lng: lng,
       radius_km,
@@ -156,7 +156,7 @@ async function findTemporalClusters(
     const targetDate = new Date(timestamp)
     const daysWindow = 30 // ±30 days
 
-    const { data, error } = await supabase.rpc('find_temporal_clusters', {
+    const { data, error } = await (supabase as any).rpc('find_temporal_clusters', {
       target_date: timestamp,
       days_window: daysWindow,
       category_filter: category,
@@ -305,7 +305,7 @@ async function findInterestedUsers(
   location: { name: string; coordinates?: [number, number] } | null
 ) {
   try {
-    const { data, error } = await supabase.rpc('find_interested_users', {
+    const { data, error } = await (supabase as any).rpc('find_interested_users', {
       category_filter: category,
       location_filter: location?.name,
       max_users: 10,

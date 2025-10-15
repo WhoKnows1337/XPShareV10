@@ -17,7 +17,7 @@ export function ExtraQuestionsPrompt({ onAccept }: ExtraQuestionsPromptProps) {
             +50 XP
           </span>
           <span className="text-xs text-text-secondary">
-            {t('title', 'Extra Questions?')}
+            {t('title')}
           </span>
         </div>
         <div className="flex gap-2">
@@ -25,18 +25,18 @@ export function ExtraQuestionsPrompt({ onAccept }: ExtraQuestionsPromptProps) {
             onClick={() => {}}
             className="px-2 py-1 text-xs text-text-tertiary hover:text-text-secondary"
           >
-            {t('decline', 'Später')}
+            {t('decline')}
           </button>
           <button
             onClick={onAccept}
             className="px-3 py-1 bg-observatory-accent/20 border border-observatory-accent/40 rounded text-xs text-observatory-accent hover:bg-observatory-accent/30"
           >
-            {t('accept', 'Start')}
+            {t('accept')}
           </button>
         </div>
       </div>
       <p className="text-[10px] text-text-tertiary leading-relaxed">
-        {t('description', 'Optionale Zusatzfragen für bessere Pattern-Matches')}
+        {t('description')}
       </p>
     </div>
   );

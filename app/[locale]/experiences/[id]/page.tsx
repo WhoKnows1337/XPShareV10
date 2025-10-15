@@ -214,13 +214,14 @@ export default async function ExperiencePage({
 
   // Fetch external events (Solar, Moon, Weather)
   const externalEvents = await getEnvironmentalData(
-    experience.date_occurred,
+    experience.date_occurred || '',
     experience.location_lat ?? undefined,
     experience.location_lng ?? undefined
   )
 
   // Fetch cross-category insights (Aha-Moment #9)
-  const crossCategoryInsights = await getCrossCategoryInsights(experience.category)
+  const crossCategoryInsightsRaw = await getCrossCategoryInsights(experience.category)
+  const crossCategoryInsights = Array.isArray(crossCategoryInsightsRaw) ? crossCategoryInsightsRaw : []
 
   // Fetch nearby experiences if location is available
   let nearbyCount = 0
@@ -231,7 +232,7 @@ export default async function ExperiencePage({
       50, // 50km radius
       20 // limit
     )
-    nearbyCount = nearbyExperiences.length
+    nearbyCount = Array.isArray(nearbyExperiences) ? nearbyExperiences.length : 0
   }
 
   // Fetch author's experiences for timeline
@@ -347,7 +348,7 @@ export default async function ExperiencePage({
   }
 
   // Prepare similar experiences data (now with real similarity scores)
-  const similarExpsData = similarExperiences || []
+  const similarExpsData = Array.isArray(similarExperiences) ? similarExperiences : []
 
   // Prepare sidebar components
   const relatedSidebarContent = (
@@ -357,7 +358,12 @@ export default async function ExperiencePage({
         similarExperiences={similarExpsData}
         currentUserId={user?.id}
         isFollowing={isFollowing}
-        authorTimeline={authorExperiences || []}
+        authorTimeline={(authorExperiences || [])
+          .filter((exp) => exp.created_at !== null)
+          .map((exp) => ({
+            created_at: exp.created_at!,
+            date_occurred: exp.date_occurred ?? undefined,
+          }))}
         experienceId={experience.id}
       />
     </Suspense>
@@ -385,7 +391,7 @@ export default async function ExperiencePage({
           externalEvents={externalEvents}
         />
         <CrossCategoryInsights
-          insights={crossCategoryInsights}
+          insights={crossCategoryInsights as any}
           currentCategory={experience.category}
         />
         {experience.location_lat && experience.location_lng && (

@@ -75,7 +75,7 @@ export const getSimilarExperiences = cache(async (experienceId: string, limit: n
   }
 
   // Use RPC function for vector similarity search
-  const { data } = await supabase.rpc('match_experiences', {
+  const { data } = await (supabase as any).rpc('match_experiences', {
     query_embedding: experience.embedding,
     match_threshold: 0.6,
     match_count: limit,
@@ -107,7 +107,7 @@ export const getEnvironmentalData = cache(async (
 export const getCrossCategoryInsights = cache(async (category: string) => {
   const supabase = await createClient()
 
-  const { data } = await supabase.rpc('get_cross_category_insights', {
+  const { data } = await (supabase as any).rpc('get_cross_category_insights', {
     p_category: category,
   })
 
@@ -137,7 +137,9 @@ export const getTimelineData = cache(async (category: string, months: number = 1
   const monthlyData: { [key: string]: number } = {}
 
   data.forEach((exp) => {
-    const date = new Date(exp.date_occurred || exp.created_at)
+    const dateValue = exp.date_occurred || exp.created_at
+    if (!dateValue) return // Skip if no date available
+    const date = new Date(dateValue)
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1
   })
@@ -162,7 +164,7 @@ export const getNearbyExperiences = cache(async (
   const supabase = await createClient()
 
   // Use PostGIS for geospatial queries
-  const { data } = await supabase.rpc('get_nearby_experiences', {
+  const { data } = await (supabase as any).rpc('get_nearby_experiences', {
     p_lat: lat,
     p_lng: lng,
     p_radius_km: radiusKm,

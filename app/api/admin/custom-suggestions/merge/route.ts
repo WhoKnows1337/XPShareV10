@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await (supabase as any).auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the suggestion details
-    const { data: suggestion, error: fetchError } = await supabase
+    const { data: suggestion, error: fetchError } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .select('*')
       .eq('id', suggestionId)
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify that the merge target exists in attribute_schema
-    const { data: schema, error: schemaError } = await supabase
+    const { data: schema, error: schemaError } = await (supabase as any)
       .from('attribute_schema')
       .select('options')
       .eq('attribute_key', suggestion.attribute_key)
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const targetOptionExists = schema.options?.some(
+    const targetOptionExists = (schema as any).options?.some(
       (opt: any) => opt.value === mergeIntoValue
     );
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the suggestion status to merged
-    const { error: statusError } = await supabase
+    const { error: statusError } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .update({
         status: 'merged',

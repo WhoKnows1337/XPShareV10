@@ -8,7 +8,7 @@ import { DropZone } from './DropZone'
 import { MediaPreview } from './MediaPreview'
 import { ProgressBar } from '../shared/ProgressBar'
 import { NavigationButtons } from '../shared/NavigationButtons'
-import { WitnessManager } from '@/components/submit3/WitnessManager'
+import { WitnessManager } from '@/components/submit-observatory/screen4/WitnessManager'
 import { Pencil } from 'lucide-react'
 
 // Dynamic import for Excalidraw to avoid SSR issues

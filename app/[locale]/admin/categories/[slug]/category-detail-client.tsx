@@ -38,10 +38,10 @@ import {
 interface AttributeSchema {
   key: string
   display_name: string
-  data_type: string
+  data_type: string | null
   allowed_values: string[] | null
-  is_filterable: boolean
-  is_searchable: boolean
+  is_filterable: boolean | null
+  is_searchable: boolean | null
   description?: string | null
 }
 
@@ -257,11 +257,11 @@ export function CategoryDetailClient({
       key: attribute.key,
       display_name: attribute.display_name,
       display_name_de: '',
-      data_type: attribute.data_type,
+      data_type: attribute.data_type || 'enum',
       allowed_values: attribute.allowed_values || [],
       description: attribute.description || '',
-      is_searchable: attribute.is_searchable,
-      is_filterable: attribute.is_filterable,
+      is_searchable: attribute.is_searchable ?? true,
+      is_filterable: attribute.is_filterable ?? true,
       sort_order: 999,
     })
     setIsAttributeDialogOpen(true)

@@ -17,7 +17,7 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
   } = options
 
   const store = useSubmissionStore()
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const lastSaveRef = useRef<number>(0)
 
   const saveDraft = useCallback(() => {

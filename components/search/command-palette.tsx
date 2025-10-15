@@ -70,7 +70,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       setLoading(true)
       try {
         const supabase = createClient()
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('experiences')
           .select(`
             id,

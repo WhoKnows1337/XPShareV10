@@ -28,7 +28,7 @@ export function MediaLightbox({ media, initialIndex, isOpen, onClose }: MediaLig
   const dialogRef = useRef<HTMLDivElement>(null)
 
   // Focus trap
-  useFocusTrap(dialogRef, isOpen)
+  useFocusTrap(dialogRef as any, isOpen)
 
   useEffect(() => {
     setCurrentIndex(initialIndex)

@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // Generate professional HTML for PDF
-    const html = generateExperiencePDFHTML(experience)
+    const html = generateExperiencePDFHTML(experience as any)
 
     // PRODUCTION PDF GENERATION:
     // Uncomment when puppeteer is installed:

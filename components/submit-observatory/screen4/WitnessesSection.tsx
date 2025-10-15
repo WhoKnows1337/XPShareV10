@@ -71,10 +71,10 @@ export function WitnessesSection() {
           <div className="flex-1">
             <h2 className="section-title-observatory flex items-center gap-2">
               <Users className="w-5 h-5 text-observatory-gold" />
-              {t('title', '🤝 Augenzeugen & Glaubwürdigkeit')}
+              {t('title')}
             </h2>
             <p className="text-sm text-text-secondary mt-2">
-              {t('subtitle', 'War jemand dabei? Lade Zeugen ein die deine Erfahrung bestätigen können!')}
+              {t('subtitle')}
             </p>
           </div>
         </div>
@@ -83,10 +83,10 @@ export function WitnessesSection() {
           <span className="text-lg">⭐</span>
           <div className="flex-1">
             <p className="text-sm font-semibold text-observatory-gold">
-              {t('xpBonus', '+30 XP pro bestätigtem Zeugen!')}
+              {t('xpBonus')}
             </p>
             <p className="text-xs text-text-tertiary">
-              {t('credibility', 'Augenzeugen erhöhen die Glaubwürdigkeit deiner Erfahrung erheblich.')}
+              {t('credibility')}
             </p>
           </div>
         </div>
@@ -101,7 +101,7 @@ export function WitnessesSection() {
           >
             <Search className="w-7 h-7 text-observatory-gold mx-auto mb-2 group-hover:scale-110 transition-transform" />
             <div className="text-sm font-medium text-text-primary">
-              {t('searchUser', 'Nutzer suchen')}
+              {t('searchUser')}
             </div>
           </button>
 
@@ -111,7 +111,7 @@ export function WitnessesSection() {
           >
             <Mail className="w-7 h-7 text-observatory-gold mx-auto mb-2 group-hover:scale-110 transition-transform" />
             <div className="text-sm font-medium text-text-primary">
-              {t('emailInvite', 'E-Mail Einladung')}
+              {t('emailInvite')}
             </div>
           </button>
 
@@ -121,7 +121,7 @@ export function WitnessesSection() {
           >
             <Link2 className="w-7 h-7 text-observatory-gold mx-auto mb-2 group-hover:scale-110 transition-transform" />
             <div className="text-sm font-medium text-text-primary">
-              {t('shareLink', 'Link teilen')}
+              {t('shareLink')}
             </div>
           </button>
         </div>
@@ -135,7 +135,7 @@ export function WitnessesSection() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('searchPlaceholder', 'Nutzername oder E-Mail...')}
+              placeholder={t('searchPlaceholder')}
               className="input-observatory flex-1"
               autoFocus
             />
@@ -151,7 +151,7 @@ export function WitnessesSection() {
             onClick={() => setActiveMethod(null)}
             className="text-xs text-text-tertiary hover:text-text-secondary"
           >
-            {t('cancel', 'Abbrechen')}
+            {t('cancel')}
           </button>
         </div>
       )}
@@ -164,7 +164,7 @@ export function WitnessesSection() {
               type="email"
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
-              placeholder={t('emailPlaceholder', 'zeuge@example.com')}
+              placeholder={t('emailPlaceholder')}
               className="input-observatory flex-1"
               autoFocus
             />
@@ -173,14 +173,14 @@ export function WitnessesSection() {
               disabled={!emailInput.trim() || !emailInput.includes('@')}
               className="btn-observatory px-5"
             >
-              {t('send', 'Senden')}
+              {t('send')}
             </button>
           </div>
           <button
             onClick={() => setActiveMethod(null)}
             className="text-xs text-text-tertiary hover:text-text-secondary"
           >
-            {t('cancel', 'Abbrechen')}
+            {t('cancel')}
           </button>
         </div>
       )}
@@ -189,20 +189,20 @@ export function WitnessesSection() {
       {activeMethod === 'link' && (
         <div className="p-5 bg-space-deep/60 border border-glass-border rounded-lg space-y-4">
           <div className="text-sm text-text-secondary mb-3">
-            {t('linkDescription', 'Teile diesen Link mit Zeugen per WhatsApp, SMS oder anderen Kanälen')}
+            {t('linkDescription')}
           </div>
           <button
             onClick={handleCopyShareLink}
             className="btn-observatory w-full"
           >
             <Link2 className="w-4 h-4 mr-2" />
-            {linkCopied ? t('linkCopied', '✓ Link kopiert!') : t('copyLink', 'Link kopieren')}
+            {linkCopied ? t('linkCopied') : t('copyLink')}
           </button>
           <button
             onClick={() => setActiveMethod(null)}
             className="text-xs text-text-tertiary hover:text-text-secondary"
           >
-            {t('close', 'Schließen')}
+            {t('close')}
           </button>
         </div>
       )}
@@ -211,7 +211,7 @@ export function WitnessesSection() {
       {screen4.witnesses.length > 0 && (
         <div className="space-y-3 pt-4 border-t border-glass-border">
           <div className="text-sm font-medium text-text-secondary">
-            {t('invited', 'Eingeladene Zeugen')} ({screen4.witnesses.length})
+            {t('invited')} ({screen4.witnesses.length})
           </div>
           <div className="space-y-2">
             {screen4.witnesses.map((witness, index) => (
@@ -230,15 +230,12 @@ export function WitnessesSection() {
         <Users className="w-5 h-5 text-success-soft flex-shrink-0 mt-0.5" />
         <div className="text-sm">
           <p className="text-text-secondary">
-            {t(
-              'info',
-              '💡 Eingeladene Zeugen erhalten eine Benachrichtigung und können:'
-            )}
+            {t('info')}
           </p>
           <ul className="text-xs text-text-tertiary mt-2 space-y-1 ml-4 list-disc">
-            <li>{t('infoPoint1', 'Die Erfahrung bestätigen')}</li>
-            <li>{t('infoPoint2', 'Eigene Details und Perspektiven hinzufügen')}</li>
-            <li>{t('infoPoint3', 'Dir +30 XP verschaffen wenn sie bestätigen')}</li>
+            <li>{t('infoPoint1')}</li>
+            <li>{t('infoPoint2')}</li>
+            <li>{t('infoPoint3')}</li>
           </ul>
         </div>
       </div>

@@ -5,12 +5,11 @@ import dynamic from 'next/dynamic'
 import * as Dialog from '@radix-ui/react-dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, RotateCcw } from 'lucide-react'
-import type { ExcalidrawImperativeAPI, ExcalidrawElement } from '@excalidraw/excalidraw/types/types'
 
 const Excalidraw = dynamic(
   async () => {
-    const module = await import('@excalidraw/excalidraw')
-    return module.Excalidraw
+    const excalidrawModule = await import('@excalidraw/excalidraw')
+    return excalidrawModule.Excalidraw
   },
   {
     ssr: false,
@@ -29,7 +28,7 @@ interface SketchModalProps {
 }
 
 export const SketchModal = ({ isOpen, onClose, onSave }: SketchModalProps) => {
-  const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
+  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null)
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSave = async () => {

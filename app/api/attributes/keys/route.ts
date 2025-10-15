@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    const { data: keys, error } = await supabase.rpc(
+    const { data: keys, error } = await (supabase as any).rpc(
       'get_available_attribute_keys',
       {
         p_category_slug: category || null,

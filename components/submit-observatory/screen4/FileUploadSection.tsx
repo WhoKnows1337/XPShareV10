@@ -39,14 +39,14 @@ export function FileUploadSection() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="section-title-observatory">
-            {t('title', 'Dateien hinzufügen')}
+            {t('title')}
           </h2>
           <p className="text-sm text-text-tertiary mt-1">
-            {t('subtitle', 'Fotos, Videos oder Skizzen (optional)')}
+            {t('subtitle')}
           </p>
         </div>
         <div className="text-xs text-text-tertiary">
-          {t('optional', 'Optional')}
+          {t('optional')}
         </div>
       </div>
 
@@ -58,10 +58,10 @@ export function FileUploadSection() {
         >
           <Camera className="w-8 h-8 text-observatory-gold mx-auto mb-3 group-hover:scale-110 transition-transform" />
           <div className="text-sm font-medium text-text-primary">
-            {t('photo', 'Foto')}
+            {t('photo')}
           </div>
           <div className="text-xs text-text-tertiary mt-1">
-            {t('photoDesc', 'JPG, PNG, HEIC')}
+            {t('photoDesc')}
           </div>
         </button>
 
@@ -71,10 +71,10 @@ export function FileUploadSection() {
         >
           <Video className="w-8 h-8 text-observatory-gold mx-auto mb-3 group-hover:scale-110 transition-transform" />
           <div className="text-sm font-medium text-text-primary">
-            {t('video', 'Video')}
+            {t('video')}
           </div>
           <div className="text-xs text-text-tertiary mt-1">
-            {t('videoDesc', 'MP4, MOV, AVI')}
+            {t('videoDesc')}
           </div>
         </button>
 
@@ -84,10 +84,10 @@ export function FileUploadSection() {
         >
           <Pencil className="w-8 h-8 text-observatory-gold mx-auto mb-3 group-hover:scale-110 transition-transform" />
           <div className="text-sm font-medium text-text-primary">
-            {t('sketch', 'Skizze')}
+            {t('sketch')}
           </div>
           <div className="text-xs text-text-tertiary mt-1">
-            {t('sketchDesc', 'Zeichnung, Diagramm')}
+            {t('sketchDesc')}
           </div>
         </button>
       </div>
@@ -105,7 +105,7 @@ export function FileUploadSection() {
       {screen4.files.length > 0 && (
         <div className="space-y-3 pt-4 border-t border-glass-border">
           <div className="text-sm font-medium text-text-secondary">
-            {t('uploaded', 'Hochgeladene Dateien')} ({screen4.files.length})
+            {t('uploaded')} ({screen4.files.length})
           </div>
           <div className="space-y-2">
             {screen4.files.map((file, index) => (
@@ -123,10 +123,7 @@ export function FileUploadSection() {
       <div className="flex items-start gap-3 p-4 bg-observatory-gold/5 border border-observatory-gold/20 rounded-lg">
         <Upload className="w-5 h-5 text-observatory-gold flex-shrink-0 mt-0.5" />
         <div className="text-sm text-text-secondary">
-          {t(
-            'info',
-            'Dateien werden sicher gespeichert und können später bearbeitet werden. Maximale Dateigröße: 50 MB pro Datei.'
-          )}
+          {t('info')}
         </div>
       </div>
     </div>

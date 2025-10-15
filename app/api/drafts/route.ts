@@ -7,14 +7,14 @@ export async function GET() {
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get all drafts for user
-    const { data: drafts, error } = await supabase
+    const { data: drafts, error } = await (supabase as any)
       .from('experience_drafts')
       .select('*')
       .eq('user_id', user.id)
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     // If ID provided, update existing draft
     if (id) {
-      const { data: draft, error } = await supabase
+      const { data: draft, error } = await (supabase as any)
         .from('experience_drafts')
         .update({
           content,
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     }
 
     // Otherwise, create new draft
-    const { data: draft, error } = await supabase
+    const { data: draft, error } = await (supabase as any)
       .from('experience_drafts')
       .insert({
         user_id: user.id,

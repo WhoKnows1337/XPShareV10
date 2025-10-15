@@ -46,11 +46,11 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
       const data = await response.json();
       setExtractedText(data.text);
       setStatus('complete');
-      toast.success(t('success', 'Text successfully recognized!'));
+      toast.success(t('success'));
     } catch (error) {
       console.error('OCR error:', error);
       setStatus('error');
-      toast.error(t('error', 'Failed to recognize text'));
+      toast.error(t('error'));
     }
   };
 
@@ -99,7 +99,7 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-glass-border">
           <h2 className="text-xl font-semibold text-text-primary">
-            {t('title', 'Handgeschriebene Notiz einscannen')}
+            {t('title')}
           </h2>
           <button
             onClick={onClose}
@@ -122,7 +122,7 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
                 >
                   <Camera className="w-8 h-8 text-observatory-gold" />
                   <span className="font-medium text-text-primary">
-                    {t('camera', '📷 Foto aufnehmen')}
+                    {t('camera')}
                   </span>
                 </button>
 
@@ -133,7 +133,7 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
                 >
                   <Upload className="w-8 h-8 text-observatory-gold" />
                   <span className="font-medium text-text-primary">
-                    {t('upload', '📁 Bild hochladen')}
+                    {t('upload')}
                   </span>
                 </button>
               </div>
@@ -162,7 +162,7 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
               )}
               <Loader2 className="w-12 h-12 text-observatory-gold animate-spin" />
               <p className="text-text-secondary font-medium">
-                {t('analyzing', 'Analysiere Text... 🔄')}
+                {t('analyzing')}
               </p>
             </div>
           )}
@@ -173,7 +173,7 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-success-soft/15 border border-success-soft/30 rounded-md">
                 <Check className="w-4 h-4 text-success-soft" />
                 <span className="text-sm font-semibold text-success-soft">
-                  {t('recognized', '✅ Text erkannt')}
+                  {t('recognized')}
                 </span>
               </div>
 
@@ -189,7 +189,7 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
               {/* Extracted Text */}
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">
-                  {t('extracted', 'Erkannter Text:')}
+                  {t('extracted')}
                 </label>
                 {isEditing ? (
                   <textarea
@@ -212,13 +212,13 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
                              text-text-secondary hover:bg-text-primary/10 transition-colors"
                 >
                   <Edit2 className="w-4 h-4" />
-                  {isEditing ? t('doneEditing', '✓ Fertig') : t('edit', '✏️ Bearbeiten')}
+                  {isEditing ? t('doneEditing') : t('edit')}
                 </button>
                 <button
                   onClick={handleInsert}
                   className="flex-1 btn-observatory"
                 >
-                  {t('insert', '✓ Übernehmen')}
+                  {t('insert')}
                 </button>
               </div>
             </div>
@@ -228,13 +228,13 @@ export function OCRModal({ isOpen, onClose, onTextExtracted }: OCRModalProps) {
           {status === 'error' && (
             <div className="text-center py-8 space-y-4">
               <p className="text-error-soft font-medium">
-                {t('errorMessage', '❌ Fehler beim Erkennen')}
+                {t('errorMessage')}
               </p>
               <button
                 onClick={handleRetry}
                 className="btn-observatory"
               >
-                {t('retry', 'Erneut versuchen')}
+                {t('retry')}
               </button>
             </div>
           )}

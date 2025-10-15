@@ -125,7 +125,7 @@ export async function PATCH(
     // Auth check
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json(

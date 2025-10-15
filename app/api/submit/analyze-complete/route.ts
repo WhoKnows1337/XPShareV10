@@ -22,9 +22,9 @@ const openai = new OpenAI({
 interface AttributeSchema {
   key: string;
   display_name: string;
-  data_type: string;
+  data_type: string | null;
   allowed_values: string[] | null;
-  description: string;
+  description: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -128,7 +128,7 @@ CRITICAL:
     // Step 2: Complete Analysis with Structured Outputs
     // Build comprehensive JSON Schema for OpenAI Structured Outputs
     const attributeSchemaObj = hasAttributes
-      ? attributeSchemaToJSONSchema(attributeSchema)
+      ? attributeSchemaToJSONSchema(attributeSchema as any)
       : { type: 'object' as const, properties: {}, required: [], additionalProperties: false };
 
     // Create comprehensive JSON schema including all fields

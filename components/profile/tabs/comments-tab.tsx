@@ -29,7 +29,7 @@ export function CommentsTab({ userId }: CommentsTabProps) {
     queryKey: ['user-comments', userId],
     queryFn: async () => {
       const supabase = createClient()
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('comments')
         .select(`
           id,

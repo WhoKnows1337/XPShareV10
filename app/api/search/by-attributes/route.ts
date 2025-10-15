@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
 
     // Call the search function
-    const { data: results, error: searchError } = await supabase.rpc(
+    const { data: results, error: searchError } = await (supabase as any).rpc(
       'search_experiences_by_attributes',
       {
         p_attribute_filters: attributeFilters,
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total count for pagination
-    const { data: totalCount, error: countError } = await supabase.rpc(
+    const { data: totalCount, error: countError } = await (supabase as any).rpc(
       'count_experiences_by_attributes',
       {
         p_attribute_filters: attributeFilters,

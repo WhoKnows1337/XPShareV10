@@ -59,8 +59,8 @@ export default async function GlobalConfigPage() {
 
   return (
     <GlobalConfigClient
-      initialQuestions={questions || []}
-      attributes={attributes}
+      initialQuestions={(questions || []) as any}
+      attributes={attributes as any}
     />
   )
 }

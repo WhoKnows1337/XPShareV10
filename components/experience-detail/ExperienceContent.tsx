@@ -544,7 +544,7 @@ export function ExperienceContent({
       {/* Linked/Collaborative Experiences */}
       <LinkedExperiences
         experienceId={id}
-        linkedExperiences={linkedExperiences}
+        linkedExperiences={linkedExperiences as any}
         isAuthor={isAuthor}
       />
     </motion.div>

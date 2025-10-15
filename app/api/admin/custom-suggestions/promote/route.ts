@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await (supabase as any).auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the suggestion details
-    const { data: suggestion, error: fetchError } = await supabase
+    const { data: suggestion, error: fetchError } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .select('*')
       .eq('id', suggestionId)
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add the new option to attribute_schema
-    const { data: existingSchema, error: schemaError } = await supabase
+    const { data: existingSchema, error: schemaError } = await (supabase as any)
       .from('attribute_schema')
       .select('*')
       .eq('attribute_key', suggestion.attribute_key)
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     if (schemaError) {
       // If no schema exists for this attribute, create one
-      const { error: insertError } = await supabase
+      const { error: insertError } = await (supabase as any)
         .from('attribute_schema')
         .insert({
           attribute_key: suggestion.attribute_key,
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         },
       ];
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('attribute_schema')
         .update({ options: updatedOptions })
         .eq('id', existingSchema.id);
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the suggestion status to approved
-    const { error: statusError } = await supabase
+    const { error: statusError } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .update({
         status: 'approved',
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update all existing experience_attributes that used this custom value
-    const { error: updateExperiencesError } = await supabase
+    const { error: updateExperiencesError } = await (supabase as any)
       .from('experience_attributes')
       .update({
         attribute_value: newOptionValue,

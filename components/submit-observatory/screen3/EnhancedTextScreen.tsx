@@ -134,8 +134,8 @@ export function EnhancedTextScreen() {
     return (
       <LoadingState
         icon="sparkles"
-        title={t('summarizing', 'Erstelle Preview...')}
-        description={t('summarizingDesc', 'KI generiert eine kompakte Zusammenfassung für den Feed')}
+        title={t('summarizing')}
+        description={t('summarizingDesc')}
       />
     );
   }
@@ -194,7 +194,7 @@ export function EnhancedTextScreen() {
           onNext={goNext}
           onReset={handleReset}
           canGoNext={isClient ? canGoNext() : false}
-          nextLabel={t('continue', 'Weiter')}
+          nextLabel={t('continue')}
           showReset={true}
           resetConfirm={showResetConfirm}
         />

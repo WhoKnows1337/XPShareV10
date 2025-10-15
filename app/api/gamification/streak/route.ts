@@ -9,14 +9,14 @@ export async function GET(req: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Fetch user's streak data
-    const { data: streak, error } = await supabase
+    const { data: streak, error } = await (supabase as any)
       .from('user_streaks')
       .select('*')
       .eq('user_id', user.id)
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Call the database function to update streak
-    const { data, error } = await supabase.rpc('update_user_streak', {
+    const { data, error } = await (supabase as any).rpc('update_user_streak', {
       p_user_id: user.id,
       p_activity_type: activity_type,
     })
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch updated streak data
-    const { data: updatedStreak, error: fetchError } = await supabase
+    const { data: updatedStreak, error: fetchError } = await (supabase as any)
       .from('user_streaks')
       .select('*')
       .eq('user_id', user.id)

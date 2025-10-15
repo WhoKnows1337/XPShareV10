@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get('offset') || '0')
 
     // Build query
-    let query = supabase
+    let query = (supabase as any)
       .from('media_library')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     }
 
     // Insert media record
-    const { data: media, error } = await supabase
+    const { data: media, error } = await (supabase as any)
       .from('media_library')
       .insert({
         filename,

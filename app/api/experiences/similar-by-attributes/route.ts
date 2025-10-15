@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
 
     // Call the SQL function to find similar experiences
-    const { data: similarResults, error: similarError } = await supabase.rpc(
+    const { data: similarResults, error: similarError } = await (supabase as any).rpc(
       'find_experiences_by_shared_attributes',
       {
         p_experience_id: experienceId,

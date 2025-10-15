@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await (supabase as any).auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the suggestion details
-    const { data: suggestion, error: fetchError } = await supabase
+    const { data: suggestion, error: fetchError } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .select('*')
       .eq('id', suggestionId)
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the suggestion status to rejected
-    const { error: statusError } = await supabase
+    const { error: statusError } = await (supabase as any)
       .from('custom_attribute_suggestions')
       .update({
         status: 'rejected',

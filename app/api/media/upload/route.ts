@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer)
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { data, error } = await (supabase as any).storage
       .from(bucket)
       .upload(fileName, buffer, {
         contentType: file.type,
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     // Get public URL
     const {
       data: { publicUrl },
-    } = supabase.storage.from(bucket).getPublicUrl(fileName)
+    } = (supabase as any).storage.from(bucket).getPublicUrl(fileName)
 
     return NextResponse.json({
       success: true,

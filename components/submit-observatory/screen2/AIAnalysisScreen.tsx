@@ -244,8 +244,8 @@ export function AIAnalysisScreen() {
     return (
       <LoadingState
         icon="sparkles"
-        title={t('enriching', '✨ KI vervollständigt deine Experience...')}
-        description={t('enrichingDesc', 'Text wird angereichert und finale Metadaten (Titel, Zusammenfassung, Tags) werden generiert')}
+        title={t('enriching')}
+        description={t('enrichingDesc')}
       />
     );
   }
@@ -262,7 +262,7 @@ export function AIAnalysisScreen() {
           <AlertCircle className="w-12 h-12 text-destructive" />
           <div className="text-center">
             <h2 className="text-lg font-semibold text-destructive mb-1">
-              {t('errorTitle', 'Fehler bei der Analyse')}
+              {t('errorTitle')}
             </h2>
             <p className="text-text-secondary text-xs">
               {analysisError}
@@ -276,14 +276,14 @@ export function AIAnalysisScreen() {
               className="group"
             >
               <RefreshCw className="w-4 h-4 transition-transform group-hover:rotate-180" />
-              {t('retry', 'Erneut versuchen')}
+              {t('retry')}
             </Button>
             <Button
               onClick={goBack}
               variant="ghost"
               size="default"
             >
-              {t('back', 'Zurück')}
+              {t('back')}
             </Button>
           </div>
         </div>
@@ -301,10 +301,10 @@ export function AIAnalysisScreen() {
         <div>
           <div className="mb-4">
             <h2 className="section-title-observatory">
-              {t('questions.title', 'Fragen zur Experience')}
+              {t('questions.title')}
             </h2>
             <p className="text-text-secondary text-xs mt-1">
-              {t('questions.description', 'Beantworte die Fragen um Pattern-Matching zu verbessern')}
+              {t('questions.description')}
             </p>
           </div>
 
@@ -318,7 +318,7 @@ export function AIAnalysisScreen() {
           onNext={handleNext}
           onReset={handleReset}
           canGoNext={isClient ? canGoNext() : false}
-          nextLabel={t('continue', 'Weiter zum Editor')}
+          nextLabel={t('continue')}
           showReset={true}
           resetConfirm={showResetConfirm}
         />

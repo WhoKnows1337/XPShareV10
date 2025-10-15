@@ -10,9 +10,9 @@ interface Attribute {
   key: string
   display_name: string
   display_name_de?: string
-  data_type: string
-  is_filterable: boolean
-  is_searchable: boolean
+  data_type: string | null
+  is_filterable: boolean | null
+  is_searchable: boolean | null
 }
 
 interface AttributeQuestionMatrixProps {

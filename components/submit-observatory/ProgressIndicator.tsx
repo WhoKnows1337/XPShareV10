@@ -13,13 +13,13 @@ export function ProgressIndicator() {
   const getStepLabel = (step: number) => {
     switch (step) {
       case 1:
-        return t('progress.screen1', 'Text Input');
+        return t('progress.screen1');
       case 2:
-        return t('progress.screen2', 'Questions');
+        return t('progress.screen2');
       case 3:
-        return t('progress.screen3', 'Review');
+        return t('progress.screen3');
       case 4:
-        return t('progress.screen4', 'Files & Witnesses');
+        return t('progress.screen4');
       default:
         return `Step ${step}`;
     }
@@ -36,7 +36,7 @@ export function ProgressIndicator() {
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className="font-mono text-xs text-text-tertiary uppercase tracking-wider"
         >
-          {t('progress.step', { current: currentStep, total: totalSteps }, `Step ${currentStep}/${totalSteps}`)}
+          {t('progress.step', { current: currentStep, total: totalSteps })}
         </motion.span>
         <AnimatePresence mode="wait">
           <motion.span

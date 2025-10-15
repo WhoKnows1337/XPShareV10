@@ -33,10 +33,9 @@ export const DropZone = ({ accept, onFilesAdded, maxFiles = 10 }: DropZoneProps)
   }
 
   return (
-    <motion.div
+    <div
       {...getRootProps()}
-      whileHover={{ scale: 1.01 }}
-      className={`relative border-2 border-dashed rounded-2xl p-12 transition-all cursor-pointer ${getBorderColor()}`}
+      className={`relative border-2 border-dashed rounded-2xl p-12 transition-all cursor-pointer hover:scale-[1.01] ${getBorderColor()}`}
     >
       <input {...getInputProps()} />
 
@@ -98,6 +97,6 @@ export const DropZone = ({ accept, onFilesAdded, maxFiles = 10 }: DropZoneProps)
           }}
         />
       )}
-    </motion.div>
+    </div>
   )
 }

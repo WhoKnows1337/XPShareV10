@@ -153,7 +153,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           console.error('Following-Feed RPC error:', followingError)
           experiences = []
         } else {
-          experiences = followingData || []
+          experiences = Array.isArray(followingData) ? followingData : []
         }
       } catch (error) {
         console.error('Following-Feed error:', error)
@@ -192,7 +192,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           throw rpcError
         }
 
-        experiences = forYouData || []
+        experiences = Array.isArray(forYouData) ? forYouData : []
       } catch (error) {
         // Fallback: Smart filtering based on user preferences
         console.log('Using fallback For You algorithm')

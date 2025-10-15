@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       const embedding = await generateEmbedding(text)
 
       // Find similar experiences
-      const { count } = await supabase.rpc('count_similar_experiences', {
+      const { count } = await (supabase as any).rpc('count_similar_experiences', {
         query_embedding: embedding,
         similarity_threshold: 0.75,
         max_results: 50,

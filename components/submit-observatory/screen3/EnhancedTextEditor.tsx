@@ -1,5 +1,6 @@
 'use client';
 
+import { ReactElement } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 
@@ -18,7 +19,7 @@ export function EnhancedTextEditor() {
 
     // Convert text to array of characters for easier manipulation
     const textChars = displayText.split('');
-    const elements: JSX.Element[] = [];
+    const elements: ReactElement[] = [];
     let lastIndex = 0;
 
     // Sort highlights by start position
@@ -78,11 +79,11 @@ export function EnhancedTextEditor() {
         <div className="flex items-center gap-6 mt-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-observatory-gold/20 border-l-2 border-observatory-gold rounded-sm" />
-            <span className="text-text-tertiary">{t('legend.added', 'KI hinzugefügt')}</span>
+            <span className="text-text-tertiary">{t('legend.added')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-success-soft/20 border-l-2 border-success-soft rounded-sm" />
-            <span className="text-text-tertiary">{t('legend.enhanced', 'KI verbessert')}</span>
+            <span className="text-text-tertiary">{t('legend.enhanced')}</span>
           </div>
           <div className="ml-auto text-text-tertiary text-xs">
             {screen3.highlights.length} {screen3.highlights.length === 1 ? 'Änderung' : 'Änderungen'}

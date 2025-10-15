@@ -17,7 +17,7 @@ export async function GET(
     const { key } = await params;
 
     // Check admin auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await (supabase as any).auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -65,7 +65,7 @@ export async function PATCH(
     const { key } = await params;
 
     // Check admin auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await (supabase as any).auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -161,7 +161,7 @@ export async function DELETE(
     const { key } = await params;
 
     // Check admin auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await (supabase as any).auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

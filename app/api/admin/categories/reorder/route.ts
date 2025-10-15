@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     await Promise.all(updates)
 
     // Log the reorder action
-    await supabase.from('question_change_history').insert({
+    await (supabase as any).from('question_change_history').insert({
       entity_type: 'category',
       entity_id: category_ids[0],
       changed_by: user.id,

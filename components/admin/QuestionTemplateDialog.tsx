@@ -184,18 +184,23 @@ export function QuestionTemplateDialog({
                 <Save className="w-4 h-4 mr-2" />
                 Aktuelles Set speichern
               </Button>
-              <label>
-                <Button variant="outline" as="span">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Importieren
-                </Button>
+              <div>
                 <input
                   type="file"
                   accept=".json"
                   onChange={handleImportTemplate}
                   className="hidden"
+                  id="import-template-file"
                 />
-              </label>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => document.getElementById('import-template-file')?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importieren
+                </Button>
+              </div>
             </div>
 
             {loading ? (

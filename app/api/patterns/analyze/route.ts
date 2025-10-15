@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await (supabase as any).auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       // Fallback: Call SQL function directly
       console.warn('Edge function unavailable, using direct SQL:', edgeError);
 
-      const { error: sqlError } = await supabase.rpc(
+      const { error: sqlError } = await (supabase as any).rpc(
         'update_pattern_insights_for_experience',
         { p_experience_id: experienceId }
       );
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch pattern insights
-    const { data: insights, error } = await supabase
+    const { data: insights, error } = await (supabase as any)
       .from('pattern_insights')
       .select('*')
       .eq('experience_id', experienceId);

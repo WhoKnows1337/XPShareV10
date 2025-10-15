@@ -15,7 +15,7 @@ export async function POST(
     // Authenticate
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -93,7 +93,7 @@ export async function POST(
       }
 
       // Create notification
-      await supabase.from('notifications').insert({
+      await (supabase as any).from('notifications').insert({
         user_id: invitedUser.id,
         type: 'witness_invite',
         title: `You've been invited as a witness`,

@@ -13,7 +13,7 @@ export async function GET(
     // Check if user is admin
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -75,7 +75,7 @@ export async function PATCH(
     // Check if user is admin
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -139,7 +139,7 @@ export async function DELETE(
     // Check if user is admin
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -196,7 +196,7 @@ export async function DELETE(
     }
 
     // Delete category (only if no questions AND no attributes)
-    const { error } = await supabase.from('question_categories').delete().eq('id', id)
+    const { error } = await (supabase as any).from('question_categories').delete().eq('id', id)
 
     if (error) {
       console.error('Error deleting category:', error)

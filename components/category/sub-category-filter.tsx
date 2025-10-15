@@ -17,7 +17,6 @@ interface SubCategory {
 
 interface SubCategoryFilterProps {
   categorySlug: string
-  subCategories: SubCategory[]
   selectedSubCategories: string[]
   onSubCategoryChange: (selected: string[]) => void
 }

@@ -114,10 +114,10 @@ export function SuccessScreen() {
             <div className="w-full h-full border-4 border-observatory-gold border-t-transparent rounded-full animate-spin" />
           </div>
           <h2 className="text-2xl font-bold text-text-primary">
-            {t('publishing', 'Veröffentliche Erfahrung...')}
+            {t('publishing')}
           </h2>
           <p className="text-text-secondary">
-            {t('publishingDesc', 'Deine Erfahrung wird gespeichert und mit ähnlichen Mustern verglichen.')}
+            {t('publishingDesc')}
           </p>
         </div>
       </div>
@@ -132,11 +132,11 @@ export function SuccessScreen() {
             <span className="text-3xl">⚠️</span>
           </div>
           <h2 className="text-2xl font-bold text-text-primary">
-            {t('error', 'Fehler beim Veröffentlichen')}
+            {t('error')}
           </h2>
           <p className="text-text-secondary">{error}</p>
           <button onClick={handlePublish} className="btn-observatory">
-            {t('retry', 'Erneut versuchen')}
+            {t('retry')}
           </button>
         </div>
       </div>
@@ -155,10 +155,10 @@ export function SuccessScreen() {
           <CheckCircle className="w-14 h-14 text-success-soft" />
         </div>
         <h1 className="text-4xl font-bold text-text-primary">
-          {t('title', 'Erfahrung veröffentlicht!')}
+          {t('title')}
         </h1>
         <p className="text-xl text-text-secondary">
-          {t('subtitle', 'Deine Erfahrung wurde erfolgreich gespeichert und kann von anderen gesehen werden.')}
+          {t('subtitle')}
         </p>
       </div>
 
@@ -175,7 +175,7 @@ export function SuccessScreen() {
             <div className="flex flex-col items-center gap-3">
               <ArrowRight className="w-8 h-8 text-observatory-gold group-hover:translate-x-1 transition-transform" />
               <span className="text-sm font-medium text-text-primary">
-                {t('view', 'Erfahrung ansehen')}
+                {t('view')}
               </span>
             </div>
           </Link>
@@ -190,7 +190,7 @@ export function SuccessScreen() {
             <div className="flex flex-col items-center gap-3">
               <Share2 className="w-8 h-8 text-observatory-gold group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium text-text-primary">
-                {t('share', 'Link teilen')}
+                {t('share')}
               </span>
             </div>
           </button>
@@ -202,7 +202,7 @@ export function SuccessScreen() {
             <div className="flex flex-col items-center gap-3">
               <Plus className="w-8 h-8 text-observatory-gold group-hover:rotate-90 transition-transform" />
               <span className="text-sm font-medium text-text-primary">
-                {t('submitAnother', 'Weitere eintragen')}
+                {t('submitAnother')}
               </span>
             </div>
           </button>

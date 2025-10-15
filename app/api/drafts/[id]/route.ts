@@ -11,13 +11,13 @@ export async function GET(
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: draft, error } = await supabase
+    const { data: draft, error } = await (supabase as any)
       .from('experience_drafts')
       .select('*')
       .eq('id', id)
@@ -43,13 +43,13 @@ export async function DELETE(
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('experience_drafts')
       .delete()
       .eq('id', id)

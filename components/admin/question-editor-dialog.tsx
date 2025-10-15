@@ -159,6 +159,7 @@ export function QuestionEditorDialog({
     follow_up_question: null,
     tags: [],
     is_active: isActive,
+    maps_to_attribute: mapsToAttribute && mapsToAttribute !== '__none__' ? mapsToAttribute : null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     created_by: null,

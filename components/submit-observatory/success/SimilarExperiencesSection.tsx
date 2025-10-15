@@ -48,10 +48,10 @@ export function SimilarExperiencesSection({ experienceId }: SimilarExperiencesSe
       <div className="glass-card p-8">
         <h2 className="section-title-observatory mb-6 flex items-center gap-2">
           <GitBranch className="w-5 h-5 text-observatory-gold" />
-          {t('title', 'Ähnliche Erfahrungen')}
+          {t('title')}
         </h2>
         <div className="text-center py-8 text-text-tertiary">
-          {t('loading', 'Suche ähnliche Muster...')}
+          {t('loading')}
         </div>
       </div>
     );
@@ -62,12 +62,12 @@ export function SimilarExperiencesSection({ experienceId }: SimilarExperiencesSe
       <div className="glass-card p-8">
         <h2 className="section-title-observatory mb-6 flex items-center gap-2">
           <GitBranch className="w-5 h-5 text-observatory-gold" />
-          {t('title', 'Ähnliche Erfahrungen')}
+          {t('title')}
         </h2>
         <div className="text-center py-8">
           <div className="text-4xl mb-3">🌟</div>
           <div className="text-text-secondary">
-            {t('noSimilar', 'Deine Erfahrung ist einzigartig! Noch keine ähnlichen Muster gefunden.')}
+            {t('noSimilar')}
           </div>
         </div>
       </div>
@@ -78,14 +78,11 @@ export function SimilarExperiencesSection({ experienceId }: SimilarExperiencesSe
     <div className="glass-card p-8">
       <h2 className="section-title-observatory mb-6 flex items-center gap-2">
         <GitBranch className="w-5 h-5 text-observatory-gold" />
-        {t('title', 'Ähnliche Erfahrungen')}
+        {t('title')}
       </h2>
 
       <p className="text-sm text-text-secondary mb-6">
-        {t(
-          'description',
-          'Diese Erfahrungen haben ähnliche Muster oder Merkmale wie deine. Erkunde sie, um mehr zu erfahren.'
-        )}
+        {t('description')}
       </p>
 
       <div className="space-y-4">

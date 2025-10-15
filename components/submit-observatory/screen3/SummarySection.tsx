@@ -32,7 +32,7 @@ export function SummarySection({ onRegenerate, isLoading = false }: SummarySecti
       <div className="flex items-center justify-between mb-4">
         <label className="flex items-center gap-2 text-sm font-semibold text-text-primary">
           <FileText className="w-4 h-4 text-observatory-gold" />
-          {t('title', '📋 Kurzzusammenfassung')}
+          {t('title')}
         </label>
         {!isEditing && (
           <button
@@ -41,7 +41,7 @@ export function SummarySection({ onRegenerate, isLoading = false }: SummarySecti
                        bg-text-primary/5 hover:bg-text-primary/10 border border-text-primary/10 rounded-md transition-colors"
           >
             <Edit2 className="w-3 h-3" />
-            {t('edit', 'Edit')}
+            {t('edit')}
           </button>
         )}
       </div>
@@ -53,7 +53,7 @@ export function SummarySection({ onRegenerate, isLoading = false }: SummarySecti
             value={editedSummary}
             onChange={(e) => setEditedSummary(e.target.value)}
             className="w-full min-h-[100px] input-observatory"
-            placeholder={t('placeholder', 'Schreibe eine kurze Zusammenfassung...')}
+            placeholder={t('placeholder')}
           />
 
           {/* Character Counter */}
@@ -71,11 +71,11 @@ export function SummarySection({ onRegenerate, isLoading = false }: SummarySecti
                          disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RotateCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              {t('regenerate', 'KI neu generieren')}
+              {t('regenerate')}
             </button>
             <button onClick={handleSave} className="flex-1 btn-observatory">
               <Check className="w-4 h-4" />
-              {t('save', 'Speichern')}
+              {t('save')}
             </button>
           </div>
         </div>
@@ -86,7 +86,7 @@ export function SummarySection({ onRegenerate, isLoading = false }: SummarySecti
                        hover:bg-text-primary/8 transition-colors mb-3"
             onClick={() => setIsEditing(true)}
           >
-            <p className="text-text-primary leading-relaxed">{screen3.summary || t('noSummary', 'Keine Zusammenfassung')}</p>
+            <p className="text-text-primary leading-relaxed">{screen3.summary || t('noSummary')}</p>
           </div>
 
           {/* Info */}
@@ -94,10 +94,10 @@ export function SummarySection({ onRegenerate, isLoading = false }: SummarySecti
             <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-observatory-gold" />
             <div>
               <p className="text-text-secondary">
-                {t('info', '👁️ Diese Zusammenfassung erscheint als Preview in Feed und Suchergebnissen.')}
+                {t('info')}
               </p>
               <p className="text-text-tertiary text-xs mt-1">
-                {t('infoDetail', 'Empfohlen: 150-200 Zeichen für optimale Lesbarkeit')}
+                {t('infoDetail')}
               </p>
             </div>
           </div>

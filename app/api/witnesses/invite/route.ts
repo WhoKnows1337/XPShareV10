@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     // Check authentication
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       status: 'pending',
     }))
 
-    const { data, error } = await supabase.from('witness_invitations').insert(invitations).select()
+    const { data, error } = await (supabase as any).from('witness_invitations').insert(invitations).select()
 
     if (error) {
       console.error('Database error:', error)

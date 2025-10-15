@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient()
 
     // Fetch invitation data
-    const { data: invitation, error } = await supabase
+    const { data: invitation, error } = await (supabase as any)
       .from('witness_invitations')
       .select('*, inviter:inviter_id(username, full_name), draft:draft_id(content, title)')
       .eq('token', token)

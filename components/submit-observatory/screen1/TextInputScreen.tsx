@@ -57,13 +57,10 @@ export function TextInputScreen() {
       {/* Compact Header */}
       <div className="mb-3">
         <h1 className="section-title-observatory">
-          {t('title', 'Deine Erfahrung')}
+          {t('title')}
         </h1>
         <p className="text-text-secondary text-xs leading-snug mt-2">
-          {t(
-            'subtitle',
-            'Beschreibe was passiert ist'
-          )}
+          {t('subtitle')}
         </p>
       </div>
 
@@ -72,10 +69,7 @@ export function TextInputScreen() {
         <TextInputArea
           value={screen1.text}
           onChange={setText}
-          placeholder={t(
-            'placeholder',
-            '3:33 Uhr nachts... Ich sah ein Licht am Himmel...\n\nOder beginne mit: "Es war ein ganz normaler Dienstag, bis..."'
-          )}
+          placeholder={t('placeholder')}
         />
       </div>
 
@@ -104,7 +98,7 @@ export function TextInputScreen() {
         onNext={goNext}
         onReset={handleReset}
         canGoNext={isClient ? canGoNext() : false}
-        nextLabel={t('continue', 'Weiter')}
+        nextLabel={t('continue')}
         showReset={true}
         resetConfirm={showResetConfirm}
       />

@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation'
 
 interface DraggableQuestionListProps {
   questions: DynamicQuestion[]
-  categoryId: string
+  categoryId: string | null
   onReorder: (questionIds: string[]) => Promise<void>
   onEdit: (question: DynamicQuestion) => void
   onDelete: (questionId: string) => void

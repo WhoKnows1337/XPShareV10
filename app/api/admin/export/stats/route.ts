@@ -19,12 +19,12 @@ export async function GET(req: NextRequest) {
       { count: totalCategories },
       { count: totalQuestions },
     ] = await Promise.all([
-      supabase.from('user_profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('experiences').select('*', { count: 'exact', head: true }),
-      supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('user_badges').select('*', { count: 'exact', head: true }),
-      supabase.from('question_categories').select('*', { count: 'exact', head: true }),
-      supabase.from('dynamic_questions').select('*', { count: 'exact', head: true }),
+      (supabase as any).from('user_profiles').select('*', { count: 'exact', head: true }),
+      (supabase as any).from('experiences').select('*', { count: 'exact', head: true }),
+      (supabase as any).from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      (supabase as any).from('user_badges').select('*', { count: 'exact', head: true }),
+      (supabase as any).from('question_categories').select('*', { count: 'exact', head: true }),
+      (supabase as any).from('dynamic_questions').select('*', { count: 'exact', head: true }),
     ])
 
     // Fetch categories with details

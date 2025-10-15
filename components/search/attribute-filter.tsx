@@ -76,11 +76,18 @@ export function AttributeFilter({
       if (category) params.set('category', category);
 
       const response = await fetch(`/api/attributes/keys?${params}`);
-      const data = await response.json();
 
+      if (!response.ok) {
+        console.warn('Attributes API not available');
+        setAvailableKeys([]);
+        return;
+      }
+
+      const data = await response.json();
       setAvailableKeys(data.keys || []);
     } catch (error) {
       console.error('Error fetching attribute keys:', error);
+      setAvailableKeys([]);
     } finally {
       setLoadingKeys(false);
     }
@@ -93,14 +100,21 @@ export function AttributeFilter({
       if (category) params.set('category', category);
 
       const response = await fetch(`/api/attributes/values?${params}`);
-      const data = await response.json();
 
+      if (!response.ok) {
+        console.warn(`Attributes values API not available for key: ${key}`);
+        setAvailableValues((prev) => ({ ...prev, [key]: [] }));
+        return;
+      }
+
+      const data = await response.json();
       setAvailableValues((prev) => ({
         ...prev,
         [key]: data.values || [],
       }));
     } catch (error) {
       console.error(`Error fetching values for key ${key}:`, error);
+      setAvailableValues((prev) => ({ ...prev, [key]: [] }));
     } finally {
       setLoadingValues((prev) => ({ ...prev, [key]: false }));
     }

@@ -45,19 +45,19 @@ export default async function ImpactDashboardPage({
   // Fetch detailed analytics
   const { data: viewsByDay } = await supabase
     .from('experience_views')
-    .select('created_at')
+    .select('viewed_at')
     .eq('experience_id', id)
-    .order('created_at', { ascending: true })
+    .order('viewed_at', { ascending: true })
 
   const { data: likesByDay } = await supabase
     .from('upvotes')
-    .select('created_at, user_profiles(username, display_name)')
+    .select('created_at, user_id')
     .eq('experience_id', id)
     .order('created_at', { ascending: false })
 
   const { data: comments } = await supabase
     .from('comments')
-    .select('created_at, user_profiles(username, display_name)')
+    .select('created_at, user_id')
     .eq('experience_id', id)
     .order('created_at', { ascending: false })
 
@@ -76,8 +76,10 @@ export default async function ImpactDashboardPage({
 
   // Group views by day for chart
   const viewsGrouped = (viewsByDay || []).reduce((acc: Record<string, number>, view) => {
-    const date = new Date(view.created_at).toLocaleDateString('de-DE')
-    acc[date] = (acc[date] || 0) + 1
+    if (view.viewed_at) {
+      const date = new Date(view.viewed_at).toLocaleDateString('de-DE')
+      acc[date] = (acc[date] || 0) + 1
+    }
     return acc
   }, {})
 
@@ -228,14 +230,14 @@ export default async function ImpactDashboardPage({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(likesByDay || []).slice(0, 5).map((like) => (
-                <div key={like.created_at} className="flex items-center justify-between">
+              {(likesByDay || []).slice(0, 5).map((like, idx) => (
+                <div key={`${like.created_at}-${idx}`} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">
-                      @{like.user_profiles?.username || 'Anonymous'}
+                      Reaction
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(like.created_at), { addSuffix: true, locale: de })}
+                      {like.created_at && formatDistanceToNow(new Date(like.created_at), { addSuffix: true, locale: de })}
                     </p>
                   </div>
                   <Heart className="w-4 h-4 text-red-500 fill-red-500" />
@@ -257,14 +259,14 @@ export default async function ImpactDashboardPage({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(comments || []).slice(0, 5).map((comment) => (
-                <div key={comment.created_at} className="flex items-center justify-between">
+              {(comments || []).slice(0, 5).map((comment, idx) => (
+                <div key={`${comment.created_at}-${idx}`} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">
-                      @{comment.user_profiles?.username || 'Anonymous'}
+                      Comment
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: de })}
+                      {comment.created_at && formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: de })}
                     </p>
                   </div>
                   <MessageCircle className="w-4 h-4 text-green-500" />

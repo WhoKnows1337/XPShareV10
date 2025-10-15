@@ -177,30 +177,25 @@ export const PrivacyWitnesses = () => {
           {/* Existing Witnesses */}
           {witnesses.length > 0 && (
             <div className="mb-4 space-y-2">
-              {witnesses.map((witness) => (
+              {witnesses.map((witness, index) => (
                 <div
-                  key={witness.id}
+                  key={index}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    {witness.avatar ? (
-                      <img
-                        src={witness.avatar}
-                        alt={witness.username}
-                        className="w-10 h-10 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <Users className="w-5 h-5 text-gray-600" />
-                      </div>
-                    )}
+                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-gray-600" />
+                    </div>
                     <div>
-                      <p className="font-medium text-gray-900">{witness.username}</p>
+                      <p className="font-medium text-gray-900">{witness.name}</p>
                       {witness.email && <p className="text-sm text-gray-500">{witness.email}</p>}
+                      {witness.detectedFromText && (
+                        <p className="text-xs text-purple-600">AI-detected</p>
+                      )}
                     </div>
                   </div>
                   <button
-                    onClick={() => removeWitness(witness.id)}
+                    onClick={() => removeWitness(index)}
                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                   >
                     <X className="w-5 h-5" />

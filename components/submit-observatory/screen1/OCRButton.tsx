@@ -28,7 +28,7 @@ export function OCRButton({ onTextExtracted }: OCRButtonProps) {
         className="text-xs"
       >
         <FileText className="w-3 h-3" />
-        {t('button', 'Notiz einscannen')}
+        {t('button')}
       </Button>
 
       {isModalOpen && (

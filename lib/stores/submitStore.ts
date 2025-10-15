@@ -13,11 +13,20 @@ export interface ExtractedField<T = string> {
 
 export interface Question {
   id: string
-  type: 'text' | 'date' | 'location' | 'multi-choice' | 'emotional'
+  type: 'text' | 'date' | 'location' | 'multiChoice' | 'emotionalTags' | 'boolean' | 'slider'
   question: string
+  field?: string
   options?: string[]
   required: boolean
-  category: string
+  category?: string
+  currentValue?: string | string[] | boolean | number
+  confidence?: number
+  xpBonus?: number
+  helpText?: string
+  placeholder?: string
+  sliderConfig?: { min: number; max: number; step: number; unit: string }
+  mapsToAttribute?: string
+  isAISuggestion?: boolean
 }
 
 export interface UploadedFile {
@@ -48,6 +57,13 @@ export interface User {
   username: string
   email?: string
   avatar?: string
+}
+
+export interface Witness {
+  name: string
+  email?: string
+  invite: boolean
+  detectedFromText: boolean
 }
 
 export interface InviteLink {
@@ -156,7 +172,7 @@ export interface SubmitStore {
   // STEP 5: PRIVACY
   // ========================================
   privacyLevel: 'public' | 'anonymous' | 'private'
-  witnesses: User[]
+  witnesses: Witness[]
   linkedExperiences: string[]
   inviteLinks: InviteLink[]
 
@@ -198,8 +214,8 @@ export interface SubmitStore {
 
   // Privacy
   setPrivacy: (level: 'public' | 'anonymous' | 'private') => void
-  addWitness: (user: User) => void
-  removeWitness: (userId: string) => void
+  addWitness: (witness: Witness) => void
+  removeWitness: (index: number) => void
   generateInviteLink: () => Promise<string>
   linkExperience: (experienceId: string) => void
   unlinkExperience: (experienceId: string) => void
@@ -267,7 +283,7 @@ const initialState = {
 
   // Step 5
   privacyLevel: 'anonymous' as 'public' | 'anonymous' | 'private',
-  witnesses: [] as User[],
+  witnesses: [] as Witness[],
   linkedExperiences: [] as string[],
   inviteLinks: [] as InviteLink[],
 
@@ -637,15 +653,15 @@ export const useSubmitStore = create<SubmitStore>()(
           set({ privacyLevel: level })
         },
 
-        addWitness: (user: User) => {
+        addWitness: (witness: Witness) => {
           set((state) => ({
-            witnesses: [...state.witnesses, user],
+            witnesses: [...state.witnesses, witness],
           }))
         },
 
-        removeWitness: (userId: string) => {
+        removeWitness: (index: number) => {
           set((state) => ({
-            witnesses: state.witnesses.filter((w) => w.id !== userId),
+            witnesses: state.witnesses.filter((_, i) => i !== index),
           }))
         },
 

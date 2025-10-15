@@ -37,7 +37,7 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
 
   const startRecording = async () => {
     if (!isSupported) {
-      toast.error(t('notSupported', 'Voice recording is not supported in your browser'));
+      toast.error(t('notSupported'));
       return;
     }
 
@@ -73,10 +73,10 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
 
           const data = await response.json();
           onTranscript(data.text);
-          toast.success(t('success', 'Voice transcribed successfully!'));
+          toast.success(t('success'));
         } catch (error) {
           console.error('Transcription error:', error);
-          toast.error(t('error', 'Failed to transcribe audio'));
+          toast.error(t('error'));
         } finally {
           setIsProcessing(false);
         }
@@ -87,10 +87,10 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
 
       mediaRecorder.start();
       setIsRecording(true);
-      toast.success(t('recording', 'Recording started...'));
+      toast.success(t('recording'));
     } catch (error) {
       console.error('Error starting recording:', error);
-      toast.error(t('permissionError', 'Microphone permission denied'));
+      toast.error(t('permissionError'));
     }
   };
 
@@ -125,17 +125,17 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
       {isProcessing ? (
         <>
           <Loader2 className="w-3 h-3 animate-spin" />
-          {t('processing', 'Processing...')}
+          {t('processing')}
         </>
       ) : isRecording ? (
         <>
           <MicOff className="w-3 h-3" />
-          {t('stop', 'Stop')}
+          {t('stop')}
         </>
       ) : (
         <>
           <Mic className="w-3 h-3" />
-          {t('start', 'Diktat')}
+          {t('start')}
         </>
       )}
     </Button>

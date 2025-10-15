@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the source experience
-    const { data: sourceExp, error: sourceError } = await supabase
+    const { data: sourceExp, error: sourceError } = await (supabase as any)
       .from('experiences')
       .select('*')
       .eq('id', experienceId)
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     // Find similar experiences
     // Strategy: Match by category first, then by tags, then by location proximity
 
-    const { data: allExperiences, error: fetchError } = await supabase
+    const { data: allExperiences, error: fetchError } = await (supabase as any)
       .from('experiences')
       .select('id, title, summary, category, tags, date, location, location_lat, location_lng, duration')
       .neq('id', experienceId)
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate similarity scores
     const scoredExperiences = allExperiences
-      .map((exp) => {
+      .map((exp: any) => {
         let score = 0;
         const matchReasons: string[] = [];
 
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
         // Tag overlap (30% weight)
         const sourceTags = Array.isArray(sourceExp.tags) ? sourceExp.tags : [];
         const expTags = Array.isArray(exp.tags) ? exp.tags : [];
-        const tagOverlap = sourceTags.filter((tag) => expTags.includes(tag)).length;
+        const tagOverlap = sourceTags.filter((tag: any) => expTags.includes(tag)).length;
         if (tagOverlap > 0) {
           score += (tagOverlap / Math.max(sourceTags.length, expTags.length)) * 0.3;
           matchReasons.push(`${tagOverlap} matching tags`);
@@ -103,8 +103,8 @@ export async function GET(request: NextRequest) {
           matchReasons,
         };
       })
-      .filter((exp) => exp.matchScore > 0.2) // Only return experiences with >20% match
-      .sort((a, b) => b.matchScore - a.matchScore)
+      .filter((exp: any) => exp.matchScore > 0.2) // Only return experiences with >20% match
+      .sort((a: any, b: any) => b.matchScore - a.matchScore)
       .slice(0, 5); // Top 5 matches
 
     return NextResponse.json({

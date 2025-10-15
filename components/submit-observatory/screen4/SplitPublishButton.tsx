@@ -71,24 +71,24 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
   const visibilityConfig = {
     public: {
       icon: Globe,
-      label: t('public', 'Öffentlich'),
-      description: t('publicDesc', 'Alle können diese Erfahrung sehen'),
+      label: t('public'),
+      description: t('publicDesc'),
       color: 'text-success-soft',
       bgColor: 'bg-success-soft/10',
       borderColor: 'border-success-soft/30',
     },
     anonymous: {
       icon: UserX,
-      label: t('anonymous', 'Anonym'),
-      description: t('anonymousDesc', 'Öffentlich, aber ohne deinen Namen'),
+      label: t('anonymous'),
+      description: t('anonymousDesc'),
       color: 'text-observatory-gold',
       bgColor: 'bg-observatory-gold/10',
       borderColor: 'border-observatory-gold/30',
     },
     private: {
       icon: Lock,
-      label: t('private', 'Privat'),
-      description: t('privateDesc', 'Nur du kannst diese Erfahrung sehen'),
+      label: t('private'),
+      description: t('privateDesc'),
       color: 'text-text-tertiary',
       bgColor: 'bg-space-deep/50',
       borderColor: 'border-glass-border',
@@ -107,13 +107,10 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
             <Info className="w-5 h-5 text-space-deep flex-shrink-0 mt-0.5" />
             <div>
               <div className="text-sm font-semibold text-space-deep mb-1">
-                {t('tooltipTitle', 'Tipp: Sichtbarkeit wählen')}
+                {t('tooltipTitle')}
               </div>
               <div className="text-xs text-space-deep/80">
-                {t(
-                  'tooltipDesc',
-                  'Klicke auf den Pfeil um die Sichtbarkeit zu ändern: Öffentlich, Anonym oder Privat.'
-                )}
+                {t('tooltipDesc')}
               </div>
             </div>
           </div>
@@ -136,7 +133,7 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
           className="rounded-r-none border-r border-primary/30 group"
         >
           <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-          {t('publish', 'Veröffentlichen')}
+          {t('publish')}
         </Button>
 
         {/* Dropdown Toggle */}
@@ -160,7 +157,7 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
       {showMenu && (
         <div className="absolute bottom-full right-0 mb-2 w-80 glass-card p-2 shadow-xl animate-slide-up z-40">
           <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wide px-3 py-2">
-            {t('selectVisibility', 'Sichtbarkeit wählen')}
+            {t('selectVisibility')}
           </div>
 
           {/* Menu Options */}
@@ -202,7 +199,7 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
             <div className="flex items-center gap-2 text-xs text-text-secondary">
               <CurrentIcon className={`w-4 h-4 ${currentConfig.color}`} />
               <span>
-                {t('current', 'Aktuell')}: <span className="font-medium">{currentConfig.label}</span>
+                {t('current')}: <span className="font-medium">{currentConfig.label}</span>
               </span>
             </div>
           </div>

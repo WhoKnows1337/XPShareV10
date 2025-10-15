@@ -159,7 +159,23 @@ export const ExtraQuestionsFlow = forwardRef<ExtraQuestionsFlowHandle, ExtraQues
   const handleNext = (answer: any) => {
     if (!currentQuestion) return;
 
+    // Save answer to extra questions
     setExtraQuestion(currentQuestion.id, answer);
+
+    // If question maps to an attribute, update it with user's answer
+    if (currentQuestion.maps_to_attribute) {
+      updateScreen2({
+        attributes: {
+          ...screen2.attributes,
+          [currentQuestion.maps_to_attribute]: {
+            value: answer,
+            confidence: 100,  // User answer = 100% confidence
+            isManuallyEdited: true  // User explicitly confirmed
+          }
+        }
+      });
+      console.log(`✓ Updated attribute '${currentQuestion.maps_to_attribute}' with user answer:`, answer);
+    }
 
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -196,7 +212,7 @@ export const ExtraQuestionsFlow = forwardRef<ExtraQuestionsFlowHandle, ExtraQues
       <div className="p-6 bg-glass-bg border border-glass-border rounded flex items-center justify-center gap-3">
         <Loader2 className="h-5 w-5 animate-spin text-observatory-accent" />
         <span className="text-sm text-text-secondary">
-          {t('loading', 'Lade Fragen...')}
+          {t('loading')}
         </span>
       </div>
     );
@@ -211,7 +227,7 @@ export const ExtraQuestionsFlow = forwardRef<ExtraQuestionsFlowHandle, ExtraQues
           onClick={onComplete}
           className="mt-3 text-xs text-text-secondary hover:text-text-primary underline"
         >
-          {t('skip', 'Überspringen')}
+          {t('skip')}
         </button>
       </div>
     );
@@ -243,7 +259,7 @@ export const ExtraQuestionsFlow = forwardRef<ExtraQuestionsFlowHandle, ExtraQues
       <div className="p-6 bg-glass-bg border border-glass-border rounded flex items-center justify-center gap-3">
         <Loader2 className="h-5 w-5 animate-spin text-observatory-accent" />
         <span className="text-sm text-text-secondary">
-          {t('reloading', 'Fragen werden aktualisiert...')}
+          {t('reloading')}
         </span>
       </div>
     );
@@ -281,7 +297,7 @@ export const ExtraQuestionsFlow = forwardRef<ExtraQuestionsFlowHandle, ExtraQues
           onClick={handleSkipAll}
           className="text-[10px] text-text-tertiary hover:text-text-secondary uppercase tracking-wide"
         >
-          {t('skipAll', 'Alle überspringen')}
+          {t('skipAll')}
         </button>
       </div>
 

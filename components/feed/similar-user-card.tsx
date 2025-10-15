@@ -25,7 +25,7 @@ export function SimilarUserCard({ currentUserId }: SimilarUserCardProps) {
     queryKey: ['similar-user', currentUserId],
     queryFn: async () => {
       const supabase = createClient()
-      const { data, error } = await supabase.rpc('find_similar_users', {
+      const { data, error } = await (supabase as any).rpc('find_similar_users', {
         target_user_id: currentUserId,
         limit_count: 1
       })

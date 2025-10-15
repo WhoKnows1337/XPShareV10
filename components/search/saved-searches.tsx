@@ -17,7 +17,7 @@ export function SavedSearches({ userId }: { userId: string }) {
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('saved_searches').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+      const { data } = await (supabase as any).from('saved_searches').select('*').eq('user_id', userId).order('created_at', { ascending: false })
       setSearches(data || [])
     }
     load()
@@ -25,8 +25,8 @@ export function SavedSearches({ userId }: { userId: string }) {
 
   const deleteSearch = async (id: string) => {
     const supabase = createClient()
-    await supabase.from('saved_searches').delete().eq('id', id)
-    setSearches(searches.filter(s => s.id \!== id))
+    await (supabase as any).from('saved_searches').delete().eq('id', id)
+    setSearches(searches.filter(s => s.id !== id))
     toast({ title: 'Search deleted' })
   }
 

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     // Check authentication
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       transcript,
-      duration: transcription.duration || null,
+      duration: (transcription as any).duration || null,
     })
   } catch (error: any) {
     console.error('Transcription error:', error)

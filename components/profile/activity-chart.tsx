@@ -28,6 +28,7 @@ export function ActivityChart({ userId }: ActivityChartProps) {
       const monthlyCounts: Record<string, number> = {}
 
       data.forEach((exp) => {
+        if (!exp.created_at) return
         const date = new Date(exp.created_at)
         const monthKey = date.toLocaleDateString('de-DE', { year: 'numeric', month: 'short' })
         monthlyCounts[monthKey] = (monthlyCounts[monthKey] || 0) + 1

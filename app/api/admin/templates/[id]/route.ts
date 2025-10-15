@@ -11,7 +11,7 @@ export async function GET(
   // Check admin auth
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await (supabase as any).auth.getUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -56,7 +56,7 @@ export async function DELETE(
   // Check admin auth
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await (supabase as any).auth.getUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -100,7 +100,7 @@ export async function PATCH(
   // Check admin auth
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await (supabase as any).auth.getUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

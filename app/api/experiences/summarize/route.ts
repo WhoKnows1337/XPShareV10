@@ -11,16 +11,17 @@ interface SummarizeRequest {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body: SummarizeRequest = await request.json()
-    const { text, category } = body
+  const body: SummarizeRequest = await request.json()
+  const { text, category } = body
 
-    if (!text) {
-      return NextResponse.json(
-        { error: 'Text is required' },
-        { status: 400 }
-      )
-    }
+  if (!text) {
+    return NextResponse.json(
+      { error: 'Text is required' },
+      { status: 400 }
+    )
+  }
+
+  try {
 
     const systemPrompt = `Du bist ein Experte darin, fesselnde Titel und Teaser für persönliche Erfahrungsberichte zu erstellen.
 

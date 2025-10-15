@@ -38,10 +38,10 @@ export function FilesWitnessesScreen() {
       {/* Compact Header */}
       <div className="mb-3">
         <h1 className="section-title-observatory">
-          {t('title', 'Medien & Zeugen')}
+          {t('title')}
         </h1>
         <p className="text-text-secondary text-xs mt-1">
-          {t('subtitle', 'Füge Dateien hinzu und lade Zeugen ein (optional)')}
+          {t('subtitle')}
         </p>
       </div>
 

@@ -6,21 +6,16 @@ import { CategoryPicker } from '../screen2/CategoryPicker';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, X, Pencil, Check, RefreshCw } from 'lucide-react';
+import { X, Pencil, Check, RefreshCw } from 'lucide-react';
+import { AttributeGrid } from '../shared/AttributeGrid';
 import { useTranslations } from 'next-intl';
 import { getCategoryIcon, getCategoryBgClass } from '@/lib/category-icons';
-
-interface AttributeOption {
-  value: string;
-  label: string;
-}
 
 export function EditableMetadataHero() {
   const tCategories = useTranslations('categories');
   const { screen2, screen3, setTitle, setCategory, removeTag, setSummary, screen1, updateScreen2 } = useSubmitFlowStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingSummary, setIsEditingSummary] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showTitleSuggestions, setShowTitleSuggestions] = useState(false);
   const [showSummarySuggestions, setShowSummarySuggestions] = useState(false);
@@ -28,14 +23,6 @@ export function EditableMetadataHero() {
   const [summarySuggestions, setSummarySuggestions] = useState<string[]>([]);
   const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
   const [isGeneratingSummaries, setIsGeneratingSummaries] = useState(false);
-
-  // Attribute editing states
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [editedAttributes, setEditedAttributes] = useState(screen2.attributes || {});
-  const [customAttributeValue, setCustomAttributeValue] = useState<string>('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [loadedOptions, setLoadedOptions] = useState<Record<string, AttributeOption[]>>({});
-  const [loadingOptions, setLoadingOptions] = useState(false);
 
   // Helper function to get category translation
   const getCategoryTranslation = (slug: string): string => {
@@ -130,222 +117,20 @@ export function EditableMetadataHero() {
     }
   };
 
-  // Load attribute options dynamically from API
-  const [attributeMetadata, setAttributeMetadata] = useState<Record<string, { dataType: string; displayName: string }>>({});
-
-  const loadAttributeOptions = async (key: string) => {
-    if (loadedOptions[key]) {
-      return;
-    }
-
-    setLoadingOptions(true);
-    try {
-      const response = await fetch(`/api/attribute-options?key=${encodeURIComponent(key)}`);
-      if (response.ok) {
-        const data = await response.json();
-        const options = data.options || [];
-        const dataType = data.dataType || 'text';
-        const displayName = data.displayName || key;
-
-        // Save metadata
-        setAttributeMetadata(prev => ({
-          ...prev,
-          [key]: { dataType, displayName },
-        }));
-
-        // Only add options and "other" for enum types
-        if (dataType === 'enum') {
-          const hasOther = options.some((opt: AttributeOption) => opt.value === 'other');
-          if (!hasOther) {
-            options.push({ value: 'other', label: 'Andere...' });
-          }
-
-          setLoadedOptions(prev => ({
-            ...prev,
-            [key]: options,
-          }));
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to load options for ${key}:`, error);
-      setAttributeMetadata(prev => ({
-        ...prev,
-        [key]: { dataType: 'text', displayName: key },
-      }));
-    } finally {
-      setLoadingOptions(false);
-    }
-  };
-
-  const handleAttributeClick = async (key: string) => {
-    setEditingKey(key);
-    setEditedAttributes(screen2.attributes || {});
-
-    const currentAttr = screen2.attributes?.[key];
-    if (currentAttr && typeof currentAttr === 'object' && currentAttr.customValue) {
-      setCustomAttributeValue(currentAttr.customValue);
-    } else {
-      setCustomAttributeValue('');
-    }
-
-    await loadAttributeOptions(key);
-  };
-
-  const handleAttributeChange = (key: string, value: string) => {
-    const newAttributes = {
-      ...editedAttributes,
-      [key]: {
-        ...editedAttributes[key],
-        value,
-        isManuallyEdited: true,
-      },
-    };
-    setEditedAttributes(newAttributes);
-  };
-
-  const handleSaveAttribute = async (key: string) => {
-    setIsSaving(true);
-    const attributeValue = editedAttributes[key]?.value;
-    if (attributeValue === 'other' && customAttributeValue.trim()) {
-      editedAttributes[key] = {
-        ...editedAttributes[key],
-        customValue: customAttributeValue.trim(),
-        isCustom: true,
-        isManuallyEdited: true,
-      };
-    }
-    updateScreen2({ attributes: editedAttributes });
-    setEditingKey(null);
-    setCustomAttributeValue('');
-    setIsSaving(false);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingKey(null);
-    setCustomAttributeValue('');
-    setEditedAttributes(screen2.attributes || {});
-  };
-
-  // Get confidence color (traffic light system) - dezente Version
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 80) return {
-      text: 'text-green-600',
-      bg: 'bg-green-100/20',
-    };
-    if (confidence >= 60) return {
-      text: 'text-yellow-600',
-      bg: 'bg-yellow-100/20',
-    };
-    return {
-      text: 'text-red-600',
-      bg: 'bg-red-100/20',
-    };
-  };
-
-  // Sortiere Attribute nach logischen Gruppen
-  const sortAttributes = (attributes: Record<string, any>) => {
-    const priorityOrder = [
-      // Zeit & Ort
-      'experience_date', 'event_date', 'event_time', 'location', 'event_location', 'time_of_day',
-      // Dauer & Kontext
-      'duration', 'event_duration', 'witnesses', 'visibility', 'prior_state',
-      // Intensität & Emotionen
-      'intensity', 'emotions', 'emotional_state', 'afterwards_feeling', 'repeatability', 'frequency',
-      // Physische Eigenschaften
-      'shape', 'surface', 'size', 'phenomenon_color', 'light_color', 'light_pattern',
-      // Verhalten & Bewegung
-      'movement', 'movement_type', 'sound', 'altitude', 'sky_location', 'disappearance',
-      // Rest alphabetisch
-    ];
-
-    return Object.entries(attributes).sort((a, b) => {
-      const indexA = priorityOrder.indexOf(a[0]);
-      const indexB = priorityOrder.indexOf(b[0]);
-
-      if (indexA === -1 && indexB === -1) return a[0].localeCompare(b[0]);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-  };
-
-  // Render smart input based on attribute type
-  const renderSmartInput = (key: string) => {
-    const metadata = attributeMetadata[key];
-    const dataType = metadata?.dataType || 'text';
-    const displayName = metadata?.displayName || key.replace(/_/g, ' ');
-    const options = loadedOptions[key];
-
-    // Enum type → Dropdown
-    if (dataType === 'enum' && options && options.length > 0) {
-      return (
-        <select
-          value={editedAttributes[key]?.value || ''}
-          onChange={(e) => handleAttributeChange(key, e.target.value)}
-          disabled={isSaving || loadingOptions}
-          className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
-          autoFocus
-        >
-          <option value="">Auswählen...</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      );
-    }
-
-    // Date field
-    if (key.includes('date')) {
-      return (
-        <input
-          type="date"
-          value={editedAttributes[key]?.value || ''}
-          onChange={(e) => handleAttributeChange(key, e.target.value)}
-          disabled={isSaving}
-          className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
-          autoFocus
-        />
-      );
-    }
-
-    // Time field
-    if (key.includes('time')) {
-      return (
-        <input
-          type="time"
-          value={editedAttributes[key]?.value || ''}
-          onChange={(e) => handleAttributeChange(key, e.target.value)}
-          disabled={isSaving}
-          className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
-          autoFocus
-        />
-      );
-    }
-
-    // Default: Text input
-    return (
-      <input
-        type="text"
-        value={editedAttributes[key]?.value || ''}
-        onChange={(e) => handleAttributeChange(key, e.target.value)}
-        disabled={isSaving}
-        className="w-full px-2 py-1.5 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50 disabled:opacity-50"
-        placeholder={`${displayName} eingeben...`}
-        autoFocus
-      />
-    );
-  };
 
   const categorySlug = screen2.category || 'other';
   const CategoryIcon = getCategoryIcon(categorySlug);
   const categoryColor = getCategoryBgClass(categorySlug);
-  const confidencePercent = Math.round((screen2.confidence || 0.95) * 100);
+  const confidencePercent = Math.round((screen2.aiConfidence || 0.95) * 100);
   const attributeCount = screen2.attributes ? Object.keys(screen2.attributes).length : 0;
 
   const titleLength = screen2.title.length;
   const summaryLength = screen3.summary?.length || 0;
+
+  // Callback for saving attributes
+  const handleSaveAttribute = async (key: string, editedAttributes: Record<string, any>) => {
+    updateScreen2({ attributes: editedAttributes });
+  };
 
   return (
     <motion.div
@@ -612,129 +397,14 @@ export function EditableMetadataHero() {
           </div>
         </div>
 
-        {/* Collapsible Attributes */}
-        {attributeCount > 0 && (
-          <div className="mt-4 pt-4 border-t border-glass-border">
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary transition-colors w-full"
-            >
-              <span>
-                {attributeCount} Details aus deinem Text erkannt
-              </span>
-              <ChevronDown
-                className={`w-4 h-4 ml-auto transition-transform ${
-                  isExpanded ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {sortAttributes(screen2.attributes || {}).map(([key, attr]) => {
-                      const displayName = key.replace(/_/g, ' ');
-                      const attrValue = typeof attr === 'string' ? attr : attr.value;
-                      const attrConfidence = typeof attr === 'object' && attr.confidence ? attr.confidence : 0;
-                      const options = loadedOptions[key];
-                      const isEditing = editingKey === key;
-
-                      // Display custom value if present
-                      const displayValue = typeof attr === 'object' && attr.customValue
-                        ? attr.customValue
-                        : attrValue;
-
-                      return (
-                        <div
-                          key={key}
-                          className={`text-xs p-2 bg-glass-bg/50 rounded border transition-all ${
-                            isEditing
-                              ? 'border-observatory-accent ring-2 ring-observatory-accent/20'
-                              : 'border-glass-border hover:border-observatory-accent/30 cursor-pointer'
-                          }`}
-                        >
-                          {isEditing ? (
-                            <div className="space-y-2">
-                              <label className="block text-text-tertiary font-medium capitalize">
-                                {displayName}:
-                              </label>
-                              {/* Smart input based on type */}
-                              {renderSmartInput(key)}
-
-                              {/* Custom value input - only for enum with "other" */}
-                              {editedAttributes[key]?.value === 'other' && (
-                                <div className="p-2 bg-glass-bg border border-glass-border rounded space-y-1">
-                                  <label className="text-[10px] font-medium text-text-primary">
-                                    Bitte genauer beschreiben:
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={customAttributeValue}
-                                    onChange={(e) => setCustomAttributeValue(e.target.value)}
-                                    placeholder="z.B. Kreuzförmig, Bumerang..."
-                                    className="w-full px-2 py-1 text-xs border border-glass-border rounded bg-glass-bg text-text-primary focus:outline-none focus:ring-2 focus:ring-observatory-accent/50"
-                                    maxLength={50}
-                                    disabled={isSaving}
-                                  />
-                                  <p className="text-[9px] text-text-tertiary italic">
-                                    💡 Deine Eingabe hilft uns das System zu verbessern
-                                  </p>
-                                </div>
-                              )}
-
-                              {/* Action buttons */}
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => handleSaveAttribute(key)}
-                                  disabled={isSaving}
-                                  className="flex-1 px-2 py-1 text-[10px] font-medium bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded border border-green-400/30 transition-colors disabled:opacity-50"
-                                >
-                                  <Check className="w-3 h-3 inline mr-1" />
-                                  Speichern
-                                </button>
-                                <button
-                                  onClick={handleCancelEdit}
-                                  disabled={isSaving}
-                                  className="flex-1 px-2 py-1 text-[10px] font-medium bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded border border-red-400/30 transition-colors disabled:opacity-50"
-                                >
-                                  <X className="w-3 h-3 inline mr-1" />
-                                  Abbrechen
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div onClick={() => handleAttributeClick(key)}>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-text-tertiary text-[11px] min-w-[90px] text-right">
-                                  {displayName}:
-                                </span>
-                                {typeof attr === 'object' && attr.confidence && (
-                                  <span className={`px-1 py-0.5 rounded text-[8px] font-semibold ${getConfidenceColor(attr.confidence).bg} ${getConfidenceColor(attr.confidence).text}`}>
-                                    {attr.confidence}%
-                                  </span>
-                                )}
-                                <span className="text-text-primary font-medium text-[11px] flex-1">
-                                  {displayValue}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+        {/* Attributes Grid - Shared Component */}
+        <AttributeGrid
+          attributes={screen2.attributes}
+          attributeCount={attributeCount}
+          isCollapsible={true}
+          onSaveAttribute={handleSaveAttribute}
+          buttonText="Details aus deinem Text erkannt"
+        />
       </div>
     </motion.div>
   );

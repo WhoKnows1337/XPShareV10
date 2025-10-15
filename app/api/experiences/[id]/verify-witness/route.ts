@@ -17,14 +17,14 @@ export async function POST(
     // Authenticate user
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await (supabase as any).auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
     // Verify user is the experience author
-    const { data: experience } = await supabase
+    const { data: experience } = await (supabase as any)
       .from('experiences')
       .select('user_id')
       .eq('id', experienceId)
@@ -48,7 +48,7 @@ export async function POST(
     }
 
     // 1. Create verification record
-    const { error: verificationError } = await supabase
+    const { error: verificationError } = await (supabase as any)
       .from('witness_verifications')
       .insert({
         experience_id: experienceId,
@@ -65,7 +65,7 @@ export async function POST(
 
     // 2. Award Badge + XP
     // Check if badge exists
-    const { data: badge } = await supabase
+    const { data: badge } = await (supabase as any)
       .from('badges')
       .select('id')
       .eq('name', 'Verified Witness')
@@ -73,7 +73,7 @@ export async function POST(
 
     if (badge) {
       // Award badge if not already earned
-      const { data: existingBadge } = await supabase
+      const { data: existingBadge } = await (supabase as any)
         .from('user_badges')
         .select('id')
         .eq('user_id', witness_user_id)
@@ -81,7 +81,7 @@ export async function POST(
         .single()
 
       if (!existingBadge) {
-        await supabase.from('user_badges').insert({
+        await (supabase as any).from('user_badges').insert({
           user_id: witness_user_id,
           badge_id: badge.id,
         })
@@ -89,7 +89,7 @@ export async function POST(
     }
 
     // Add XP
-    const { data: witnessProfile } = await supabase
+    const { data: witnessProfile } = await (supabase as any)
       .from('user_profiles')
       .select('total_xp, level')
       .eq('id', witness_user_id)
@@ -99,7 +99,7 @@ export async function POST(
       const newXP = (witnessProfile.total_xp || 0) + 20
       const newLevel = Math.floor(newXP / 1000) + 1
 
-      await supabase
+      await (supabase as any)
         .from('user_profiles')
         .update({
           total_xp: newXP,
@@ -109,13 +109,13 @@ export async function POST(
     }
 
     // 3. Create notification
-    const { data: authorProfile } = await supabase
+    const { data: authorProfile } = await (supabase as any)
       .from('user_profiles')
       .select('username')
       .eq('id', user.id)
       .single()
 
-    await supabase.from('notifications').insert({
+    await (supabase as any).from('notifications').insert({
       user_id: witness_user_id,
       type: 'witness_verified',
       title: '🎉 Deine Witness-Verifikation wurde bestätigt!',

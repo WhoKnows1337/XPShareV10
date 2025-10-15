@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    const { data: values, error } = await supabase.rpc(
+    const { data: values, error } = await (supabase as any).rpc(
       'get_attribute_values_for_key',
       {
         p_attribute_key: attributeKey,

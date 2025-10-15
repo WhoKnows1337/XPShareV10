@@ -69,7 +69,7 @@ export default async function AdminLayout({
               {/* Category Tree */}
               {categories && categories.length > 0 && (
                 <div className="mt-2">
-                  <SidebarCategoryTree categories={categories} />
+                  <SidebarCategoryTree categories={categories as any} />
                 </div>
               )}
 

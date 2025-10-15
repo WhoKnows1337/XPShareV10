@@ -62,7 +62,7 @@ export async function GET(
 
     // 1. Get attribute correlations
     for (const attr of attributes) {
-      const { data: correlations } = await supabase
+      const { data: correlations } = await (supabase as any)
         .rpc('get_attribute_correlation', {
           attr_key: attr.attribute_key,
           attr_val: attr.attribute_value,
@@ -88,7 +88,7 @@ export async function GET(
 
     // 2. Get geographic clusters
     if (attributes.length > 0) {
-      const { data: geoClusters } = await supabase
+      const { data: geoClusters } = await (supabase as any)
         .rpc('get_attribute_geographic_clusters', {
           attr_key: attributes[0].attribute_key,
           attr_val: attributes[0].attribute_value,
@@ -109,7 +109,7 @@ export async function GET(
 
     // 3. Get temporal patterns
     for (const attr of attributes.slice(0, 3)) { // Limit to first 3 attributes
-      const { data: temporal } = await supabase
+      const { data: temporal } = await (supabase as any)
         .rpc('get_attribute_temporal_patterns', {
           attr_key: attr.attribute_key,
           attr_val: attr.attribute_value,
@@ -132,7 +132,7 @@ export async function GET(
 
     // 4. Get co-occurrence patterns
     for (const attr of attributes.slice(0, 2)) { // Limit to first 2 attributes
-      const { data: coOccurrence } = await supabase
+      const { data: coOccurrence } = await (supabase as any)
         .rpc('get_attribute_co_occurrence', {
           attr_key: attr.attribute_key,
           attr_val: attr.attribute_value,
@@ -155,7 +155,7 @@ export async function GET(
 
     // 5. Get value distribution
     for (const attr of attributes) {
-      const { data: distribution } = await supabase
+      const { data: distribution } = await (supabase as any)
         .rpc('get_attribute_value_distribution', {
           attr_key: attr.attribute_key,
         });
@@ -170,7 +170,7 @@ export async function GET(
     }
 
     // 6. Get similar experiences
-    const { data: similar } = await supabase
+    const { data: similar } = await (supabase as any)
       .rpc('get_similar_experiences_by_attributes', {
         exp_id: id,
         min_shared: Math.min(2, attributes.length), // At least 2 shared attributes or all if less
@@ -188,7 +188,7 @@ export async function GET(
 
     // 7. Get confidence stats
     for (const attr of attributes) {
-      const { data: stats } = await supabase
+      const { data: stats } = await (supabase as any)
         .rpc('get_attribute_confidence_stats', {
           attr_key: attr.attribute_key,
           attr_val: attr.attribute_value,

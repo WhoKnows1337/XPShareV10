@@ -148,12 +148,6 @@ export function ProfileClientTabs({
       <ProfileTabs
         userId={profileUser.id}
         isOwnProfile={isOwnProfile}
-        stats={{
-          experiencesCount: stats.experiencesCount,
-          draftsCount: stats.draftsCount,
-          privateCount: stats.privateCount,
-          badgesCount: badges.length,
-        }}
       />
     </div>
   )

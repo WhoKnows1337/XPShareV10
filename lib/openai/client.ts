@@ -46,11 +46,12 @@ export async function transcribeAudio(audioFile: File) {
 }
 
 /**
- * Generate embedding for text (3072 dimensions with text-embedding-3-large)
+ * Generate embedding for text (1536 dimensions with text-embedding-3-small)
+ * Note: Using text-embedding-3-small due to pgvector's 2000 dimension limit
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const response = await openai.embeddings.create({
-    model: 'text-embedding-3-large',
+    model: 'text-embedding-3-small',
     input: text,
   })
 

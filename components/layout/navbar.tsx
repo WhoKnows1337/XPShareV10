@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, User, Sparkles, Search, Shield, ChevronDown, FolderOpen, Plus } from 'lucide-react';
+import { LogOut, Settings, User, Sparkles, Search, Shield, ChevronDown, FolderOpen, Plus, History } from 'lucide-react';
 import { NotificationsDropdown } from './notifications-dropdown';
 import { LanguageSwitcher } from './language-switcher';
 import { CommandPalette } from '@/components/browse/command-palette';
@@ -168,6 +168,15 @@ export function Navbar() {
                     >
                       <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
                       {t('settings')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/search/history"
+                      className="cursor-pointer text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10 focus:text-observatory-gold focus:bg-observatory-gold/10"
+                    >
+                      <History className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Search History
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
