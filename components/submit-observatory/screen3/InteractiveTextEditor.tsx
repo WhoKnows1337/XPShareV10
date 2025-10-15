@@ -44,6 +44,8 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
   const handleSegmentClick = useCallback((segment: TextSegment, event: React.MouseEvent) => {
     if (segment.type !== 'ai-added') return;
 
+    event.stopPropagation(); // Prevent triggering edit mode
+
     const rect = event.currentTarget.getBoundingClientRect();
     setTooltip({
       segment,
@@ -220,9 +222,13 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
         <>
           {/* View Mode - Text Display */}
           <div
+            onClick={enterEditMode}
             className="p-5 bg-space-deep/60 border border-glass-border rounded-lg
                        text-text-primary text-base leading-relaxed
-                       min-h-[300px]"
+                       min-h-[300px] cursor-text
+                       hover:border-observatory-gold/30 hover:bg-space-deep/80
+                       transition-all duration-200"
+            title="Klicke hier um den Text zu bearbeiten"
           >
             <AnimatePresence mode="wait">
               {renderSegments()}
