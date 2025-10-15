@@ -1,13 +1,10 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit3, Save, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { SegmentTooltip } from './SegmentTooltip';
-import { EditableTextArea } from './EditableTextArea';
 import type { TextSegment } from '@/lib/utils/text-diff';
 
 interface TooltipState {
@@ -26,9 +23,8 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
 
   const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editedText, setEditedText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const editableRef = useRef<HTMLDivElement>(null);
 
   // Get display text based on enhancement state
   const displayText = screen3.enhancementEnabled && screen3.enhancedText
@@ -76,43 +72,21 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
     }
   }, [undo]);
 
-  // Edit Mode Handlers
-  const enterEditMode = useCallback(() => {
-    setEditedText(currentText);
-    setIsEditMode(true);
-    setTooltip(null); // Close any open tooltips
-  }, [currentText]);
+  // Handle contentEditable input
+  const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
+    const newText = e.currentTarget.textContent || '';
+    setCurrentText(newText);
 
-  const handleTextEdit = useCallback((newText: string) => {
-    setEditedText(newText);
-    // Trigger change detection callback
     if (onTextChange) {
       onTextChange(newText);
     }
-  }, [onTextChange]);
+  }, [setCurrentText, onTextChange]);
 
-  const handleTextEditBlur = useCallback(() => {
+  const handleBlur = useCallback(() => {
     if (onTextBlur) {
       onTextBlur();
     }
   }, [onTextBlur]);
-
-  const saveEdit = useCallback(() => {
-    setCurrentText(editedText);
-    setIsEditMode(false);
-    // Trigger final change detection
-    if (onTextChange) {
-      onTextChange(editedText);
-    }
-    if (onTextBlur) {
-      onTextBlur();
-    }
-  }, [editedText, setCurrentText, onTextChange, onTextBlur]);
-
-  const cancelEdit = useCallback(() => {
-    setIsEditMode(false);
-    setEditedText('');
-  }, []);
 
   // Render segments as interactive elements
   const renderSegments = () => {
@@ -173,127 +147,77 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
 
   return (
     <div className="relative" ref={containerRef}>
-      {/* Mode Toggle Button */}
-      {!isEditMode && (
-        <div className="absolute top-3 right-3 z-10">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              onClick={enterEditMode}
-              variant="outline"
-              size="sm"
-              className="text-xs bg-space-deep/80 backdrop-blur-sm"
-            >
-              <Edit3 className="w-3 h-3 mr-1.5" />
-              Text bearbeiten
-            </Button>
-          </motion.div>
+      {/* Seamless Editable Text Display */}
+      <div
+        ref={editableRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onBlur={handleBlur}
+        className="p-5 bg-space-deep/60 border border-glass-border rounded-lg
+                   text-text-primary text-base leading-relaxed
+                   min-h-[300px] cursor-text
+                   focus:outline-none focus:border-observatory-gold/50 focus:bg-space-deep/80
+                   transition-all duration-200"
+        style={{ whiteSpace: 'pre-wrap' }}
+      >
+        <AnimatePresence mode="wait">
+          {renderSegments()}
+        </AnimatePresence>
+      </div>
+
+      {/* Enhancement Legend & Info */}
+      {screen3.enhancementEnabled && aiSegmentsCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-6 mt-4 text-sm"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-observatory-gold/20 border-b-2 border-observatory-gold rounded-sm" />
+            <span className="text-text-tertiary">{t('legend.added', 'AI hinzugefügt')}</span>
+          </div>
+
+          <div className="ml-auto text-text-tertiary text-xs flex items-center gap-3">
+            <span>
+              {aiSegmentsCount} {aiSegmentsCount === 1 ? 'Änderung' : 'Änderungen'}
+            </span>
+
+            {canUndo && (
+              <button
+                onClick={handleUndo}
+                className="text-observatory-gold hover:text-observatory-gold/80 transition-colors underline"
+              >
+                ↶ Undo
+              </button>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* No Enhancement Info */}
+      {!screen3.enhancementEnabled && (
+        <div className="mt-3 text-xs text-text-tertiary flex items-center gap-2">
+          <span>💡</span>
+          <span>Aktiviere den AI-Button um deinen Text mit zusätzlichen Details zu ergänzen</span>
         </div>
       )}
 
-      {/* Edit Mode */}
-      {isEditMode ? (
-        <div className="space-y-3">
-          <EditableTextArea
-            text={editedText}
-            segments={screen3.segments}
-            onChange={handleTextEdit}
-            onBlur={handleTextEditBlur}
-            minHeight={300}
-          />
-
-          {/* Edit Mode Actions */}
-          <div className="flex items-center justify-end gap-2">
-            <Button onClick={cancelEdit} variant="outline" size="sm">
-              <X className="w-4 h-4 mr-1.5" />
-              Abbrechen
-            </Button>
-            <Button
-              onClick={saveEdit}
-              variant="default"
-              size="sm"
-              className="bg-observatory-gold hover:bg-observatory-gold/80 text-space-deep"
-            >
-              <Save className="w-4 h-4 mr-1.5" />
-              Speichern
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* View Mode - Text Display */}
-          <div
-            onClick={enterEditMode}
-            className="p-5 bg-space-deep/60 border border-glass-border rounded-lg
-                       text-text-primary text-base leading-relaxed
-                       min-h-[300px] cursor-text
-                       hover:border-observatory-gold/30 hover:bg-space-deep/80
-                       transition-all duration-200"
-            title="Klicke hier um den Text zu bearbeiten"
-          >
-            <AnimatePresence mode="wait">
-              {renderSegments()}
-            </AnimatePresence>
-          </div>
-        </>
+      {/* Tooltip */}
+      {tooltip && (
+        <SegmentTooltip
+          segment={tooltip.segment}
+          position={tooltip.position}
+          onRemove={handleRemoveSegment}
+          onClose={() => setTooltip(null)}
+        />
       )}
 
-      {/* View Mode Only - Enhancement Legend & Info */}
-      {!isEditMode && (
-        <>
-          {/* Enhancement Legend */}
-          {screen3.enhancementEnabled && aiSegmentsCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-6 mt-4 text-sm"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-observatory-gold/20 border-b-2 border-observatory-gold rounded-sm" />
-                <span className="text-text-tertiary">{t('legend.added', 'AI hinzugefügt')}</span>
-              </div>
-
-              <div className="ml-auto text-text-tertiary text-xs flex items-center gap-3">
-                <span>
-                  {aiSegmentsCount} {aiSegmentsCount === 1 ? 'Änderung' : 'Änderungen'}
-                </span>
-
-                {canUndo && (
-                  <button
-                    onClick={handleUndo}
-                    className="text-observatory-gold hover:text-observatory-gold/80 transition-colors underline"
-                  >
-                    ↶ Undo
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          )}
-
-          {/* No Enhancement Info */}
-          {!screen3.enhancementEnabled && (
-            <div className="mt-3 text-xs text-text-tertiary flex items-center gap-2">
-              <span>💡</span>
-              <span>Aktiviere den AI-Button um deinen Text mit zusätzlichen Details zu ergänzen</span>
-            </div>
-          )}
-
-          {/* Tooltip */}
-          {tooltip && (
-            <SegmentTooltip
-              segment={tooltip.segment}
-              position={tooltip.position}
-              onRemove={handleRemoveSegment}
-              onClose={() => setTooltip(null)}
-            />
-          )}
-
-          {/* Keyboard hint */}
-          {hasSegments && aiSegmentsCount > 0 && (
-            <div className="mt-2 text-xs text-text-tertiary/60 text-center">
-              💡 Tip: Click on gold text to remove AI additions or click "Text bearbeiten" to edit
-            </div>
-          )}
-        </>
+      {/* Keyboard hint */}
+      {hasSegments && aiSegmentsCount > 0 && (
+        <div className="mt-2 text-xs text-text-tertiary/60 text-center">
+          💡 Tip: Klicke auf goldenen Text um KI-Ergänzungen zu entfernen
+        </div>
       )}
     </div>
   );
