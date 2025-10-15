@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import DiffMatchPatch from 'diff-match-patch';
+import type { TextSegment } from '@/lib/utils/text-diff';
 
 /**
  * Text Enrichment API - Merge question answers and attributes into original text
@@ -9,6 +11,7 @@ import OpenAI from 'openai';
  * - Question answers (date, location, witnesses, etc.)
  *
  * Creates a more complete narrative without changing the user's voice.
+ * Returns segments for interactive editing.
  */
 
 const openai = new OpenAI({
@@ -94,13 +97,17 @@ Gib NUR den angereicherten Text zurück, keine Erklärungen.`;
 
     const enrichedText = completion.choices[0].message.content || text;
 
-    // Calculate highlights (simplified: assume everything after original text is added)
-    const highlights = calculateHighlights(text, enrichedText);
+    // Calculate segments with proper positions
+    const segments = calculateSegments(text, enrichedText, attributes, answers);
+
+    // Convert to highlights for backward compatibility
+    const highlights = segmentsToHighlights(segments);
 
     return NextResponse.json({
       enrichedText: enrichedText.trim(),
       originalText: text,
-      highlights,
+      highlights, // Backward compatibility
+      segments, // NEW: Detailed segments for interactive editing
       hasChanges: enrichedText !== text,
     });
 
@@ -132,28 +139,100 @@ Gib NUR den angereicherten Text zurück, keine Erklärungen.`;
 }
 
 /**
- * Calculate highlight ranges by finding added sections
- * Uses simple character-based comparison
+ * Calculate text segments using diff-match-patch
+ * Returns segments with proper positions and types
  */
-function calculateHighlights(original: string, enriched: string): Array<{
+function calculateSegments(original: string, enriched: string, attributes: Record<string, any>, answers: Record<string, any>): TextSegment[] {
+  const dmp = new DiffMatchPatch();
+  const diffs = dmp.diff_main(original, enriched);
+  dmp.diff_cleanupSemantic(diffs); // Make diffs more human-readable
+
+  const segments: TextSegment[] = [];
+  let currentPosition = 0;
+  let segmentId = 0;
+
+  for (const [operation, text] of diffs) {
+    if (operation === 0) {
+      // EQUAL - Original text segment
+      segments.push({
+        id: `segment-${segmentId++}`,
+        type: 'original',
+        text,
+        start: currentPosition,
+        end: currentPosition + text.length,
+      });
+      currentPosition += text.length;
+    } else if (operation === 1) {
+      // INSERT - AI added text
+      // Try to determine source from attributes or answers
+      const source = inferSource(text, attributes, answers);
+
+      segments.push({
+        id: `segment-${segmentId++}`,
+        type: 'ai-added',
+        text,
+        start: currentPosition,
+        end: currentPosition + text.length,
+        source,
+      });
+      currentPosition += text.length;
+    }
+    // operation === -1 (DELETE) should not happen in enrichment, so we ignore it
+  }
+
+  return segments;
+}
+
+/**
+ * Infer the source of added text based on attributes and answers
+ * Simple heuristic: check if added text contains attribute/answer keywords
+ */
+function inferSource(addedText: string, attributes: Record<string, any>, answers: Record<string, any>): TextSegment['source'] {
+  const lowerText = addedText.toLowerCase();
+
+  // Check attributes
+  for (const [key, attr] of Object.entries(attributes)) {
+    if (attr.value && typeof attr.value === 'string' && lowerText.includes(attr.value.toLowerCase())) {
+      return {
+        type: 'attribute',
+        key,
+        label: key.charAt(0).toUpperCase() + key.slice(1),
+      };
+    }
+  }
+
+  // Check answers
+  for (const [key, value] of Object.entries(answers)) {
+    if (value && typeof value === 'string' && lowerText.includes(value.toLowerCase())) {
+      return {
+        type: 'question',
+        key,
+        label: key === 'date' ? 'Date & Time' : key === 'location' ? 'Location' : key.charAt(0).toUpperCase() + key.slice(1),
+      };
+    }
+  }
+
+  // Default source
+  return {
+    type: 'question',
+    key: 'general',
+    label: 'AI Enhancement',
+  };
+}
+
+/**
+ * Calculate simple highlights for backward compatibility
+ */
+function segmentsToHighlights(segments: TextSegment[]): Array<{
   start: number;
   end: number;
   type: 'added' | 'enhanced';
 }> {
-  const highlights: Array<{ start: number; end: number; type: 'added' | 'enhanced' }> = [];
-
-  // Simple implementation: if enriched is longer, highlight the end
-  if (enriched.length > original.length) {
-    const addedStart = original.length;
-    highlights.push({
-      start: addedStart,
-      end: enriched.length,
-      type: 'added'
-    });
-  }
-
-  // More sophisticated diff would be needed for proper highlighting
-  // Could use libraries like diff-match-patch for better results
-
-  return highlights;
+  return segments
+    .filter((s) => s.type === 'ai-added')
+    .map((s) => ({
+      start: s.start,
+      end: s.end,
+      type: 'added' as const,
+    }));
 }
