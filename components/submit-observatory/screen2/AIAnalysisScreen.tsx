@@ -180,6 +180,13 @@ export function AIAnalysisScreen() {
         const enrichData = await enrichResponse.json();
         enrichedTextContent = enrichData.enrichedText;
         setEnhancedText(enrichData.enrichedText, enrichData.highlights);
+
+        // ⭐ Also set segments and baseline to prevent re-enrichment in Step 3
+        if (enrichData.segments) {
+          const { setTextSegments, setTextVersionAfterAI } = useSubmitFlowStore.getState();
+          setTextSegments(enrichData.segments);
+          setTextVersionAfterAI(enrichData.enrichedText);
+        }
       }
 
       setEnhancing(false);

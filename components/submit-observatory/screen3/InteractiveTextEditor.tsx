@@ -115,6 +115,7 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
 
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
 
   // Get display text based on enhancement state
   const displayText = screen3.enhancementEnabled && screen3.enhancedText
@@ -221,6 +222,12 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
   // Update editor content when segments change
   useEffect(() => {
     if (!editor) return;
+
+    // ⭐ Skip first render - editor is already initialized with correct content
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
 
     // ⭐ Don't update if editor is focused (user is typing)
     if (editor.isFocused) {

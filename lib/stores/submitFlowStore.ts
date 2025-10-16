@@ -134,6 +134,7 @@ export interface SubmitFlowState {
 
   // NEW: Advanced Screen 3 Actions
   setTextSegments: (segments: TextSegment[]) => void;
+  setTextVersionAfterAI: (text: string) => void;
   removeSegment: (segmentId: string) => void;
   editSegment: (segmentId: string, newText: string) => void;
   setCurrentText: (text: string) => void;
@@ -348,6 +349,17 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         set((state) => ({
           screen3: { ...state.screen3, segments },
           isDraft: true,
+        })),
+
+      setTextVersionAfterAI: (text) =>
+        set((state) => ({
+          screen3: {
+            ...state.screen3,
+            textVersions: {
+              ...state.screen3.textVersions,
+              afterAIEnhancement: text,
+            },
+          },
         })),
 
       removeSegment: (segmentId) =>

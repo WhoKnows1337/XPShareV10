@@ -24,6 +24,7 @@ export function EnhancedTextScreen() {
     setSummary,
     setEnhancedText,
     setTextSegments,
+    setTextVersionAfterAI,
     toggleEnhancement,
     setSummarizing,
     setEnhancing,
@@ -40,7 +41,10 @@ export function EnhancedTextScreen() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [qualityScore, setQualityScore] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
-  const [initialEnhancementDone, setInitialEnhancementDone] = useState(false);
+  // ⭐ Initialize as true if segments already exist (from Step 2)
+  const [initialEnhancementDone, setInitialEnhancementDone] = useState(
+    () => screen3.segments && screen3.segments.length > 0
+  );
 
   // Change detection state
   const [detectedChange, setDetectedChange] = useState<TextChange | null>(null);
@@ -87,20 +91,30 @@ export function EnhancedTextScreen() {
     }
   };
 
-  // Generate summary on mount if not already generated
+  // ⭐ Run both summary and enhancement in parallel on mount
   useEffect(() => {
-    if (screen1.text && !screen3.summary) {
-      generateSummary();
-    }
-  }, []);
+    const initializeScreen = async () => {
+      const tasks = [];
 
-  // Generate enhanced text when enhancement is enabled
-  useEffect(() => {
-    if (screen3.enhancementEnabled && screen1.text &&
-        (!screen3.enhancedText || !screen3.segments || screen3.segments.length === 0)) {
-      enhanceText();
-    }
-  }, [screen3.enhancementEnabled]);
+      // Add summary generation if needed
+      if (screen1.text && !screen3.summary) {
+        tasks.push(generateSummary());
+      }
+
+      // Add text enhancement if enabled and not already done
+      if (screen3.enhancementEnabled && screen1.text &&
+          (!screen3.enhancedText || !screen3.segments || screen3.segments.length === 0)) {
+        tasks.push(enhanceText());
+      }
+
+      // Run both in parallel
+      if (tasks.length > 0) {
+        await Promise.all(tasks);
+      }
+    };
+
+    initializeScreen();
+  }, []); // Only run on mount
 
   const generateSummary = async () => {
     setSummarizing(true);
@@ -160,6 +174,8 @@ export function EnhancedTextScreen() {
       if (data.segments) {
         console.log('[EnhancedTextScreen] Calling setTextSegments with', data.segments.length, 'segments');
         setTextSegments(data.segments);
+        // ⭐ Set baseline for change detection (enriched text WITH AI)
+        setTextVersionAfterAI(data.enrichedText);
         // ⭐ Mark initial enhancement as done - activate change detection now
         setInitialEnhancementDone(true);
       } else {
@@ -234,24 +250,18 @@ export function EnhancedTextScreen() {
     resetDetection,
   ]);
 
-  // Show loading state during initial summary generation
-  if (isSummarizing && !screen3.summary) {
-    return (
-      <LoadingState
-        icon="sparkles"
-        title={t('summarizing')}
-        description={t('summarizingDesc')}
-      />
-    );
-  }
+  // ⭐ Show loading state during initial processing (summary + AI enhancement)
+  // Combine both loading states into ONE to avoid double loading screens
+  const isInitialProcessing =
+    (isSummarizing && !screen3.summary) ||
+    (isEnhancing && screen3.enhancementEnabled && !initialEnhancementDone);
 
-  // ⭐ Show loading during initial AI enhancement
-  if (isEnhancing && screen3.enhancementEnabled && !initialEnhancementDone) {
+  if (isInitialProcessing) {
     return (
       <LoadingState
         icon="sparkles"
-        title="KI bereitet Text auf..."
-        description="Füge zusätzliche Details aus deinen Antworten ein"
+        title="KI analysiert deine Antworten..."
+        description="Ergänze deinen Text mit Details aus deiner Erfahrung"
       />
     );
   }
