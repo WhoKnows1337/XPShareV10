@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { StarterKit } from '@tiptap/starter-kit';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { SegmentTooltip } from './SegmentTooltip';
+import { AIHighlight } from './extensions/AIHighlight';
 import type { TextSegment } from '@/lib/utils/text-diff';
 
 interface TooltipState {
@@ -17,14 +20,101 @@ interface InteractiveTextEditorProps {
   onTextBlur?: () => void;
 }
 
+/**
+ * Convert segments to Tiptap JSON format with marks
+ */
+function segmentsToTiptapJSON(segments: TextSegment[]): any {
+  if (!segments || segments.length === 0) {
+    return {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: '' }],
+        },
+      ],
+    };
+  }
+
+  // Group segments into paragraphs based on newlines
+  const content: any[] = [];
+  let currentParagraph: any[] = [];
+
+  for (const segment of segments) {
+    if (segment.text === '') continue;
+
+    const lines = segment.text.split('\n');
+
+    lines.forEach((line, index) => {
+      if (index > 0) {
+        // Finish current paragraph and start a new one
+        if (currentParagraph.length > 0) {
+          content.push({
+            type: 'paragraph',
+            content: currentParagraph,
+          });
+        }
+        currentParagraph = [];
+      }
+
+      if (line.length === 0) return;
+
+      const textNode: any = {
+        type: 'text',
+        text: line,
+      };
+
+      // Add marks for AI-added or user-edited segments
+      if (segment.type === 'ai-added' || segment.type === 'user-edited') {
+        textNode.marks = [
+          {
+            type: 'aiHighlight',
+            attrs: {
+              segmentId: segment.id,
+              type: segment.type,
+              sourceType: segment.source?.type || null,
+              sourceKey: segment.source?.key || null,
+              sourceLabel: segment.source?.label || null,
+              sourceValue: segment.source?.value ? String(segment.source.value) : null,
+              questionText: segment.source?.questionText || null,
+              confidence: segment.source?.confidence || null,
+            },
+          },
+        ];
+      }
+
+      currentParagraph.push(textNode);
+    });
+  }
+
+  // Add remaining paragraph
+  if (currentParagraph.length > 0) {
+    content.push({
+      type: 'paragraph',
+      content: currentParagraph,
+    });
+  }
+
+  // Ensure at least one paragraph
+  if (content.length === 0) {
+    content.push({
+      type: 'paragraph',
+      content: [],
+    });
+  }
+
+  return {
+    type: 'doc',
+    content,
+  };
+}
+
 export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveTextEditorProps = {}) {
   const t = useTranslations('submit.screen3.editor');
   const { screen1, screen3, removeSegment, undo, setCurrentText } = useSubmitFlowStore();
 
-  const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const editableRef = useRef<HTMLDivElement>(null);
 
   // Get display text based on enhancement state
   const displayText = screen3.enhancementEnabled && screen3.enhancedText
@@ -34,33 +124,127 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
   // Use current text from store if available, otherwise fallback
   const currentText = screen3.textVersions?.current || displayText;
 
-  // Use segments if available, otherwise fall back to simple display
+  // Use segments if available
   const hasSegments = screen3.segments && screen3.segments.length > 0;
 
-  const handleSegmentClick = useCallback((segment: TextSegment, event: React.MouseEvent) => {
-    if (segment.type !== 'ai-added') return;
-
-    event.stopPropagation(); // Prevent triggering edit mode
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    setTooltip({
-      segment,
-      position: {
-        x: rect.left + rect.width / 2,
-        y: rect.top,
+  // Initialize Tiptap editor
+  const editor = useEditor({
+    immediatelyRender: false, // ⭐ Fix SSR warning
+    extensions: [
+      StarterKit.configure({
+        // Disable some formatting that we don't need
+        heading: false,
+        blockquote: false,
+        codeBlock: false,
+        horizontalRule: false,
+        listItem: false,
+        bulletList: false,
+        orderedList: false,
+        code: false,
+        bold: false,
+        italic: false,
+        strike: false,
+      }),
+      AIHighlight, // ⭐ Our custom mark with inclusive: false and exitable: true
+    ],
+    content: hasSegments
+      ? segmentsToTiptapJSON(screen3.segments)
+      : {
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: currentText ? [{ type: 'text', text: currentText }] : [],
+            },
+          ],
+        },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm focus:outline-none text-text-primary leading-relaxed min-h-[300px]',
       },
-    });
-  }, []);
+      handleClickOn: (view, pos, node, nodePos, event) => {
+        // Handle clicks on AI highlights
+        const target = event.target as HTMLElement;
+        const highlightElement = target.closest('[data-ai-highlight]');
 
-  const handleSegmentHover = useCallback((segmentId: string | null) => {
-    setHoveredSegmentId(segmentId);
-  }, []);
+        if (highlightElement) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          // Extract segment data from attributes
+          const segmentId = highlightElement.getAttribute('data-segment-id');
+          const type = highlightElement.getAttribute('data-type') as 'ai-added' | 'user-edited';
+          const sourceType = highlightElement.getAttribute('data-source-type') as 'attribute' | 'question' | null;
+          const sourceKey = highlightElement.getAttribute('data-source-key');
+          const sourceLabel = highlightElement.getAttribute('data-source-label');
+          const sourceValue = highlightElement.getAttribute('data-source-value');
+          const questionText = highlightElement.getAttribute('data-question-text');
+          const confidenceStr = highlightElement.getAttribute('data-confidence');
+          const confidence = confidenceStr ? parseFloat(confidenceStr) : undefined;
+
+          if (!segmentId) return true;
+
+          // Find segment in store
+          const segment = screen3.segments?.find(s => s.id === segmentId);
+          if (!segment) return true;
+
+          // Show tooltip
+          const rect = highlightElement.getBoundingClientRect();
+          setTooltip({
+            segment,
+            position: {
+              x: rect.left + rect.width / 2,
+              y: rect.top,
+            },
+          });
+
+          return true;
+        }
+
+        return false;
+      },
+    },
+    onUpdate: ({ editor }) => {
+      const text = editor.getText();
+      setCurrentText(text);
+      if (onTextChange) {
+        onTextChange(text);
+      }
+    },
+    onBlur: () => {
+      if (onTextBlur) {
+        onTextBlur();
+      }
+    },
+  });
+
+  // Update editor content when segments change
+  useEffect(() => {
+    if (!editor) return;
+
+    const newContent = hasSegments
+      ? segmentsToTiptapJSON(screen3.segments)
+      : {
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: currentText ? [{ type: 'text', text: currentText }] : [],
+            },
+          ],
+        };
+
+    // Only update if content actually changed
+    const currentJSON = editor.getJSON();
+    if (JSON.stringify(currentJSON) !== JSON.stringify(newContent)) {
+      editor.commands.setContent(newContent);
+    }
+  }, [screen3.segments, hasSegments, currentText, editor]);
 
   const handleRemoveSegment = useCallback(() => {
     if (tooltip) {
       removeSegment(tooltip.segment.id);
       setTooltip(null);
-      setHoveredSegmentId(null);
     }
   }, [tooltip, removeSegment]);
 
@@ -68,75 +252,8 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
     const success = undo();
     if (success) {
       setTooltip(null);
-      setHoveredSegmentId(null);
     }
   }, [undo]);
-
-  // Handle contentEditable input
-  const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
-    const newText = e.currentTarget.textContent || '';
-    setCurrentText(newText);
-
-    if (onTextChange) {
-      onTextChange(newText);
-    }
-  }, [setCurrentText, onTextChange]);
-
-  const handleBlur = useCallback(() => {
-    if (onTextBlur) {
-      onTextBlur();
-    }
-  }, [onTextBlur]);
-
-  // Render segments as interactive elements
-  const renderSegments = () => {
-    if (!hasSegments) {
-      // Fallback: Simple display
-      return <div className="whitespace-pre-wrap leading-relaxed">{displayText}</div>;
-    }
-
-    return (
-      <div className="whitespace-pre-wrap leading-relaxed">
-        {screen3.segments.map((segment) => {
-          const isAIAdded = segment.type === 'ai-added';
-          const isUserEdited = segment.type === 'user-edited';
-          const isHovered = hoveredSegmentId === segment.id;
-          const isRemoved = segment.text === ''; // Check if segment was removed
-
-          if (isRemoved) return null;
-
-          const className = [
-            'inline',
-            isAIAdded && 'bg-observatory-gold/20 border-b-2 border-observatory-gold cursor-pointer hover:bg-observatory-gold/30 transition-all',
-            isUserEdited && 'bg-blue-500/20 border-b-2 border-blue-500 cursor-pointer hover:bg-blue-500/30 transition-all',
-            isHovered && 'bg-observatory-gold/40',
-          ].filter(Boolean).join(' ');
-
-          if (isAIAdded || isUserEdited) {
-            return (
-              <motion.span
-                key={segment.id}
-                className={className}
-                onClick={(e) => handleSegmentClick(segment, e)}
-                onMouseEnter={() => handleSegmentHover(segment.id)}
-                onMouseLeave={() => handleSegmentHover(null)}
-                initial={{ opacity: 0, y: -2 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                title={`${segment.source?.label || 'AI Enhancement'} - Click for options`}
-              >
-                {segment.text}
-              </motion.span>
-            );
-          }
-
-          // Original text segments
-          return <span key={segment.id}>{segment.text}</span>;
-        })}
-      </div>
-    );
-  };
 
   // Count AI segments
   const aiSegmentsCount = hasSegments
@@ -147,23 +264,15 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
 
   return (
     <div className="relative" ref={containerRef}>
-      {/* Seamless Editable Text Display */}
+      {/* Tiptap Editor */}
       <div
-        ref={editableRef}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleInput}
-        onBlur={handleBlur}
         className="p-5 bg-space-deep/60 border border-glass-border rounded-lg
                    text-text-primary text-base leading-relaxed
                    min-h-[300px] cursor-text
-                   focus:outline-none focus:border-observatory-gold/50 focus:bg-space-deep/80
-                   transition-all duration-200"
-        style={{ whiteSpace: 'pre-wrap' }}
+                   focus-within:border-observatory-gold/50 focus-within:bg-space-deep/80
+                   transition-all duration-200 tiptap-editor"
       >
-        <AnimatePresence mode="wait">
-          {renderSegments()}
-        </AnimatePresence>
+        <EditorContent editor={editor} />
       </div>
 
       {/* Enhancement Legend & Info */}

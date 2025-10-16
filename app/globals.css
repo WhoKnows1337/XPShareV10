@@ -438,3 +438,51 @@
   }
 }
 
+/* Tiptap AI Highlight Styles */
+@layer components {
+  /* Tiptap Editor Container */
+  .tiptap-editor .ProseMirror {
+    outline: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .tiptap-editor .ProseMirror p {
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .tiptap-editor .ProseMirror p + p {
+    margin-top: 0.5em;
+  }
+
+  /* AI-Added Highlights - Gold/Blue style */
+  .ai-highlight-added {
+    background: rgba(251, 191, 36, 0.2); /* Gold background */
+    border-bottom: 2px solid rgb(251, 191, 36); /* Gold border */
+    cursor: pointer;
+    transition: background var(--transition-base);
+  }
+
+  .ai-highlight-added:hover {
+    background: rgba(251, 191, 36, 0.3);
+  }
+
+  /* User-Edited Highlights - Blue style */
+  .ai-highlight-edited {
+    background: rgba(59, 130, 246, 0.2); /* Blue background */
+    border-bottom: 2px solid rgb(59, 130, 246); /* Blue border */
+    cursor: pointer;
+    transition: background var(--transition-base);
+  }
+
+  .ai-highlight-edited:hover {
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  /* Tiptap Editor Focus State */
+  .tiptap-editor:focus-within {
+    border-color: rgba(251, 191, 36, 0.5);
+  }
+}
+
