@@ -101,7 +101,8 @@ export function FilesWitnessesScreen() {
         enhancedText: screen3.enhancementEnabled ? screen3.enhancedText : screen1.text,
 
         // Screen 4
-        visibility,
+        // Map 'anonymous' to 'community' to match DB constraint
+        visibility: visibility === 'anonymous' ? 'community' : visibility,
         mediaUrls: uploadedFileUrls,
         witnesses: screen4.witnesses,
       };
