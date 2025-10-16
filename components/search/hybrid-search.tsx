@@ -14,7 +14,7 @@ import {
 import { Search, Sliders, Loader2, Globe } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { addToSearchHistory } from '@/lib/utils/search-history'
-import { SearchAutocomplete } from './search-autocomplete'
+import { PredictiveSearchInput } from './predictive-search-input'
 
 interface HybridSearchProps {
   onResults: (results: any[], meta: any) => void
@@ -30,16 +30,18 @@ interface HybridSearchProps {
     vectorWeight?: number
     crossLingual?: boolean
   }) => void
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
-export function HybridSearch({ 
-  onResults, 
+export function HybridSearch({
+  onResults,
   initialQuery = '',
   initialLanguage = 'de',
   initialCategory = '',
   initialVectorWeight = 0.6,
   initialCrossLingual = false,
-  onFilterChange
+  onFilterChange,
+  onLoadingChange
 }: HybridSearchProps) {
   const [query, setQuery] = useState(initialQuery)
   const [vectorWeight, setVectorWeight] = useState(initialVectorWeight)
@@ -84,6 +86,7 @@ export function HybridSearch({
     }
 
     setIsLoading(true)
+    onLoadingChange?.(true)
     setError(null)
 
     try {
@@ -207,6 +210,7 @@ export function HybridSearch({
       setError(err.message || 'Failed to search. Please try again.')
     } finally {
       setIsLoading(false)
+      onLoadingChange?.(false)
     }
   }
 
@@ -221,15 +225,17 @@ export function HybridSearch({
       <form onSubmit={handleSearch} className="space-y-4">
         {/* Main Search Input */}
         <div className="flex gap-2">
-          <SearchAutocomplete
+          <PredictiveSearchInput
             value={query}
-            onChange={handleQueryChange}
+            onQueryChange={handleQueryChange}
             onSearch={(q) => {
               setQuery(q)
               handleSearch()
             }}
             placeholder="Search experiences..."
             className="flex-1"
+            showRecentSearches={true}
+            showTrending={true}
           />
 
           <Button type="submit" disabled={isLoading || !query.trim()}>
@@ -251,24 +257,47 @@ export function HybridSearch({
           </Button>
         </div>
 
+        {/* Cross-Lingual Search Toggle - Prominent Position */}
+        <Card className="border-primary/20">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-primary" />
+                  Cross-Lingual Search
+                  {crossLingual && (
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full flex items-center gap-1">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                      </span>
+                      Active
+                    </span>
+                  )}
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {crossLingual ? (
+                    <span className="flex items-center gap-1">
+                      Searching in 4 languages: <span className="font-semibold">🇩🇪 DE • 🇬🇧 EN • 🇫🇷 FR • 🇪🇸 ES</span>
+                    </span>
+                  ) : (
+                    'Search in all languages simultaneously for better results'
+                  )}
+                </p>
+              </div>
+              <Switch
+                checked={crossLingual}
+                onCheckedChange={handleCrossLingualChange}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Advanced Settings */}
         {showAdvanced && (
           <Card>
             <CardContent className="pt-6 space-y-4">
-              {/* Cross-Lingual Search Toggle */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    Cross-Lingual Search
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Search in all languages simultaneously
-                  </p>
-                </div>
-                <Switch checked={crossLingual} onCheckedChange={handleCrossLingualChange} />
-              </div>
-
               {/* Language Selector - Only show if cross-lingual is disabled */}
               {!crossLingual && (
                 <div>

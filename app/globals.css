@@ -484,5 +484,39 @@
   .tiptap-editor:focus-within {
     border-color: rgba(251, 191, 36, 0.5);
   }
+
+  /* Search Loading Skeleton Shimmer - State-of-the-Art UX */
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted-foreground) / 0.1) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 2s infinite linear;
+  }
+
+  /* Skeleton Base - Dark theme optimized */
+  .skeleton-base {
+    background: hsl(var(--muted));
+    border-radius: var(--radius-md);
+  }
+
+  /* Skeleton for search results */
+  .skeleton-search-result {
+    @apply skeleton-base;
+    height: 120px;
+    margin-bottom: 12px;
+  }
 }
 

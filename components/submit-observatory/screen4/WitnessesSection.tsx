@@ -5,52 +5,58 @@ import { useTranslations } from 'next-intl';
 import { Users, Search, Mail, Link2, Plus } from 'lucide-react';
 import { WitnessCard } from './WitnessCard';
 import { useState } from 'react';
-
-type WitnessMethod = 'search' | 'email' | 'link' | null;
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function WitnessesSection() {
   const t = useTranslations('submit.screen4.witnesses');
   const { screen4, updateScreen4 } = useSubmitFlowStore();
-  const [activeMethod, setActiveMethod] = useState<WitnessMethod>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [emailInput, setEmailInput] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const handleAddUserWitness = (username: string) => {
-    updateScreen4({
-      witnesses: [
-        ...screen4.witnesses,
-        {
-          type: 'user',
-          userId: username, // In real app, would be user ID
-          username,
-          status: 'pending',
-        },
-      ],
-    });
-    setSearchQuery('');
-    setActiveMethod(null);
-  };
+  // Smart detection: email vs username
+  const isEmail = inputValue.includes('@');
+  const canAdd = inputValue.trim().length > 0;
 
-  const handleAddEmailWitness = () => {
-    if (emailInput.trim() && emailInput.includes('@')) {
+  const handleAdd = () => {
+    if (!canAdd) return;
+
+    if (isEmail) {
+      // Add as email witness
       updateScreen4({
         witnesses: [
           ...screen4.witnesses,
           {
             type: 'email',
-            email: emailInput.trim(),
+            email: inputValue.trim(),
             status: 'pending',
           },
         ],
       });
-      setEmailInput('');
-      setActiveMethod(null);
+    } else {
+      // Add as user witness
+      updateScreen4({
+        witnesses: [
+          ...screen4.witnesses,
+          {
+            type: 'user',
+            userId: inputValue.trim(),
+            username: inputValue.trim(),
+            status: 'pending',
+          },
+        ],
+      });
+    }
+
+    setInputValue('');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && canAdd) {
+      handleAdd();
     }
   };
 
   const handleCopyShareLink = () => {
-    // In real app, this would be a unique share link
     const shareLink = `${window.location.origin}/witness/invite/[unique-id]`;
     navigator.clipboard.writeText(shareLink);
     setLinkCopied(true);
@@ -64,181 +70,148 @@ export function WitnessesSection() {
   };
 
   return (
-    <div className="glass-card p-8 space-y-6">
-      {/* Section Header */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h2 className="section-title-observatory flex items-center gap-2">
-              <Users className="w-5 h-5 text-observatory-gold" />
-              {t('title')}
-            </h2>
-            <p className="text-sm text-text-secondary mt-2">
-              {t('subtitle')}
-            </p>
-          </div>
+    <div className="glass-card p-4 space-y-3 max-h-[550px] overflow-y-auto custom-scrollbar">
+      {/* Section Header - Compact */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-observatory-gold" />
+          <h2 className="text-sm font-semibold text-text-primary">
+            {t('title')}
+          </h2>
         </div>
-        {/* XP Motivation Badge */}
-        <div className="flex items-center gap-2 p-3 bg-observatory-gold/10 border border-observatory-gold/30 rounded-lg animate-fly-in-right">
-          <span className="text-lg">⭐</span>
+
+        {/* XP Motivation Badge - Compact */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-2 bg-observatory-gold/10 border border-observatory-gold/30 rounded-lg"
+        >
+          <span className="text-sm">⭐</span>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-observatory-gold">
+            <p className="text-xs font-semibold text-observatory-gold">
               {t('xpBonus')}
             </p>
-            <p className="text-xs text-text-tertiary">
-              {t('credibility')}
-            </p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Add Witness Methods */}
-      {!activeMethod && (
-        <div className="grid grid-cols-3 gap-4">
-          <button
-            onClick={() => setActiveMethod('search')}
-            className="glass-card-accent p-5 hover:bg-space-deep/40 transition-all group"
-          >
-            <Search className="w-7 h-7 text-observatory-gold mx-auto mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-medium text-text-primary">
-              {t('searchUser')}
+      {/* Smart Input - Always Visible */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            {/* Dynamic Icon */}
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-observatory-gold transition-all">
+              {isEmail ? (
+                <Mail className="w-4 h-4" />
+              ) : (
+                <Search className="w-4 h-4" />
+              )}
             </div>
-          </button>
 
-          <button
-            onClick={() => setActiveMethod('email')}
-            className="glass-card-accent p-5 hover:bg-space-deep/40 transition-all group"
-          >
-            <Mail className="w-7 h-7 text-observatory-gold mx-auto mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-medium text-text-primary">
-              {t('emailInvite')}
-            </div>
-          </button>
-
-          <button
-            onClick={() => setActiveMethod('link')}
-            className="glass-card-accent p-5 hover:bg-space-deep/40 transition-all group"
-          >
-            <Link2 className="w-7 h-7 text-observatory-gold mx-auto mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-medium text-text-primary">
-              {t('shareLink')}
-            </div>
-          </button>
-        </div>
-      )}
-
-      {/* Search User Form */}
-      {activeMethod === 'search' && (
-        <div className="p-5 bg-space-deep/60 border border-glass-border rounded-lg space-y-4">
-          <div className="flex items-center gap-3">
+            {/* Input Field */}
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('searchPlaceholder')}
-              className="input-observatory flex-1"
-              autoFocus
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={
+                isEmail
+                  ? t('emailPlaceholder') || 'email@example.com'
+                  : t('searchPlaceholder') || 'Search username...'
+              }
+              className="input-observatory pl-10 text-sm"
             />
-            <button
-              onClick={() => handleAddUserWitness(searchQuery)}
-              disabled={!searchQuery.trim()}
-              className="btn-observatory px-5"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-          <button
-            onClick={() => setActiveMethod(null)}
-            className="text-xs text-text-tertiary hover:text-text-secondary"
-          >
-            {t('cancel')}
-          </button>
-        </div>
-      )}
 
-      {/* Email Invite Form */}
-      {activeMethod === 'email' && (
-        <div className="p-5 bg-space-deep/60 border border-glass-border rounded-lg space-y-4">
-          <div className="flex items-center gap-3">
-            <input
-              type="email"
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              placeholder={t('emailPlaceholder')}
-              className="input-observatory flex-1"
-              autoFocus
-            />
-            <button
-              onClick={handleAddEmailWitness}
-              disabled={!emailInput.trim() || !emailInput.includes('@')}
-              className="btn-observatory px-5"
-            >
-              {t('send')}
-            </button>
+            {/* Input Hint */}
+            <AnimatePresence>
+              {inputValue && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <span className="text-[10px] text-text-tertiary">
+                    {isEmail ? 'Email' : 'Username'}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <button
-            onClick={() => setActiveMethod(null)}
-            className="text-xs text-text-tertiary hover:text-text-secondary"
-          >
-            {t('cancel')}
-          </button>
-        </div>
-      )}
 
-      {/* Share Link */}
-      {activeMethod === 'link' && (
-        <div className="p-5 bg-space-deep/60 border border-glass-border rounded-lg space-y-4">
-          <div className="text-sm text-text-secondary mb-3">
-            {t('linkDescription')}
-          </div>
+          {/* Add Button */}
           <button
-            onClick={handleCopyShareLink}
-            className="btn-observatory w-full"
+            onClick={handleAdd}
+            disabled={!canAdd}
+            className="btn-observatory px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
-            <Link2 className="w-4 h-4 mr-2" />
-            {linkCopied ? t('linkCopied') : t('copyLink')}
-          </button>
-          <button
-            onClick={() => setActiveMethod(null)}
-            className="text-xs text-text-tertiary hover:text-text-secondary"
-          >
-            {t('close')}
+            <Plus className="w-4 h-4" />
           </button>
         </div>
-      )}
+
+        {/* Share Link Button */}
+        <button
+          onClick={handleCopyShareLink}
+          className="w-full glass-card-accent p-2 rounded-lg hover:bg-space-deep/40 transition-all flex items-center justify-center gap-2 text-xs border border-glass-border"
+        >
+          <Link2 className="w-4 h-4 text-observatory-gold" />
+          <span className="text-text-secondary">
+            {linkCopied ? t('linkCopied') || 'Link Copied!' : t('copyLink') || 'Copy Share Link'}
+          </span>
+        </button>
+      </div>
 
       {/* Added Witnesses */}
-      {screen4.witnesses.length > 0 && (
-        <div className="space-y-3 pt-4 border-t border-glass-border">
-          <div className="text-sm font-medium text-text-secondary">
-            {t('invited')} ({screen4.witnesses.length})
-          </div>
-          <div className="space-y-2">
-            {screen4.witnesses.map((witness, index) => (
-              <WitnessCard
-                key={index}
-                witness={witness}
-                onRemove={() => handleRemoveWitness(index)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {screen4.witnesses.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-2 pt-3 border-t border-glass-border"
+          >
+            <div className="text-xs font-medium text-text-secondary flex items-center gap-2">
+              <Users className="w-3 h-3" />
+              {t('invited')} ({screen4.witnesses.length})
+            </div>
+            <div className="space-y-2">
+              <AnimatePresence>
+                {screen4.witnesses.map((witness, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <WitnessCard witness={witness} onRemove={() => handleRemoveWitness(index)} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Info Note */}
-      <div className="flex items-start gap-3 p-4 bg-success-soft/10 border border-success-soft/20 rounded-lg">
-        <Users className="w-5 h-5 text-success-soft flex-shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="text-text-secondary">
+      {/* Info Note - Compact */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex items-start gap-2 p-3 bg-success-soft/10 border border-success-soft/20 rounded-lg"
+      >
+        <Users className="w-4 h-4 text-success-soft flex-shrink-0 mt-0.5" />
+        <div className="text-xs">
+          <p className="text-text-secondary font-medium">
             {t('info')}
           </p>
-          <ul className="text-xs text-text-tertiary mt-2 space-y-1 ml-4 list-disc">
+          <ul className="text-[10px] text-text-tertiary mt-1.5 space-y-0.5 ml-3 list-disc">
             <li>{t('infoPoint1')}</li>
             <li>{t('infoPoint2')}</li>
             <li>{t('infoPoint3')}</li>
           </ul>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

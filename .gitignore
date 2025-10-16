@@ -39,3 +39,6 @@ next-env.d.ts
 *.swp
 *.swo
 *~
+
+# MCP configuration with API keys
+.mcp.json

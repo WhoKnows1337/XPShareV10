@@ -73,6 +73,11 @@ export interface Screen3Data {
     timestamp: number;
     data: any;
   }>;
+
+  // NEW: Final text approval fields
+  finalText?: string;       // User's approved text for saving
+  wasEnhanced?: boolean;    // true = saved with AI, false = saved original
+  wasEdited?: boolean;      // true = user made manual edits
 }
 
 // Screen 4: Files + Witnesses
@@ -131,6 +136,7 @@ export interface SubmitFlowState {
   setSummary: (summary: string) => void;
   setEnhancedText: (text: string, highlights: Screen3Data['highlights']) => void;
   toggleEnhancement: () => void;
+  setEnhancementEnabled: (enabled: boolean) => void;
 
   // NEW: Advanced Screen 3 Actions
   setTextSegments: (segments: TextSegment[]) => void;
@@ -341,6 +347,14 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           screen3: {
             ...state.screen3,
             enhancementEnabled: !state.screen3.enhancementEnabled,
+          },
+        })),
+
+      setEnhancementEnabled: (enabled) =>
+        set((state) => ({
+          screen3: {
+            ...state.screen3,
+            enhancementEnabled: enabled,
           },
         })),
 

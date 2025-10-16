@@ -22,26 +22,30 @@ export async function POST(request: NextRequest) {
 
     const experienceData = await request.json();
 
+    // Get final approved text (user's choice)
+    const finalText = experienceData.finalText ||
+                     (experienceData.wasEnhanced ? experienceData.enhancedText : experienceData.text);
+
     // Insert experience into database
     const { data: experience, error: insertError } = await (supabase as any)
       .from('experiences')
       .insert({
         user_id: user.id,
         title: experienceData.title,
-        text: experienceData.enhancedText || experienceData.text,
-        summary: experienceData.summary,
+        story_text: finalText,  // User's approved text
         category: experienceData.category,
-        tags: experienceData.tags,
-        date: experienceData.date,
-        time: experienceData.time,
-        location: experienceData.location,
-        location_lat: experienceData.locationLat,
-        location_lng: experienceData.locationLng,
-        duration: experienceData.duration,
-        extra_questions: experienceData.extraQuestions,
-        word_count: experienceData.wordCount,
-        visibility: experienceData.visibility,
-        status: 'published',
+        tags: experienceData.tags || [],
+        date_occurred: experienceData.date || null,
+        time_of_day: experienceData.time || null,
+        location_text: experienceData.location || null,
+        location_lat: experienceData.locationLat || null,
+        location_lng: experienceData.locationLng || null,
+        question_answers: experienceData.extraQuestions || {},
+        visibility: experienceData.visibility || 'public',
+        // NEW: AI enhancement metadata
+        ai_enhancement_used: experienceData.wasEnhanced || false,
+        user_edited_ai: experienceData.wasEdited || false,
+        enhancement_model: experienceData.wasEnhanced ? 'gpt-4o-mini' : null,
       })
       .select()
       .single();
@@ -51,10 +55,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save experience', details: insertError.message }, { status: 500 });
     }
 
+    // Save media files if any
+    if (experienceData.mediaUrls && experienceData.mediaUrls.length > 0) {
+      const mediaRecords = experienceData.mediaUrls.map((url: string, index: number) => ({
+        experience_id: experience.id,
+        type: url.includes('sketch') ? 'sketch' : url.includes('video') ? 'video' : url.includes('audio') ? 'audio' : 'photo',
+        url,
+        sort_order: index,
+      }));
+
+      const { error: mediaError } = await (supabase as any)
+        .from('experience_media')
+        .insert(mediaRecords);
+
+      if (mediaError) {
+        console.error('Error saving media:', mediaError);
+        // Don't fail the entire publish if media save fails
+      }
+    }
+
+    // Save witnesses if any
+    if (experienceData.witnesses && experienceData.witnesses.length > 0) {
+      const witnessRecords = experienceData.witnesses.map((witness: any) => ({
+        experience_id: experience.id,
+        name: witness.type === 'user' ? witness.username : witness.email,
+        contact_info: witness.type === 'email' ? witness.email : null,
+        is_verified: false,
+      }));
+
+      const { error: witnessError } = await (supabase as any)
+        .from('experience_witnesses')
+        .insert(witnessRecords);
+
+      if (witnessError) {
+        console.error('Error saving witnesses:', witnessError);
+        // Don't fail the entire publish if witness save fails
+      }
+    }
+
     // Generate and save embedding for semantic search
     try {
-      const embeddingText = experienceData.enhancedText || experienceData.text;
-      const embedding = await generateEmbedding(embeddingText);
+      // Use the final approved text for embedding
+      const embedding = await generateEmbedding(finalText);
 
       await (supabase as any)
         .from('experiences')

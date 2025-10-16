@@ -21,6 +21,9 @@ import { ConstellationView } from '@/components/visualization/constellation-view
 import { GraphView3D } from '@/components/visualization/graph-view-3d'
 import { HeatmapView } from '@/components/visualization/heatmap-view'
 import { ZeroResultsSuggestions } from '@/components/search/zero-results-suggestions'
+import { SearchResultsSkeleton } from '@/components/search/search-results-skeleton'
+import { ResultsStatsBar } from '@/components/search/results-stats-bar'
+import { RecentSearchesWidget } from '@/components/search/recent-searches-widget'
 import { Search as SearchIcon, Sparkles, Sliders, TrendingUp, Loader2, MessageSquare, LayoutGrid, Table as TableIcon, Network, Box, Map, CheckSquare, Square } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -29,6 +32,7 @@ import {
   serializeFiltersToURL,
   SearchFilters as URLSearchFilters
 } from '@/lib/utils/search-url-params'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface SearchPageClientProps {
   initialQuery?: string
@@ -393,6 +397,35 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // "/" - Focus search input
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault()
+        const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement
+        searchInput?.focus()
+      }
+
+      // Escape - Clear search or close modals
+      if (e.key === 'Escape') {
+        if (selectionMode) {
+          handleClearSelection()
+        }
+      }
+
+      // Ctrl/Cmd + K - Focus search (like modern apps)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement
+        searchInput?.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectionMode])
+
   return (
     <>
       <BulkActionBar
@@ -424,7 +457,7 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => handlePopularSearch(term)}
-                    className="text-xs"
+                    className="text-xs transition-all hover:scale-105 hover:shadow-md hover:border-primary/50"
                   >
                     {term}
                   </Button>
@@ -468,7 +501,7 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="w-full transition-all hover:scale-105 hover:shadow-md"
                   onClick={() => {
                     const url = window.location.href
                     navigator.clipboard.writeText(url)
@@ -486,6 +519,9 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
       }
       rightPanel={
         <div className="space-y-4">
+          {/* Live Search Activity */}
+          <RecentSearchesWidget />
+
           {/* Search Tips */}
           <Card>
             <CardContent className="pt-6">
@@ -529,13 +565,13 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
               <h3 className="font-semibold mb-3">Explore More</h3>
               <div className="flex flex-col gap-2">
                 <Link href="/feed">
-                  <Button variant="outline" size="sm" className="w-full justify-start">
+                  <Button variant="outline" size="sm" className="w-full justify-start transition-all hover:scale-105 hover:shadow-md">
                     <TrendingUp className="w-4 h-4 mr-2" />
                     Browse Feed
                   </Button>
                 </Link>
                 <Link href="/categories">
-                  <Button variant="outline" size="sm" className="w-full justify-start">
+                  <Button variant="outline" size="sm" className="w-full justify-start transition-all hover:scale-105 hover:shadow-md">
                     <Sliders className="w-4 h-4 mr-2" />
                     Categories
                   </Button>
@@ -584,40 +620,41 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
           </div>
 
           <Tabs value={searchMode} onValueChange={handleSearchModeChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="hybrid">
+            <TabsList className="grid w-full grid-cols-4" role="tablist" aria-label="Search mode selector">
+              <TabsTrigger value="hybrid" aria-current={searchMode === 'hybrid' ? 'page' : undefined} suppressHydrationWarning>
                 <SearchIcon className="w-4 h-4 mr-2" />
                 Hybrid
               </TabsTrigger>
-              <TabsTrigger value="nlp">
+              <TabsTrigger value="nlp" aria-current={searchMode === 'nlp' ? 'page' : undefined} suppressHydrationWarning>
                 <Sparkles className="w-4 h-4 mr-2" />
                 Natural
               </TabsTrigger>
-              <TabsTrigger value="ask">
+              <TabsTrigger value="ask" aria-current={searchMode === 'ask' ? 'page' : undefined} suppressHydrationWarning>
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Q&A
               </TabsTrigger>
-              <TabsTrigger value="advanced">
+              <TabsTrigger value="advanced" aria-current={searchMode === 'advanced' ? 'page' : undefined} suppressHydrationWarning>
                 <Sliders className="w-4 h-4 mr-2" />
                 Advanced
               </TabsTrigger>
             </TabsList>
 
             {/* Hybrid Search Tab */}
-            <TabsContent value="hybrid" className="space-y-6">
-              <HybridSearch 
-                onResults={handleHybridResults} 
+            <TabsContent value="hybrid" className="space-y-6" suppressHydrationWarning>
+              <HybridSearch
+                onResults={handleHybridResults}
                 initialQuery={searchFilters.query}
                 initialLanguage={searchFilters.language as any}
                 initialCategory={searchFilters.category}
                 initialVectorWeight={searchFilters.vectorWeight}
                 initialCrossLingual={searchFilters.crossLingual}
                 onFilterChange={handleFilterUpdate}
+                onLoadingChange={setIsLoading}
               />
             </TabsContent>
 
             {/* NLP Search Tab */}
-            <TabsContent value="nlp" className="space-y-6">
+            <TabsContent value="nlp" className="space-y-6" suppressHydrationWarning>
               <NLPSearch 
                 onResults={handleNLPResults} 
                 initialQuery={searchFilters.query}
@@ -626,7 +663,7 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
             </TabsContent>
 
             {/* Q&A Tab */}
-            <TabsContent value="ask" className="space-y-6">
+            <TabsContent value="ask" className="space-y-6" suppressHydrationWarning>
               <AskAI 
                 initialQuestion={searchFilters.query}
                 onQuestionChange={(query) => handleFilterUpdate({ query })}
@@ -634,31 +671,69 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
             </TabsContent>
 
             {/* Advanced Search Tab */}
-            <TabsContent value="advanced" className="space-y-6">
+            <TabsContent value="advanced" className="space-y-6" suppressHydrationWarning>
               <AdvancedSearchBuilder onSearch={handleAdvancedSearch} resultCount={results.length} />
             </TabsContent>
           </Tabs>
 
           {/* Search Results or Empty State - Only for non-Q&A modes */}
           {searchMode !== 'ask' && (
-            <>
+            <AnimatePresence mode="wait">
               {!hasSearched ? (
-                <Card>
-                  <CardContent className="py-16">
-                    <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
-                      <SearchIcon className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                      <h3 className="mb-2 text-lg font-semibold">Start Your Search</h3>
-                      <p className="mb-6 text-sm text-muted-foreground">
-                        Choose a search mode above and enter your query to find experiences
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <motion.div
+                  key="empty-state"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card>
+                    <CardContent className="py-16">
+                      <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
+                        <SearchIcon className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                        <h3 className="mb-2 text-lg font-semibold">Start Your Search</h3>
+                        <p className="mb-6 text-sm text-muted-foreground">
+                          Choose a search mode above and enter your query to find experiences
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : isLoading ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="sr-only" role="status" aria-live="polite">
+                    Loading search results...
+                  </span>
+                  <SearchResultsSkeleton count={6} viewMode={viewMode} />
+                </motion.div>
               ) : filteredResults.length > 0 ? (
-                <div className="space-y-4">
+                <motion.div
+                  key="results"
+                  initial="hidden"
+                  animate="show"
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
+                >
+                  {/* Results Stats Bar */}
+                  {searchMeta && (
+                    <ResultsStatsBar
+                      resultCount={filteredResults.length}
+                      executionTime={searchMeta.executionTime}
+                      avgSimilarity={searchMeta.avgSimilarity}
+                      searchType={searchMode}
+                    />
+                  )}
+
                   {/* Results Header with View Switcher */}
                   <div className="flex items-center justify-between flex-wrap gap-3">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
                       <span className="font-semibold text-foreground">{filteredResults.length}</span> result
                       {filteredResults.length !== 1 ? 's' : ''} found
                     </p>
@@ -702,12 +777,14 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                       {/* View Mode Switcher */}
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground mr-2">View:</span>
-                        <div className="flex rounded-md border">
+                        <div className="flex rounded-md border" role="group" aria-label="View mode selector">
                           <Button
                             variant={viewMode === 'grid' ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => handleViewModeChange('grid')}
                             className="rounded-r-none"
+                            aria-label="Grid view"
+                            aria-pressed={viewMode === 'grid'}
                           >
                             <LayoutGrid className="h-4 w-4" />
                           </Button>
@@ -716,6 +793,8 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                             size="sm"
                             onClick={() => handleViewModeChange('table')}
                             className="rounded-none border-x"
+                            aria-label="Table view"
+                            aria-pressed={viewMode === 'table'}
                           >
                             <TableIcon className="h-4 w-4" />
                           </Button>
@@ -724,6 +803,8 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                             size="sm"
                             onClick={() => handleViewModeChange('constellation')}
                             className="rounded-none"
+                            aria-label="Constellation view"
+                            aria-pressed={viewMode === 'constellation'}
                           >
                             <Network className="h-4 w-4" />
                           </Button>
@@ -732,6 +813,8 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                             size="sm"
                             onClick={() => handleViewModeChange('graph3d')}
                             className="rounded-none border-x"
+                            aria-label="3D graph view"
+                            aria-pressed={viewMode === 'graph3d'}
                           >
                             <Box className="h-4 w-4" />
                           </Button>
@@ -740,6 +823,8 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                             size="sm"
                             onClick={() => handleViewModeChange('heatmap')}
                             className="rounded-l-none"
+                            aria-label="Heatmap view"
+                            aria-pressed={viewMode === 'heatmap'}
                           >
                             <Map className="h-4 w-4" />
                           </Button>
@@ -750,54 +835,116 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
 
                   {/* Results Display - Different Views */}
                   {viewMode === 'grid' && (
-                    <BentoGrid className="max-w-full">
-                      {filteredResults.map((experience: any, index: number) => (
-                        <SelectableExperienceCard
-                          key={experience.id}
-                          experience={experience}
-                          size={
-                            index === 0
-                              ? 'large'
-                              : index === 2
-                                ? 'wide'
-                                : index % 7 === 0
+                    <motion.div
+                      variants={{
+                        hidden: { opacity: 0 },
+                        show: {
+                          opacity: 1,
+                          transition: {
+                            staggerChildren: 0.05, // 50ms delay between cards
+                          },
+                        },
+                      }}
+                      initial="hidden"
+                      animate="show"
+                    >
+                      <BentoGrid className="max-w-full">
+                        {filteredResults.map((experience: any, index: number) => (
+                          <motion.div
+                            key={experience.id}
+                            variants={{
+                              hidden: { opacity: 0, y: 20 },
+                              show: { opacity: 1, y: 0 },
+                            }}
+                            transition={{ duration: 0.3 }}
+                            className={cn(
+                              index === 0 && 'md:col-span-2',
+                              index === 2 && 'md:row-span-2',
+                              index % 7 === 0 && 'md:col-span-2'
+                            )}
+                          >
+                            <SelectableExperienceCard
+                              experience={experience}
+                              size={
+                                index === 0
                                   ? 'large'
-                                  : 'default'
-                          }
-                          className={cn(
-                            index === 0 && 'md:col-span-2',
-                            index === 2 && 'md:row-span-2',
-                            index % 7 === 0 && 'md:col-span-2'
-                          )}
-                          selectionMode={selectionMode}
-                          isSelected={selectedIds.has(experience.id)}
-                          onSelectionChange={handleSelectionChange}
-                        />
-                      ))}
-                    </BentoGrid>
+                                  : index === 2
+                                    ? 'wide'
+                                    : index % 7 === 0
+                                      ? 'large'
+                                      : 'default'
+                              }
+                              selectionMode={selectionMode}
+                              isSelected={selectedIds.has(experience.id)}
+                              onSelectionChange={handleSelectionChange}
+                            />
+                          </motion.div>
+                        ))}
+                      </BentoGrid>
+                    </motion.div>
                   )}
 
-                  {viewMode === 'table' && <TableView experiences={filteredResults} />}
+                  {viewMode === 'table' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <TableView experiences={filteredResults} />
+                    </motion.div>
+                  )}
 
-                  {viewMode === 'constellation' && <ConstellationView experiences={filteredResults} />}
+                  {viewMode === 'constellation' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <ConstellationView experiences={filteredResults} />
+                    </motion.div>
+                  )}
 
-                  {viewMode === 'graph3d' && <GraphView3D experiences={filteredResults} />}
+                  {viewMode === 'graph3d' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <GraphView3D experiences={filteredResults} />
+                    </motion.div>
+                  )}
 
-                  {viewMode === 'heatmap' && <HeatmapView experiences={filteredResults} />}
-                </div>
+                  {viewMode === 'heatmap' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <HeatmapView experiences={filteredResults} />
+                    </motion.div>
+                  )}
+                </motion.div>
               ) : (
-                <ZeroResultsSuggestions
-                  query={searchFilters.query}
-                  language={searchFilters.language}
-                  category={searchFilters.category || null}
-                  onSuggestionClick={(suggestion) => {
-                    handleFilterUpdate({ query: suggestion })
-                    // Re-trigger search with new query
-                    setSearchFilters({ ...searchFilters, query: suggestion })
-                  }}
-                />
+                <motion.div
+                  key="zero-results"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ZeroResultsSuggestions
+                    query={searchFilters.query}
+                    language={searchFilters.language}
+                    category={searchFilters.category || null}
+                    onSuggestionClick={(suggestion) => {
+                      handleFilterUpdate({ query: suggestion })
+                      // Re-trigger search with new query
+                      setSearchFilters({ ...searchFilters, query: suggestion })
+                    }}
+                  />
+                </motion.div>
               )}
-            </>
+            </AnimatePresence>
           )}
         </div>
       }

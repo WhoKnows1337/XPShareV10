@@ -1,17 +1,19 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Globe, UserX, Lock, Send, Info } from 'lucide-react';
+import { ChevronDown, Globe, UserX, Lock, Send, Info, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SplitPublishButtonProps {
-  onPublish: (visibility: 'public' | 'anonymous' | 'private') => void;
+  onPublish: (visibility: 'public' | 'anonymous' | 'private') => Promise<void>;
 }
 
 export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
   const t = useTranslations('submit.screen4.publish');
+  const { isPublishing } = useSubmitFlowStore();
   const [selectedVisibility, setSelectedVisibility] = useState<'public' | 'anonymous' | 'private'>('public');
   const [showMenu, setShowMenu] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -47,6 +49,7 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
   }, [showMenu]);
 
   const handleMenuToggle = () => {
+    if (isPublishing) return;
     setShowMenu(!showMenu);
     if (isFirstTime && showTooltip) {
       setShowTooltip(false);
@@ -61,6 +64,7 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
   };
 
   const handlePublish = () => {
+    if (isPublishing) return;
     if (isFirstTime && showTooltip) {
       localStorage.setItem('xpshare-split-button-seen', 'true');
       setIsFirstTime(false);
@@ -101,7 +105,7 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
   return (
     <div className="relative" ref={menuRef}>
       {/* First-time Tooltip */}
-      {isFirstTime && showTooltip && (
+      {isFirstTime && showTooltip && !isPublishing && (
         <div className="absolute bottom-full right-0 mb-4 w-72 p-4 bg-observatory-gold/95 backdrop-blur-sm border border-observatory-gold rounded-lg shadow-xl animate-tooltip-bounce z-50">
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-space-deep flex-shrink-0 mt-0.5" />
@@ -122,26 +126,37 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
       {/* Split Button */}
       <motion.div
         className="flex items-stretch overflow-hidden rounded-lg shadow-lg"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={!isPublishing ? { scale: 1.02 } : {}}
+        whileTap={!isPublishing ? { scale: 0.98 } : {}}
       >
         {/* Main Publish Button */}
         <Button
           onClick={handlePublish}
+          disabled={isPublishing}
           variant="default"
           size="lg"
-          className="rounded-r-none border-r border-primary/30 group"
+          className="rounded-r-none border-r border-primary/30 group disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-          {t('publish')}
+          {isPublishing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Publishing...
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              {t('publish')}
+            </>
+          )}
         </Button>
 
         {/* Dropdown Toggle */}
         <Button
           onClick={handleMenuToggle}
+          disabled={isPublishing}
           variant="default"
           size="lg"
-          className="rounded-l-none px-3"
+          className="rounded-l-none px-3 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Select visibility"
         >
           <motion.div
@@ -154,7 +169,7 @@ export function SplitPublishButton({ onPublish }: SplitPublishButtonProps) {
       </motion.div>
 
       {/* Visibility Menu */}
-      {showMenu && (
+      {showMenu && !isPublishing && (
         <div className="absolute bottom-full right-0 mb-2 w-80 glass-card p-2 shadow-xl animate-slide-up z-40">
           <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wide px-3 py-2">
             {t('selectVisibility')}

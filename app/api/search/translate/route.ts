@@ -26,6 +26,70 @@ import { openai } from '@/lib/openai/client'
  * }
  */
 
+// LRU Cache for translations (1000 entries, 24h TTL)
+interface CacheEntry {
+  translations: Record<string, string>
+  detectedLanguage?: string
+  timestamp: number
+}
+
+class TranslationCache {
+  private cache = new Map<string, CacheEntry>()
+  private readonly maxSize = 1000
+  private readonly ttl = 24 * 60 * 60 * 1000 // 24 hours
+
+  private getCacheKey(query: string, targetLanguages: string[]): string {
+    return `${query.toLowerCase()}_${targetLanguages.sort().join('_')}`
+  }
+
+  get(query: string, targetLanguages: string[]): CacheEntry | null {
+    const key = this.getCacheKey(query, targetLanguages)
+    const entry = this.cache.get(key)
+
+    if (!entry) return null
+
+    // Check TTL
+    if (Date.now() - entry.timestamp > this.ttl) {
+      this.cache.delete(key)
+      return null
+    }
+
+    // Move to end (LRU)
+    this.cache.delete(key)
+    this.cache.set(key, entry)
+
+    return entry
+  }
+
+  set(query: string, targetLanguages: string[], translations: Record<string, string>, detectedLanguage?: string) {
+    const key = this.getCacheKey(query, targetLanguages)
+
+    // Evict oldest if at max size
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value
+      if (firstKey) {
+        this.cache.delete(firstKey)
+      }
+    }
+
+    this.cache.set(key, {
+      translations,
+      detectedLanguage,
+      timestamp: Date.now(),
+    })
+  }
+
+  getStats() {
+    return {
+      size: this.cache.size,
+      maxSize: this.maxSize,
+      ttl: this.ttl,
+    }
+  }
+}
+
+const translationCache = new TranslationCache()
+
 const TRANSLATION_PROMPT = `You are a translation assistant for a search system.
 Translate the given search query into the requested languages while preserving search intent and key terms.
 
@@ -76,6 +140,23 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Check cache first
+    const cached = translationCache.get(query, targetLanguages)
+    if (cached) {
+      const executionTime = Date.now() - startTime
+      return NextResponse.json({
+        original: query,
+        translations: cached.translations,
+        detectedLanguage: cached.detectedLanguage || sourceLanguage,
+        meta: {
+          executionTime,
+          targetLanguages,
+          cached: true,
+          cacheStats: translationCache.getStats(),
+        },
+      })
+    }
+
     // Build the translation request
     const userMessage = `Translate the following search query into ${targetLanguages.join(', ')}:
 
@@ -110,6 +191,9 @@ Return only a JSON object with keys: ${targetLanguages.join(', ')}`
       }
     }
 
+    // Cache the result
+    translationCache.set(query, targetLanguages, translations, detectedLanguage)
+
     const executionTime = Date.now() - startTime
 
     return NextResponse.json({
@@ -119,6 +203,8 @@ Return only a JSON object with keys: ${targetLanguages.join(', ')}`
       meta: {
         executionTime,
         targetLanguages,
+        cached: false,
+        cacheStats: translationCache.getStats(),
       },
     })
 

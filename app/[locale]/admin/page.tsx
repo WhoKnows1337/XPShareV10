@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, FileText, Flag, BadgeCheck, FolderOpen, MessageSquare, Plus, TrendingUp, Download, AlertTriangle, Tag } from 'lucide-react'
+import { Users, FileText, Flag, BadgeCheck, FolderOpen, MessageSquare, Plus, TrendingUp, Download, AlertTriangle, Tag, BarChart3 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
@@ -140,9 +140,15 @@ export default async function AdminDashboard() {
               </Button>
             </Link>
             <Link href="/admin/analytics">
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <TrendingUp className="mr-2 h-4 w-4" />
                 Analytics
+              </Button>
+            </Link>
+            <Link href="/admin/analytics/search">
+              <Button variant="outline" size="sm" className="border-primary/30 hover:bg-primary/5">
+                <BarChart3 className="mr-2 h-4 w-4 text-primary" />
+                Search Analytics
               </Button>
             </Link>
             <Link href="/admin/questions">

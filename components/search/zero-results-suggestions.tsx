@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Search as SearchIcon, Lightbulb, Loader2, Tag } from 'lucide-react'
+import { Search as SearchIcon, Lightbulb, Loader2, Tag, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface Suggestion {
   query: string
@@ -71,7 +72,11 @@ export function ZeroResultsSuggestions({
     <Card>
       <CardContent className="py-16">
         <div className="flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-6">
-          <SearchIcon className="h-12 w-12 text-muted-foreground/50" />
+          {/* Visual Illustration with Sparkles */}
+          <div className="relative">
+            <SearchIcon className="h-16 w-16 text-muted-foreground/30" />
+            <Sparkles className="h-7 w-7 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+          </div>
           <div>
             <h3 className="mb-2 text-lg font-semibold">No Results Found</h3>
             <p className="text-sm text-muted-foreground">
@@ -93,23 +98,44 @@ export function ZeroResultsSuggestions({
                 <span>Try these searches instead:</span>
               </div>
 
-              <div className="space-y-2">
+              <motion.div
+                className="space-y-2"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1, // 100ms delay between suggestions
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
                 {suggestions.map((suggestion, index) => (
-                  <Button
+                  <motion.div
                     key={index}
-                    variant="outline"
-                    className="w-full justify-start text-left h-auto py-3"
-                    onClick={() => onSuggestionClick(suggestion.query)}
+                    variants={{
+                      hidden: { opacity: 0, x: -20 },
+                      show: { opacity: 1, x: 0 },
+                    }}
+                    transition={{ duration: 0.3 }}
                   >
-                    <div className="flex-1">
-                      <div className="font-medium">{suggestion.query}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {suggestion.reason}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left h-auto py-3 transition-all hover:scale-[1.02] hover:shadow-md hover:border-primary/50"
+                      onClick={() => onSuggestionClick(suggestion.query)}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{suggestion.query}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {suggestion.reason}
+                        </div>
                       </div>
-                    </div>
-                  </Button>
+                    </Button>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           )}
 
@@ -120,22 +146,44 @@ export function ZeroResultsSuggestions({
                 <span>Or explore these categories:</span>
               </div>
 
-              <div className="flex flex-wrap gap-2 justify-center">
+              <motion.div
+                className="flex flex-wrap gap-2 justify-center"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.05, // 50ms delay between categories
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
                 {categories.map((cat) => (
-                  <Button
+                  <motion.div
                     key={cat}
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      // This would need to be passed as a prop to handle category changes
-                      // For now, just trigger a search with the category name
-                      onSuggestionClick(cat)
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.8 },
+                      show: { opacity: 1, scale: 1 },
                     }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {cat}
-                  </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="transition-all hover:scale-110 hover:shadow-md"
+                      onClick={() => {
+                        // This would need to be passed as a prop to handle category changes
+                        // For now, just trigger a search with the category name
+                        onSuggestionClick(cat)
+                      }}
+                    >
+                      {cat}
+                    </Button>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           )}
 

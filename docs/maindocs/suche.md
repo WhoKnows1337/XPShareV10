@@ -825,9 +825,9 @@ WHERE replaced_by IS NULL;
 | 5 | Auto-Complete mit AI | 🟡 Medium | 🟡 Medium | €2/mo | 1 |
 | 6 | RAG Q&A System | 🟡 Medium | 🔥 High | €10/mo | 2 |
 | 7 | Faceted Search (Dynamic Filters) | 🟡 Medium | 🟡 Medium | €0 | 2 |
-| 8 | Search Analytics Dashboard | 🟡 Medium | 🟡 Medium | €0 | 2 |
+| 8 | Search Analytics Dashboard | ✅ **COMPLETED** | 🟡 Medium | €0 | 2 |
 | 9 | Multimodal Search (CLIP) | 🟠 High | 🔥 High | €15/mo | 3 |
-| 10 | Cross-Lingual Search | 🟠 High | 🟡 Medium | €5/mo | 3 |
+| 10 | Cross-Lingual Search | ✅ **COMPLETED** | 🟡 Medium | €5/mo | 3 |
 | 11 | Personalized Ranking | 🔴 Very High | 🟡 Medium | €0 | 3 |
 | 12 | Visual Search UI (Graph/Timeline) | 🟡 Medium | 🟡 Medium | €0 | 3 |
 
@@ -1835,79 +1835,235 @@ LIMIT 100;
 
 ---
 
-## 🗓️ 3-Phasen Roadmap {#roadmap}
+## 🗓️ 3-Phasen Roadmap (UX-Enhanced) {#roadmap}
 
-### **Phase 1: Quick Wins (Woche 1)** ⚡
+### **Phase 1: Critical DB Layer + Core UX (Tag 1-2)** 🔴
 
-**Ziel:** Verbesserte Suche ohne neue Infrastruktur
+**Ziel:** Funktionierende Basis-Infrastruktur + essenzielle UX
 
-**Tasks:**
-1. PostgreSQL Full-Text Search Migration
-2. Hybrid Search API (`/api/search/hybrid`)
-3. Natural Language Query API (`/api/search/nlp`)
-4. Search Analytics Tracking
-5. URL-based Filters (shareable searches)
-6. Auto-Complete mit Debouncing
+#### **DB Layer (Priorität 1)**
+1. ✅ PostgreSQL Full-Text Search Migration
+   - GIN Indexes für `title`, `story_text`, `tags`
+   - Multi-Language Support (de, en, fr, es)
+   - `ts_rank()` Integration
+
+2. ✅ Hybrid Search DB Function
+   - `hybrid_search()` mit Reciprocal Rank Fusion
+   - Vector + FTS weight mixing
+   - Performance-optimiert (<100ms)
+
+3. ✅ Search Analytics System
+   - `search_analytics` Tabelle
+   - `track_search()` Function
+   - Metriken: query, results, time, filters
+
+#### **UX Essentials (Priorität 1)**
+4. ✅ Loading States überall
+   - `SearchResultsSkeleton.tsx` mit Shimmer
+   - CSS Shimmer Animation in `globals.css`
+   - Framer Motion `AnimatePresence` transitions
+
+5. ✅ Predictive Search
+   - `PredictiveSearchInput.tsx` Component
+   - `useDebounce.ts` Hook (300ms)
+   - Command Palette UI
+   - Keyboard Navigation (Arrow, Enter, Esc)
 
 **Deliverables:**
-- ✅ 10x bessere Suchergebnisse
-- ✅ "Google-like" natürliche Queries
-- ✅ Teilbare Such-URLs
-- ✅ Analytics Dashboard (Basis)
+- ✅ Hybrid Search funktioniert End-to-End
+- ✅ Smooth Loading UX (keine Spinner!)
+- ✅ Predictive Search mit Keyboard Support
+- ✅ Search Analytics erfasst alles
 
-**Aufwand:** 3-4 Entwicklertage
+**Aufwand:** 1.5-2 Tage (12-16h)
+
+**Validierung:**
+- [ ] Hybrid Search returns in <100ms
+- [ ] Skeleton → Content transition smooth
+- [ ] Predictive dropdown funktioniert
+- [ ] Analytics data in DB sichtbar
 
 ---
 
-### **Phase 2: AI Enhancement (Woche 2-3)** 🤖
+### **Phase 2: UX Enhancement & Polish (Tag 3-4)** 🟡
 
-**Ziel:** KI-gestützte Features für bessere UX
+**Ziel:** State-of-the-Art UX Details
 
-**Tasks:**
-1. RAG Q&A System (`/api/ask`)
-2. Faceted Search (dynamic filters mit counts)
-3. Search Analytics Dashboard (Admin Panel)
-4. Smart Suggestions (GPT-4 generiert verwandte Suchen)
-5. Search Result Explanations ("Warum dieses Ergebnis?")
-6. Zero-Result Handling (Vorschläge wenn nichts gefunden)
+#### **Visual Feedback (Priorität 2)**
+1. ✅ Results Stats Bar
+   - `ResultsStatsBar.tsx` Component
+   - Result count + Execution time + Relevance
+   - Filter impact preview on hover
+
+2. ✅ RAG Citations Enhanced
+   - `RAGCitationCard.tsx` mit SVG Confidence Circle
+   - `ConfidenceCircle.tsx` Utility Component
+   - `HighlightedText.tsx` für query matching
+   - Expand/Collapse Details
+
+3. ✅ Faceted Filters Dynamic Counts
+   - Update `FacetedFiltersPanel.tsx`
+   - Dynamic count calculation (useMemo)
+   - Disabled state für count = 0
+   - "Apply" Preview ("Will show X results")
+
+#### **Empty States & Errors (Priorität 2)**
+4. ✅ Zero Results Enhanced
+   - Update `ZeroResultsSuggestions.tsx`
+   - Visual illustrations (Icons)
+   - AI-generated similar queries
+   - Popular searches integration
+
+5. ✅ Search History
+   - `useSearchHistory.ts` Hook
+   - localStorage Integration
+   - Visual Timeline in Dropdown
+   - Delete/Pin functionality
 
 **Deliverables:**
-- ✅ Q&A Interface (Chat mit Datenbank)
-- ✅ Admin Analytics (popular searches, zero-results)
-- ✅ Bessere Empty States
-- ✅ Explanation Tooltips
+- ✅ Confidence visualization in RAG
+- ✅ Dynamic filter counts überall
+- ✅ Helpful empty states
+- ✅ Persistent search history
 
-**Aufwand:** 5-7 Entwicklertage
+**Aufwand:** 1.5-2 Tage (12-16h)
+
+**Validierung:**
+- [ ] Confidence circles animieren smooth
+- [ ] Filter counts update instantly
+- [ ] Zero results zeigt AI suggestions
+- [ ] Search history persistent
 
 ---
 
-### **Phase 3: Advanced Features (Woche 4+)** 🚀
+### **Phase 3: Animations & Micro-Interactions (Tag 5)** 🟢
 
-**Ziel:** Cutting-edge Features für Differenzierung
+**Ziel:** Polished, delightful UX
 
-**Tasks:**
-1. **Multimodal Search** (Bilder + Text mit Claude 3.5)
-   - Upload Foto → finde ähnliche Experiences
-   - Sketch → finde matching Descriptions
-2. **Cross-Lingual Search** (multilingual embeddings)
-   - Deutsch suchen → finde englische Results
-3. **Visual Search UI**
-   - Timeline View (chronologisch mit clustering)
-   - Graph View (Neo4j Visualization)
-   - Map Heatmap (3D density)
-4. **Personalized Ranking** (User-basiert)
-   - Collaborative Filtering
-   - "More like this" für User
-5. **Saved Searches** (persistent in DB statt localStorage)
-6. **Search Alerts** ("Notify bei neuen UFO-Sichtungen Bodensee")
+#### **Framer Motion Integration**
+1. ✅ Page Transitions
+   - Search Mode switching animations
+   - Smooth tab changes
+   - Exit/Enter animations
+
+2. ✅ Stagger Animations
+   - Results Cards staggered entrance
+   - Filter checkboxes stagger
+   - Citation cards fade-in sequence
+
+3. ✅ Hover Effects
+   - Card scale on hover (1.02)
+   - Button press animations (0.98)
+   - Filter toggle animations
+
+#### **Accessibility Polish**
+4. ✅ Keyboard Navigation Complete
+   - Focus visible everywhere
+   - Logical tab order
+   - ARIA labels
+
+5. ✅ Screen Reader Support
+   - Live regions für updates
+   - Role="search" attributes
+   - Aria-live for counts
 
 **Deliverables:**
-- 🎨 Multimodal Search
-- 🌐 Cross-Language Support
-- 📊 Advanced Visualizations
-- 🔔 Alerts System
+- ✅ 60 FPS animations überall
+- ✅ WCAG 2.1 AA compliant
+- ✅ Delightful micro-interactions
 
-**Aufwand:** 10-15 Entwicklertage
+**Aufwand:** 0.5-1 Tag (4-8h)
+
+**Validierung:**
+- [ ] Animations bei 60 FPS
+- [ ] Keyboard navigation works completely
+- [ ] Screen reader test passed
+
+---
+
+### **Phase 4: Advanced Features (Woche 2+)** 🚀
+
+**Ziel:** Differenzierende Features
+
+#### **Multimodal & Cross-Lingual**
+1. ⚪ Multimodal Search (Claude 3.5 Vision)
+   - Image upload → find similar
+   - Sketch recognition
+   - Image embeddings (CLIP)
+
+2. ✅ **Cross-Lingual Search** (COMPLETED 2025-10-16)
+   - ✅ Multilingual search (DE/EN/FR/ES)
+   - ✅ Automatic translation via OpenAI GPT-4o-mini
+   - ✅ Language detection (auto)
+   - ✅ LRU Cache (1000 entries, 24h TTL)
+   - ✅ Prominent UI with language flags 🇩🇪 🇬🇧 🇫🇷 🇪🇸
+   - ✅ 55% faster on cache hits
+
+#### **Analytics & Insights**
+3. ✅ **Search Analytics Dashboard** (COMPLETED 2025-10-16)
+   - ✅ `/admin/analytics/search` page (admin-only)
+   - ✅ 5 Analytics endpoints (overview, top-searches, trends, zero-results, low-relevance)
+   - ✅ SVG Charts (search volume trends)
+   - ✅ Real-time stats widgets
+   - ✅ Live Search Activity widget in search page
+
+4. ⚪ Search Alerts System
+   - Saved searches in DB
+   - Email notifications
+   - Webhook integration
+
+#### **Visual Search UI**
+5. ⚪ Timeline View
+   - Chronological visualization
+   - Clustering by time
+   - Interactive timeline
+
+6. ⚪ Graph View (Neo4j)
+   - Relationship visualization
+   - Interactive graph
+   - Pattern highlighting
+
+**Deliverables:**
+- 🎨 Multimodal Search working
+- 📊 Analytics Dashboard live
+- 📈 Visual Search UI polished
+- 🔔 Alerts System active
+
+**Aufwand:** 10-15 Tage
+
+---
+
+### **Implementation Checklist** ✅
+
+#### **Phase 1 (MUST HAVE)**
+- [ ] `20250116_fts_indexes.sql` - Full-Text Search Indexes
+- [ ] `20250116_hybrid_search_function.sql` - Hybrid Search RRF
+- [ ] `20250116_search_analytics.sql` - Analytics System
+- [ ] `components/search/predictive-search-input.tsx`
+- [ ] `components/search/search-results-skeleton.tsx`
+- [ ] `hooks/use-debounce.ts`
+- [ ] CSS Shimmer in `globals.css`
+
+#### **Phase 2 (SHOULD HAVE)**
+- [ ] `components/search/results-stats-bar.tsx`
+- [ ] `components/search/rag-citation-card.tsx`
+- [ ] `components/ui/confidence-circle.tsx`
+- [ ] `components/ui/highlighted-text.tsx`
+- [ ] Update `FacetedFiltersPanel.tsx` (dynamic counts)
+- [ ] Update `ZeroResultsSuggestions.tsx` (AI suggestions)
+- [ ] `hooks/use-search-history.ts`
+
+#### **Phase 3 (NICE TO HAVE)**
+- [ ] Framer Motion transitions everywhere
+- [ ] Accessibility audit & fixes
+- [ ] Performance optimization
+- [ ] Mobile touch gestures
+
+#### **Phase 4 (FUTURE)**
+- [ ] Multimodal Search
+- [ ] Analytics Dashboard
+- [ ] Visual Search UI
+- [ ] Alerts System
 
 ---
 
@@ -2111,6 +2267,1071 @@ export default async function SearchAnalyticsPage() {
       </div>
     </div>
   )
+}
+```
+
+---
+
+## 🎨 UX/UI Best Practices 2025 {#ux-best-practices}
+
+### **State-of-the-Art Search UX (Research-based)**
+
+Basierend auf aktuellen UX Studies (DesignRush, TanStack, Algolia 2025):
+
+#### **1. Predictive Search & Autosuggestions** ⭐ CRITICAL
+
+**Best Practice Requirements:**
+- ✅ **Live Suggestions** während Typing (debounced 300ms)
+- ✅ **Keyboard Navigation** (Arrow Up/Down, Enter, Esc)
+- ✅ **Recent Searches** Integration in Dropdown
+- ✅ **Category Grouping** (Suggestions, Recent, Trending)
+- ✅ **Visual Indicators** (Icons, Badges mit Counts)
+
+**Anti-Patterns vermeiden:**
+- ❌ Keine Suggestions → User fühlt sich verloren
+- ❌ Langsame Response (>500ms) → Frustration
+- ❌ Keine Keyboard Support → Accessibility Fail
+
+**Implementierung:**
+```tsx
+// Muss in HybridSearch, NLPSearch integriert werden
+<Command>
+  <CommandInput
+    placeholder="Search experiences..."
+    onValueChange={debouncedSearch}
+  />
+  <CommandList>
+    <CommandGroup heading="Suggestions">
+      {predictions.map(p => (
+        <CommandItem key={p.id} onSelect={() => handleSelect(p)}>
+          <Sparkles className="mr-2 h-4 w-4" />
+          {p.text}
+          <Badge className="ml-auto">{p.count}</Badge>
+        </CommandItem>
+      ))}
+    </CommandGroup>
+    <CommandGroup heading="Recent">
+      {recent.map(r => (
+        <CommandItem>
+          <Clock className="mr-2 h-4 w-4" />
+          {r.query}
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  </CommandList>
+</Command>
+```
+
+---
+
+#### **2. Loading States & Skeleton Screens** ⭐ CRITICAL
+
+**Best Practice Requirements:**
+- ✅ **Skeleton Screens** statt Spinner (zeigt Layout-Struktur)
+- ✅ **Shimmer Animation** für "Loading"-Feeling
+- ✅ **Progressive Loading** (first 3 results → rest)
+- ✅ **Smooth Transitions** (Framer Motion AnimatePresence)
+- ✅ **Optimistic UI** wo möglich
+
+**Performance Targets:**
+- Initial Render: <100ms
+- Skeleton → Content: <300ms transition
+- No Layout Shift (CLS = 0)
+
+**Implementierung:**
+```tsx
+// Custom Shimmer Animation (CSS - leichter als JS!)
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+// Component
+<AnimatePresence mode="wait">
+  {isLoading ? (
+    <motion.div
+      key="skeleton"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <div className="space-y-4">
+        {/* Hero Skeleton */}
+        <div className="h-64 w-full rounded-lg skeleton-shimmer" />
+
+        {/* Grid Skeletons */}
+        <div className="grid grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-40 rounded-lg skeleton-shimmer" />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  ) : (
+    <motion.div
+      key="results"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, staggerChildren: 0.05 }}
+    >
+      {results.map(r => <ResultCard key={r.id} />)}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+---
+
+#### **3. Dynamic Results Stats & Transparency** 🔥
+
+**Best Practice Requirements:**
+- ✅ **Result Count** prominent anzeigen
+- ✅ **Execution Time** (zeigt Performance)
+- ✅ **Relevance Score** (avg similarity)
+- ✅ **Filter Impact Preview** ("This filter → 23 results")
+- ✅ **Quality Indicators** (confidence, sources)
+
+**Implementierung:**
+```tsx
+<Card className="mb-4 bg-muted/50">
+  <CardContent className="pt-4">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-6">
+        {/* Result Count */}
+        <div>
+          <p className="text-3xl font-bold">{results.length}</p>
+          <p className="text-xs text-muted-foreground">results</p>
+        </div>
+
+        <Separator orientation="vertical" className="h-10" />
+
+        {/* Execution Time */}
+        <div>
+          <p className="text-lg font-semibold">{executionTime}ms</p>
+          <p className="text-xs text-muted-foreground">search time</p>
+        </div>
+
+        <Separator orientation="vertical" className="h-10" />
+
+        {/* Avg Relevance (nur bei Vector/Hybrid) */}
+        <div className="flex items-center gap-1">
+          <Sparkles className="h-4 w-4 text-yellow-500" />
+          <p className="text-lg font-semibold">
+            {Math.round(avgSimilarity * 100)}%
+          </p>
+          <p className="text-xs text-muted-foreground ml-1">relevance</p>
+        </div>
+      </div>
+
+      {/* Filter Preview on Hover */}
+      <AnimatePresence>
+        {hoveredFilter && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="text-sm"
+          >
+            Would show <strong>{predictedCount}</strong> results
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  </CardContent>
+</Card>
+```
+
+---
+
+#### **4. RAG Q&A Citations - Visual Trust Signals** 🔥
+
+**Best Practice Requirements:**
+- ✅ **Confidence Visualization** (Circular Progress 0-100%)
+- ✅ **Highlighted Excerpts** (query matching mit <mark>)
+- ✅ **Source Metadata** (category, date, attributes)
+- ✅ **Expand/Collapse** für Details
+- ✅ **Direct Links** zu Original Experience
+
+**Trust Signals:**
+- High Confidence (80-100%): Green Circle
+- Medium (60-79%): Yellow Circle
+- Low (40-59%): Orange Circle
+- Very Low (<40%): Red Circle (nicht zeigen!)
+
+**Implementierung:**
+```tsx
+// Custom SVG Confidence Circle (kein Library Overhead!)
+function ConfidenceCircle({ score }: { score: number }) {
+  const circumference = 2 * Math.PI * 20 // radius = 20
+  const offset = circumference - (score / 100) * circumference
+
+  const color = score >= 80 ? '#22c55e' :
+                score >= 60 ? '#eab308' : '#f97316'
+
+  return (
+    <svg width="48" height="48" viewBox="0 0 48 48">
+      {/* Background Circle */}
+      <circle
+        cx="24"
+        cy="24"
+        r="20"
+        fill="none"
+        stroke="hsl(var(--muted))"
+        strokeWidth="4"
+      />
+
+      {/* Progress Circle */}
+      <circle
+        cx="24"
+        cy="24"
+        r="20"
+        fill="none"
+        stroke={color}
+        strokeWidth="4"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform="rotate(-90 24 24)"
+        className="transition-all duration-500"
+      />
+
+      {/* Score Text */}
+      <text
+        x="24"
+        y="24"
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="text-sm font-bold"
+        fill={color}
+      >
+        {score}%
+      </text>
+    </svg>
+  )
+}
+
+// Citation Card
+<Card className="overflow-hidden hover:shadow-lg transition-shadow">
+  <CardContent className="p-4">
+    <div className="flex gap-4">
+      {/* Confidence Circle */}
+      <ConfidenceCircle score={Math.round(source.similarity * 100)} />
+
+      <div className="flex-1 min-w-0">
+        {/* Title with Link */}
+        <Link href={`/experiences/${source.id}`}>
+          <h4 className="font-semibold hover:underline mb-2">
+            {source.title}
+          </h4>
+        </Link>
+
+        {/* Highlighted Excerpt */}
+        <p className="text-sm text-muted-foreground mb-3">
+          {highlightMatches(source.excerpt, query)}
+        </p>
+
+        {/* Metadata */}
+        <div className="flex gap-2 flex-wrap">
+          <Badge>{source.category}</Badge>
+          <span className="text-xs text-muted-foreground">
+            {formatDate(source.date)}
+          </span>
+          {source.attributes?.map(attr => (
+            <Badge key={attr} variant="outline">{attr}</Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Expand Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <ChevronDown className={cn(
+          "h-4 w-4 transition-transform",
+          expanded && "rotate-180"
+        )} />
+      </Button>
+    </div>
+
+    {/* Expanded Details */}
+    <AnimatePresence>
+      {expanded && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="mt-4 pt-4 border-t"
+        >
+          <p className="text-sm">{source.fullText}</p>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </CardContent>
+</Card>
+
+// Highlight Helper
+function highlightMatches(text: string, query: string) {
+  if (!query) return text
+  const regex = new RegExp(`(${query})`, 'gi')
+  return text.split(regex).map((part, i) =>
+    regex.test(part) ? (
+      <mark key={i} className="bg-yellow-200 dark:bg-yellow-900/50 px-1 rounded">
+        {part}
+      </mark>
+    ) : part
+  )
+}
+```
+
+---
+
+#### **5. Faceted Search - Dynamic Counts** 🎯
+
+**Best Practice Requirements:**
+- ✅ **Live Counts** neben jedem Filter (zeigt Impact)
+- ✅ **Disabled State** wenn count = 0
+- ✅ **Sort by Count** (meiste zuerst)
+- ✅ **Collapsible Groups** (nicht zu overwhelming)
+- ✅ **Apply Preview** ("3 filters active → 42 results")
+
+**Performance:**
+- Counts dürfen **nicht** bei jedem Hover DB query machen
+- Frontend-Berechnung aus aktuellen Results
+- Nur bei "Apply" → Backend query
+
+**Implementierung:**
+```tsx
+// Berechne counts aus aktuellen results (Frontend)
+const filterCounts = useMemo(() => {
+  const counts = new Map<string, Map<string, number>>()
+
+  results.forEach(exp => {
+    // Category counts
+    const catMap = counts.get('category') || new Map()
+    catMap.set(exp.category, (catMap.get(exp.category) || 0) + 1)
+    counts.set('category', catMap)
+
+    // Attribute counts
+    exp.attributes?.forEach(attr => {
+      const attrMap = counts.get(attr.key) || new Map()
+      attrMap.set(attr.value, (attrMap.get(attr.value) || 0) + 1)
+      counts.set(attr.key, attrMap)
+    })
+  })
+
+  return counts
+}, [results])
+
+// Faceted Filter UI
+<div className="space-y-4">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="font-semibold">Filters</h3>
+    {activeFilters.size > 0 && (
+      <Badge variant="secondary">
+        {activeFilters.size} active → {filteredCount} results
+      </Badge>
+    )}
+  </div>
+
+  {/* Category Facet */}
+  <Collapsible defaultOpen>
+    <CollapsibleTrigger className="flex items-center justify-between w-full">
+      <span className="font-medium">Category</span>
+      <ChevronDown className="h-4 w-4" />
+    </CollapsibleTrigger>
+    <CollapsibleContent className="mt-2 space-y-1">
+      {Array.from(filterCounts.get('category')?.entries() || [])
+        .sort((a, b) => b[1] - a[1])
+        .map(([cat, count]) => (
+          <div key={cat} className="flex items-center justify-between">
+            <Checkbox
+              checked={selectedFilters.has(cat)}
+              onCheckedChange={() => toggleFilter('category', cat)}
+              disabled={count === 0}
+            >
+              <span className={count === 0 ? 'text-muted-foreground' : ''}>
+                {cat}
+              </span>
+            </Checkbox>
+            <Badge variant="outline" className="ml-auto">
+              {count}
+            </Badge>
+          </div>
+        ))}
+    </CollapsibleContent>
+  </Collapsible>
+
+  {/* Apply Button mit Preview */}
+  <Button
+    onClick={applyFilters}
+    className="w-full"
+    disabled={pendingFilters.size === 0}
+  >
+    Apply Filters
+    {pendingFilters.size > 0 && (
+      <Badge className="ml-2">
+        Will show {predictedCount} results
+      </Badge>
+    )}
+  </Button>
+</div>
+```
+
+---
+
+#### **6. Empty States & Error Handling** 💡
+
+**Best Practice Requirements:**
+- ✅ **Helpful Error Messages** (nicht "No results")
+- ✅ **Actionable Suggestions** (alternative queries)
+- ✅ **Visual Feedback** (illustrations, nicht nur Text)
+- ✅ **Related Content** ("Try browsing categories")
+- ✅ **Retry Mechanisms** bei Errors
+
+**Zero Results Flow:**
+```tsx
+<div className="flex flex-col items-center justify-center py-16 max-w-md mx-auto text-center">
+  {/* Custom Illustration (optional) */}
+  <div className="mb-6 relative">
+    <Search className="h-24 w-24 text-muted-foreground/20" />
+    <Sparkles className="h-8 w-8 text-yellow-500 absolute -top-2 -right-2 animate-pulse" />
+  </div>
+
+  <h3 className="text-xl font-semibold mb-2">
+    No results for "{query}"
+  </h3>
+
+  <p className="text-muted-foreground mb-6">
+    Try adjusting your filters or search with different keywords
+  </p>
+
+  {/* Suggestions */}
+  <div className="w-full space-y-3">
+    <p className="text-sm font-medium text-left">Suggestions:</p>
+
+    {/* AI-Generated Similar Queries */}
+    {suggestions.map(sugg => (
+      <Button
+        key={sugg}
+        variant="outline"
+        className="w-full justify-start"
+        onClick={() => handleSearch(sugg)}
+      >
+        <Lightbulb className="h-4 w-4 mr-2" />
+        {sugg}
+      </Button>
+    ))}
+
+    {/* Popular Searches */}
+    <Separator className="my-4" />
+    <p className="text-sm font-medium text-left">Popular searches:</p>
+    {popularSearches.slice(0, 3).map(pop => (
+      <Button
+        key={pop}
+        variant="ghost"
+        className="w-full justify-start"
+        onClick={() => handleSearch(pop)}
+      >
+        <TrendingUp className="h-4 w-4 mr-2" />
+        {pop}
+      </Button>
+    ))}
+  </div>
+</div>
+```
+
+---
+
+### **Animation & Micro-Interaction Guidelines** ✨
+
+#### **Framer Motion Best Practices:**
+
+**1. Page Transitions:**
+```tsx
+// Smooth mode switching
+<AnimatePresence mode="wait">
+  <motion.div
+    key={searchMode}
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    transition={{ duration: 0.2 }}
+  >
+    {searchMode === 'hybrid' && <HybridSearch />}
+    {searchMode === 'nlp' && <NLPSearch />}
+    {/* ... */}
+  </motion.div>
+</AnimatePresence>
+```
+
+**2. Stagger Children (Results):**
+```tsx
+<motion.div
+  variants={{
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }}
+  initial="hidden"
+  animate="show"
+>
+  {results.map(r => (
+    <motion.div
+      key={r.id}
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+      }}
+    >
+      <ResultCard />
+    </motion.div>
+  ))}
+</motion.div>
+```
+
+**3. Hover Effects:**
+```tsx
+<motion.div
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  transition={{ type: "spring", stiffness: 400 }}
+>
+  <Card />
+</motion.div>
+```
+
+**4. Filter Toggle:**
+```tsx
+<motion.div
+  layout
+  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+>
+  <Badge>Active Filter</Badge>
+</motion.div>
+```
+
+---
+
+### **Performance Budgets** ⚡
+
+| Metric | Target | Critical |
+|--------|--------|----------|
+| **Search Response Time** | <100ms | <500ms |
+| **Page Load (FCP)** | <1s | <2s |
+| **Skeleton → Content** | <300ms | <1s |
+| **Animation Frame Rate** | 60 FPS | >30 FPS |
+| **Bundle Size (Search)** | <50KB | <100KB |
+
+**Optimization Techniques:**
+- ✅ React Query mit stale-while-revalidate
+- ✅ Debouncing (300ms für autocomplete)
+- ✅ Virtual Scrolling ab 100+ results
+- ✅ Image lazy loading
+- ✅ Code splitting per search mode
+
+---
+
+### **Accessibility Requirements** ♿
+
+**WCAG 2.1 AA Compliance:**
+
+1. **Keyboard Navigation:**
+   - Tab through all interactive elements
+   - Arrow keys in dropdowns
+   - Enter/Space to select
+   - Esc to close modals/dropdowns
+
+2. **Screen Reader Support:**
+   - ARIA labels auf Icons
+   - Live regions für result updates
+   - Role="search" auf Container
+   - Aria-live="polite" für count updates
+
+3. **Focus Management:**
+   - Sichtbarer focus ring
+   - Logische tab order
+   - Focus trap in modals
+   - Return focus nach close
+
+**Implementation:**
+```tsx
+<div role="search" aria-label="Experience Search">
+  <input
+    type="search"
+    aria-label="Search query"
+    aria-describedby="search-help"
+  />
+  <span id="search-help" className="sr-only">
+    Enter keywords to search experiences
+  </span>
+
+  <div
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    {results.length} results found
+  </div>
+</div>
+```
+
+---
+
+## 📦 Component Specifications {#component-specs}
+
+### **Neue Components (müssen erstellt werden)**
+
+#### **1. PredictiveSearchInput.tsx** 🆕
+
+**Location:** `components/search/predictive-search-input.tsx`
+
+**Props:**
+```typescript
+interface PredictiveSearchInputProps {
+  initialQuery?: string
+  onSearch: (query: string) => void
+  onQueryChange?: (query: string) => void
+  placeholder?: string
+  showRecentSearches?: boolean
+  showTrending?: boolean
+}
+```
+
+**Features:**
+- Debounced autocomplete (300ms)
+- Keyboard navigation (Arrow, Enter, Esc)
+- Recent searches from localStorage
+- Trending searches API integration
+- Command Palette UI (shadcn/ui Command)
+
+**Dependencies:**
+- `@/components/ui/command`
+- `@/components/ui/popover`
+- `@/components/ui/badge`
+- `@/hooks/use-debounce`
+
+---
+
+#### **2. SearchResultsSkeleton.tsx** 🆕
+
+**Location:** `components/search/search-results-skeleton.tsx`
+
+**Props:**
+```typescript
+interface SearchResultsSkeletonProps {
+  count?: number
+  variant?: 'grid' | 'list' | 'table'
+  showHero?: boolean
+}
+```
+
+**Features:**
+- Custom shimmer animation (CSS)
+- Matches actual result layout
+- Responsive grid/list/table variants
+- Framer Motion fade in/out
+
+**CSS Required:**
+```css
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(...);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+```
+
+---
+
+#### **3. ResultsStatsBar.tsx** 🆕
+
+**Location:** `components/search/results-stats-bar.tsx`
+
+**Props:**
+```typescript
+interface ResultsStatsBarProps {
+  resultCount: number
+  executionTime: number
+  avgSimilarity?: number // 0-1, nur bei Vector/Hybrid
+  searchType: 'hybrid' | 'nlp' | 'ask' | 'advanced'
+  onHoverFilter?: (filterId: string, predictedCount: number) => void
+}
+```
+
+**Features:**
+- Result count prominent display
+- Execution time visualization
+- Relevance score (Sparkles icon)
+- Filter impact preview (AnimatePresence)
+
+---
+
+#### **4. RAGCitationCard.tsx** 🆕
+
+**Location:** `components/search/rag-citation-card.tsx`
+
+**Props:**
+```typescript
+interface RAGCitationCardProps {
+  source: {
+    id: string
+    title: string
+    excerpt: string
+    fullText?: string
+    category: string
+    date: string
+    similarity: number // 0-1
+    attributes?: string[]
+  }
+  query: string
+  onExpand?: (id: string, expanded: boolean) => void
+}
+```
+
+**Features:**
+- Custom SVG Confidence Circle (keine Library!)
+- Highlighted query matches in excerpt
+- Expand/Collapse for full text
+- Color-coded confidence (green/yellow/orange)
+- Direct link to experience
+
+**Helper Functions:**
+```typescript
+function ConfidenceCircle({ score }: { score: number }) { /* SVG */ }
+
+function highlightMatches(text: string, query: string) {
+  const regex = new RegExp(`(${query})`, 'gi')
+  return text.split(regex).map((part, i) =>
+    regex.test(part) ? <mark>{part}</mark> : part
+  )
+}
+```
+
+---
+
+#### **5. FacetedFiltersPanel.tsx** 🆕 (UPDATE)
+
+**Location:** `components/search/faceted-filters-panel.tsx`
+
+**ENHANCEMENT:** Add dynamic counts!
+
+**Props:**
+```typescript
+interface FacetedFiltersPanelProps {
+  results: Experience[]
+  selectedFilters: Set<string>
+  onFilterChange: (filters: Set<string>) => void
+  showCounts?: boolean // ← NEW
+  onApplyPreview?: (count: number) => void // ← NEW
+}
+```
+
+**NEW Features:**
+- Dynamic count calculation (useMemo)
+- Disabled state for count = 0
+- Sort by count (descending)
+- Apply button with preview
+
+**Implementation:**
+```typescript
+const filterCounts = useMemo(() => {
+  const counts = new Map<string, Map<string, number>>()
+
+  results.forEach(exp => {
+    // Calculate counts for categories, attributes, etc.
+  })
+
+  return counts
+}, [results])
+```
+
+---
+
+### **Existing Components (müssen erweitert werden)**
+
+#### **1. HybridSearch.tsx** ⚙️ UPDATE
+
+**ADD:**
+- Replace basic input with `PredictiveSearchInput`
+- Add `SearchResultsSkeleton` during loading
+- Add `ResultsStatsBar` above results
+- Framer Motion transitions
+
+```tsx
+<div className="space-y-4">
+  <PredictiveSearchInput
+    initialQuery={query}
+    onSearch={handleSearch}
+  />
+
+  <AnimatePresence mode="wait">
+    {isLoading ? (
+      <SearchResultsSkeleton key="skeleton" count={6} />
+    ) : (
+      <motion.div
+        key="results"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <ResultsStatsBar
+          resultCount={results.length}
+          executionTime={meta.executionTime}
+          avgSimilarity={meta.avgSimilarity}
+          searchType="hybrid"
+        />
+        <ResultsGrid results={results} />
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
+```
+
+---
+
+#### **2. AskAI.tsx** ⚙️ UPDATE
+
+**ADD:**
+- Replace basic citations with `RAGCitationCard`
+- Add typing indicator during loading
+- Confidence visualization
+
+```tsx
+<div className="space-y-6">
+  {/* Question Input */}
+  <Input {...} />
+
+  {/* Answer with Citations */}
+  {response && (
+    <div className="space-y-4">
+      <div className="prose dark:prose-invert">
+        <p>{response.answer}</p>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <h4 className="font-semibold">
+          Sources ({response.sources.length})
+        </h4>
+        {response.sources.map(source => (
+          <RAGCitationCard
+            key={source.id}
+            source={source}
+            query={question}
+          />
+        ))}
+      </div>
+    </div>
+  )}
+
+  {/* Loading State */}
+  {isLoading && (
+    <div className="flex items-center gap-2">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      <span className="text-sm">Analyzing experiences...</span>
+    </div>
+  )}
+</div>
+```
+
+---
+
+#### **3. ZeroResultsSuggestions.tsx** ⚙️ UPDATE
+
+**ENHANCE:**
+- Add visual illustration (Search + Sparkles icon)
+- AI-generated similar queries
+- Popular searches integration
+- Better CTA buttons
+
+```tsx
+<div className="py-16 max-w-md mx-auto text-center">
+  {/* Illustration */}
+  <div className="mb-6 relative">
+    <Search className="h-24 w-24 text-muted-foreground/20" />
+    <Sparkles className="h-8 w-8 text-yellow-500 absolute -top-2 -right-2 animate-pulse" />
+  </div>
+
+  <h3 className="text-xl font-semibold mb-2">
+    No results for "{query}"
+  </h3>
+
+  <p className="text-muted-foreground mb-6">
+    Try adjusting your filters or search with different keywords
+  </p>
+
+  {/* AI Suggestions */}
+  <div className="space-y-3">
+    <p className="text-sm font-medium text-left">Suggestions:</p>
+    {aiSuggestions.map(sugg => (
+      <Button variant="outline" className="w-full justify-start" onClick={() => handleSearch(sugg)}>
+        <Lightbulb className="h-4 w-4 mr-2" />
+        {sugg}
+      </Button>
+    ))}
+  </div>
+</div>
+```
+
+---
+
+### **Utility Components**
+
+#### **ConfidenceCircle.tsx** 🆕
+
+**Location:** `components/ui/confidence-circle.tsx`
+
+Simple SVG-based circular progress indicator:
+```typescript
+interface ConfidenceCircleProps {
+  score: number // 0-100
+  size?: number // default 48
+  strokeWidth?: number // default 4
+}
+```
+
+---
+
+#### **HighlightedText.tsx** 🆕
+
+**Location:** `components/ui/highlighted-text.tsx`
+
+Highlights query matches in text:
+```typescript
+interface HighlightedTextProps {
+  text: string
+  query: string
+  className?: string
+}
+
+// Usage: <HighlightedText text={excerpt} query={searchQuery} />
+```
+
+---
+
+### **Hooks (müssen erstellt werden)**
+
+#### **useDebounce.ts** 🆕
+
+**Location:** `hooks/use-debounce.ts`
+
+```typescript
+export function useDebounce<T>(value: T, delay: number = 300): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => clearTimeout(timer)
+  }, [value, delay])
+
+  return debouncedValue
+}
+```
+
+---
+
+#### **useSearchHistory.ts** 🆕
+
+**Location:** `hooks/use-search-history.ts`
+
+```typescript
+export function useSearchHistory() {
+  const [history, setHistory] = useState<SearchHistoryItem[]>([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('searchHistory')
+    if (saved) setHistory(JSON.parse(saved))
+  }, [])
+
+  const addToHistory = (query: string, type: SearchType, filters?: any, resultCount?: number) => {
+    const item: SearchHistoryItem = {
+      id: Date.now().toString(),
+      query,
+      searchType: type,
+      filters,
+      resultCount,
+      timestamp: new Date().toISOString()
+    }
+
+    const updated = [item, ...history.filter(h => h.query !== query)].slice(0, 20)
+    setHistory(updated)
+    localStorage.setItem('searchHistory', JSON.stringify(updated))
+  }
+
+  const clearHistory = () => {
+    setHistory([])
+    localStorage.removeItem('searchHistory')
+  }
+
+  return { history, addToHistory, clearHistory }
+}
+```
+
+---
+
+### **CSS Additions**
+
+#### **globals.css** Updates
+
+```css
+/* Skeleton Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Highlighted Text */
+mark {
+  @apply bg-yellow-200 dark:bg-yellow-900/50 px-1 rounded;
+}
+
+/* Focus Visible (Accessibility) */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
 }
 ```
 

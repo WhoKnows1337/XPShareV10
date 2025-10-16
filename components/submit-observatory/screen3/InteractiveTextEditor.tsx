@@ -128,6 +128,16 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
   // Use segments ONLY when enhancement is enabled
   const hasSegments = screen3.enhancementEnabled && screen3.segments && screen3.segments.length > 0;
 
+  // Debug logging
+  console.log('[InteractiveTextEditor] State:', {
+    enhancementEnabled: screen3.enhancementEnabled,
+    enhancedText: screen3.enhancedText?.substring(0, 50) + '...',
+    originalText: screen1.text?.substring(0, 50) + '...',
+    segmentsCount: screen3.segments?.length || 0,
+    hasSegments,
+    currentText: currentText?.substring(0, 50) + '...',
+  });
+
   // Initialize Tiptap editor
   const editor = useEditor({
     immediatelyRender: false, // ⭐ Fix SSR warning

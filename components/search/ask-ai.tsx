@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageSquare, Loader2, ExternalLink, TrendingUp } from 'lucide-react'
-import Link from 'next/link'
+import { MessageSquare, Loader2, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { addToSearchHistory } from '@/lib/utils/search-history'
+import { RAGCitationCard } from './rag-citation-card'
+import { motion } from 'framer-motion'
 
 interface AskAIProps {
   initialQuestion?: string
@@ -18,10 +19,13 @@ interface AskAIProps {
 interface Source {
   id: string
   title: string
+  excerpt?: string
+  fullText?: string
   category: string
   similarity: number
   date_occurred?: string
   location_text?: string
+  attributes?: string[]
 }
 
 interface QAResponse {
@@ -106,19 +110,6 @@ export function AskAI({ initialQuestion = '', onQuestionChange }: AskAIProps) {
     return 'text-orange-600 dark:text-orange-400'
   }
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      ufo: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      nde: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-      paranormal: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-      dreams: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-      psychedelic: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      meditation: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      synchronicity: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    }
-    return colors[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
-  }
-
   return (
     <div className="space-y-6">
       {/* Question Input */}
@@ -158,7 +149,7 @@ export function AskAI({ initialQuestion = '', onQuestionChange }: AskAIProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => handleQuestionChange(example)}
-                className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                className="text-xs h-auto py-2 px-3 whitespace-normal text-left transition-all hover:scale-105 hover:shadow-md"
               >
                 {example}
               </Button>
@@ -224,64 +215,49 @@ export function AskAI({ initialQuestion = '', onQuestionChange }: AskAIProps) {
             </CardContent>
           </Card>
 
-          {/* Sources */}
+          {/* Sources with RAG Citations */}
           {response.sources.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-base font-semibold">
                   Verwendete Quellen ({response.sources.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {response.sources.map((source, index) => (
-                    <div
-                      key={source.id}
-                      className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-muted-foreground">#{index + 1}</span>
-                          <Link
-                            href={`/experiences/${source.id}`}
-                            className="font-medium hover:underline line-clamp-1"
-                          >
-                            {source.title || 'Ohne Titel'}
-                          </Link>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <Badge variant="secondary" className={getCategoryColor(source.category)}>
-                            {source.category}
-                          </Badge>
-                          {source.location_text && (
-                            <span className="flex items-center gap-1">
-                              📍 {source.location_text}
-                            </span>
-                          )}
-                          {source.date_occurred && (
-                            <span>📅 {new Date(source.date_occurred).toLocaleDateString('de-DE')}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
-                          <div className="text-xs text-muted-foreground">Relevanz</div>
-                          <div className="text-sm font-semibold">
-                            {Math.round(source.similarity * 100)}%
-                          </div>
-                        </div>
-                        <Link href={`/experiences/${source.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <ExternalLink className="w-3 h-3" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                </h3>
+              </div>
+              <motion.div
+                className="space-y-3"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.08, // 80ms delay between cards
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
+                {response.sources.map((source) => (
+                  <motion.div
+                    key={source.id}
+                    variants={{
+                      hidden: { opacity: 0, x: -20 },
+                      show: { opacity: 1, x: 0 },
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <RAGCitationCard
+                      source={{
+                        ...source,
+                        excerpt: source.excerpt || source.title || 'No excerpt available',
+                      }}
+                      query={question}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
           )}
         </div>
       )}

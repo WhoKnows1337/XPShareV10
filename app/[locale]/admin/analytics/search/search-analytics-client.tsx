@@ -31,6 +31,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { SearchTrendsChart } from '@/components/admin/search-trends-chart'
 
 interface SearchStat {
   query_text: string
@@ -300,6 +301,9 @@ export function SearchAnalyticsClient() {
           </Card>
         </div>
       )}
+
+      {/* Search Volume Trends Chart */}
+      <SearchTrendsChart days={parseInt(timeRange)} />
 
       {/* Popular Searches */}
       <Card>

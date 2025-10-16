@@ -5,7 +5,7 @@ import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { ProgressIndicator } from '@/components/submit-observatory/ProgressIndicator';
 import { TextInputScreen } from '@/components/submit-observatory/screen1/TextInputScreen';
 import { AIAnalysisScreen } from '@/components/submit-observatory/screen2/AIAnalysisScreen';
-import { EnhancedTextScreen } from '@/components/submit-observatory/screen3/EnhancedTextScreen';
+import { EnhancementReviewScreen } from '@/components/submit-observatory/screen3/EnhancementReviewScreen';
 import { FilesWitnessesScreen } from '@/components/submit-observatory/screen4/FilesWitnessesScreen';
 import { SuccessScreen } from '@/components/submit-observatory/success/SuccessScreen';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -42,7 +42,7 @@ export default function ExperienceSubmitPage() {
               >
                 {currentStep === 1 && <TextInputScreen />}
                 {currentStep === 2 && <AIAnalysisScreen />}
-                {currentStep === 3 && <EnhancedTextScreen />}
+                {currentStep === 3 && <EnhancementReviewScreen />}
                 {currentStep === 4 && <FilesWitnessesScreen />}
                 {currentStep === 5 && <SuccessScreen />}
               </motion.div>
