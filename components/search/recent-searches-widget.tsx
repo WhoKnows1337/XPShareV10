@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock, TrendingUp, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
 
 interface SearchStat {
   query: string
@@ -17,47 +16,26 @@ export function RecentSearchesWidget() {
   const [popularSearches, setPopularSearches] = useState<SearchStat[]>([])
   const [totalToday, setTotalToday] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [hasPermission, setHasPermission] = useState(true)
 
-  // Check admin status
   useEffect(() => {
-    const checkAdmin = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        setIsAdmin(false)
-        setLoading(false)
-        return
-      }
-
-      // Check if user has admin role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      setIsAdmin(profile?.role === 'admin')
-      setLoading(false)
-    }
-
-    checkAdmin()
-  }, [])
-
-  // Load search stats only if admin
-  useEffect(() => {
-    if (!isAdmin) return
-
     loadSearchStats()
     // Refresh every 30 seconds
     const interval = setInterval(loadSearchStats, 30000)
     return () => clearInterval(interval)
-  }, [isAdmin])
+  }, [])
 
   const loadSearchStats = async () => {
     try {
       const response = await fetch('/api/admin/search-analytics?type=overview&days=1')
+
+      // If unauthorized (non-admin), gracefully hide widget
+      if (response.status === 401) {
+        setHasPermission(false)
+        setLoading(false)
+        return
+      }
+
       if (!response.ok) {
         setLoading(false)
         return
@@ -85,8 +63,8 @@ export function RecentSearchesWidget() {
     }
   }
 
-  // Don't show widget if not admin
-  if (!isAdmin && !loading) {
+  // Don't show widget if user has no permission (non-admin)
+  if (!hasPermission && !loading) {
     return null
   }
 

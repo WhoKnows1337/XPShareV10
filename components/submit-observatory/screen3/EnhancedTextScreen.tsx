@@ -10,9 +10,7 @@ import { EditWarningToast } from './EditWarningToast';
 import { ReAnalysisModal } from './ReAnalysisModal';
 import { useTextChangeDetection } from '@/lib/hooks/useTextChangeDetection';
 import { useTranslations } from 'next-intl';
-import { Loader2, Brain } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import type { TextChange } from '@/lib/utils/text-diff';
 
 export function EnhancedTextScreen() {
@@ -275,41 +273,77 @@ export function EnhancedTextScreen() {
       <div className="space-y-4">
         <div>
           <div className="flex items-center justify-between mb-3">
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-text-primary">
-                Dein Text
-              </h3>
-              <p className="text-xs text-text-secondary mt-0.5">
+            <h3 className="text-sm font-semibold text-text-primary">
+              Dein Text
+            </h3>
+
+            {/* Segmented Control - AI Mode Toggle */}
+            <div className="flex flex-col items-end gap-1.5">
+              <div className="inline-flex items-center bg-glass-bg/50 border border-glass-border rounded-lg p-1">
+                {/* Original Mode Button */}
+                <button
+                  onClick={() => {
+                    console.log('[Toggle] BEFORE - enhancementEnabled:', screen3.enhancementEnabled);
+                    console.log('[Toggle] Calling toggleEnhancement...');
+                    toggleEnhancement();
+                    setTimeout(() => {
+                      console.log('[Toggle] AFTER (100ms delay) - enhancementEnabled:', screen3.enhancementEnabled);
+                    }, 100);
+                  }}
+                  disabled={isEnhancing}
+                  className={`
+                    px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200
+                    ${!screen3.enhancementEnabled
+                      ? 'bg-space-deep text-text-primary shadow-sm'
+                      : 'text-text-tertiary hover:text-text-secondary'
+                    }
+                    ${isEnhancing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+                  `}
+                >
+                  Original
+                </button>
+
+                {/* AI Mode Button */}
+                <button
+                  onClick={() => {
+                    console.log('[Toggle] BEFORE - enhancementEnabled:', screen3.enhancementEnabled);
+                    console.log('[Toggle] Calling toggleEnhancement...');
+                    toggleEnhancement();
+                    setTimeout(() => {
+                      console.log('[Toggle] AFTER (100ms delay) - enhancementEnabled:', screen3.enhancementEnabled);
+                    }, 100);
+                  }}
+                  disabled={isEnhancing}
+                  className={`
+                    px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 flex items-center gap-1.5
+                    ${screen3.enhancementEnabled
+                      ? 'bg-observatory-gold/20 text-observatory-gold border border-observatory-gold/30 shadow-sm'
+                      : 'text-text-tertiary hover:text-text-secondary'
+                    }
+                    ${isEnhancing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+                  `}
+                >
+                  {isEnhancing ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      ✨ <span>KI-Angereichert</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Explanation Text */}
+              <p className="text-[10px] text-text-tertiary text-right max-w-[200px] leading-tight">
                 {screen3.enhancementEnabled
-                  ? '✨ KI-Anreicherungen aktiv'
-                  : 'Originaltext'}
+                  ? 'Deine Wahl wird gespeichert • Jederzeit änderbar'
+                  : 'KI ergänzt Details aus deinen Antworten'
+                }
               </p>
             </div>
-            {/* Brain Button - Toggle AI Enhancement */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button
-                onClick={toggleEnhancement}
-                disabled={isEnhancing}
-                variant={screen3.enhancementEnabled ? "default" : "outline"}
-                size="sm"
-                className="text-xs"
-              >
-                {isEnhancing ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="w-3 h-3" />
-                    {screen3.enhancementEnabled ? 'AI On' : 'AI Off'}
-                  </>
-                )}
-              </Button>
-            </motion.div>
           </div>
           <InteractiveTextEditor
             onTextChange={handleTextChange}

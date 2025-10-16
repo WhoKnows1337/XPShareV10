@@ -125,18 +125,8 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
   // Use current text from store if available, otherwise fallback
   const currentText = screen3.textVersions?.current || displayText;
 
-  // Use segments ONLY when enhancement is enabled
-  const hasSegments = screen3.enhancementEnabled && screen3.segments && screen3.segments.length > 0;
-
-  // Debug logging
-  console.log('[InteractiveTextEditor] State:', {
-    enhancementEnabled: screen3.enhancementEnabled,
-    enhancedText: screen3.enhancedText?.substring(0, 50) + '...',
-    originalText: screen1.text?.substring(0, 50) + '...',
-    segmentsCount: screen3.segments?.length || 0,
-    hasSegments,
-    currentText: currentText?.substring(0, 50) + '...',
-  });
+  // Use segments if available
+  const hasSegments = screen3.segments && screen3.segments.length > 0;
 
   // Initialize Tiptap editor
   const editor = useEditor({
@@ -229,7 +219,7 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
     },
   });
 
-  // Update editor content when segments change OR enhancement toggled
+  // Update editor content when segments OR enhancement mode changes
   useEffect(() => {
     if (!editor) return;
 
@@ -245,14 +235,15 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
       return;
     }
 
-    const newContent = hasSegments
+    // Determine content based on enhancement state
+    const newContent = hasSegments && screen3.enhancementEnabled
       ? segmentsToTiptapJSON(screen3.segments)
       : {
           type: 'doc',
           content: [
             {
               type: 'paragraph',
-              content: currentText ? [{ type: 'text', text: currentText }] : [],
+              content: displayText ? [{ type: 'text', text: displayText }] : [],
             },
           ],
         };
@@ -260,10 +251,10 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
     // Only update if content actually changed
     const currentJSON = editor.getJSON();
     if (JSON.stringify(currentJSON) !== JSON.stringify(newContent)) {
-      console.log('[InteractiveTextEditor] Updating content (enhancement:', screen3.enhancementEnabled, ')');
+      console.log('[InteractiveTextEditor] Updating content - enhancementEnabled:', screen3.enhancementEnabled);
       editor.commands.setContent(newContent);
     }
-  }, [screen3.segments, screen3.enhancementEnabled, hasSegments, currentText, editor]);
+  }, [screen3.segments, hasSegments, screen3.enhancementEnabled, displayText, editor]);
 
   const handleRemoveSegment = useCallback(() => {
     if (tooltip) {

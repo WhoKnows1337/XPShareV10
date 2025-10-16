@@ -268,9 +268,9 @@ export function EditableMetadataHero() {
           </div>
         </div>
 
-        {/* Editable Summary - With Pencil Icon */}
-        <div className="mt-4 space-y-1">
-          <label className="text-[10px] font-medium text-text-tertiary uppercase">
+        {/* Editable Summary - With Background Panel */}
+        <div className="mt-4 space-y-1.5">
+          <label className="text-[10px] font-medium text-text-tertiary uppercase tracking-wide">
             Zusammenfassung
           </label>
           {isEditingSummary ? (
@@ -352,47 +352,54 @@ export function EditableMetadataHero() {
               </AnimatePresence>
             </div>
           ) : (
-            <div className="group flex items-start gap-2 cursor-pointer text-sm text-text-primary p-2 rounded border border-transparent hover:border-accent-cyan/30 min-h-[60px]">
-              <div
-                onClick={() => setIsEditingSummary(true)}
-                className="flex-1"
-              >
-                {screen3.summary || 'Zusammenfassung eingeben...'}
+            <div 
+              onClick={() => setIsEditingSummary(true)}
+              className="group relative cursor-pointer p-3 rounded-lg bg-space-deep/40 border border-glass-border/30 hover:border-accent-cyan/40 transition-all duration-200 min-h-[60px]"
+            >
+              <div className="flex items-start gap-2">
+                <div className="flex-1 text-sm text-text-primary leading-relaxed">
+                  {screen3.summary || (
+                    <span className="text-text-tertiary italic">Zusammenfassung eingeben...</span>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingSummary(true);
+                  }}
+                  className="flex-shrink-0 p-1.5 text-observatory-accent opacity-0 group-hover:opacity-100 hover:bg-observatory-accent/10 rounded transition-all"
+                  title="Zusammenfassung bearbeiten"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <button
-                onClick={() => setIsEditingSummary(true)}
-                className="p-1.5 text-observatory-accent hover:bg-observatory-accent/10 rounded transition-colors"
-                title="Zusammenfassung bearbeiten"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
             </div>
           )}
         </div>
 
-        {/* Tags - Without # */}
-        <div className="mt-4 space-y-2">
-          <label className="text-[10px] font-medium text-text-tertiary uppercase">
+        {/* Tags - Minimal Design */}
+        <div className="mt-4 space-y-1.5">
+          <label className="text-[10px] font-medium text-text-tertiary uppercase tracking-wide">
             Tags ({screen2.tags.length}/12)
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {screen2.tags.map((tag) => (
               <div
                 key={tag}
-                className="group flex items-center gap-1.5 px-3 py-1 rounded-full bg-observatory-accent/10 border border-observatory-accent/20 hover:border-observatory-accent/40 transition-colors"
+                className="group inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-observatory-accent/5 border border-observatory-accent/15 hover:border-observatory-accent/30 transition-colors"
               >
-                <span className="text-xs font-medium text-observatory-accent">{tag}</span>
+                <span className="text-[10px] font-normal text-observatory-accent/80 leading-none">{tag}</span>
                 <button
                   onClick={() => removeTag(tag)}
-                  className="p-0.5 rounded-full hover:bg-destructive/20 transition-colors"
+                  className="p-0.5 rounded-full hover:bg-destructive/20 transition-colors opacity-0 group-hover:opacity-100"
                   aria-label="Tag entfernen"
                 >
-                  <X className="w-3 h-3 text-text-tertiary group-hover:text-destructive transition-colors" />
+                  <X className="w-2 h-2 text-text-tertiary group-hover:text-destructive transition-colors" />
                 </button>
               </div>
             ))}
             {screen2.tags.length === 0 && (
-              <span className="text-xs text-text-tertiary">Keine Tags vorhanden</span>
+              <span className="text-[10px] text-text-tertiary italic">Keine Tags vorhanden</span>
             )}
           </div>
         </div>
