@@ -28,6 +28,12 @@ interface SearchHistoryDropdownProps {
 export function SearchHistoryDropdown({ onSearchSelect, limit = 10 }: SearchHistoryDropdownProps) {
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Fix hydration mismatch - only render DropdownMenu after mount
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const loadHistory = () => {
     const searches = getRecentSearches(limit)
@@ -85,6 +91,16 @@ export function SearchHistoryDropdown({ onSearchSelect, limit = 10 }: SearchHist
       default:
         return 'default'
     }
+  }
+
+  // Don't render DropdownMenu on server to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <Button variant="outline" size="sm" disabled>
+        <History className="w-4 h-4 mr-2" />
+        History
+      </Button>
+    )
   }
 
   return (
