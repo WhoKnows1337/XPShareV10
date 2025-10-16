@@ -125,8 +125,8 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
   // Use current text from store if available, otherwise fallback
   const currentText = screen3.textVersions?.current || displayText;
 
-  // Use segments if available
-  const hasSegments = screen3.segments && screen3.segments.length > 0;
+  // Use segments ONLY when enhancement is enabled
+  const hasSegments = screen3.enhancementEnabled && screen3.segments && screen3.segments.length > 0;
 
   // Initialize Tiptap editor
   const editor = useEditor({
@@ -219,7 +219,7 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
     },
   });
 
-  // Update editor content when segments change
+  // Update editor content when segments change OR enhancement toggled
   useEffect(() => {
     if (!editor) return;
 
@@ -250,10 +250,10 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
     // Only update if content actually changed
     const currentJSON = editor.getJSON();
     if (JSON.stringify(currentJSON) !== JSON.stringify(newContent)) {
-      console.log('[InteractiveTextEditor] Updating content');
+      console.log('[InteractiveTextEditor] Updating content (enhancement:', screen3.enhancementEnabled, ')');
       editor.commands.setContent(newContent);
     }
-  }, [screen3.segments, hasSegments, currentText, editor]);
+  }, [screen3.segments, screen3.enhancementEnabled, hasSegments, currentText, editor]);
 
   const handleRemoveSegment = useCallback(() => {
     if (tooltip) {

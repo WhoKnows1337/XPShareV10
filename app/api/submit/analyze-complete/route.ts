@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
   try {
     const { text, language = 'de' } = await request.json();
 
-    if (!text || text.trim().length < 50) {
+    if (!text || text.trim().length < 30) {
       return NextResponse.json(
-        { error: 'Text is too short for analysis (minimum 50 characters)' },
+        { error: 'Text is too short for analysis (minimum 30 characters)' },
         { status: 400 }
       );
     }
@@ -125,10 +125,95 @@ CRITICAL:
     // Continue even if no attributes found - not all categories have attributes yet
     const hasAttributes = attributeSchema && attributeSchema.length > 0;
 
-    // Step 2: Complete Analysis with Structured Outputs
-    // Build comprehensive JSON Schema for OpenAI Structured Outputs
-    const attributeSchemaObj = hasAttributes
-      ? attributeSchemaToJSONSchema(attributeSchema as any)
+    // ⭐ NEW: Two-Pass Extraction Approach
+    // PASS 1: Identify which attributes are EXPLICITLY mentioned in the text
+    let mentionedAttributeKeys: string[] = [];
+    
+    if (hasAttributes) {
+      const identificationPrompt = `Analyze this text and identify which attributes are EXPLICITLY mentioned.
+
+Language: ${language}
+Text: "${text}"
+
+Available Attributes:
+${attributeSchema.map(attr => {
+  let valueInfo = ''
+  if (attr.data_type === 'enum' && attr.allowed_values) {
+    const values = typeof attr.allowed_values === 'string'
+      ? JSON.parse(attr.allowed_values)
+      : attr.allowed_values
+    valueInfo = `[${values.join(', ')}]`
+  } else {
+    valueInfo = `(${attr.data_type})`
+  }
+  return `  - ${attr.key}: ${attr.description || attr.display_name} ${valueInfo}`
+}).join('\n')}
+
+STRICT RULES:
+1. Only include an attribute if the text EXPLICITLY mentions it
+2. DO NOT infer or assume based on general knowledge about the topic
+3. "hell" or "bright" refers to VISIBILITY, NOT color attributes
+4. "awake" or "asleep" must be EXPLICITLY stated, don't assume from context
+5. Boolean fields (has_witnesses, has_documentation) require EXPLICIT mention of witnesses/photos/videos
+6. State fields (prior_state, afterwards_feeling) require EXPLICIT before/after descriptions
+7. If duration/time not mentioned → don't include duration fields
+8. When in doubt → EXCLUDE IT
+
+Return ONLY the keys of attributes that are explicitly mentioned.`;
+
+      const identificationSchema = {
+        type: 'object' as const,
+        properties: {
+          mentioned_attributes: {
+            type: 'array' as const,
+            items: { type: 'string' as const },
+            description: 'List of attribute keys that are EXPLICITLY mentioned in the text'
+          },
+          reasoning: {
+            type: 'string' as const,
+            description: 'Brief explanation of which attributes were found and why others were excluded'
+          }
+        },
+        required: ['mentioned_attributes', 'reasoning'],
+        additionalProperties: false
+      };
+
+      const identificationResponse = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{
+          role: 'user',
+          content: identificationPrompt
+        }],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'attribute_identification',
+            schema: identificationSchema
+          }
+        },
+        temperature: 0.1, // Very low temperature for strict identification
+      });
+
+      const identificationText = identificationResponse.choices[0].message.content || '{}';
+      const identificationResult = JSON.parse(identificationText);
+      mentionedAttributeKeys = identificationResult.mentioned_attributes || [];
+
+      console.log('[Two-Pass] Pass 1 - Identified attributes:', {
+        total: attributeSchema.length,
+        mentioned: mentionedAttributeKeys.length,
+        keys: mentionedAttributeKeys,
+        reasoning: identificationResult.reasoning
+      });
+    }
+
+    // PASS 2: Extract ONLY the mentioned attributes
+    // Build schema with ONLY identified attributes
+    const filteredAttributeSchema = hasAttributes && mentionedAttributeKeys.length > 0
+      ? attributeSchema.filter(attr => mentionedAttributeKeys.includes(attr.key))
+      : [];
+
+    const attributeSchemaObj = filteredAttributeSchema.length > 0
+      ? attributeSchemaToJSONSchema(filteredAttributeSchema as any)
       : { type: 'object' as const, properties: {}, required: [], additionalProperties: false };
 
     // Create comprehensive JSON schema including all fields
@@ -160,10 +245,10 @@ CRITICAL:
       additionalProperties: false
     };
 
-    // Create comprehensive analysis prompt
-    const attributeInstructions = hasAttributes
+    // Create extraction prompt - only for identified attributes
+    const attributeInstructions = filteredAttributeSchema.length > 0
       ? `\nExtract these attributes in CANONICAL ENGLISH LOWERCASE:
-${attributeSchema.map(attr => {
+${filteredAttributeSchema.map(attr => {
   let valueInfo = ''
   if (attr.data_type === 'enum' && attr.allowed_values) {
     const values = typeof attr.allowed_values === 'string'
@@ -176,14 +261,13 @@ ${attributeSchema.map(attr => {
   return `  - ${attr.key}: ${attr.description || attr.display_name} ${valueInfo}`
 }).join('\n')}
 
-CRITICAL RULES FOR ATTRIBUTES:
+EXTRACTION RULES:
 1. Values MUST be in canonical English lowercase
-   Example: "Dreieck" → "triangle", "métallique" → "metallic"
 2. For enum types, ONLY use exact values from the list
-3. Extract ONLY if clearly mentioned or strongly implied
-4. If not found, omit the field entirely (don't return null)
-5. Be confident - include if 70%+ sure`
-      : '\nNo specific attributes defined for this category.';
+3. These attributes were pre-identified as mentioned - extract their exact values
+4. "hell/bright" → use for visibility attribute, NOT color
+5. Extract the precise value stated in the text`
+      : '\nNo specific attributes identified in the text.';
 
     const analysisPrompt = `Analyze this ${detectedCategory} experience and extract structured information.
 
@@ -219,8 +303,14 @@ Return complete JSON with all fields: title, summary, tags[], attributes{}, miss
     const analysisText = analysisResponse.choices[0].message.content || '{}';
     const analysisResult = JSON.parse(analysisText);
 
-    // With Structured Outputs, validation is unnecessary - OpenAI guarantees schema compliance!
-    // Attributes are already in the correct format with correct enum values
+    // Post-processing: Remove any "unknown" values and ensure clean data
+    const cleanedAttributes: Record<string, any> = {};
+    for (const [key, value] of Object.entries(analysisResult.attributes || {})) {
+      // Skip "unknown", "not_specified", null, or empty values
+      if (value && value !== 'unknown' && value !== 'not_specified' && value !== '') {
+        cleanedAttributes[key] = value;
+      }
+    }
 
     // Return complete analysis
     return NextResponse.json({
@@ -229,14 +319,18 @@ Return complete JSON with all fields: title, summary, tags[], attributes{}, miss
       title: analysisResult.title || 'Untitled Experience',
       summary: analysisResult.summary || '',
       tags: analysisResult.tags || [],
-      attributes: analysisResult.attributes || {},
+      attributes: cleanedAttributes,
       missing_info: analysisResult.missing_info || [],
       confidence: categoryResult.confidence || 0.8,
       _debug: {
-        attributeSchemaCount: hasAttributes ? attributeSchema.length : 0,
-        extractedCount: Object.keys(analysisResult.attributes || {}).length,
-        hasAttributes,
-        structuredOutputs: true // Flag to indicate we're using Structured Outputs
+        twoPassExtraction: true,
+        pass1_totalAttributes: hasAttributes ? attributeSchema.length : 0,
+        pass1_identifiedAttributes: mentionedAttributeKeys.length,
+        pass1_identifiedKeys: mentionedAttributeKeys,
+        pass2_extractedCount: Object.keys(cleanedAttributes).length,
+        pass2_extractedKeys: Object.keys(cleanedAttributes),
+        removedUnknownValues: Object.keys(analysisResult.attributes || {}).length - Object.keys(cleanedAttributes).length,
+        categoryReasoning: categoryResult.reasoning,
       }
     });
 

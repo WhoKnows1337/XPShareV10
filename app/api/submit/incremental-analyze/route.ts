@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { analyzeTextChanges } from '@/lib/utils/text-diff';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * Incremental Analysis API - Re-analyze edited text
@@ -61,119 +62,259 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build prompt for incremental analysis
-    const prompt = `Du analysierst Änderungen an einem Erfahrungsbericht und aktualisierst die Metadaten.
+    const supabase = await createClient();
 
-**Original-Text:**
+    // Get attribute schema for current category
+    const { data: attributeSchema } = await supabase
+      .from('attribute_schema')
+      .select('*')
+      .or(`category_slug.is.null,category_slug.eq.${currentCategory}`)
+      .order('sort_order');
+
+    const hasAttributes = attributeSchema && attributeSchema.length > 0;
+
+    // ⭐ TWO-PASS EXTRACTION for new/changed attributes
+    let mentionedAttributeKeys: string[] = [];
+
+    if (hasAttributes) {
+      // PASS 1: Identify which attributes are mentioned in the CHANGED/ADDED text
+      const identificationPrompt = `Analyze the CHANGES in this text and identify which attributes are EXPLICITLY mentioned in the NEW or CHANGED parts.
+
+**Original Text:**
 """
 ${originalText}
 """
 
-**Bearbeiteter Text:**
+**Edited Text:**
 """
 ${editedText}
 """
 
-**Aktuelle Kategorie:** ${currentCategory}
+**Change Summary:**
+- Type: ${textChange.type}
+- Added words: ${textChange.wordsAdded}
+- Deleted words: ${textChange.wordsDeleted}
 
-**Aktuelle Attribute:**
-${JSON.stringify(currentAttributes, null, 2)}
+Available Attributes:
+${attributeSchema.map(attr => {
+  let valueInfo = '';
+  if (attr.data_type === 'enum' && attr.allowed_values) {
+    const values = typeof attr.allowed_values === 'string'
+      ? JSON.parse(attr.allowed_values)
+      : attr.allowed_values;
+    valueInfo = `[${values.join(', ')}]`;
+  } else {
+    valueInfo = `(${attr.data_type})`;
+  }
+  return `  - ${attr.key}: ${attr.description || attr.display_name} ${valueInfo}`;
+}).join('\n')}
 
-**Änderungsübersicht:**
-- Typ: ${textChange.type}
-- Schweregrad: ${textChange.severity}
-- Hinzugefügte Wörter: ${textChange.wordsAdded}
-- Entfernte Wörter: ${textChange.wordsDeleted}
+STRICT RULES:
+1. Only include attributes that are EXPLICITLY mentioned in the CHANGES
+2. DO NOT infer or assume based on general knowledge
+3. DO NOT include attributes that were already in the original text
+4. Boolean fields require EXPLICIT mention
+5. State fields require EXPLICIT before/after descriptions
+6. When in doubt → EXCLUDE IT
 
-**Aufgabe:**
-Analysiere die Änderungen und gib ein JSON-Objekt zurück mit:
+Return ONLY the keys of NEW/CHANGED attributes that are explicitly mentioned.`;
 
-1. **categoryChanged** (boolean): Hat sich die Kategorie geändert?
-2. **newCategory** (string): Neue Kategorie falls geändert (UAP, Naturphänomen, Traum, Meditation, etc.)
-3. **updatedAttributes** (object): NEUE oder GEÄNDERTE Attribute mit:
-   - key: attribute name (shape, color, duration, witnesses, etc.)
-   - value: string value
-   - confidence: 0.0-1.0
-   - reason: kurze Erklärung warum das Attribut aktualisiert wurde
-4. **invalidatedAttributes** (string[]): Liste von Attribut-Keys die nicht mehr gelten
-5. **newQuestionSuggestions** (string[]): Neue Fragen die aufgrund der Änderungen gestellt werden sollten
-
-**Wichtige Regeln:**
-- Nur Attribute zurückgeben die NEU sind oder sich GEÄNDERT haben
-- Bestehende gültige Attribute NICHT wiederholen
-- Kategorie nur ändern wenn WIRKLICH notwendig
-- Confidence realistisch einschätzen
-
-Gib NUR das JSON-Objekt zurück, keine zusätzlichen Erklärungen.`;
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `Du bist ein Experte für Erfahrungsberichte und analysierst Textänderungen.
-Du gibst präzise, strukturierte JSON-Antworten zurück ohne zusätzlichen Text.`,
+      const identificationSchema = {
+        type: 'object' as const,
+        properties: {
+          mentioned_attributes: {
+            type: 'array' as const,
+            items: { type: 'string' as const },
+            description: 'Attribute keys explicitly mentioned in the changes',
+          },
+          invalidated_attributes: {
+            type: 'array' as const,
+            items: { type: 'string' as const },
+            description: 'Attribute keys that are no longer valid due to changes',
+          },
+          reasoning: {
+            type: 'string' as const,
+            description: 'Brief explanation of findings',
+          },
         },
-        {
+        required: ['mentioned_attributes', 'invalidated_attributes', 'reasoning'],
+        additionalProperties: false,
+      };
+
+      const identificationResponse = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{
           role: 'user',
-          content: prompt,
+          content: identificationPrompt,
+        }],
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'incremental_attribute_identification',
+            schema: identificationSchema,
+          },
         },
-      ],
-      temperature: 0.2,
-      max_tokens: 1500,
-      response_format: { type: 'json_object' },
-    });
+        temperature: 0.1,
+      });
 
-    const analysisResult = JSON.parse(
-      completion.choices[0].message.content || '{}'
-    );
+      const identificationText = identificationResponse.choices[0].message.content || '{}';
+      const identificationResult = JSON.parse(identificationText);
+      mentionedAttributeKeys = identificationResult.mentioned_attributes || [];
+      const invalidatedKeys = identificationResult.invalidated_attributes || [];
 
-    // Build response with merged data
-    const response: any = {
-      changesDetected: textChange,
-      reAnalysisPerformed: true,
-      category: analysisResult.categoryChanged
-        ? analysisResult.newCategory
-        : currentCategory,
-    };
+      console.log('[Incremental Two-Pass] Pass 1:', {
+        mentioned: mentionedAttributeKeys,
+        invalidated: invalidatedKeys,
+        reasoning: identificationResult.reasoning,
+      });
 
-    // Merge updated attributes with existing ones
-    if (analysisResult.updatedAttributes) {
-      response.attributes = { ...currentAttributes };
+      // PASS 2: Extract values for ONLY identified attributes
+      if (mentionedAttributeKeys.length > 0) {
+        const filteredSchema = attributeSchema.filter(attr =>
+          mentionedAttributeKeys.includes(attr.key)
+        );
 
-      // Add/update new attributes
-      for (const [key, attrData] of Object.entries(
-        analysisResult.updatedAttributes as Record<string, any>
-      )) {
-        response.attributes[key] = {
-          value: attrData.value,
-          confidence: attrData.confidence || 0.8,
+        const extractionPrompt = `Extract the exact values for these NEW/CHANGED attributes from the edited text.
+
+Edited Text: "${editedText}"
+
+Extract these attributes in CANONICAL ENGLISH LOWERCASE:
+${filteredSchema.map(attr => {
+  let valueInfo = '';
+  if (attr.data_type === 'enum' && attr.allowed_values) {
+    const values = typeof attr.allowed_values === 'string'
+      ? JSON.parse(attr.allowed_values)
+      : attr.allowed_values;
+    valueInfo = `[${values.join(', ')}]`;
+  } else {
+    valueInfo = `(${attr.data_type})`;
+  }
+  return `  - ${attr.key}: ${attr.description || attr.display_name} ${valueInfo}`;
+}).join('\n')}
+
+EXTRACTION RULES:
+1. Values MUST be in canonical English lowercase
+2. For enum types, ONLY use exact values from the list
+3. Extract precise values as stated in text`;
+
+        // Build dynamic schema
+        const extractionProperties: Record<string, any> = {};
+        for (const attr of filteredSchema) {
+          if (attr.data_type === 'enum' && attr.allowed_values) {
+            const values = typeof attr.allowed_values === 'string'
+              ? JSON.parse(attr.allowed_values)
+              : attr.allowed_values;
+            extractionProperties[attr.key] = {
+              type: 'string',
+              enum: values,
+            };
+          } else if (attr.data_type === 'boolean') {
+            extractionProperties[attr.key] = { type: 'boolean' };
+          } else if (attr.data_type === 'number') {
+            extractionProperties[attr.key] = { type: 'number' };
+          } else {
+            extractionProperties[attr.key] = { type: 'string' };
+          }
+        }
+
+        const extractionSchema = {
+          type: 'object' as const,
+          properties: extractionProperties,
+          required: [],
+          additionalProperties: false,
         };
-      }
 
-      // Remove invalidated attributes
-      if (analysisResult.invalidatedAttributes) {
-        for (const key of analysisResult.invalidatedAttributes) {
+        const extractionResponse = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [{
+            role: 'user',
+            content: extractionPrompt,
+          }],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'attribute_extraction',
+              schema: extractionSchema,
+            },
+          },
+          temperature: 0.3,
+        });
+
+        const extractionText = extractionResponse.choices[0].message.content || '{}';
+        const extractedAttributes = JSON.parse(extractionText);
+
+        // Clean extracted attributes
+        const cleanedAttributes: Record<string, any> = {};
+        for (const [key, value] of Object.entries(extractedAttributes)) {
+          if (value && value !== '' && value !== 'unknown' && value !== 'not_specified') {
+            cleanedAttributes[key] = {
+              value,
+              confidence: 0.85,
+              isManuallyEdited: false,
+            };
+          }
+        }
+
+        // Build response
+        const response: any = {
+          changesDetected: textChange,
+          reAnalysisPerformed: true,
+          category: currentCategory,
+          attributes: { ...currentAttributes },
+        };
+
+        // Update with new attributes
+        Object.assign(response.attributes, cleanedAttributes);
+
+        // Remove invalidated attributes
+        for (const key of invalidatedKeys) {
           delete response.attributes[key];
         }
+
+        response.meta = {
+          twoPassExtraction: true,
+          attributesIdentified: mentionedAttributeKeys.length,
+          attributesExtracted: Object.keys(cleanedAttributes).length,
+          attributesInvalidated: invalidatedKeys.length,
+        };
+
+        return NextResponse.json(response);
       }
+
+      // No new attributes found
+      const response: any = {
+        changesDetected: textChange,
+        reAnalysisPerformed: true,
+        category: currentCategory,
+        attributes: { ...currentAttributes },
+      };
+
+      // Remove invalidated attributes
+      for (const key of invalidatedKeys) {
+        delete response.attributes[key];
+      }
+
+      response.meta = {
+        twoPassExtraction: true,
+        attributesIdentified: 0,
+        attributesExtracted: 0,
+        attributesInvalidated: invalidatedKeys.length,
+      };
+
+      return NextResponse.json(response);
     }
 
-    // Include new question suggestions
-    if (analysisResult.newQuestionSuggestions) {
-      response.newQuestionSuggestions = analysisResult.newQuestionSuggestions;
-    }
+    // No attributes for this category
+    return NextResponse.json({
+      changesDetected: textChange,
+      reAnalysisPerformed: true,
+      category: currentCategory,
+      attributes: currentAttributes,
+      meta: {
+        noAttributesAvailable: true,
+      },
+    });
 
-    // Metadata for debugging/logging
-    response.meta = {
-      categoryChanged: analysisResult.categoryChanged || false,
-      attributesUpdated: Object.keys(analysisResult.updatedAttributes || {})
-        .length,
-      attributesInvalidated: (analysisResult.invalidatedAttributes || [])
-        .length,
-    };
-
-    return NextResponse.json(response);
   } catch (error: any) {
     console.error('Incremental analysis error:', error);
 

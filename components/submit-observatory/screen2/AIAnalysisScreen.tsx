@@ -73,8 +73,8 @@ export function AIAnalysisScreen() {
     setAnalysisError(null);
     try {
       // Validate text length before sending to API
-      if (!screen1.text || screen1.text.trim().length < 50) {
-        throw new Error('Text ist zu kurz für die Analyse (mindestens 50 Zeichen erforderlich). Bitte gehe zurück und füge mehr Text hinzu.');
+      if (!screen1.text || screen1.text.trim().length < 30) {
+        throw new Error('Text ist zu kurz für die Analyse (mindestens 30 Zeichen erforderlich). Bitte gehe zurück und füge mehr Text hinzu.');
       }
 
       // Step 1: Complete analysis including title, category, tags, AND attributes
