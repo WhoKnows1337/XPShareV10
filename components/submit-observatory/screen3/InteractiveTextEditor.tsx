@@ -222,6 +222,12 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
   useEffect(() => {
     if (!editor) return;
 
+    // ⭐ Don't update if editor is focused (user is typing)
+    if (editor.isFocused) {
+      console.log('[InteractiveTextEditor] Skipping content update - editor is focused');
+      return;
+    }
+
     const newContent = hasSegments
       ? segmentsToTiptapJSON(screen3.segments)
       : {
@@ -237,6 +243,7 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
     // Only update if content actually changed
     const currentJSON = editor.getJSON();
     if (JSON.stringify(currentJSON) !== JSON.stringify(newContent)) {
+      console.log('[InteractiveTextEditor] Updating content');
       editor.commands.setContent(newContent);
     }
   }, [screen3.segments, hasSegments, currentText, editor]);

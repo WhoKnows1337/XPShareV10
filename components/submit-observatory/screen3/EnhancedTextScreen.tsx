@@ -40,14 +40,15 @@ export function EnhancedTextScreen() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [qualityScore, setQualityScore] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
+  const [initialEnhancementDone, setInitialEnhancementDone] = useState(false);
 
   // Change detection state
   const [detectedChange, setDetectedChange] = useState<TextChange | null>(null);
   const [showReAnalysisModal, setShowReAnalysisModal] = useState(false);
 
-  // Initialize change detection hook
+  // Initialize change detection hook - only enable AFTER initial enhancement is done
   const { handleTextChange, triggerAnalysis, resetDetection } = useTextChangeDetection({
-    enabled: true,
+    enabled: initialEnhancementDone, // ⭐ Only activate after AI text is loaded
     debounceMs: 2000,
     onChangeDetected: (change) => {
       console.log('Change detected:', change);
@@ -159,6 +160,8 @@ export function EnhancedTextScreen() {
       if (data.segments) {
         console.log('[EnhancedTextScreen] Calling setTextSegments with', data.segments.length, 'segments');
         setTextSegments(data.segments);
+        // ⭐ Mark initial enhancement as done - activate change detection now
+        setInitialEnhancementDone(true);
       } else {
         console.warn('[EnhancedTextScreen] NO SEGMENTS in API response!');
       }
@@ -238,6 +241,17 @@ export function EnhancedTextScreen() {
         icon="sparkles"
         title={t('summarizing')}
         description={t('summarizingDesc')}
+      />
+    );
+  }
+
+  // ⭐ Show loading during initial AI enhancement
+  if (isEnhancing && screen3.enhancementEnabled && !initialEnhancementDone) {
+    return (
+      <LoadingState
+        icon="sparkles"
+        title="KI bereitet Text auf..."
+        description="Füge zusätzliche Details aus deinen Antworten ein"
       />
     );
   }
