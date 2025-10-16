@@ -1,7 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Brain, Sparkles, Telescope, LucideIcon } from 'lucide-react';
+import { Brain, Sparkles, Telescope, LucideIcon, CheckCircle, Circle, Loader2, Zap } from 'lucide-react';
+
+export interface ProgressStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'active' | 'complete';
+  estimatedDuration?: number; // in seconds
+}
 
 interface LoadingStateProps {
   icon?: 'brain' | 'sparkles' | 'telescope';
@@ -9,6 +16,8 @@ interface LoadingStateProps {
   description?: string;
   showProgress?: boolean;
   progress?: number;
+  steps?: ProgressStep[]; // ⭐ NEW: Live progress steps
+  hideCounter?: boolean; // ⭐ Hide "Schritt X von Y" counter
 }
 
 const iconMap: Record<string, LucideIcon> = {
@@ -23,6 +32,8 @@ export function LoadingState({
   description = 'Einen Moment bitte',
   showProgress = false,
   progress = 0,
+  steps,
+  hideCounter = false,
 }: LoadingStateProps) {
   const Icon = iconMap[icon];
 
@@ -128,6 +139,27 @@ export function LoadingState({
         </motion.p>
       </div>
 
+      {/* ⭐ NEW: Live Progress Steps */}
+      {steps && steps.length > 0 && (
+        <motion.div
+          className="w-full max-w-md space-y-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {/* Individual Steps with Icons + Time */}
+          {steps.map((step, index) => (
+            <StepIndicator key={step.id} step={step} index={index} />
+          ))}
+
+          {/* Global Progress Bar */}
+          <GlobalProgressBar steps={steps} />
+
+          {/* Counter + Time Remaining (optional) */}
+          {!hideCounter && <StepCounter steps={steps} />}
+        </motion.div>
+      )}
+
       {/* Optional Progress Bar */}
       {showProgress && (
         <motion.div
@@ -150,5 +182,167 @@ export function LoadingState({
         </motion.div>
       )}
     </div>
+  );
+}
+
+// ============================================================================
+// Helper Components for Live Progress Steps
+// ============================================================================
+
+/**
+ * Individual Step Indicator with status icons and pulsing border
+ */
+function StepIndicator({ step, index }: { step: ProgressStep; index: number }) {
+  // Icon based on status
+  const icons = {
+    pending: <Circle className="w-5 h-5 text-text-tertiary" />,
+    active: <Loader2 className="w-5 h-5 text-observatory-gold animate-spin" />,
+    complete: (
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", duration: 0.6 }}
+      >
+        <CheckCircle className="w-5 h-5 text-green-400" />
+      </motion.div>
+    ),
+  };
+
+  return (
+    <div>
+      {/* Main Step Card */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{
+          opacity: step.status === 'complete' ? 0.4 : step.status === 'active' ? 1 : 0.3,
+          x: 0,
+          // ⭐ Pulsing border for active step (like the radar!)
+          ...(step.status === 'active' && {
+            boxShadow: [
+              "0 0 0px rgba(212, 175, 55, 0.3)",
+              "0 0 15px rgba(212, 175, 55, 0.6)",
+              "0 0 0px rgba(212, 175, 55, 0.3)",
+            ]
+          })
+        }}
+        transition={step.status === 'active'
+          ? {
+              opacity: { delay: index * 0.1, duration: 0.5 },
+              x: { delay: index * 0.1, duration: 0.5 },
+              boxShadow: { duration: 2, repeat: Infinity }
+            }
+          : { delay: index * 0.1, duration: 0.5 }
+        }
+        className={`
+          flex items-center gap-3 px-4 py-3 rounded-lg
+          ${step.status === 'active'
+            ? 'bg-observatory-gold/5 border-2 border-observatory-gold/30'
+            : 'bg-space-deep/40 border border-glass-border'
+          }
+        `}
+      >
+        {/* Status Icon */}
+        {icons[step.status]}
+
+        {/* Label */}
+        <span className={`
+          text-sm flex-1
+          ${step.status === 'active' ? 'text-text-primary font-medium' : 'text-text-secondary'}
+        `}>
+          {step.label}
+        </span>
+
+        {/* Estimated Time (Feature 4) */}
+        {step.estimatedDuration && (
+          <span className="text-xs text-text-tertiary font-mono">
+            ~{step.estimatedDuration}s
+          </span>
+        )}
+
+        {/* Lightning bolt for active step */}
+        {step.status === 'active' && (
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <Zap className="w-4 h-4 text-observatory-gold" />
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Mini Progress Bar per Step */}
+      <div className="h-1 bg-glass-bg border-b border-glass-border/30 overflow-hidden rounded-b-sm">
+        <motion.div
+          className={`h-full ${
+            step.status === 'complete'
+              ? 'bg-green-400'
+              : step.status === 'active'
+              ? 'bg-gradient-to-r from-observatory-gold to-observatory-accent'
+              : 'bg-transparent'
+          }`}
+          initial={{ width: '0%' }}
+          animate={{
+            width: step.status === 'complete' ? '100%' : step.status === 'active' ? '40%' : '0%'
+          }}
+          transition={{ duration: 0.5 }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Global Progress Bar showing overall completion (Feature 3)
+ */
+function GlobalProgressBar({ steps }: { steps: ProgressStep[] }) {
+  const completedCount = steps.filter(s => s.status === 'complete').length;
+  const progressPercent = (completedCount / steps.length) * 100;
+
+  return (
+    <div className="mt-4">
+      <div className="h-2 bg-glass-bg border border-glass-border rounded-full overflow-hidden">
+        <motion.div
+          className="h-full bg-gradient-to-r from-observatory-gold via-observatory-accent to-green-400"
+          initial={{ width: '0%' }}
+          animate={{ width: `${progressPercent}%` }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Step Counter with Remaining Time Display (Feature 4)
+ */
+function StepCounter({ steps }: { steps: ProgressStep[] }) {
+  const currentStepIndex = steps.findIndex(s => s.status === 'active');
+  const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : steps.length;
+  const totalSteps = steps.length;
+
+  // Calculate remaining time (sum of pending + active steps)
+  const remainingTime = steps
+    .filter(s => s.status === 'active' || s.status === 'pending')
+    .reduce((sum, s) => sum + (s.estimatedDuration || 0), 0);
+
+  return (
+    <motion.div
+      className="flex items-center justify-center gap-3 text-xs text-text-tertiary font-mono mt-2"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.5 }}
+    >
+      <span>
+        Schritt {currentStep} von {totalSteps}
+      </span>
+      {remainingTime > 0 && (
+        <>
+          <span>•</span>
+          <span className="text-observatory-gold">
+            ~{remainingTime}s verbleibend
+          </span>
+        </>
+      )}
+    </motion.div>
   );
 }

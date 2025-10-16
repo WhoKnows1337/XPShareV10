@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { AIHeroHeader } from './AIHeroHeader';
-import { LoadingState } from '../shared/LoadingState';
+import { LoadingState, ProgressStep } from '../shared/LoadingState';
 import { ExtraQuestionsFlow, ExtraQuestionsFlowHandle } from './ExtraQuestionsFlow';
 import { NavigationButtons } from '../shared/NavigationButtons';
 import { useTranslations } from 'next-intl';
@@ -34,6 +34,47 @@ export function AIAnalysisScreen() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const extraQuestionsRef = useRef<ExtraQuestionsFlowHandle>(null);
+
+  // ⭐ Live Progress Steps for enrichment phase
+  const [enrichmentSteps, setEnrichmentSteps] = useState<ProgressStep[]>([
+    {
+      id: '1',
+      label: 'Attribute einarbeiten',
+      status: 'pending',
+      estimatedDuration: 2
+    },
+    {
+      id: '2',
+      label: 'Kontext hinzufügen',
+      status: 'pending',
+      estimatedDuration: 3
+    },
+    {
+      id: '3',
+      label: 'Titel finalisieren',
+      status: 'pending',
+      estimatedDuration: 2
+    },
+  ]);
+
+  // ⭐ Live Progress Steps for initial analysis phase (no time counters)
+  const [analysisSteps, setAnalysisSteps] = useState<ProgressStep[]>([
+    {
+      id: '1',
+      label: 'Scanne XP',
+      status: 'pending'
+    },
+    {
+      id: '2',
+      label: 'Extrahiere Details',
+      status: 'pending'
+    },
+    {
+      id: '3',
+      label: 'Generiere Metadaten',
+      status: 'pending'
+    },
+  ]);
 
   // Hydration fix: Only compute canGoNext on client
   useEffect(() => {
@@ -71,7 +112,20 @@ export function AIAnalysisScreen() {
   const analyzeText = async () => {
     setAnalyzing(true);
     setAnalysisError(null);
+    
+    // Reset analysis steps to pending (no time counters)
+    setAnalysisSteps([
+      { id: '1', label: 'Scanne XP', status: 'pending' },
+      { id: '2', label: 'Extrahiere Details', status: 'pending' },
+      { id: '3', label: 'Generiere Metadaten', status: 'pending' },
+    ]);
+    
     try {
+      // ⭐ Step 1: Activate "Text analysieren"
+      setAnalysisSteps(prev => prev.map((s, i) =>
+        i === 0 ? { ...s, status: 'active' as const } : s
+      ));
+      
       // Validate text length before sending to API
       if (!screen1.text || screen1.text.trim().length < 30) {
         throw new Error('Text ist zu kurz für die Analyse (mindestens 30 Zeichen erforderlich). Bitte gehe zurück und füge mehr Text hinzu.');
@@ -91,6 +145,15 @@ export function AIAnalysisScreen() {
       }
 
       const data = await response.json();
+
+      // ⭐ Step 1: Complete → Step 2: Activate "Attribute extrahieren"
+      setAnalysisSteps(prev => prev.map((s, i) =>
+        i === 0 ? { ...s, status: 'complete' as const } :
+        i === 1 ? { ...s, status: 'active' as const } : s
+      ));
+
+      // 400ms delay for checkmark animation visibility
+      await new Promise(resolve => setTimeout(resolve, 400));
 
       // Store AI results including attributes
       setAIResults(data.title, data.category, data.tags, data.confidence);
@@ -130,11 +193,20 @@ export function AIAnalysisScreen() {
         updateScreen2({ attributes: formattedAttributes });
       }
 
-      // Store summary directly from analyze-complete (no separate API call needed!)
-      if (data.summary) {
-        const { setSummary } = useSubmitFlowStore.getState();
-        setSummary(data.summary);
-      }
+      // ⭐ Step 2: Complete → Step 3: Activate "Generiere Metadaten"
+      setAnalysisSteps(prev => prev.map((s, i) =>
+        i === 1 ? { ...s, status: 'complete' as const } :
+        i === 2 ? { ...s, status: 'active' as const } : s
+      ));
+
+      // 400ms delay for checkmark animation
+      await new Promise(resolve => setTimeout(resolve, 400));
+
+      // ⭐ Step 3: Complete (Title + Tags generated)
+      setAnalysisSteps(prev => prev.map(s => ({ ...s, status: 'complete' as const })));
+
+      // Final delay for all-complete animation
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       setHasAnalyzed(true);
     } catch (error) {
@@ -144,7 +216,7 @@ export function AIAnalysisScreen() {
     } finally {
       setAnalyzing(false);
     }
-  };
+  };;
 
   // Callback for AIHeroHeader to reload questions when attributes change
   const handleReloadQuestions = async () => {
@@ -158,11 +230,23 @@ export function AIAnalysisScreen() {
     // Start transitioning - we'll enrich the text AND generate final metadata
     setIsTransitioning(true);
 
+    // Reset steps to initial state
+    setEnrichmentSteps([
+      { id: '1', label: 'Attribute einarbeiten', status: 'pending', estimatedDuration: 2 },
+      { id: '2', label: 'Kontext hinzufügen', status: 'pending', estimatedDuration: 3 },
+      { id: '3', label: 'Titel finalisieren', status: 'pending', estimatedDuration: 2 },
+    ]);
+
     let enrichedTextContent = screen1.text; // Fallback to original
 
     try {
       const { setEnhancedText, setEnhancing, setAIResults, setSummary } = useSubmitFlowStore.getState();
       setEnhancing(true);
+
+      // ⭐ Step 1: Activate "Attribute einarbeiten"
+      setEnrichmentSteps(prev => prev.map((s, i) =>
+        i === 0 ? { ...s, status: 'active' as const } : s
+      ));
 
       // Step 1: Enrich text with attributes and answers from questions
       const enrichResponse = await fetch('/api/submit/enrich-text', {
@@ -189,6 +273,15 @@ export function AIAnalysisScreen() {
         }
       }
 
+      // ⭐ Step 1: Complete → Step 2: Activate
+      setEnrichmentSteps(prev => prev.map((s, i) =>
+        i === 0 ? { ...s, status: 'complete' as const } :
+        i === 1 ? { ...s, status: 'active' as const } : s
+      ));
+
+      // 400ms delay for checkmark animation visibility
+      await new Promise(resolve => setTimeout(resolve, 400));
+
       setEnhancing(false);
 
       // Step 2: Generate final metadata (Title, Summary, Tags) based on enriched text
@@ -210,6 +303,15 @@ export function AIAnalysisScreen() {
         }),
       });
 
+      // ⭐ Step 2: Complete → Step 3: Activate
+      setEnrichmentSteps(prev => prev.map((s, i) =>
+        i === 1 ? { ...s, status: 'complete' as const } :
+        i === 2 ? { ...s, status: 'active' as const } : s
+      ));
+
+      // 400ms delay for checkmark animation
+      await new Promise(resolve => setTimeout(resolve, 400));
+
       if (metadataResponse.ok) {
         const metadataData = await metadataResponse.json();
 
@@ -222,6 +324,12 @@ export function AIAnalysisScreen() {
         );
         setSummary(metadataData.summary);
       }
+
+      // ⭐ Step 3: Complete
+      setEnrichmentSteps(prev => prev.map(s => ({ ...s, status: 'complete' as const })));
+
+      // Final delay for all-complete animation
+      await new Promise(resolve => setTimeout(resolve, 600));
 
     } catch (error) {
       console.error('Transition error:', error);
@@ -242,6 +350,8 @@ export function AIAnalysisScreen() {
         icon="telescope"
         title={t('analyzing')}
         description="KI erkennt Kategorie & Tags, erstellt Titel & Preview-Zusammenfassung"
+        steps={analysisSteps}
+        hideCounter={true}
       />
     );
   }
@@ -252,7 +362,8 @@ export function AIAnalysisScreen() {
       <LoadingState
         icon="sparkles"
         title={t('enriching')}
-        description={t('enrichingDesc')}
+        description="Dein Text wird mit KI-Power aufgewertet"
+        steps={enrichmentSteps}
       />
     );
   }

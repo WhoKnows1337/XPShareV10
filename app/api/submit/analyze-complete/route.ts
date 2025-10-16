@@ -224,10 +224,6 @@ Return ONLY the keys of attributes that are explicitly mentioned.`;
           type: 'string' as const,
           description: 'Compelling title for the experience (max 80 chars, in original language)'
         },
-        summary: {
-          type: 'string' as const,
-          description: 'Concise summary in 2-3 sentences (in original language)'
-        },
         tags: {
           type: 'array' as const,
           items: { type: 'string' as const },
@@ -241,7 +237,7 @@ Return ONLY the keys of attributes that are explicitly mentioned.`;
           description: 'List of missing information that would be helpful'
         }
       },
-      required: ['title', 'summary', 'tags', 'attributes', 'missing_info'],
+      required: ['title', 'tags', 'attributes', 'missing_info'],
       additionalProperties: false
     };
 
@@ -277,11 +273,10 @@ ${attributeInstructions}
 
 ALSO EXTRACT:
 - A compelling title (max 80 chars, in original language)
-- A concise summary (2-3 sentences, in original language)
 - Up to 8 relevant tags (lowercase, English)
 - Missing information that would be helpful
 
-Return complete JSON with all fields: title, summary, tags[], attributes{}, missing_info[]`;
+Return complete JSON with all fields: title, tags[], attributes{}, missing_info[]`;
 
     // Use Structured Outputs for 100% schema compliance
     const analysisResponse = await openai.chat.completions.create({
@@ -312,12 +307,11 @@ Return complete JSON with all fields: title, summary, tags[], attributes{}, miss
       }
     }
 
-    // Return complete analysis
+    // Return complete analysis (summary removed - generated later in finalize-metadata)
     return NextResponse.json({
       category: detectedCategory,
       categoryConfidence: categoryResult.confidence,
       title: analysisResult.title || 'Untitled Experience',
-      summary: analysisResult.summary || '',
       tags: analysisResult.tags || [],
       attributes: cleanedAttributes,
       missing_info: analysisResult.missing_info || [],
