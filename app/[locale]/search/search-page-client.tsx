@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
 import { HybridSearch } from '@/components/search/hybrid-search'
@@ -83,64 +83,63 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   // Update URL when state changes
-  const updateURL = (updates: Partial<typeof searchFilters & { mode?: string; view?: string }>) => {
+  const updateURL = useCallback((updates: Partial<typeof searchFilters & { mode?: string; view?: string }>) => {
     const params = new URLSearchParams(searchParams.toString())
-    
+
     // Update mode
     if (updates.mode !== undefined) {
       params.set('mode', updates.mode)
     }
-    
+
     // Update view
     if (updates.view !== undefined) {
       params.set('view', updates.view)
     }
-    
+
     // Update search filters
     if (updates.query !== undefined && updates.query) {
       params.set('q', updates.query)
     } else if (updates.query === '') {
       params.delete('q')
     }
-    
+
     if (updates.language !== undefined) {
       params.set('lang', updates.language)
     }
-    
+
     if (updates.category !== undefined && updates.category) {
       params.set('cat', updates.category)
     } else if (updates.category === '') {
       params.delete('cat')
     }
-    
+
     if (updates.vectorWeight !== undefined) {
       params.set('vw', updates.vectorWeight.toString())
     }
-    
+
     if (updates.crossLingual !== undefined) {
       params.set('cross', updates.crossLingual.toString())
     }
-    
+
     // Replace URL without triggering navigation
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-  }
+  }, [router, pathname, searchParams])
 
-  const handleSearchModeChange = (mode: string) => {
+  const handleSearchModeChange = useCallback((mode: string) => {
     const validMode = mode as 'hybrid' | 'nlp' | 'ask' | 'advanced'
     setSearchMode(validMode)
     updateURL({ mode: validMode })
-  }
+  }, [updateURL])
 
-  const handleViewModeChange = (view: 'grid' | 'table' | 'constellation' | 'graph3d' | 'heatmap') => {
+  const handleViewModeChange = useCallback((view: 'grid' | 'table' | 'constellation' | 'graph3d' | 'heatmap') => {
     setViewMode(view)
     updateURL({ view })
-  }
+  }, [updateURL])
 
-  const handleFilterUpdate = (updates: Partial<typeof searchFilters>) => {
-    const newFilters = { ...searchFilters, ...updates }
-    setSearchFilters(newFilters)
+  const handleFilterUpdate = useCallback((updates: Partial<typeof searchFilters>) => {
+    setSearchFilters(prev => ({ ...prev, ...updates }))
     updateURL(updates)
-  }
+  }, [updateURL])
 
   const handleHybridResults = (newResults: any[], meta: any) => {
     setResults(newResults)
@@ -162,7 +161,7 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
   }
 
   const handlePopularSearch = (term: string) => {
-    setSearchFilters({ ...searchFilters, query: term })
+    setSearchFilters(prev => ({ ...prev, query: term }))
     updateURL({ query: term })
     setSearchMode('hybrid')
     updateURL({ mode: 'hybrid' })
@@ -939,8 +938,6 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                     category={searchFilters.category || null}
                     onSuggestionClick={(suggestion) => {
                       handleFilterUpdate({ query: suggestion })
-                      // Re-trigger search with new query
-                      setSearchFilters({ ...searchFilters, query: suggestion })
                     }}
                   />
                 </motion.div>

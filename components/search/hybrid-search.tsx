@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
@@ -52,30 +52,30 @@ export function HybridSearch({
   const [error, setError] = useState<string | null>(null)
   const [crossLingual, setCrossLingual] = useState(initialCrossLingual)
 
-  const handleQueryChange = (newQuery: string) => {
+  const handleQueryChange = useCallback((newQuery: string) => {
     setQuery(newQuery)
     onFilterChange?.({ query: newQuery })
-  }
+  }, [onFilterChange])
 
-  const handleLanguageChange = (newLanguage: 'de' | 'en' | 'fr' | 'es') => {
+  const handleLanguageChange = useCallback((newLanguage: 'de' | 'en' | 'fr' | 'es') => {
     setLanguage(newLanguage)
     onFilterChange?.({ language: newLanguage })
-  }
+  }, [onFilterChange])
 
-  const handleCategoryChange = (newCategory: string) => {
+  const handleCategoryChange = useCallback((newCategory: string) => {
     setCategory(newCategory)
     onFilterChange?.({ category: newCategory })
-  }
+  }, [onFilterChange])
 
-  const handleVectorWeightChange = (newWeight: number) => {
+  const handleVectorWeightChange = useCallback((newWeight: number) => {
     setVectorWeight(newWeight)
     onFilterChange?.({ vectorWeight: newWeight })
-  }
+  }, [onFilterChange])
 
-  const handleCrossLingualChange = (newCrossLingual: boolean) => {
+  const handleCrossLingualChange = useCallback((newCrossLingual: boolean) => {
     setCrossLingual(newCrossLingual)
     onFilterChange?.({ crossLingual: newCrossLingual })
-  }
+  }, [onFilterChange])
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault()
