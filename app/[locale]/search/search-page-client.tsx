@@ -336,7 +336,7 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
     setFilteredResults(filtered)
   }, [results, advancedFilters])
 
-  // Hydrate state from URL on mount and browser back/forward
+  // Hydrate state from URL on mount ONLY (not on every searchParams change to prevent infinite loop)
   useEffect(() => {
     const urlFilters = deserializeFiltersFromURL(searchParams)
 
@@ -385,7 +385,8 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
         }
       }))
     }
-  }, [searchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Browser back/forward support
   useEffect(() => {
