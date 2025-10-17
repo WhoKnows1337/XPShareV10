@@ -286,8 +286,10 @@ export function FeedbackList() {
                       addSuffix: true,
                     })}
                   </span>
-                  {item.screenshot_url && (
-                    <Badge variant="outline">📸 Screenshot</Badge>
+                  {((item.screenshots && item.screenshots.length > 0) || item.screenshot_url) && (
+                    <Badge variant="outline">
+                      📸 {item.screenshots?.length || 1} Screenshot{(item.screenshots?.length || 1) > 1 ? 's' : ''}
+                    </Badge>
                   )}
                 </CardDescription>
               </CardHeader>

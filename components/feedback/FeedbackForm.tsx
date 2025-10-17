@@ -27,7 +27,9 @@ import { toast } from 'sonner';
 
 const feedbackSchema = z.object({
   type: z.enum(['bug', 'feature', 'general']),
-  title: z.string().min(5, 'Title must be at least 5 characters'),
+  title: z.string().min(2, 'Title must be at least 2 characters'),
+  name: z.string().optional(),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   description: z.string().min(10, 'Description must be at least 10 characters'),
 });
 
@@ -56,6 +58,8 @@ export function FeedbackForm({
     defaultValues: {
       type: 'general',
       title: '',
+      name: '',
+      email: '',
       description: '',
     },
   });
@@ -226,92 +230,6 @@ export function FeedbackForm({
               Select Area
             </Button>
           </div>
-
-          <Button type="submit" disabled={isSubmitting}>
-            <Send className="mr-2 h-4 w-4" />
-            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
-}
-        />
-
-        {/* Title */}
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Brief summary of your feedback" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Description */}
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Provide detailed information..."
-                  className="min-h-[120px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Screenshots Preview */}
-        {screenshots.length > 0 && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Screenshots ({screenshots.length})
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {screenshots.map((screenshot, index) => (
-                <div key={index} className="relative rounded-lg overflow-hidden border">
-                  <img
-                    src={screenshot}
-                    alt={`Screenshot ${index + 1}`}
-                    className="w-full h-auto"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => onRemoveScreenshot(index)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-2 justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleScreenshot}
-            disabled={isSubmitting || isCapturing}
-          >
-            <Camera className="mr-2 h-4 w-4" />
-            {isCapturing ? 'Capturing...' : screenshots.length > 0 ? 'Add Another Screenshot' : 'Add Screenshot'}
-          </Button>
 
           <Button type="submit" disabled={isSubmitting}>
             <Send className="mr-2 h-4 w-4" />

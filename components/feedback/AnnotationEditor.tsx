@@ -228,29 +228,31 @@ export function AnnotationEditor({
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const pos = getMousePos(e);
 
-    if (tool === 'text' && isCreatingTextBox && startPos && newTextBox) {
-      // Update text box preview
+    if (tool === 'text' && isCreatingTextBox && startPos) {
+      // Calculate preview dimensions
+      const previewX = Math.min(startPos.x, pos.x);
+      const previewY = Math.min(startPos.y, pos.y);
+      const previewWidth = Math.abs(pos.x - startPos.x);
+      const previewHeight = Math.abs(pos.y - startPos.y);
+
+      // Update text box state
       setNewTextBox({
-        x: Math.min(startPos.x, pos.x),
-        y: Math.min(startPos.y, pos.y),
-        width: Math.abs(pos.x - startPos.x),
-        height: Math.abs(pos.y - startPos.y),
+        x: previewX,
+        y: previewY,
+        width: previewWidth,
+        height: previewHeight,
       });
+
       redrawCanvas();
 
-      // Draw preview
+      // Draw preview using calculated values immediately (not state)
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
-      if (ctx && newTextBox) {
+      if (ctx) {
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.setLineDash([5, 5]);
-        ctx.strokeRect(
-          Math.min(startPos.x, pos.x),
-          Math.min(startPos.y, pos.y),
-          Math.abs(pos.x - startPos.x),
-          Math.abs(pos.y - startPos.y)
-        );
+        ctx.strokeRect(previewX, previewY, previewWidth, previewHeight);
         ctx.setLineDash([]);
       }
       return;
@@ -631,18 +633,6 @@ export function AnnotationEditor({
             </Button>
           </div>
         </div>
-
-        {/* Actions - Right Side */}
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-            <X className="mr-2 h-4 w-4" />
-            Cancel
-          </Button>
-          <Button type="button" size="sm" onClick={handleComplete}>
-            <Check className="mr-2 h-4 w-4" />
-            Done
-          </Button>
-        </div>
       </div>
 
       {/* Canvas */}
@@ -665,6 +655,18 @@ export function AnnotationEditor({
           className={tool === 'select' ? 'cursor-pointer' : 'cursor-crosshair'}
           style={{ display: 'block' }}
         />
+      </div>
+
+      {/* Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4 z-[105] flex justify-center gap-3">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          <X className="mr-2 h-4 w-4" />
+          Cancel
+        </Button>
+        <Button type="button" onClick={handleComplete}>
+          <Check className="mr-2 h-4 w-4" />
+          Done
+        </Button>
       </div>
 
       {/* Text Box Input Modal */}

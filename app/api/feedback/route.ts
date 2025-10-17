@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       type,
       title,
       description,
-      screenshot_url,
+      screenshots,
       page_url,
       browser_info,
       console_logs,
@@ -33,47 +33,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let uploadedScreenshotUrl = null;
+    const uploadedScreenshotUrls: string[] = [];
 
-    // Upload screenshot to Supabase Storage if provided
-    if (screenshot_url && screenshot_url.startsWith('data:image')) {
-      try {
-        // Convert base64 to blob
-        const base64Data = screenshot_url.split(',')[1];
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+    // Upload all screenshots to Supabase Storage if provided
+    if (screenshots && Array.isArray(screenshots) && screenshots.length > 0) {
+      for (let i = 0; i < screenshots.length; i++) {
+        const screenshot = screenshots[i];
+        if (screenshot && screenshot.startsWith('data:image')) {
+          try {
+            // Convert base64 to blob
+            const base64Data = screenshot.split(',')[1];
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let j = 0; j < byteCharacters.length; j++) {
+              byteNumbers[j] = byteCharacters.charCodeAt(j);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'image/png' });
+
+            // Generate unique filename
+            const filename = `feedback/${user.id}/${Date.now()}-${i}.png`;
+
+            // Upload to Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('feedback-screenshots')
+              .upload(filename, blob, {
+                contentType: 'image/png',
+                upsert: false,
+              });
+
+            if (uploadError) {
+              console.error('Screenshot upload error:', uploadError);
+            } else {
+              // Get public URL
+              const {
+                data: { publicUrl },
+              } = supabase.storage
+                .from('feedback-screenshots')
+                .getPublicUrl(filename);
+
+              uploadedScreenshotUrls.push(publicUrl);
+            }
+          } catch (uploadError) {
+            console.error('Screenshot upload failed:', uploadError);
+            // Continue with next screenshot
+          }
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'image/png' });
-
-        // Generate unique filename
-        const filename = `feedback/${user.id}/${Date.now()}.png`;
-
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('feedback-screenshots')
-          .upload(filename, blob, {
-            contentType: 'image/png',
-            upsert: false,
-          });
-
-        if (uploadError) {
-          console.error('Screenshot upload error:', uploadError);
-        } else {
-          // Get public URL
-          const {
-            data: { publicUrl },
-          } = supabase.storage
-            .from('feedback-screenshots')
-            .getPublicUrl(filename);
-
-          uploadedScreenshotUrl = publicUrl;
-        }
-      } catch (uploadError) {
-        console.error('Screenshot upload failed:', uploadError);
-        // Continue without screenshot if upload fails
       }
     }
 
@@ -88,7 +93,8 @@ export async function POST(request: NextRequest) {
         page_url,
         browser_info,
         console_logs,
-        screenshot_url: uploadedScreenshotUrl,
+        screenshots: uploadedScreenshotUrls,
+        screenshot_url: uploadedScreenshotUrls[0] || null, // Keep for backward compatibility
         status: 'new',
         priority: 'medium',
       })

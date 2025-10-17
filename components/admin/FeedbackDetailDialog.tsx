@@ -181,16 +181,34 @@ export function FeedbackDetailDialog({
               </p>
             </div>
 
-            {/* Screenshot */}
-            {feedback.screenshot_url && (
+            {/* Screenshots */}
+            {((feedback.screenshots && feedback.screenshots.length > 0) || feedback.screenshot_url) && (
               <div>
-                <h3 className="font-semibold mb-2">Screenshot</h3>
-                <div className="rounded-lg overflow-hidden border">
-                  <img
-                    src={feedback.screenshot_url}
-                    alt="Feedback screenshot"
-                    className="w-full h-auto"
-                  />
+                <h3 className="font-semibold mb-2">
+                  Screenshots ({(feedback.screenshots?.length || (feedback.screenshot_url ? 1 : 0))})
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* New array format */}
+                  {feedback.screenshots && feedback.screenshots.map((url: string, idx: number) => (
+                    <div key={idx} className="rounded-lg overflow-hidden border">
+                      <img
+                        src={url}
+                        alt={`Screenshot ${idx + 1}`}
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  ))}
+
+                  {/* Legacy single screenshot fallback */}
+                  {!feedback.screenshots && feedback.screenshot_url && (
+                    <div className="rounded-lg overflow-hidden border">
+                      <img
+                        src={feedback.screenshot_url}
+                        alt="Feedback screenshot"
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
