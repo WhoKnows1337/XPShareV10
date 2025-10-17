@@ -15,6 +15,7 @@ import { AnalyticsTable } from '@/components/admin/analytics-table'
 import { AnalyticsInsights } from '@/components/admin/analytics-insights'
 import { Download, RefreshCw, TrendingUp } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslations } from 'next-intl'
 
 interface Category {
   id: string
@@ -28,6 +29,7 @@ interface AnalyticsClientProps {
 }
 
 export function AnalyticsClient({ categories }: AnalyticsClientProps) {
+  const t = useTranslations('admin.analytics')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [data, setData] = useState<any>(null)
   const [previousData, setPreviousData] = useState<any>(null)
@@ -73,8 +75,8 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
     } catch (error) {
       console.error('Analytics error:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to load analytics',
+        title: t('toast.error'),
+        description: t('toast.loadFailed'),
         variant: 'destructive',
       })
     } finally {
@@ -153,14 +155,14 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
       }
 
       toast({
-        title: 'Success',
-        description: `Analytics exported as ${format.toUpperCase()}`,
+        title: t('toast.success'),
+        description: t('toast.exported', { format: format.toUpperCase() }),
       })
     } catch (error) {
       console.error('Export error:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to export analytics',
+        title: t('toast.error'),
+        description: t('toast.exportFailed'),
         variant: 'destructive',
       })
     }
@@ -173,13 +175,13 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
       await fetchAnalytics()
 
       toast({
-        title: 'Success',
-        description: 'Analytics refreshed',
+        title: t('toast.success'),
+        description: t('toast.refreshed'),
       })
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to refresh analytics',
+        title: t('toast.error'),
+        description: t('toast.refreshFailed'),
         variant: 'destructive',
       })
     }
@@ -215,20 +217,154 @@ export function AnalyticsClient({ categories }: AnalyticsClientProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Analytics Dashboard</h2>
+          <h2 className="text-3xl font-bold">{t('title')}</h2>
           <p className="text-muted-foreground">
-            Question performance and insights
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+            {t('refresh')}
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => handleExport('csv')}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {t('exportCsv')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport('json')}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {t('exportJson')}
+          </Button>
+        </div>
+      </div>
+
+      {/* Category Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('filters.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-2 block">{t('filters.category')}</label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('filters.selectCategory')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('filters.allCategories')}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.icon} {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Stats */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('stats.totalShown')}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalShown.toLocaleString()}</div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.totalShown, previousStats.totalShown)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% {t('stats.vsLastWeek')}
+                  </p>
+                ) : null
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('stats.totalAnswered')}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.totalAnswered.toLocaleString()}
+              </div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.totalAnswered, previousStats.totalAnswered)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% {t('stats.vsLastWeek')}
+                  </p>
+                ) : null
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('stats.totalSkipped')}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats.totalSkipped.toLocaleString()}
+              </div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.totalSkipped, previousStats.totalSkipped)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-red-600' : 'text-green-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% {t('stats.vsLastWeek')}
+                  </p>
+                ) : null
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('stats.avgAnswerRate')}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.avgAnswerRate.toFixed(1)}%</div>
+              {previousStats && (() => {
+                const trend = calculateTrend(stats.avgAnswerRate, previousStats.avgAnswerRate)
+                return trend ? (
+                  <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {trend.isPositive ? '↗' : '↘'} {trend.percentage}% {t('stats.vsLastWeek')}
+                  </p>
+                ) : null
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* AI Insights */}
+      <AnalyticsInsights categoryId={selectedCategory !== 'all' ? selectedCategory : undefined} />
+
+      {/* Charts */}
+      {data && <AnalyticsCharts data={data} isLoading={isLoading} />}
+
+      {/* Table */}
+      {data && <AnalyticsTable data={data.summary || []} isLoading={isLoading} />}
+    </div>
+  )
+}
           >
             <Download className="mr-2 h-4 w-4" />
             Export CSV

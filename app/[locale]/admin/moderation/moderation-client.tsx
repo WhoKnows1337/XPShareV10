@@ -30,6 +30,7 @@ import Link from 'next/link'
 import { ModerationActions } from '@/components/admin/moderation-actions'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslations } from 'next-intl'
 
 interface Report {
   id: string
@@ -77,6 +78,7 @@ const reasonColors: Record<string, string> = {
 }
 
 export function ModerationClient({ initialReports }: ModerationClientProps) {
+  const t = useTranslations('admin.moderation')
   const [reports, setReports] = useState(initialReports)
   const [filteredReports, setFilteredReports] = useState(initialReports)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -182,7 +184,7 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
   const handleBulkAction = async (action: 'approve' | 'dismiss' | 'delete') => {
     if (selectedIds.size === 0) return
 
-    if (!confirm(`Are you sure you want to ${action} ${selectedIds.size} report(s)?`)) {
+    if (!confirm(t('bulkActions.confirmMessage', { count: selectedIds.size, action }))) {
       return
     }
 
@@ -204,8 +206,8 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
       }
 
       toast({
-        title: 'Success',
-        description: `${selectedIds.size} report(s) ${action}ed`,
+        title: t('toast.success'),
+        description: t('toast.reportsResolved', { count: selectedIds.size }),
       })
 
       setSelectedIds(new Set())
@@ -214,8 +216,8 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
     } catch (error) {
       console.error('Bulk action error:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to perform bulk action',
+        title: t('toast.error'),
+        description: t('toast.actionFailed'),
         variant: 'destructive',
       })
     }
@@ -240,8 +242,8 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Content Moderation</h2>
-          <p className="text-muted-foreground">Review and moderate reported content</p>
+          <h2 className="text-3xl font-bold">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -249,7 +251,7 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.pending')}</CardTitle>
             <Flag className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
@@ -258,7 +260,7 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolved</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.resolved')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -267,7 +269,7 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dismissed</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.dismissed')}</CardTitle>
             <XCircle className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
@@ -276,7 +278,7 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('stats.total')}</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -289,10 +291,10 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="pending">
-            Pending ({stats.pending})
+            {t('tabs.pending')} ({stats.pending})
           </TabsTrigger>
           <TabsTrigger value="history">
-            History ({stats.resolved + stats.dismissed})
+            {t('tabs.history')} ({stats.resolved + stats.dismissed})
           </TabsTrigger>
         </TabsList>
 
@@ -300,18 +302,300 @@ export function ModerationClient({ initialReports }: ModerationClientProps) {
           {/* Filters */}
           <Card>
             <CardHeader>
-              <CardTitle>Filters</CardTitle>
+              <CardTitle>{t('filters.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Search Experience</label>
+                  <label className="text-sm font-medium">{t('filters.searchExperience')}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search by title..."
+                      placeholder={t('filters.searchPlaceholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('filters.reason')}</label>
+                  <Select value={reasonFilter} onValueChange={setReasonFilter}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('filters.allReasons')}</SelectItem>
+                      {Object.entries(reasonLabels).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>
+                          {t(`reasons.${key}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('filters.dateRange')}</label>
+                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('filters.allTime')}</SelectItem>
+                      <SelectItem value="7">{t('filters.last7Days')}</SelectItem>
+                      <SelectItem value="30">{t('filters.last30Days')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Results</label>
+                  <div className="text-sm font-semibold flex items-center h-10 px-3 rounded-md border">
+                    {filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bulk Actions Bar */}
+          {selectedIds.size > 0 && (
+            <Card className="border-primary">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">
+                    {t('bulkActions.selected')}: {selectedIds.size}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleBulkAction('approve')}
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      {t('bulkActions.keepResolve')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkAction('dismiss')}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      {t('bulkActions.dismiss')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleBulkAction('delete')}
+                    >
+                      {t('bulkActions.deleteExperiences')}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Reports List */}
+          {paginatedReports.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Flag className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {filteredReports.length === 0 && searchTerm === '' && reasonFilter === 'all'
+                    ? t('empty.noPending')
+                    : t('empty.noMatching')}
+                </h3>
+                <p className="text-muted-foreground">
+                  {filteredReports.length === 0 && (searchTerm !== '' || reasonFilter !== 'all')
+                    ? t('empty.adjustFilters')
+                    : t('empty.allCaughtUp')}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {paginatedReports.length > 0 && (
+                <div className="flex items-center gap-2 px-2">
+                  <Checkbox
+                    checked={selectedIds.size === paginatedReports.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Select all on page
+                  </span>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {paginatedReports.map((report) => (
+                  <Card key={report.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1">
+                          <Checkbox
+                            checked={selectedIds.has(report.id)}
+                            onCheckedChange={() => handleSelectReport(report.id)}
+                          />
+                          <div className="space-y-1 flex-1">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Link
+                                href={`/experiences/${report.experiences?.id}`}
+                                className="hover:underline"
+                                target="_blank"
+                              >
+                                {report.experiences?.title || 'Deleted Experience'}
+                              </Link>
+                            </CardTitle>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>
+                                {t('list.reportedBy')} @{report.user_profiles?.username || 'unknown'}
+                              </span>
+                              <span>•</span>
+                              <span>
+                                {t('list.reportedAt')} {formatDistanceToNow(new Date(report.created_at), {
+                                  addSuffix: true,
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Badge variant={reasonColors[report.reason] as any}>
+                          {t(`reasons.${report.reason}`)}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {report.details && (
+                        <div className="rounded-lg bg-muted p-3">
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">
+                            {t('list.description')}:
+                          </p>
+                          <p className="text-sm">{report.details}</p>
+                        </div>
+                      )}
+
+                      <ModerationActions
+                        reportId={report.id}
+                        experienceId={report.experiences?.id || ''}
+                      />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    {t('pagination.previous')}
+                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    {t('pagination.showing', { start: (currentPage - 1) * itemsPerPage + 1, end: Math.min(currentPage * itemsPerPage, filteredReports.length), total: filteredReports.length })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    {t('pagination.next')}
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          {/* History List */}
+          {filteredReports.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">{t('history.noHistory')}</h3>
+                <p className="text-muted-foreground">
+                  Resolved and dismissed reports will appear here
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredReports.slice(0, 50).map((report) => (
+                <Card key={report.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1 flex-1">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Link
+                            href={`/experiences/${report.experiences?.id}`}
+                            className="hover:underline"
+                            target="_blank"
+                          >
+                            {report.experiences?.title || 'Deleted Experience'}
+                          </Link>
+                        </CardTitle>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>
+                            {t('list.reportedBy')} @{report.user_profiles?.username || 'unknown'}
+                          </span>
+                          <span>•</span>
+                          <span>
+                            {report.reviewed_at
+                              ? `${t('history.status')}: ${report.status === 'resolved' ? t('history.resolvedOn') : t('history.dismissedOn')} ${formatDistanceToNow(new Date(report.reviewed_at), {
+                                  addSuffix: true,
+                                })}`
+                              : 'Not reviewed'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge variant={reasonColors[report.reason] as any}>
+                          {t(`reasons.${report.reason}`)}
+                        </Badge>
+                        <Badge
+                          variant={report.status === 'resolved' ? 'default' : 'secondary'}
+                        >
+                          {report.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  {(report.details || report.admin_notes) && (
+                    <CardContent className="space-y-3">
+                      {report.details && (
+                        <div className="rounded-lg bg-muted p-3">
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">
+                            User Report:
+                          </p>
+                          <p className="text-sm">{report.details}</p>
+                        </div>
+                      )}
+                      {report.admin_notes && (
+                        <div className="rounded-lg bg-primary/10 p-3">
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">
+                            Admin Notes:
+                          </p>
+                          <p className="text-sm">{report.admin_notes}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
                       className="pl-10"
                     />
                   </div>

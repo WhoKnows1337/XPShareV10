@@ -25,6 +25,7 @@ import { Search, Shield, UserCog, Ban, CheckCircle, History } from 'lucide-react
 import { formatDistanceToNow } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 type AdminRole = 'super_admin' | 'content_manager' | 'analyst' | null
 
@@ -60,6 +61,7 @@ const roleLabels = {
 }
 
 export function UsersClient({ users: initialUsers }: UsersClientProps) {
+  const t = useTranslations('admin.users')
   const [users, setUsers] = useState(initialUsers)
   const [filter, setFilter] = useState<'all' | 'admins' | 'regular'>('all')
   const [search, setSearch] = useState('')
@@ -113,8 +115,8 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
         if (!res.ok) throw new Error('Failed to remove admin role')
 
         toast({
-          title: 'Success',
-          description: 'Admin role removed',
+          title: t('toast.success'),
+          description: t('toast.roleUpdated'),
         })
       } else if (newRole !== null) {
         // Add or update admin role
@@ -142,8 +144,8 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
         }
 
         toast({
-          title: 'Success',
-          description: `Role changed to ${roleLabels[newRole]}`,
+          title: t('toast.success'),
+          description: t('toast.roleUpdated'),
         })
       }
 
@@ -153,8 +155,8 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
     } catch (error) {
       console.error('Role change error:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to change role',
+        title: t('toast.error'),
+        description: t('toast.roleUpdateFailed'),
         variant: 'destructive',
       })
     }
@@ -181,7 +183,7 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
     } catch (error) {
       console.error('Load activity error:', error)
       toast({
-        title: 'Error',
+        title: t('toast.error'),
         description: 'Failed to load activity log',
         variant: 'destructive',
       })
@@ -194,9 +196,9 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold">User Management</h2>
+        <h2 className="text-3xl font-bold">{t('title')}</h2>
         <p className="text-muted-foreground">
-          Manage all platform users and admin roles
+          {t('subtitle')}
         </p>
       </div>
 
@@ -205,31 +207,31 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{roleCounts.all}</div>
-            <p className="text-xs text-muted-foreground">Total Users</p>
+            <p className="text-xs text-muted-foreground">{t('stats.totalUsers')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{roleCounts.super_admin}</div>
-            <p className="text-xs text-muted-foreground">🔴 Super Admins</p>
+            <p className="text-xs text-muted-foreground">{t('stats.superAdmins')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{roleCounts.content_manager}</div>
-            <p className="text-xs text-muted-foreground">🟡 Content Managers</p>
+            <p className="text-xs text-muted-foreground">{t('stats.contentManagers')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{roleCounts.analyst}</div>
-            <p className="text-xs text-muted-foreground">🟢 Analysts</p>
+            <p className="text-xs text-muted-foreground">{t('stats.analysts')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{roleCounts.regular}</div>
-            <p className="text-xs text-muted-foreground">Regular Users</p>
+            <p className="text-xs text-muted-foreground">{t('stats.regularUsers')}</p>
           </CardContent>
         </Card>
       </div>
@@ -239,9 +241,210 @@ export function UsersClient({ users: initialUsers }: UsersClientProps) {
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search users..."
+            placeholder={t('list.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={filter} onValueChange={(val: any) => setFilter(val)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('filters.allUsers', { count: roleCounts.all })}</SelectItem>
+            <SelectItem value="admins">
+              {t('filters.onlyAdmins', { count: roleCounts.super_admin + roleCounts.content_manager + roleCounts.analyst })}
+            </SelectItem>
+            <SelectItem value="regular">{t('filters.regularUsers', { count: roleCounts.regular })}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* User List */}
+      {filteredUsers.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="text-muted-foreground">{t('list.noUsers')}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filteredUsers.map((user) => {
+            const role = user.admin_role?.[0]?.role || null
+
+            return (
+              <Card key={user.id}>
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback>
+                          {user.display_name?.charAt(0).toUpperCase() || user.username?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{user.display_name || user.username}</h3>
+                          {role && (
+                            <Badge className={roleColors[role]}>
+                              {t(`roles.${role}`)}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">@{user.username}</p>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span>{user.experiences?.[0]?.count || 0} {t('list.experiences')}</span>
+                          <span>•</span>
+                          <span>{user.comments?.[0]?.count || 0} {t('list.comments')}</span>
+                          <span>•</span>
+                          <span>{user.user_badges?.[0]?.count || 0} {t('list.badges')}</span>
+                          <span>•</span>
+                          <span>{t('list.level')} {user.level || 1}</span>
+                          <span>•</span>
+                          <span>{user.total_xp || 0} {t('list.xp')}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t('list.joined')} {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {role && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openActivityLog(user)}
+                        >
+                          <History className="mr-2 h-4 w-4" />
+                          {t('list.viewActivity')}
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openRoleDialog(user)}
+                      >
+                        <UserCog className="mr-2 h-4 w-4" />
+                        {t('list.changeRole')}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Role Change Dialog */}
+      <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('roleDialog.title')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>{t('roleDialog.user')}</Label>
+              <p className="text-sm font-medium mt-1">
+                {selectedUser?.display_name || selectedUser?.username}
+              </p>
+              <p className="text-xs text-muted-foreground">@{selectedUser?.username}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('roleDialog.role')}</Label>
+              <Select
+                value={newRole || 'regular'}
+                onValueChange={(val) => setNewRole(val === 'regular' ? null : (val as AdminRole))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="regular">{t('roleDialog.regularUser')}</SelectItem>
+                  <SelectItem value="super_admin">{t('roleDialog.superAdmin')}</SelectItem>
+                  <SelectItem value="content_manager">{t('roleDialog.contentManager')}</SelectItem>
+                  <SelectItem value="analyst">{t('roleDialog.analyst')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleChangeRole} className="flex-1">
+                {t('roleDialog.save')}
+              </Button>
+              <Button variant="outline" onClick={() => setIsRoleDialogOpen(false)}>
+                {t('roleDialog.cancel')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Activity Log Dialog */}
+      <Dialog open={isActivityLogOpen} onOpenChange={setIsActivityLogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('activityDialog.title')}</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {activityLogUser?.display_name || activityLogUser?.username} (@{activityLogUser?.username})
+            </p>
+          </DialogHeader>
+
+          {loadingActivity ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">{t('activityDialog.loading')}</p>
+            </div>
+          ) : activityLog.length === 0 ? (
+            <div className="py-12 text-center">
+              <History className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold">{t('activityDialog.noActivity')}</h3>
+              <p className="text-sm text-muted-foreground">
+                {t('activityDialog.noActivityDesc')}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activityLog.map((activity) => (
+                <Card key={activity.id} className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
+                      {activity.entity_type === 'category' ? '📂' : '❓'}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          activity.change_type === 'created' ? 'default' :
+                          activity.change_type === 'updated' ? 'secondary' :
+                          'destructive'
+                        }>
+                          {t(`activityDialog.${activity.change_type}`)}
+                        </Badge>
+                        <Badge variant="outline">{activity.entity_type}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(activity.changed_at), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium">{activity.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+              <div className="text-center pt-4">
+                <Button variant="outline" onClick={() => setIsActivityLogOpen(false)}>
+                  {t('activityDialog.close')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
             className="pl-10"
           />
         </div>
