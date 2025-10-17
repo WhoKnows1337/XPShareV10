@@ -11,6 +11,7 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { Starfield } from '@/components/layout/Starfield';
+import { FeedbackProvider } from '@/components/feedback/FeedbackProvider';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -79,6 +80,7 @@ export default async function RootLayout({
                 <ConditionalNavbar />
                 {children}
                 <Toaster position="top-right" richColors />
+                <FeedbackProvider />
               </RootLayoutClient>
             </AuthProvider>
           </QueryProvider>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -30,13 +30,6 @@ interface SketchModalProps {
 export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
   const [editor, setEditor] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Load tldraw CSS dynamically
-  useEffect(() => {
-    if (open && typeof window !== 'undefined') {
-      import('tldraw/tldraw.css');
-    }
-  }, [open]);
 
   const handleSave = async () => {
     if (!editor) return;

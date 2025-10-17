@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Search, MessageSquare, Sparkles, Loader2 } from 'lucide-react'
+import { Search, MessageSquare, Sparkles, Loader2, TrendingUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { detectQueryIntent, getIntentIcon, getIntentColorClass, getIntentFeedback } from '@/lib/search/intent-detection'
 import { cn } from '@/lib/utils'
@@ -19,6 +19,12 @@ interface UnifiedSearchBarProps {
   placeholder?: string
 }
 
+interface Suggestion {
+  text: string
+  source: 'ai' | 'popular'
+  score: number
+}
+
 export function UnifiedSearchBar({
   value,
   onChange,
@@ -31,10 +37,15 @@ export function UnifiedSearchBar({
   const [intent, setIntent] = useState<any>(null)
   const [feedback, setFeedback] = useState<string>('')
   const [isTyping, setIsTyping] = useState(false)
-  const typingTimeoutRef = useRef<NodeJS.Timeout>()
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Detect intent while typing (debounced)
+  // Detect intent + fetch autocomplete suggestions while typing (debounced)
   useEffect(() => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
@@ -44,14 +55,23 @@ export function UnifiedSearchBar({
       setIsTyping(true)
 
       typingTimeoutRef.current = setTimeout(async () => {
-        const detectedIntent = await detectQueryIntent(value)
+        // Run intent detection + autocomplete fetch in parallel
+        const [detectedIntent, autocompleteSuggestions] = await Promise.all([
+          detectQueryIntent(value),
+          value.length >= 2 ? fetchAutocomplete(value) : Promise.resolve([])
+        ])
+
         setIntent(detectedIntent)
         setFeedback(getIntentFeedback(detectedIntent, value))
+        setSuggestions(autocompleteSuggestions)
+        setShowSuggestions(autocompleteSuggestions.length > 0 && value.length >= 2)
         setIsTyping(false)
       }, 300) // 300ms debounce
     } else {
       setIntent(null)
       setFeedback('')
+      setSuggestions([])
+      setShowSuggestions(false)
       setIsTyping(false)
     }
 
@@ -62,10 +82,92 @@ export function UnifiedSearchBar({
     }
   }, [value])
 
-  // Handle Enter key
+  // Fetch autocomplete suggestions
+  const fetchAutocomplete = async (query: string): Promise<Suggestion[]> => {
+    if (query.length < 2) return []
+
+    setIsLoadingSuggestions(true)
+    try {
+      const res = await fetch('/api/search/autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, limit: 6 })
+      })
+
+      if (!res.ok) throw new Error('Autocomplete failed')
+
+      const data = await res.json()
+      return data.suggestions || []
+    } catch (error) {
+      console.error('Autocomplete error:', error)
+      return []
+    } finally {
+      setIsLoadingSuggestions(false)
+    }
+  }
+
+  // Click outside handler to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false)
+        setSelectedSuggestionIndex(-1)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Select suggestion handler
+  const handleSelectSuggestion = useCallback((suggestionText: string) => {
+    onChange(suggestionText)
+    setShowSuggestions(false)
+    setSelectedSuggestionIndex(-1)
+    // Auto-search after selection
+    onSearch(suggestionText)
+  }, [onChange, onSearch])
+
+  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && value.trim()) {
-      onSearch(value)
+    // If suggestions are shown, handle navigation
+    if (showSuggestions && suggestions.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault()
+          setSelectedSuggestionIndex(prev =>
+            prev < suggestions.length - 1 ? prev + 1 : prev
+          )
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          setSelectedSuggestionIndex(prev => (prev > 0 ? prev - 1 : -1))
+          break
+        case 'Enter':
+          e.preventDefault()
+          if (selectedSuggestionIndex >= 0) {
+            handleSelectSuggestion(suggestions[selectedSuggestionIndex].text)
+          } else if (value.trim()) {
+            onSearch(value)
+            setShowSuggestions(false)
+          }
+          break
+        case 'Escape':
+          e.preventDefault()
+          setShowSuggestions(false)
+          setSelectedSuggestionIndex(-1)
+          break
+      }
+    } else {
+      // No suggestions shown, just handle Enter
+      if (e.key === 'Enter' && value.trim()) {
+        onSearch(value)
+      }
     }
   }
 
@@ -192,6 +294,44 @@ export function UnifiedSearchBar({
             )}
           </div>
         </div>
+
+        {/* Autocomplete Suggestions Dropdown */}
+        <AnimatePresence>
+          {showSuggestions && suggestions.length > 0 && (
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-full left-0 right-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-md border bg-popover shadow-lg"
+            >
+              <div className="p-2">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={`${suggestion.text}-${index}`}
+                    onClick={() => handleSelectSuggestion(suggestion.text)}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm transition-colors overflow-hidden',
+                      'hover:bg-accent hover:text-accent-foreground',
+                      selectedSuggestionIndex === index && 'bg-accent text-accent-foreground'
+                    )}
+                  >
+                    {suggestion.source === 'ai' ? (
+                      <Sparkles className="h-4 w-4 flex-shrink-0 text-purple-500" />
+                    ) : (
+                      <TrendingUp className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                    )}
+                    <span className="flex-1 min-w-0 truncate font-medium">{suggestion.text}</span>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                      {suggestion.source === 'ai' ? 'AI' : 'Popular'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Subtle Hint Text Below */}
         <AnimatePresence mode="wait">

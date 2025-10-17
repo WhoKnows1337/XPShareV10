@@ -16,7 +16,7 @@ export function RecentSearchesWidget() {
   const [popularSearches, setPopularSearches] = useState<SearchStat[]>([])
   const [totalToday, setTotalToday] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [hasPermission, setHasPermission] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     loadSearchStats()
@@ -27,45 +27,33 @@ export function RecentSearchesWidget() {
 
   const loadSearchStats = async () => {
     try {
-      const response = await fetch('/api/admin/search-analytics?type=overview&days=1')
-
-      // If unauthorized (non-admin), gracefully hide widget
-      if (response.status === 401) {
-        setHasPermission(false)
-        setLoading(false)
-        return
-      }
+      const response = await fetch('/api/search/activity?days=7')
 
       if (!response.ok) {
+        setError(true)
         setLoading(false)
         return
       }
 
-      const data = await response.json()
-      setTotalToday(data.data?.total_searches || 0)
+      const result = await response.json()
+      const data = result.data
 
-      // Load top searches
-      const topResponse = await fetch('/api/admin/search-analytics?type=top-searches&days=1')
-      if (topResponse.ok) {
-        const topData = await topResponse.json()
-        const searches = (topData.data || []).slice(0, 5).map((s: any) => ({
-          query: s.query,
-          count: s.count,
-          timestamp: new Date().toISOString()
-        }))
-        setPopularSearches(searches)
-      }
+      setTotalToday(data?.total_searches || 0)
 
+      // Map top searches to SearchStat format
+      const searches = (data?.top_searches || []).slice(0, 5).map((s: any) => ({
+        query: s.query,
+        count: s.count,
+        timestamp: new Date().toISOString()
+      }))
+      setPopularSearches(searches)
+      setError(false)
       setLoading(false)
-    } catch (error) {
-      console.error('Failed to load search stats:', error)
+    } catch (err) {
+      console.error('Failed to load search stats:', err)
+      setError(true)
       setLoading(false)
     }
-  }
-
-  // Don't show widget if user has no permission (non-admin)
-  if (!hasPermission && !loading) {
-    return null
   }
 
   if (loading) {
@@ -79,6 +67,27 @@ export function RecentSearchesWidget() {
             <div className="h-4 bg-muted animate-pulse rounded"></div>
             <div className="h-4 bg-muted animate-pulse rounded"></div>
             <div className="h-4 bg-muted animate-pulse rounded w-2/3"></div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Show error state if API failed
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            Search Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">
+            <p className="text-xs text-muted-foreground">
+              Unable to load search activity
+            </p>
           </div>
         </CardContent>
       </Card>

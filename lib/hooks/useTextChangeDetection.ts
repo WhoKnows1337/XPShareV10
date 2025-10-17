@@ -36,7 +36,6 @@ export function useTextChangeDetection(options: UseTextChangeDetectionOptions = 
     screen3,
     logTextChange,
     setReAnalysisNeeded,
-    reAnalysisOffered,
     setReAnalysisOffered,
   } = useSubmitFlowStore();
 
@@ -85,14 +84,14 @@ export function useTextChangeDetection(options: UseTextChangeDetectionOptions = 
     if (change.needsReAnalysis === true) {
       // Major changes - Auto-set re-analysis needed
       setReAnalysisNeeded(true);
-      if (onReAnalysisNeeded && !reAnalysisOffered) {
+      if (onReAnalysisNeeded && !screen3.reAnalysisOffered) {
         onReAnalysisNeeded(change);
         setReAnalysisOffered(true);
       }
     } else if (change.needsReAnalysis === 'ask-user') {
       // Moderate changes - Ask user
       setReAnalysisNeeded(false); // Don't force, but offer
-      if (onReAnalysisNeeded && !reAnalysisOffered) {
+      if (onReAnalysisNeeded && !screen3.reAnalysisOffered) {
         onReAnalysisNeeded(change);
         setReAnalysisOffered(true);
       }
@@ -103,9 +102,9 @@ export function useTextChangeDetection(options: UseTextChangeDetectionOptions = 
     screen1.text,
     screen3.segments,
     screen3.textVersions?.afterAIEnhancement,
+    screen3.reAnalysisOffered,
     logTextChange,
     setReAnalysisNeeded,
-    reAnalysisOffered,
     setReAnalysisOffered,
     onChangeDetected,
     onReAnalysisNeeded,

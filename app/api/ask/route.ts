@@ -19,7 +19,16 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now()
 
   try {
-    const { question, maxSources = 15 } = await req.json()
+    const {
+      question,
+      maxSources = 15,
+      category,
+      tags,
+      location,
+      dateFrom,
+      dateTo,
+      witnessesOnly
+    } = await req.json()
 
     // Validation
     if (!question || typeof question !== 'string' || question.trim().length < 5) {
@@ -41,16 +50,34 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 2: Find relevant experiences using vector similarity
+    // Step 2: Find relevant experiences using vector similarity with filters
     const supabase = await createClient()
 
-    // Direct vector search (since match_experiences function exists)
-    const { data: relevant, error: searchError } = await supabase
+    // Build query with filters
+    let query = supabase
       .from('experiences')
-      .select('id, title, story_text, category, date_occurred, location_text, embedding')
+      .select('id, title, story_text, category, date_occurred, location_text, tags, witness_count, embedding')
       .eq('visibility', 'public')
       .not('embedding', 'is', null)
-      .limit(50)
+
+    // Apply filters
+    if (category && category !== 'all') {
+      query = query.eq('category', category)
+    }
+
+    if (dateFrom) {
+      query = query.gte('date_occurred', dateFrom)
+    }
+
+    if (dateTo) {
+      query = query.lte('date_occurred', dateTo)
+    }
+
+    if (witnessesOnly) {
+      query = query.gt('witness_count', 0)
+    }
+
+    const { data: relevant, error: searchError } = await query.limit(50)
 
     if (searchError) {
       console.error('Search error:', searchError)
@@ -67,7 +94,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate similarities and sort
-    const withSimilarity = relevant
+    // Apply client-side filters for tags and location
+    let filteredRelevant = relevant || []
+
+    if (tags) {
+      const tagList = tags.split(',').map((t: string) => t.trim().toLowerCase())
+      filteredRelevant = filteredRelevant.filter((exp: any) =>
+        exp.tags?.some((tag: string) => tagList.includes(tag.toLowerCase()))
+      )
+    }
+
+    if (location) {
+      filteredRelevant = filteredRelevant.filter((exp: any) =>
+        exp.location_text?.toLowerCase().includes(location.toLowerCase())
+      )
+    }
+
+    const withSimilarity = filteredRelevant
       .map((exp: any) => {
         if (!exp.embedding) return null
 
@@ -180,7 +223,14 @@ Antworte strukturiert und präzise.`,
         p_user_id: user?.id || null,
         p_result_count: withSimilarity.length,
         p_search_type: 'qa',
-        p_filters: { maxSources },
+        p_filters: {
+          maxSources,
+          category,
+          tags,
+          location,
+          dateRange: dateFrom || dateTo ? { from: dateFrom, to: dateTo } : null,
+          witnessesOnly,
+        },
         p_language: 'de',
         p_execution_time_ms: executionTime,
       })

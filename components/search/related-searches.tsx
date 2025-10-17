@@ -133,9 +133,9 @@ export function RelatedSearches({
                 onClick={() => onSearchSelect(suggestion.query)}
                 className="w-full justify-between h-auto py-3 px-4"
               >
-                <div className="flex flex-col items-start gap-1">
-                  <span className="font-medium text-left">{suggestion.query}</span>
-                  <span className="text-xs text-muted-foreground text-left">
+                <div className="flex flex-col items-start gap-1 min-w-0 flex-1 overflow-hidden">
+                  <span className="font-medium text-left truncate w-full">{suggestion.query}</span>
+                  <span className="text-xs text-muted-foreground text-left line-clamp-2 w-full">
                     {suggestion.reason}
                   </span>
                 </div>

@@ -299,7 +299,7 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
         >
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-observatory-gold/20 border-b-2 border-observatory-gold rounded-sm" />
-            <span className="text-text-tertiary">{t('legend.added', 'AI hinzugefügt')}</span>
+            <span className="text-text-tertiary">{t('legend.added')}</span>
           </div>
 
           <div className="ml-auto text-text-tertiary text-xs flex items-center gap-3">

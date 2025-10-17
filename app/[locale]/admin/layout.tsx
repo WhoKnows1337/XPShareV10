@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/admin-auth'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Shield, FileQuestion, Flag, Users, BarChart, TrendingUp, FileText, History, Globe, Sparkles, FolderTree, Folders, Plus, Edit3 } from 'lucide-react'
+import { Shield, FileQuestion, Flag, Users, BarChart, TrendingUp, FileText, History, Globe, Sparkles, FolderTree, Folders, Plus, Edit3, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { SidebarCategoryTree } from './sidebar-category-tree'
 import { useTranslations } from 'next-intl'
@@ -128,6 +128,12 @@ export default async function AdminLayout({
                 <Button variant="ghost" className="w-full justify-start">
                   <Users className="mr-2 h-4 w-4" />
                   {t('sidebar.usersRoles')}
+                </Button>
+              </Link>
+              <Link href={`/${locale}/admin/feedback`}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Feedback
                 </Button>
               </Link>
             </nav>

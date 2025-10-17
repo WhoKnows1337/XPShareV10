@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
 import { UnifiedSearchBar } from '@/components/search/unified-search-bar'
@@ -15,6 +15,12 @@ import { AskAI } from '@/components/search/ask-ai'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BentoGrid } from '@/components/ui/bento-grid'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { TableView } from '@/components/visualization/table-view'
 import { ConstellationView } from '@/components/visualization/constellation-view'
 import { GraphView3D } from '@/components/visualization/graph-view-3d'
@@ -23,6 +29,24 @@ import { ZeroResultsSuggestions } from '@/components/search/zero-results-suggest
 import { SearchResultsSkeleton } from '@/components/search/search-results-skeleton'
 import { ResultsStatsBar } from '@/components/search/results-stats-bar'
 import { RecentSearchesWidget } from '@/components/search/recent-searches-widget'
+import { RelatedSearches } from '@/components/search/related-searches'
+import { KeyboardShortcutsModal } from '@/components/search/keyboard-shortcuts-modal'
+import { SavedSearchesManager } from '@/components/search/saved-searches-manager'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Search as SearchIcon,
   TrendingUp,
@@ -34,6 +58,9 @@ import {
   Map,
   CheckSquare,
   Square,
+  Bookmark,
+  ChevronDown,
+  Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -74,6 +101,19 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
   // Bulk selection state
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // Keyboard shortcuts modal state
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false)
+
+  // Saved searches sheet state
+  const [showSavedSearches, setShowSavedSearches] = useState(false)
+
+  // Sort option state
+  const [sortBy, setSortBy] = useState<'relevance' | 'date_desc' | 'date_asc' | 'similarity'>('relevance')
+
+  // Pagination state
+  const [displayedCount, setDisplayedCount] = useState(12) // Initial: show 12 results
+  const itemsPerPage = 12
 
   // Calculate applied filters count
   const appliedFiltersCount =
@@ -302,6 +342,65 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
     handleFiltersChange(clearedFilters)
   }
 
+  // Handle executing saved search
+  const handleExecuteSavedSearch = (savedSearch: any) => {
+    setQuery(savedSearch.query)
+    setAskMode(savedSearch.search_type === 'ask')
+    updateURL({ q: savedSearch.query, mode: savedSearch.search_type === 'ask' ? 'ask' : undefined })
+
+    // Close the saved searches sheet
+    setShowSavedSearches(false)
+
+    // Execute the search
+    if (savedSearch.search_type !== 'ask') {
+      performSearch(savedSearch.query)
+    }
+  }
+
+  // Sort results based on selected option
+  const sortedResults = useMemo(() => {
+    if (!results || results.length === 0) return results
+
+    const sorted = [...results]
+
+    switch (sortBy) {
+      case 'date_desc':
+        return sorted.sort((a, b) => {
+          const dateA = a.date_occurred ? new Date(a.date_occurred).getTime() : 0
+          const dateB = b.date_occurred ? new Date(b.date_occurred).getTime() : 0
+          return dateB - dateA // Newest first
+        })
+      case 'date_asc':
+        return sorted.sort((a, b) => {
+          const dateA = a.date_occurred ? new Date(a.date_occurred).getTime() : 0
+          const dateB = b.date_occurred ? new Date(b.date_occurred).getTime() : 0
+          return dateA - dateB // Oldest first
+        })
+      case 'similarity':
+        return sorted.sort((a, b) => {
+          const simA = a.similarity_score || a.rank_rrf || 0
+          const simB = b.similarity_score || b.rank_rrf || 0
+          return simB - simA // Higher similarity first
+        })
+      case 'relevance':
+      default:
+        return sorted // Keep original order (already sorted by relevance from API)
+    }
+  }, [results, sortBy])
+
+  // Paginate sorted results (frontend pagination)
+  const displayedResults = useMemo(() => {
+    return sortedResults.slice(0, displayedCount)
+  }, [sortedResults, displayedCount])
+
+  // Check if there are more results to load
+  const hasMore = sortedResults.length > displayedCount
+
+  // Load more handler
+  const handleLoadMore = () => {
+    setDisplayedCount((prev) => Math.min(prev + itemsPerPage, sortedResults.length))
+  }
+
   // Bulk selection handlers
   const handleSelectionChange = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -377,6 +476,11 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
     }
   }
 
+  // Reset pagination when results change
+  useEffect(() => {
+    setDisplayedCount(12)
+  }, [results])
+
   // Auto-search on mount if query in URL
   useEffect(() => {
     if (initialQuery || searchParams.get('q')) {
@@ -391,6 +495,12 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // "?" - Show keyboard shortcuts modal
+      if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault()
+        setShowShortcutsModal((prev) => !prev)
+      }
+
       // "/" or Ctrl/Cmd + K - Focus search
       if (
         (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) ||
@@ -415,6 +525,27 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
 
   return (
     <>
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        open={showShortcutsModal}
+        onOpenChange={setShowShortcutsModal}
+      />
+
+      {/* Saved Searches Sheet */}
+      <Sheet open={showSavedSearches} onOpenChange={setShowSavedSearches}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Saved Searches</SheetTitle>
+            <SheetDescription>
+              Manage your saved searches and set up alerts for new matches
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <SavedSearchesManager onExecuteSearch={handleExecuteSavedSearch} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Loading Progress Bar */}
       <LoadingProgressBar isLoading={isLoading} />
 
@@ -507,6 +638,39 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
             {/* Live Search Activity */}
             <RecentSearchesWidget />
 
+            {/* Related Searches - Show after successful search */}
+            {hasSearched && query.trim().length > 0 && (
+              <RelatedSearches
+                currentQuery={query}
+                onSearchSelect={(selectedQuery) => {
+                  setQuery(selectedQuery)
+                  setAskMode(false)
+                  updateURL({ q: selectedQuery, mode: undefined })
+                  performSearch(selectedQuery)
+                }}
+                language="en"
+                category={filters.category || null}
+              />
+            )}
+
+            {/* Saved Searches Quick Access */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-3">Saved Searches</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Save searches and get alerts for new matches
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start transition-all hover:scale-105 hover:shadow-md hover:border-primary/50"
+                  onClick={() => setShowSavedSearches(true)}
+                >
+                  <Bookmark className="w-4 h-4 mr-2" />
+                  Manage Saved Searches
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Search Tips */}
             <Card>
               <CardContent className="pt-6">
@@ -524,6 +688,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                       <li>• System automatically detects intent</li>
                       <li>• Toggle Ask mode for Q&A</li>
                       <li>• Use filters to refine results</li>
+                      <li>• Press <kbd className="px-1 py-0.5 text-xs font-semibold bg-muted border border-border rounded">?</kbd> for shortcuts</li>
                     </>
                   )}
                 </ul>
@@ -600,17 +765,15 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
               onAskModeToggle={handleAskModeToggle}
             />
 
-            {/* Collapsible Filters (Only show in search mode, not ask mode) */}
-            {!askMode && (
-              <CollapsibleFilters
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                appliedFiltersCount={appliedFiltersCount}
-              />
-            )}
+            {/* Collapsible Filters - Available in both Search and Ask modes */}
+            <CollapsibleFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              appliedFiltersCount={appliedFiltersCount}
+            />
 
             {/* Filter Chips - Show active filters as removable badges */}
-            {!askMode && activeFilters.length > 0 && (
+            {activeFilters.length > 0 && (
               <FilterChips
                 filters={activeFilters}
                 onRemoveFilter={handleRemoveFilter}
@@ -629,7 +792,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <AskAI initialQuestion={query} onQuestionChange={setQuery} hideInput={true} />
+                  <AskAI initialQuestion={query} onQuestionChange={setQuery} hideInput={true} filters={filters} />
                 </motion.div>
               </AnimatePresence>
             ) : (
@@ -663,7 +826,10 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <SearchResultsSkeleton count={6} viewMode={viewMode} />
+                    <SearchResultsSkeleton
+                      count={6}
+                      viewMode={viewMode === 'table' ? 'table' : 'grid'}
+                    />
                   </motion.div>
                 ) : results.length > 0 ? (
                   <motion.div
@@ -680,7 +846,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         resultCount={results.length}
                         executionTime={metadata.executionTime}
                         avgSimilarity={metadata.avgSimilarity}
-                        searchType="unified"
+                        searchType="hybrid"
                       />
                     )}
 
@@ -692,8 +858,25 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                       className="mb-4"
                     />
 
-                    {/* Results Header with View Switcher */}
-                    <div className="flex items-center justify-end flex-wrap gap-3">
+                    {/* Results Header with Sort and View Switcher */}
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      {/* Sort Dropdown - Left Side */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Sort:</span>
+                        <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
+                          <SelectTrigger className="w-[140px] h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="relevance">Relevance</SelectItem>
+                            <SelectItem value="date_desc">Newest First</SelectItem>
+                            <SelectItem value="date_asc">Oldest First</SelectItem>
+                            <SelectItem value="similarity">Similarity</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Selection and View Controls - Right Side */}
                       <div className="flex items-center gap-3 flex-wrap">
                         {/* Selection Mode Toggle */}
                         <Button
@@ -720,51 +903,88 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         )}
 
                         {/* View Mode Switcher */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground mr-2">View:</span>
-                          <div className="flex rounded-md border">
-                            <Button
-                              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                              size="sm"
-                              onClick={() => handleViewModeChange('grid')}
-                              className="rounded-r-none"
-                            >
-                              <LayoutGrid className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant={viewMode === 'table' ? 'default' : 'ghost'}
-                              size="sm"
-                              onClick={() => handleViewModeChange('table')}
-                              className="rounded-none border-x"
-                            >
-                              <TableIcon className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant={viewMode === 'constellation' ? 'default' : 'ghost'}
-                              size="sm"
-                              onClick={() => handleViewModeChange('constellation')}
-                              className="rounded-none"
-                            >
-                              <Network className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant={viewMode === 'graph3d' ? 'default' : 'ghost'}
-                              size="sm"
-                              onClick={() => handleViewModeChange('graph3d')}
-                              className="rounded-none border-x"
-                            >
-                              <Box className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant={viewMode === 'heatmap' ? 'default' : 'ghost'}
-                              size="sm"
-                              onClick={() => handleViewModeChange('heatmap')}
-                              className="rounded-l-none"
-                            >
-                              <Map className="h-4 w-4" />
-                            </Button>
+                        <TooltipProvider>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground mr-2">View:</span>
+                            <div className="flex rounded-md border">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleViewModeChange('grid')}
+                                    className="rounded-r-none"
+                                  >
+                                    <LayoutGrid className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Grid View</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleViewModeChange('table')}
+                                    className="rounded-none border-x"
+                                  >
+                                    <TableIcon className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Table View</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={viewMode === 'constellation' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleViewModeChange('constellation')}
+                                    className="rounded-none"
+                                  >
+                                    <Network className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Constellation View</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={viewMode === 'graph3d' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleViewModeChange('graph3d')}
+                                    className="rounded-none border-x"
+                                  >
+                                    <Box className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>3D Graph View</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant={viewMode === 'heatmap' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => handleViewModeChange('heatmap')}
+                                    className="rounded-l-none"
+                                  >
+                                    <Map className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Heatmap View</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
                           </div>
-                        </div>
+                        </TooltipProvider>
                       </div>
                     </div>
 
@@ -784,7 +1004,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         animate="show"
                       >
                         <BentoGrid className="max-w-full">
-                          {results.map((experience: any, index: number) => (
+                          {displayedResults.map((experience: any, index: number) => (
                             <motion.div
                               key={experience.id}
                               variants={{
@@ -825,7 +1045,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <TableView experiences={results} />
+                        <TableView experiences={displayedResults} />
                       </motion.div>
                     )}
 
@@ -835,7 +1055,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.4 }}
                       >
-                        <ConstellationView experiences={results} />
+                        <ConstellationView experiences={displayedResults} />
                       </motion.div>
                     )}
 
@@ -845,7 +1065,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.4 }}
                       >
-                        <GraphView3D experiences={results} />
+                        <GraphView3D experiences={displayedResults} />
                       </motion.div>
                     )}
 
@@ -855,7 +1075,41 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.4 }}
                       >
-                        <HeatmapView experiences={results} />
+                        <HeatmapView experiences={displayedResults} />
+                      </motion.div>
+                    )}
+
+                    {/* Load More Button */}
+                    {hasMore && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        className="flex justify-center mt-8"
+                      >
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={handleLoadMore}
+                          className="group transition-all hover:scale-105 hover:shadow-md hover:border-primary/50"
+                        >
+                          <ChevronDown className="w-5 h-5 mr-2 group-hover:animate-bounce" />
+                          Load More ({sortedResults.length - displayedCount} remaining)
+                        </Button>
+                      </motion.div>
+                    )}
+
+                    {/* All Results Loaded Message */}
+                    {!hasMore && sortedResults.length > itemsPerPage && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex justify-center mt-8"
+                      >
+                        <p className="text-sm text-muted-foreground">
+                          All {sortedResults.length} results loaded
+                        </p>
                       </motion.div>
                     )}
                   </motion.div>

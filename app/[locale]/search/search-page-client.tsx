@@ -710,7 +710,10 @@ export function SearchPageClient({ initialQuery = '' }: SearchPageClientProps) {
                   <span className="sr-only" role="status" aria-live="polite">
                     Loading search results...
                   </span>
-                  <SearchResultsSkeleton count={6} viewMode={viewMode} />
+                  <SearchResultsSkeleton
+                    count={6}
+                    viewMode={viewMode === 'table' ? 'table' : 'grid'}
+                  />
                 </motion.div>
               ) : filteredResults.length > 0 ? (
                 <motion.div

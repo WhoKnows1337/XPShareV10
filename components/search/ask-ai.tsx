@@ -15,6 +15,14 @@ interface AskAIProps {
   initialQuestion?: string
   onQuestionChange?: (question: string) => void
   hideInput?: boolean // Hide the input field (when used with external search bar)
+  filters?: {
+    category?: string
+    tags?: string
+    location?: string
+    dateFrom?: string
+    dateTo?: string
+    witnessesOnly?: boolean
+  }
 }
 
 interface Source {
@@ -42,7 +50,7 @@ interface QAResponse {
   }
 }
 
-export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = false }: AskAIProps) {
+export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = false, filters }: AskAIProps) {
   const [question, setQuestion] = useState(initialQuestion)
   const [response, setResponse] = useState<QAResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -94,7 +102,14 @@ export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = fals
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: question.trim(),
-          maxSources: 15
+          maxSources: 15,
+          // Include filters if provided
+          ...(filters?.category && filters.category !== 'all' && { category: filters.category }),
+          ...(filters?.tags && { tags: filters.tags }),
+          ...(filters?.location && { location: filters.location }),
+          ...(filters?.dateFrom && { dateFrom: filters.dateFrom }),
+          ...(filters?.dateTo && { dateTo: filters.dateTo }),
+          ...(filters?.witnessesOnly && { witnessesOnly: filters.witnessesOnly }),
         }),
       })
 
