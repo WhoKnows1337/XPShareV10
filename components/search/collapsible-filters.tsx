@@ -1,15 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { ChevronDown, ChevronUp, Sliders, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Sliders, X, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { DateRangeSlider } from './date-range-slider'
 
 interface CollapsibleFiltersProps {
   filters: {
@@ -30,6 +31,28 @@ export function CollapsibleFilters({
   appliedFiltersCount = 0,
 }: CollapsibleFiltersProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [filterCounts, setFilterCounts] = useState<any>(null)
+  const [isLoadingCounts, setIsLoadingCounts] = useState(false)
+
+  // Fetch filter counts on mount
+  useEffect(() => {
+    const fetchFilterCounts = async () => {
+      setIsLoadingCounts(true)
+      try {
+        const response = await fetch('/api/search/filter-counts')
+        if (response.ok) {
+          const data = await response.json()
+          setFilterCounts(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch filter counts:', error)
+      } finally {
+        setIsLoadingCounts(false)
+      }
+    }
+
+    fetchFilterCounts()
+  }, [])
 
   const handleFilterChange = (key: string, value: any) => {
     onFiltersChange({ ...filters, [key]: value })
@@ -91,9 +114,12 @@ export function CollapsibleFilters({
           >
             <Card>
               <CardContent className="pt-6 space-y-4">
-                {/* Category Filter */}
+                {/* Category Filter with Counts */}
                 <div className="space-y-2">
-                  <Label htmlFor="category-filter">Category</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="category-filter">Category</Label>
+                    {isLoadingCounts && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                  </div>
                   <Select
                     value={filters.category || 'all'}
                     onValueChange={(value) =>
@@ -105,14 +131,30 @@ export function CollapsibleFilters({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="ufo">🛸 UFO Sighting</SelectItem>
-                      <SelectItem value="paranormal">👻 Paranormal</SelectItem>
-                      <SelectItem value="dreams">💭 Dream Experience</SelectItem>
-                      <SelectItem value="psychedelic">🍄 Psychedelic</SelectItem>
-                      <SelectItem value="spiritual">🙏 Spiritual</SelectItem>
-                      <SelectItem value="synchronicity">✨ Synchronicity</SelectItem>
-                      <SelectItem value="nde">💫 Near-Death Experience</SelectItem>
-                      <SelectItem value="other">🔮 Other Experience</SelectItem>
+                      <SelectItem value="ufo">
+                        🛸 UFO Sighting {filterCounts?.categories?.ufo && `(${filterCounts.categories.ufo})`}
+                      </SelectItem>
+                      <SelectItem value="paranormal">
+                        👻 Paranormal {filterCounts?.categories?.paranormal && `(${filterCounts.categories.paranormal})`}
+                      </SelectItem>
+                      <SelectItem value="dreams">
+                        💭 Dream Experience {filterCounts?.categories?.dreams && `(${filterCounts.categories.dreams})`}
+                      </SelectItem>
+                      <SelectItem value="psychedelic">
+                        🍄 Psychedelic {filterCounts?.categories?.psychedelic && `(${filterCounts.categories.psychedelic})`}
+                      </SelectItem>
+                      <SelectItem value="spiritual">
+                        🙏 Spiritual {filterCounts?.categories?.spiritual && `(${filterCounts.categories.spiritual})`}
+                      </SelectItem>
+                      <SelectItem value="synchronicity">
+                        ✨ Synchronicity {filterCounts?.categories?.synchronicity && `(${filterCounts.categories.synchronicity})`}
+                      </SelectItem>
+                      <SelectItem value="nde">
+                        💫 Near-Death Experience {filterCounts?.categories?.nde && `(${filterCounts.categories.nde})`}
+                      </SelectItem>
+                      <SelectItem value="other">
+                        🔮 Other Experience {filterCounts?.categories?.other && `(${filterCounts.categories.other})`}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -141,27 +183,14 @@ export function CollapsibleFilters({
                   />
                 </div>
 
-                {/* Date Range Filter */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="date-from">Date From</Label>
-                    <Input
-                      id="date-from"
-                      type="date"
-                      value={filters.dateFrom || ''}
-                      onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="date-to">Date To</Label>
-                    <Input
-                      id="date-to"
-                      type="date"
-                      value={filters.dateTo || ''}
-                      onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                    />
-                  </div>
-                </div>
+                {/* Date Range Slider - Hybrid UI */}
+                <DateRangeSlider
+                  dateFrom={filters.dateFrom || ''}
+                  dateTo={filters.dateTo || ''}
+                  onDateChange={(from, to) => {
+                    onFiltersChange({ ...filters, dateFrom: from, dateTo: to })
+                  }}
+                />
 
                 {/* Witnesses Only Filter */}
                 <div className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
