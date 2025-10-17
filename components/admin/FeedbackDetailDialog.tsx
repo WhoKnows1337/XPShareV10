@@ -24,6 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ExternalLink, MessageSquare, Send } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface FeedbackDetailDialogProps {
   feedback: any;
@@ -38,6 +39,7 @@ export function FeedbackDetailDialog({
   onOpenChange,
   onUpdate,
 }: FeedbackDetailDialogProps) {
+  const t = useTranslations('admin.feedback');
   const [status, setStatus] = useState(feedback.status);
   const [priority, setPriority] = useState(feedback.priority);
   const [comment, setComment] = useState('');
@@ -116,45 +118,55 @@ export function FeedbackDetailDialog({
             <Badge>{feedback.type}</Badge>
           </DialogTitle>
           <DialogDescription>
-            Submitted by {feedback.user.username} •{' '}
+            {t('detail.submittedBy')} {feedback.user.username} •{' '}
             {formatDistanceToNow(new Date(feedback.created_at), {
               addSuffix: true,
             })}
           </DialogDescription>
+          {(feedback.submitter_name || feedback.submitter_email) && (
+            <div className="text-sm text-muted-foreground mt-2">
+              {feedback.submitter_name && (
+                <div>{t('detail.contact')} {feedback.submitter_name}</div>
+              )}
+              {feedback.submitter_email && (
+                <div>{t('detail.email')} <a href={`mailto:${feedback.submitter_email}`} className="text-blue-600 hover:underline">{feedback.submitter_email}</a></div>
+              )}
+            </div>
+          )}
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea className="flex-1 overflow-y-auto pr-4" style={{maxHeight: 'calc(90vh - 200px)'}}>
           <div className="space-y-6">
             {/* Status & Priority */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Status</label>
+                <label className="text-sm font-medium mb-2 block">{t('detail.status')}</label>
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
+                    <SelectItem value="new">{t('detail.statusNew')}</SelectItem>
+                    <SelectItem value="in_progress">{t('detail.statusInProgress')}</SelectItem>
+                    <SelectItem value="resolved">{t('detail.statusResolved')}</SelectItem>
+                    <SelectItem value="closed">{t('detail.statusClosed')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Priority
+                  {t('detail.priority')}
                 </label>
                 <Select value={priority} onValueChange={setPriority}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value="low">{t('detail.priorityLow')}</SelectItem>
+                    <SelectItem value="medium">{t('detail.priorityMedium')}</SelectItem>
+                    <SelectItem value="high">{t('detail.priorityHigh')}</SelectItem>
+                    <SelectItem value="critical">{t('detail.priorityCritical')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -168,14 +180,14 @@ export function FeedbackDetailDialog({
               }
               className="w-full"
             >
-              Update Status & Priority
+              {t('detail.updateButton')}
             </Button>
 
             <Separator />
 
             {/* Description */}
             <div>
-              <h3 className="font-semibold mb-2">Description</h3>
+              <h3 className="font-semibold mb-2">{t('detail.description')}</h3>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {feedback.description}
               </p>
@@ -185,7 +197,7 @@ export function FeedbackDetailDialog({
             {((feedback.screenshots && feedback.screenshots.length > 0) || feedback.screenshot_url) && (
               <div>
                 <h3 className="font-semibold mb-2">
-                  Screenshots ({(feedback.screenshots?.length || (feedback.screenshot_url ? 1 : 0))})
+                  {t('detail.screenshots')} ({(feedback.screenshots?.length || (feedback.screenshot_url ? 1 : 0))})
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   {/* New array format */}
@@ -216,7 +228,7 @@ export function FeedbackDetailDialog({
             {/* Page URL */}
             {feedback.page_url && (
               <div>
-                <h3 className="font-semibold mb-2">Page URL</h3>
+                <h3 className="font-semibold mb-2">{t('detail.pageUrl')}</h3>
                 <a
                   href={feedback.page_url}
                   target="_blank"
@@ -232,7 +244,7 @@ export function FeedbackDetailDialog({
             {/* Browser Info */}
             {feedback.browser_info && (
               <div>
-                <h3 className="font-semibold mb-2">Browser Info</h3>
+                <h3 className="font-semibold mb-2">{t('detail.browserInfo')}</h3>
                 <Card>
                   <CardContent className="text-xs pt-4 space-y-1">
                     <div>
@@ -259,7 +271,7 @@ export function FeedbackDetailDialog({
             {/* Console Logs */}
             {feedback.console_logs && feedback.console_logs.length > 0 && (
               <div>
-                <h3 className="font-semibold mb-2">Console Logs</h3>
+                <h3 className="font-semibold mb-2">{t('detail.consoleLogs')}</h3>
                 <Card>
                   <CardContent className="text-xs pt-4 space-y-2">
                     {feedback.console_logs.map((log: any, idx: number) => (
@@ -288,7 +300,7 @@ export function FeedbackDetailDialog({
             <div>
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                Internal Comments ({comments.length})
+                {t('detail.internalComments')} ({comments.length})
               </h3>
 
               <div className="space-y-4 mb-4">
@@ -314,7 +326,7 @@ export function FeedbackDetailDialog({
 
                 {comments.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No comments yet
+                    {t('detail.noComments')}
                   </p>
                 )}
               </div>
@@ -322,7 +334,7 @@ export function FeedbackDetailDialog({
               {/* Add Comment */}
               <div className="space-y-2">
                 <Textarea
-                  placeholder="Add an internal comment..."
+                  placeholder={t('detail.addComment')}
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   rows={3}
@@ -333,7 +345,7 @@ export function FeedbackDetailDialog({
                   className="w-full"
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  Add Comment
+                  {t('detail.postComment')}
                 </Button>
               </div>
             </div>

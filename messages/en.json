@@ -3,6 +3,8 @@
     "home": "Home",
     "feed": "Feed",
     "search": "Search",
+    "categories": "Categories",
+    "searchHistory": "Search History",
     "map": "Map",
     "timeline": "Timeline",
     "submit": "Submit",
@@ -19,22 +21,40 @@
       "title": "Share Your Extraordinary Experiences",
       "subtitle": "Connect with others who have experienced the unexplained. Share paranormal events, UFO sightings, synchronicities, and more.",
       "cta": "Share Your Experience",
+      "getStarted": "Get Started",
+      "signIn": "Sign In",
       "login": "Login to Continue"
     },
+    "stats": {
+      "experiences": "Thousands of experiences",
+      "aiMatching": "AI-powered pattern matching",
+      "gamified": "Gamified community"
+    },
     "features": {
-      "title": "Discover & Connect",
+      "title": "Explore & Connect",
+      "subtitle": "A platform designed for extraordinary experiences",
       "share": {
-        "title": "Share Your Story",
-        "description": "Document your experiences with detailed descriptions, media uploads, and location data."
+        "title": "Share Experiences",
+        "description": "Tell your story through text, voice, photos, or sketches with our intelligent 4-step submission flow and AI assistance"
       },
       "discover": {
         "title": "Discover Patterns",
-        "description": "Find similar experiences and connect with others who have shared your journey."
+        "description": "Find connections with similar experiences worldwide using our advanced AI-powered pattern matching algorithm"
       },
       "community": {
-        "title": "Join the Community",
-        "description": "Engage with a global community of people exploring the unexplained."
+        "title": "Join Community",
+        "description": "Connect with others who've had similar encounters. Earn XP, unlock badges, and level up as you contribute"
       }
+    },
+    "cta": {
+      "title": "Ready to Share Your Story?",
+      "subtitle": "Join our community and help map the unexplained. Earn rewards, unlock badges, and connect with others.",
+      "signup": "Create Free Account"
+    },
+    "trust": {
+      "free": "Free forever",
+      "noCard": "No credit card required",
+      "privacy": "Privacy first"
     },
     "categories": {
       "title": "Explore Categories",
@@ -86,10 +106,116 @@
   },
   "search": {
     "title": "Search Experiences",
-    "placeholder": "Search for experiences...",
+    "subtitle": "AI-powered search with automatic intent detection",
+    "intelligentSearch": "Intelligent Search",
+    "placeholder": "Search experiences... (e.g., 'UFO sightings in desert' or 'lucid dreams')",
+    "askPlaceholder": "Ask a question about experiences...",
+    "searchButton": "Search",
+    "askButton": "Ask",
+    "switchToAsk": "Switch to Ask mode",
+    "switchToSearch": "Switch to Search mode",
+    "confidence": "confidence",
+    "startSearch": "Start Your Search",
+    "startSearchDescription": "Enter a query above or try a popular search",
+    "filterWithin": "Filter within these results...",
+    "clear": "Clear",
+    "showingResults": "Showing {filtered} of {total} results",
+    "narrowDown": "Narrow down results by searching within current results",
+    "loadMore": "Load More ({remaining} remaining)",
+    "allLoaded": "All {count} results loaded",
+    "hints": "💡 Try: \"UFO sightings\" or \"experiences with glowing orbs\" or \"What are common themes in NDEs?\"",
+    "scope": {
+      "all": "All Experiences",
+      "my": "My Experiences",
+      "following": "Following"
+    },
+    "sort": {
+      "label": "Sort:",
+      "relevance": "Relevance",
+      "dateDesc": "Newest First",
+      "dateAsc": "Oldest First",
+      "similarity": "Similarity"
+    },
+    "selection": {
+      "select": "Select",
+      "exitSelection": "Exit Selection",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "comparing": "Comparing {count} experiences",
+      "share": "{count} Experiences from XP-Share",
+      "shareText": "Check out these {count} experiences I found",
+      "urlCopied": "Search URL copied to clipboard!"
+    },
+    "viewMode": {
+      "label": "View:",
+      "grid": "Grid View",
+      "table": "Table View",
+      "constellation": "Constellation View",
+      "graph3d": "3D Graph View",
+      "heatmap": "Heatmap View"
+    },
+    "sidebar": {
+      "popularSearches": "Popular Searches",
+      "searchStats": "Search Stats",
+      "results": "Results:",
+      "filtered": "Filtered:",
+      "time": "Time:",
+      "semantic": "Semantic:",
+      "shareSearch": "Share Search",
+      "copyLink": "Copy Link",
+      "shareDescription": "Share this search with others",
+      "savedSearches": "Saved Searches",
+      "savedSearchesDescription": "Save searches and get alerts for new matches",
+      "manageSavedSearches": "Manage Saved Searches",
+      "searchTips": "Search Tips",
+      "exploreMore": "Explore More",
+      "browseFeed": "Browse Feed",
+      "categories": "Categories"
+    },
+    "tips": {
+      "askMode": [
+        "Ask questions about patterns in experiences",
+        "AI analyzes and cites specific sources",
+        "Get insights across multiple reports"
+      ],
+      "searchMode": [
+        "Type naturally or use keywords",
+        "System automatically detects intent",
+        "Toggle Ask mode for Q&A",
+        "Use filters to refine results",
+        "Press ? for shortcuts"
+      ]
+    },
     "filters": {
-      "category": "Filter by category",
-      "dateRange": "Date Range"
+      "label": "Filters",
+      "categories": "Categories",
+      "categoriesPlaceholder": "Select categories...",
+      "categoriesEmpty": "No categories found.",
+      "location": "Location",
+      "locationPlaceholder": "e.g., 'Berlin', 'California', 'desert'",
+      "tags": "Tags",
+      "tagsPlaceholder": "Add tags...",
+      "tagsEmpty": "Start typing to add tags.",
+      "witnessesOnly": "Only with witnesses",
+      "witnessesOnlyDescription": "Show experiences that had witnesses present",
+      "on": "On",
+      "off": "Off",
+      "clearAll": "Clear All Filters",
+      "clearAllChips": "Clear all",
+      "removeFilter": "Remove {label} filter"
+    },
+    "activeFilters": {
+      "categories": "Categories",
+      "location": "Location",
+      "tags": "Tags",
+      "date": "Date",
+      "witnesses": "Witnesses",
+      "hasWitnesses": "Has witnesses"
+    },
+    "suggestions": {
+      "ai": "AI",
+      "popular": "Popular",
+      "unavailable": "Suggestions temporarily unavailable"
     },
     "results": "{count} results found",
     "noResults": "No results found for \"{query}\""
@@ -171,8 +297,20 @@
       "subtitle": "Help us understand your experience",
       "analyzing": "Analyzing your XP...",
       "analyzingDesc": "AI recognizes patterns, creates title and prepares follow-up questions",
+      "analyzingDescription": "AI recognizes category & tags, creates title & preview summary",
       "enriching": "Enriching text...",
       "enrichingDesc": "AI adds your answers from the questions to the text",
+      "enrichingDescription": "Your text is being enhanced with AI",
+      "analysisSteps": {
+        "step1": "Scan XP",
+        "step2": "Extract Details",
+        "step3": "Generate Metadata"
+      },
+      "enrichmentSteps": {
+        "step1": "Incorporating Attributes",
+        "step2": "Adding Context",
+        "step3": "Finalizing Title"
+      },
       "aiResults": {
         "title": "AI Detection",
         "badge": "🎯 AI Analysis complete",
@@ -258,6 +396,14 @@
       "subtitle": "Review and refine your post",
       "summarizing": "Creating preview...",
       "summarizingDesc": "AI generates a compact summary for the feed",
+      "loadingTitle": "AI analyzing your answers...",
+      "loadingDescription": "Enhance your text with details from your experience",
+      "yourText": "Your Text",
+      "original": "Original",
+      "loading": "Loading...",
+      "aiEnriched": "AI-Enriched",
+      "choiceSaved": "Your choice will be saved • Changeable anytime",
+      "aiAddsDetails": "AI adds details from your answers",
       "continue": "Continue →",
       "toggle": {
         "title": "🎚️ AI Enhancements",
@@ -306,6 +452,17 @@
     "screen4": {
       "title": "Media & Witnesses",
       "subtitle": "Add files and invite witnesses (optional)",
+      "toast": {
+        "publishing": "Publishing your experience...",
+        "uploadingFiles": "Uploading {count} file(s)...",
+        "creating": "Creating your experience...",
+        "publishSuccess": "Experience published successfully!",
+        "xpEarned": "+{xp} XP earned!",
+        "badgesEarned": "Badges earned: {badges}",
+        "levelUp": "Level Up! You're now level {level}! 🎉",
+        "publishError": "Failed to publish",
+        "tryAgain": "Please try again"
+      },
       "files": {
         "title": "Add Files",
         "subtitle": "Photos, videos or sketches (optional)",
@@ -354,6 +511,21 @@
         "private": "Private",
         "privateDesc": "Only you can see this experience",
         "current": "Current"
+      }
+    },
+    "shared": {
+      "navigation": {
+        "next": "Continue",
+        "back": "Back",
+        "reset": "Reset",
+        "confirm": "Sure?",
+        "processing": "Processing..."
+      },
+      "loading": {
+        "processing": "Processing...",
+        "wait": "Just a moment",
+        "step": "Step {current} of {total}",
+        "timeRemaining": "~{time}s remaining"
       }
     },
     "success": {
@@ -452,10 +624,12 @@
       "createCategory": "Create New Category",
       "toolsAnalytics": "Tools & Analytics",
       "templates": "Templates",
+      "customValues": "Custom Values",
       "analytics": "Analytics",
       "history": "History",
       "moderation": "Moderation",
-      "usersRoles": "Users & Roles"
+      "usersRoles": "Users & Roles",
+      "feedback": "Feedback"
     },
     "tabs": {
       "dashboard": "Dashboard",
@@ -464,40 +638,317 @@
       "questions": "Questions"
     },
     "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Overview of platform statistics",
+      "quickActions": "Quick Actions:",
+      "exportAll": "Export All (JSON)",
+      "weeklyReport": "Weekly Report (CSV)",
+      "analytics": "Analytics",
+      "searchAnalytics": "Search Analytics",
+      "manageQuestions": "Manage Questions",
       "stats": {
+        "categories": "Categories",
+        "questions": "Questions",
+        "answers": "Answers",
+        "answersLast7Days": "(7 Days)",
+        "rate": "Rate",
+        "rateAverage": "(Average)",
         "totalUsers": "Total Users",
         "totalExperiences": "Total Experiences",
         "pendingReports": "Pending Reports",
         "activeToday": "Active Today"
+      },
+      "categoryOverview": {
+        "title": "Question Categories",
+        "viewAll": "View All",
+        "noQuestions": "No Questions",
+        "addQuestions": "Add Questions",
+        "edit": "Edit",
+        "analytics": "Analytics",
+        "questions": "Questions",
+        "attributes": "Attributes",
+        "noCategories": "No categories found",
+        "newCategory": "New Category",
+        "rate": "Rate"
+      },
+      "recentChanges": {
+        "title": "Recent Changes",
+        "viewAll": "View All",
+        "created": "created",
+        "updated": "updated",
+        "deleted": "deleted",
+        "by": "by",
+        "system": "System",
+        "recentlyLabel": "recently",
+        "dayAgo": "{count} day ago",
+        "daysAgo": "{count} days ago",
+        "hourAgo": "{count} hour ago",
+        "hoursAgo": "{count} hours ago",
+        "noChanges": "No changes"
+      }
+    },
+    "feedback": {
+      "title": "Feedback Management",
+      "subtitle": "Review and respond to user feedback, bugs, and feature requests",
+      "loading": "Loading feedback...",
+      "filters": {
+        "title": "Filters",
+        "search": "Search feedback...",
+        "type": "Type",
+        "allTypes": "All Types",
+        "bug": "Bug",
+        "feature": "Feature",
+        "general": "General",
+        "status": "Status",
+        "allStatuses": "All Statuses",
+        "new": "New",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "closed": "Closed",
+        "priority": "Priority",
+        "allPriorities": "All Priorities",
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "stats": {
+        "total": "Total",
+        "new": "New",
+        "inProgress": "In Progress",
+        "resolved": "Resolved"
+      },
+      "list": {
+        "noFeedback": "No feedback found",
+        "by": "By",
+        "screenshots": "Screenshot",
+        "screenshotsPlural": "Screenshots"
+      },
+      "detail": {
+        "submittedBy": "Submitted by",
+        "contact": "Contact:",
+        "email": "Email:",
+        "status": "Status",
+        "priority": "Priority",
+        "new": "New",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "closed": "Closed",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical",
+        "updateButton": "Update Status & Priority",
+        "description": "Description",
+        "screenshots": "Screenshots",
+        "pageUrl": "Page URL",
+        "browserInfo": "Browser Info",
+        "userAgent": "User Agent:",
+        "screen": "Screen:",
+        "viewport": "Viewport:",
+        "platform": "Platform:",
+        "consoleLogs": "Console Logs",
+        "internalComments": "Internal Comments",
+        "noComments": "No comments yet",
+        "addComment": "Add an internal comment...",
+        "addCommentButton": "Add Comment",
+        "updateSuccess": "Feedback updated successfully",
+        "updateError": "Failed to update feedback",
+        "commentSuccess": "Comment added",
+        "commentError": "Failed to add comment"
       }
     },
     "moderation": {
       "title": "Content Moderation",
+      "subtitle": "Review and moderate reported content",
       "pending": "Pending Review",
       "approve": "Approve",
       "reject": "Reject",
-      "ban": "Ban User"
+      "ban": "Ban User",
+      "stats": {
+        "pending": "Pending",
+        "resolved": "Resolved",
+        "dismissed": "Dismissed",
+        "total": "Total"
+      },
+      "tabs": {
+        "pending": "Pending",
+        "history": "History"
+      },
+      "filters": {
+        "title": "Filters",
+        "searchExperience": "Search Experience",
+        "searchPlaceholder": "Search by title...",
+        "reason": "Reason",
+        "allReasons": "All Reasons",
+        "dateRange": "Date Range",
+        "allTime": "All Time",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "last90Days": "Last 90 days",
+        "results": "Results",
+        "report": "report",
+        "reports": "reports"
+      },
+      "reasons": {
+        "spam": "🚫 Spam",
+        "inappropriate": "⚠️ Inappropriate",
+        "harassment": "😡 Harassment",
+        "false": "❌ False Story",
+        "privacy": "🔒 Privacy",
+        "other": "❓ Other"
+      },
+      "bulkActions": {
+        "selected": "selected",
+        "keepResolve": "Keep & Resolve",
+        "dismiss": "Dismiss",
+        "deleteExperiences": "Delete Experiences",
+        "confirmMessage": "Are you sure you want to {action} {count} report(s)?"
+      },
+      "empty": {
+        "noPending": "No pending reports 🎉",
+        "noMatching": "No matching reports found",
+        "adjustFilters": "Try adjusting your filters",
+        "allCaughtUp": "All caught up! Great work keeping the community safe."
+      },
+      "list": {
+        "selectAll": "Select all on page",
+        "deletedExperience": "Deleted Experience",
+        "reportedBy": "Reported by",
+        "notReviewed": "Not reviewed",
+        "reviewed": "Reviewed",
+        "userReport": "User Report:",
+        "adminNotes": "Admin Notes:"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {current} of {total} • {count} total reports"
+      },
+      "history": {
+        "title": "No history yet",
+        "description": "Resolved and dismissed reports will appear here"
+      },
+      "toast": {
+        "success": "Success",
+        "reportsActioned": "{count} report(s) {action}ed",
+        "error": "Error",
+        "bulkActionFailed": "Failed to perform bulk action"
+      }
     },
     "users": {
       "title": "User Management",
+      "subtitle": "Manage all platform users and admin roles",
       "search": "Search users...",
       "role": "Role",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "stats": {
+        "totalUsers": "Total Users",
+        "superAdmins": "🔴 Super Admins",
+        "contentManagers": "🟡 Content Managers",
+        "analysts": "🟢 Analysts",
+        "regularUsers": "Regular Users"
+      },
+      "filters": {
+        "allUsers": "All Users ({count})",
+        "onlyAdmins": "Only Admins ({count})",
+        "regularUsers": "Regular Users ({count})"
+      },
+      "roles": {
+        "superAdmin": "🔴 Super Admin",
+        "contentManager": "🟡 Content Manager",
+        "analyst": "🟢 Analyst"
+      },
+      "list": {
+        "noUsers": "No users found",
+        "experiences": "experiences",
+        "comments": "comments",
+        "badges": "badges",
+        "level": "Level",
+        "xp": "XP",
+        "joined": "Joined",
+        "activityLog": "Activity Log",
+        "changeRole": "Change Role",
+        "makeAdmin": "Make Admin"
+      },
+      "roleDialog": {
+        "title": "Change User Role",
+        "user": "User",
+        "role": "Role",
+        "regularUser": "Regular User (No Admin Access)",
+        "superAdmin": "🔴 Super Admin (Full Access)",
+        "contentManager": "🟡 Content Manager (Edit Content)",
+        "analyst": "🟢 Analyst (View Only)",
+        "saveChanges": "Save Changes",
+        "cancel": "Cancel"
+      },
+      "activityDialog": {
+        "title": "Activity Log",
+        "loading": "Loading activity...",
+        "noActivity": "No activity yet",
+        "noActivityDesc": "This user hasn't made any changes to questions or categories",
+        "created": "created",
+        "updated": "updated",
+        "deleted": "deleted"
+      },
+      "toast": {
+        "success": "Success",
+        "roleRemoved": "Admin role removed",
+        "roleChanged": "Role changed to {role}",
+        "error": "Error",
+        "roleChangeFailed": "Failed to change role",
+        "activityLoadFailed": "Failed to load activity log"
+      }
     },
-    "questions": {
-      "title": "Question Management",
-      "add": "Add Question",
-      "edit": "Edit",
-      "delete": "Delete"
+    "analytics": {
+      "title": "Analytics Dashboard",
+      "subtitle": "Question performance and insights",
+      "refresh": "Refresh",
+      "exportCsv": "Export CSV",
+      "exportJson": "Export JSON",
+      "filters": {
+        "title": "Filters",
+        "category": "Category",
+        "selectCategory": "Select category",
+        "allCategories": "All Categories"
+      },
+      "stats": {
+        "totalShown": "Total Shown",
+        "totalAnswered": "Total Answered",
+        "totalSkipped": "Total Skipped",
+        "avgAnswerRate": "Avg Answer Rate",
+        "vsLastWeek": "vs last week"
+      },
+      "toast": {
+        "success": "Success",
+        "exported": "Analytics exported as {format}",
+        "refreshed": "Analytics refreshed",
+        "error": "Error",
+        "exportFailed": "Failed to export analytics",
+        "refreshFailed": "Failed to refresh analytics",
+        "loadFailed": "Failed to load analytics"
+      }
     }
   },
   "map": {
     "title": "Experience Map",
+    "subtitle": "Explore extraordinary experiences across space and time",
+    "backToFeed": "Back to Feed",
+    "locationsCount": "{count} locations",
+    "loading": "Loading...",
+    "categoryFilter": "Category Filter:",
+    "allCategories": "All Categories",
+    "categoryLegend": "Category Legend",
     "cluster": "{count} experiences",
     "filters": {
       "category": "Filter by category",
       "dateRange": "Date range"
+    },
+    "empty": {
+      "title": "No Experiences Found",
+      "description": "No experiences with location data found for the selected filters.",
+      "hint": "Try adjusting the category filter or add some experiences with location data"
     }
   },
   "timeline": {

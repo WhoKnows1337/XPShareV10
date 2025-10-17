@@ -1,19 +1,22 @@
 import { Suspense } from 'react';
 import { FeedbackList } from '@/components/admin/FeedbackList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getTranslations } from 'next-intl/server';
 
 export const metadata = {
   title: 'Feedback Management - Admin',
   description: 'Manage user feedback, bug reports, and feature requests',
 };
 
-export default function AdminFeedbackPage() {
+export default async function AdminFeedbackPage() {
+  const t = await getTranslations('admin.feedback');
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Feedback Management</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Review and respond to user feedback, bugs, and feature requests
+          {t('subtitle')}
         </p>
       </div>
 

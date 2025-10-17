@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Users, FileText, Flag, BadgeCheck, FolderOpen, MessageSquare, Plus, TrendingUp, Download, AlertTriangle, Tag, BarChart3 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
+import { getTranslations, getLocale } from 'next-intl/server'
 
 export default async function AdminDashboard() {
+  const t = await getTranslations('admin')
+  const locale = await getLocale()
   const supabase = await createClient()
 
   // Fetch stats for question catalog dashboard
@@ -88,29 +91,29 @@ export default async function AdminDashboard() {
 
   const stats = [
     {
-      title: 'Kategorien',
+      title: t('dashboard.stats.categories'),
       value: totalCategories || 0,
       icon: FolderOpen,
       color: 'text-orange-500',
-      href: '/admin/questions',
+      href: `/${locale}/admin/questions`,
     },
     {
-      title: 'Fragen',
+      title: t('dashboard.stats.questions'),
       value: totalQuestions || 0,
       icon: MessageSquare,
       color: 'text-teal-500',
-      href: '/admin/questions',
+      href: `/${locale}/admin/questions`,
     },
     {
-      title: 'Antworten',
-      subtitle: '(7 Tage)',
-      value: totalAnswers.toLocaleString('de-DE'),
+      title: t('dashboard.stats.answers'),
+      subtitle: t('dashboard.stats.answersLast7Days'),
+      value: totalAnswers.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US'),
       icon: FileText,
       color: 'text-green-500',
     },
     {
-      title: 'Rate',
-      subtitle: '(Durchschnitt)',
+      title: t('dashboard.stats.rate'),
+      subtitle: t('dashboard.stats.rateAverage'),
       value: `${answerRate}%`,
       icon: TrendingUp,
       color: 'text-blue-500',
@@ -121,40 +124,40 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Dashboard</h2>
-          <p className="text-muted-foreground">Übersicht über Plattform-Statistiken</p>
+          <h2 className="text-3xl font-bold">{t('dashboard.title')}</h2>
+          <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
         </div>
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground text-right">Quick-Actions:</p>
+          <p className="text-xs text-muted-foreground text-right">{t('dashboard.quickActions')}</p>
           <div className="flex gap-2">
             <Link href="/api/admin/export/stats?format=json">
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
-                Export alles (JSON)
+                {t('dashboard.exportAll')}
               </Button>
             </Link>
             <Link href="/api/admin/export/stats?format=csv">
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
-                Wöchentlicher Report (CSV)
+                {t('dashboard.weeklyReport')}
               </Button>
             </Link>
-            <Link href="/admin/analytics">
+            <Link href={`/${locale}/admin/analytics`}>
               <Button variant="outline" size="sm">
                 <TrendingUp className="mr-2 h-4 w-4" />
-                Analytics
+                {t('dashboard.analytics')}
               </Button>
             </Link>
-            <Link href="/admin/analytics/search">
+            <Link href={`/${locale}/admin/analytics/search`}>
               <Button variant="outline" size="sm" className="border-primary/30 hover:bg-primary/5">
                 <BarChart3 className="mr-2 h-4 w-4 text-primary" />
-                Search Analytics
+                {t('dashboard.searchAnalytics')}
               </Button>
             </Link>
-            <Link href="/admin/questions">
+            <Link href={`/${locale}/admin/questions`}>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Fragen verwalten
+                {t('dashboard.manageQuestions')}
               </Button>
             </Link>
           </div>
@@ -196,10 +199,10 @@ export default async function AdminDashboard() {
         {/* Categories Overview */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Question Categories</CardTitle>
-            <Link href="/admin/questions">
+            <CardTitle>{t('dashboard.categoryOverview.title')}</CardTitle>
+            <Link href={`/${locale}/admin/questions`}>
               <Button variant="ghost" size="sm">
-                View All
+                {t('dashboard.categoryOverview.viewAll')}
               </Button>
             </Link>
           </CardHeader>
@@ -221,7 +224,7 @@ export default async function AdminDashboard() {
                           {category.questionCount === 0 && (
                             <Badge variant="destructive" className="text-xs gap-1">
                               <AlertTriangle className="w-3 h-3" />
-                              No Questions
+                              {t('dashboard.categoryOverview.noQuestions')}
                             </Badge>
                           )}
                         </div>
@@ -229,19 +232,19 @@ export default async function AdminDashboard() {
                           <div className="flex items-center gap-1 text-xs">
                             <MessageSquare className="w-3 h-3 text-muted-foreground" />
                             <span className={category.questionCount === 0 ? 'text-orange-600 font-medium' : 'text-muted-foreground'}>
-                              {category.questionCount} Questions
+                              {t('dashboard.categoryOverview.questions', { count: category.questionCount })}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 text-xs">
                             <Tag className="w-3 h-3 text-muted-foreground" />
                             <span className={category.attributeCount > 0 ? 'text-muted-foreground' : 'text-gray-400'}>
-                              {category.attributeCount} Attributes
+                              {t('dashboard.categoryOverview.answers', { count: category.attributeCount })}
                             </span>
                           </div>
                           {category.answerRate > 0 && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <TrendingUp className="w-3 h-3" />
-                              {category.answerRate}% Rate
+                              {t('dashboard.categoryOverview.avgRate', { rate: category.answerRate })}
                             </div>
                           )}
                         </div>
@@ -249,22 +252,22 @@ export default async function AdminDashboard() {
                     </div>
                     <div className="flex gap-2">
                       {category.questionCount === 0 ? (
-                        <Link href={`/admin/categories/${category.slug}`}>
+                        <Link href={`/${locale}/admin/categories/${category.slug}`}>
                           <Button variant="default" size="sm" className="bg-orange-500 hover:bg-orange-600">
                             <Plus className="w-3 h-3 mr-1" />
-                            Add Questions
+                            {t('dashboard.categoryOverview.addQuestions')}
                           </Button>
                         </Link>
                       ) : (
                         <>
-                          <Link href={`/admin/categories/${category.slug}`}>
+                          <Link href={`/${locale}/admin/categories/${category.slug}`}>
                             <Button variant="ghost" size="sm">
-                              Edit
+                              {t('dashboard.categoryOverview.edit')}
                             </Button>
                           </Link>
-                          <Link href={`/admin/analytics?category=${category.id}`}>
+                          <Link href={`/${locale}/admin/analytics?category=${category.id}`}>
                             <Button variant="ghost" size="sm">
-                              Analytics
+                              {t('dashboard.categoryOverview.analytics')}
                             </Button>
                           </Link>
                         </>
@@ -277,10 +280,10 @@ export default async function AdminDashboard() {
               <p className="text-sm text-muted-foreground">No categories found</p>
             )}
             <div className="pt-3 border-t">
-              <Link href="/admin/questions">
+              <Link href={`/${locale}/admin/questions`}>
                 <Button className="w-full" variant="outline">
                   <Plus className="mr-2 h-4 w-4" />
-                  Neue Kategorie
+                  {t('dashboard.categoryOverview.create')}
                 </Button>
               </Link>
             </div>
@@ -290,10 +293,10 @@ export default async function AdminDashboard() {
         {/* Activity Feed */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Letzte Änderungen</CardTitle>
-            <Link href="/admin/history">
+            <CardTitle>{t('dashboard.recentChanges.title')}</CardTitle>
+            <Link href={`/${locale}/admin/history`}>
               <Button variant="ghost" size="sm">
-                Alle anzeigen
+                {t('dashboard.recentChanges.viewAll')}
               </Button>
             </Link>
           </CardHeader>
@@ -301,13 +304,13 @@ export default async function AdminDashboard() {
             {recentChanges && recentChanges.length > 0 ? (
               recentChanges.map((change) => {
                 const timeAgo = (() => {
-                  if (!change.changed_at) return 'vor Kurzem'
+                  if (!change.changed_at) return t('dashboard.recentChanges.justNow')
                   const diff = Date.now() - new Date(change.changed_at).getTime()
                   const hours = Math.floor(diff / (1000 * 60 * 60))
                   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-                  if (days > 0) return `vor ${days} Tag${days > 1 ? 'en' : ''}`
-                  if (hours > 0) return `vor ${hours} Stunde${hours > 1 ? 'n' : ''}`
-                  return 'vor Kurzem'
+                  if (days > 0) return t('dashboard.recentChanges.daysAgo', { count: days })
+                  if (hours > 0) return t('dashboard.recentChanges.hoursAgo', { count: hours })
+                  return t('dashboard.recentChanges.justNow')
                 })()
 
                 return (
@@ -320,10 +323,10 @@ export default async function AdminDashboard() {
                         <span className="font-medium">
                           {change.changed_by ? `@${change.changed_by.split('@')[0]}` : 'System'}
                         </span>
-                        {' '}hat{' '}
-                        {change.change_type === 'created' && 'erstellt'}
-                        {change.change_type === 'updated' && 'bearbeitet'}
-                        {change.change_type === 'deleted' && 'gelöscht'}
+                        {' '}{t('dashboard.recentChanges.by')}{' '}
+                        {change.change_type === 'created' && t('dashboard.recentChanges.created')}
+                        {change.change_type === 'updated' && t('dashboard.recentChanges.updated')}
+                        {change.change_type === 'deleted' && t('dashboard.recentChanges.deleted')}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {change.description}

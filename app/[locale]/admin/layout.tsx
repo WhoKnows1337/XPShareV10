@@ -103,7 +103,7 @@ export default async function AdminLayout({
               <Link href={`/${locale}/admin/custom-values`}>
                 <Button variant="ghost" className="w-full justify-start">
                   <Edit3 className="mr-2 h-4 w-4" />
-                  Custom Values
+                  {t('sidebar.customValues')}
                 </Button>
               </Link>
               <Link href={`/${locale}/admin/analytics`}>
@@ -133,7 +133,7 @@ export default async function AdminLayout({
               <Link href={`/${locale}/admin/feedback`}>
                 <Button variant="ghost" className="w-full justify-start">
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  Feedback
+                  {t('sidebar.feedback')}
                 </Button>
               </Link>
             </nav>

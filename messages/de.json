@@ -3,6 +3,8 @@
     "home": "Startseite",
     "feed": "Feed",
     "search": "Suche",
+    "categories": "Kategorien",
+    "searchHistory": "Suchverlauf",
     "map": "Karte",
     "timeline": "Zeitstrahl",
     "submit": "Teilen",
@@ -19,22 +21,40 @@
       "title": "Teile Deine außergewöhnlichen Erfahrungen",
       "subtitle": "Verbinde dich mit anderen, die das Unerklärliche erlebt haben. Teile paranormale Ereignisse, UFO-Sichtungen, Synchronizitäten und mehr.",
       "cta": "Erfahrung Teilen",
+      "getStarted": "Jetzt starten",
+      "signIn": "Anmelden",
       "login": "Anmelden um Fortzufahren"
+    },
+    "stats": {
+      "experiences": "Tausende von Erfahrungen",
+      "aiMatching": "KI-gestützte Mustererkennung",
+      "gamified": "Gamifizierte Community"
     },
     "features": {
       "title": "Entdecken & Verbinden",
+      "subtitle": "Eine Plattform für außergewöhnliche Erfahrungen",
       "share": {
-        "title": "Teile Deine Geschichte",
-        "description": "Dokumentiere deine Erfahrungen mit detaillierten Beschreibungen, Medien-Uploads und Ortsdaten."
+        "title": "Erfahrungen teilen",
+        "description": "Erzähle deine Geschichte mit Text, Sprache, Fotos oder Skizzen durch unseren intelligenten 4-Schritte-Ablauf mit KI-Unterstützung"
       },
       "discover": {
-        "title": "Entdecke Muster",
-        "description": "Finde ähnliche Erfahrungen und verbinde dich mit anderen, die deine Reise geteilt haben."
+        "title": "Muster entdecken",
+        "description": "Finde Verbindungen zu ähnlichen Erfahrungen weltweit mit unserem fortschrittlichen KI-gestützten Musterabgleich-Algorithmus"
       },
       "community": {
-        "title": "Tritt der Community bei",
-        "description": "Engagiere dich mit einer globalen Community von Menschen, die das Unerklärliche erforschen."
+        "title": "Community beitreten",
+        "description": "Vernetze dich mit anderen, die ähnliche Begegnungen hatten. Verdiene XP, schalte Badges frei und steige Level auf, während du beiträgst"
       }
+    },
+    "cta": {
+      "title": "Bereit, deine Geschichte zu teilen?",
+      "subtitle": "Tritt unserer Community bei und hilf mit, das Unerklärliche zu kartieren. Verdiene Belohnungen, schalte Badges frei und vernetze dich mit anderen.",
+      "signup": "Kostenloses Konto erstellen"
+    },
+    "trust": {
+      "free": "Für immer kostenlos",
+      "noCard": "Keine Kreditkarte erforderlich",
+      "privacy": "Privatsphäre zuerst"
     },
     "categories": {
       "title": "Kategorien Erkunden",
@@ -86,10 +106,116 @@
   },
   "search": {
     "title": "Erfahrungen Suchen",
-    "placeholder": "Suche nach Erfahrungen...",
+    "subtitle": "KI-gestützte Suche mit automatischer Absichtserkennung",
+    "intelligentSearch": "Intelligente Suche",
+    "placeholder": "Suche Erfahrungen... (z.B. 'UFO-Sichtungen in der Wüste' oder 'Klarträume')",
+    "askPlaceholder": "Stelle eine Frage zu Erfahrungen...",
+    "searchButton": "Suchen",
+    "askButton": "Fragen",
+    "switchToAsk": "Zum Frage-Modus wechseln",
+    "switchToSearch": "Zum Such-Modus wechseln",
+    "confidence": "Konfidenz",
+    "startSearch": "Starte Deine Suche",
+    "startSearchDescription": "Gib oben eine Suchanfrage ein oder probiere eine beliebte Suche",
+    "filterWithin": "Innerhalb dieser Ergebnisse filtern...",
+    "clear": "Löschen",
+    "showingResults": "Zeige {filtered} von {total} Ergebnissen",
+    "narrowDown": "Ergebnisse durch Suche innerhalb der aktuellen Ergebnisse eingrenzen",
+    "loadMore": "Mehr laden ({remaining} verbleibend)",
+    "allLoaded": "Alle {count} Ergebnisse geladen",
+    "hints": "💡 Versuche: \"UFO-Sichtungen\" oder \"Erfahrungen mit leuchtenden Kugeln\" oder \"Was sind häufige Themen bei Nahtoderfahrungen?\"",
+    "scope": {
+      "all": "Alle Erfahrungen",
+      "my": "Meine Erfahrungen",
+      "following": "Folge ich"
+    },
+    "sort": {
+      "label": "Sortierung:",
+      "relevance": "Relevanz",
+      "dateDesc": "Neueste zuerst",
+      "dateAsc": "Älteste zuerst",
+      "similarity": "Ähnlichkeit"
+    },
+    "selection": {
+      "select": "Auswählen",
+      "exitSelection": "Auswahl beenden",
+      "selectAll": "Alle auswählen",
+      "deselectAll": "Alle abwählen",
+      "comparing": "Vergleiche {count} Erfahrungen",
+      "share": "{count} Erfahrungen von XP-Share",
+      "shareText": "Schau dir diese {count} Erfahrungen an, die ich gefunden habe",
+      "urlCopied": "Such-URL in Zwischenablage kopiert!"
+    },
+    "viewMode": {
+      "label": "Ansicht:",
+      "grid": "Rasteransicht",
+      "table": "Tabellenansicht",
+      "constellation": "Konstellationsansicht",
+      "graph3d": "3D-Graphansicht",
+      "heatmap": "Heatmap-Ansicht"
+    },
+    "sidebar": {
+      "popularSearches": "Beliebte Suchen",
+      "searchStats": "Such-Statistiken",
+      "results": "Ergebnisse:",
+      "filtered": "Gefiltert:",
+      "time": "Zeit:",
+      "semantic": "Semantisch:",
+      "shareSearch": "Suche teilen",
+      "copyLink": "Link kopieren",
+      "shareDescription": "Teile diese Suche mit anderen",
+      "savedSearches": "Gespeicherte Suchen",
+      "savedSearchesDescription": "Speichere Suchen und erhalte Benachrichtigungen für neue Treffer",
+      "manageSavedSearches": "Gespeicherte Suchen verwalten",
+      "searchTips": "Such-Tipps",
+      "exploreMore": "Mehr Erkunden",
+      "browseFeed": "Feed durchsuchen",
+      "categories": "Kategorien"
+    },
+    "tips": {
+      "askMode": [
+        "Stelle Fragen zu Mustern in Erfahrungen",
+        "KI analysiert und zitiert spezifische Quellen",
+        "Erhalte Einblicke über mehrere Berichte hinweg"
+      ],
+      "searchMode": [
+        "Tippe natürlich oder verwende Stichwörter",
+        "System erkennt Absicht automatisch",
+        "Wechsle zum Frage-Modus für Q&A",
+        "Verwende Filter zur Verfeinerung der Ergebnisse",
+        "Drücke ? für Tastenkombinationen"
+      ]
+    },
     "filters": {
-      "category": "Nach Kategorie filtern",
-      "dateRange": "Datumsbereich"
+      "label": "Filter",
+      "categories": "Kategorien",
+      "categoriesPlaceholder": "Kategorien auswählen...",
+      "categoriesEmpty": "Keine Kategorien gefunden.",
+      "location": "Ort",
+      "locationPlaceholder": "z.B. 'Berlin', 'Kalifornien', 'Wüste'",
+      "tags": "Tags",
+      "tagsPlaceholder": "Tags hinzufügen...",
+      "tagsEmpty": "Beginne zu tippen um Tags hinzuzufügen.",
+      "witnessesOnly": "Nur mit Zeugen",
+      "witnessesOnlyDescription": "Zeige Erfahrungen, bei denen Zeugen anwesend waren",
+      "on": "An",
+      "off": "Aus",
+      "clearAll": "Alle Filter löschen",
+      "clearAllChips": "Alle löschen",
+      "removeFilter": "{label}-Filter entfernen"
+    },
+    "activeFilters": {
+      "categories": "Kategorien",
+      "location": "Ort",
+      "tags": "Tags",
+      "date": "Datum",
+      "witnesses": "Zeugen",
+      "hasWitnesses": "Hat Zeugen"
+    },
+    "suggestions": {
+      "ai": "KI",
+      "popular": "Beliebt",
+      "unavailable": "Vorschläge vorübergehend nicht verfügbar"
     },
     "results": "{count} Ergebnisse gefunden",
     "noResults": "Keine Ergebnisse für \"{query}\" gefunden"
@@ -171,8 +297,20 @@
       "subtitle": "Hilf uns deine Erfahrung zu verstehen",
       "analyzing": "Analysiere deine XP...",
       "analyzingDesc": "KI erkennt Muster, erstellt Titel und bereitet Folgefragen vor",
+      "analyzingDescription": "KI erkennt Kategorie & Tags, erstellt Titel & Preview-Zusammenfassung",
       "enriching": "Reichere Text an...",
       "enrichingDesc": "KI fügt deine Antworten aus den Fragen in den Text ein",
+      "enrichingDescription": "Dein Text wird mit KI-Power aufgewertet",
+      "analysisSteps": {
+        "step1": "Scanne XP",
+        "step2": "Extrahiere Details",
+        "step3": "Generiere Metadaten"
+      },
+      "enrichmentSteps": {
+        "step1": "Attribute einarbeiten",
+        "step2": "Kontext hinzufügen",
+        "step3": "Titel finalisieren"
+      },
       "aiResults": {
         "title": "KI-Erkennung",
         "badge": "🎯 KI-Analyse abgeschlossen",
@@ -259,6 +397,14 @@
       "subtitle": "Überprüfe und verfeinere deinen Beitrag",
       "summarizing": "Erstelle Preview...",
       "summarizingDesc": "KI generiert eine kompakte Zusammenfassung für den Feed",
+      "loadingTitle": "KI analysiert deine Antworten...",
+      "loadingDescription": "Ergänze deinen Text mit Details aus deiner Erfahrung",
+      "yourText": "Dein Text",
+      "original": "Original",
+      "loading": "Lädt...",
+      "aiEnriched": "✨ KI-Angereichert",
+      "choiceSaved": "Deine Wahl wird gespeichert • Jederzeit änderbar",
+      "aiAddsDetails": "KI ergänzt Details aus deinen Antworten",
       "continue": "Weiter →",
       "toggle": {
         "title": "🎚️ KI-Anreicherungen",
@@ -307,6 +453,17 @@
     "screen4": {
       "title": "Medien & Zeugen",
       "subtitle": "Füge Dateien hinzu und lade Zeugen ein (optional)",
+      "toast": {
+        "publishing": "Veröffentliche deine Erfahrung...",
+        "uploadingFiles": "Lade {count} Datei(en) hoch...",
+        "creating": "Erstelle deine Erfahrung...",
+        "publishSuccess": "Erfahrung erfolgreich veröffentlicht!",
+        "xpEarned": "+{xp} XP verdient!",
+        "badgesEarned": "Badges verdient: {badges}",
+        "levelUp": "Level Up! Du bist jetzt Level {level}! 🎉",
+        "publishError": "Veröffentlichung fehlgeschlagen",
+        "tryAgain": "Bitte versuche es erneut"
+      },
       "files": {
         "title": "Dateien hinzufügen",
         "subtitle": "Fotos, Videos oder Skizzen (optional)",
@@ -355,6 +512,21 @@
         "private": "Privat",
         "privateDesc": "Nur du kannst diese Erfahrung sehen",
         "current": "Aktuell"
+      }
+    },
+    "shared": {
+      "navigation": {
+        "next": "Weiter",
+        "back": "Zurück",
+        "reset": "Zurücksetzen",
+        "confirm": "Sicher?",
+        "processing": "Verarbeite..."
+      },
+      "loading": {
+        "processing": "Verarbeite...",
+        "wait": "Einen Moment bitte",
+        "step": "Schritt {current} von {total}",
+        "timeRemaining": "~{time}s verbleibend"
       }
     },
     "success": {
@@ -453,10 +625,12 @@
       "createCategory": "Neue Kategorie erstellen",
       "toolsAnalytics": "Tools & Analytics",
       "templates": "Vorlagen",
+      "customValues": "Benutzerdefinierte Werte",
       "analytics": "Analytics",
       "history": "Historie",
       "moderation": "Moderation",
-      "usersRoles": "Benutzer & Rollen"
+      "usersRoles": "Benutzer & Rollen",
+      "feedback": "Feedback"
     },
     "tabs": {
       "dashboard": "Dashboard",
@@ -465,26 +639,281 @@
       "questions": "Fragen"
     },
     "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Übersicht über Plattform-Statistiken",
+      "quickActions": "Schnellaktionen:",
+      "exportAll": "Alles Exportieren (JSON)",
+      "weeklyReport": "Wochenbericht (CSV)",
+      "analytics": "Analytics",
+      "searchAnalytics": "Suche Analytics",
+      "manageQuestions": "Fragen Verwalten",
       "stats": {
+        "categories": "Kategorien",
+        "questions": "Fragen",
+        "answers": "Antworten",
+        "answersLast7Days": "(7 Tage)",
+        "rate": "Rate",
+        "rateAverage": "(Durchschnitt)",
         "totalUsers": "Benutzer Gesamt",
         "totalExperiences": "Erfahrungen Gesamt",
         "pendingReports": "Ausstehende Meldungen",
         "activeToday": "Heute Aktiv"
+      },
+      "categoryOverview": {
+        "title": "Fragen-Kategorien",
+        "viewAll": "Alle Ansehen",
+        "noQuestions": "Keine Fragen",
+        "addQuestions": "Fragen Hinzufügen",
+        "edit": "Bearbeiten",
+        "analytics": "Analytics",
+        "questions": "{count} Fragen",
+        "answers": "{count} Antworten",
+        "avgRate": "⌀ {rate}% Antwortrate",
+        "create": "Erstellen",
+        "delete": "Löschen"
+      },
+      "recentChanges": {
+        "title": "Letzte Änderungen",
+        "viewAll": "Alle Ansehen",
+        "created": "erstellt",
+        "updated": "aktualisiert",
+        "deleted": "gelöscht",
+        "by": "von",
+        "justNow": "gerade eben",
+        "minutesAgo": "vor {count} Min",
+        "hoursAgo": "vor {count} Std",
+        "daysAgo": "vor {count} Tagen"
+      }
+    },
+    "feedback": {
+      "title": "Feedback-Verwaltung",
+      "subtitle": "Überprüfen und beantworten Sie Nutzer-Feedback, Bugs und Feature-Anfragen",
+      "loading": "Lade Feedback...",
+      "filters": {
+        "title": "Filter",
+        "search": "Feedback durchsuchen...",
+        "type": "Typ",
+        "allTypes": "Alle Typen",
+        "bug": "Bug",
+        "feature": "Feature",
+        "general": "Allgemein",
+        "status": "Status",
+        "allStatuses": "Alle Status",
+        "new": "Neu",
+        "inProgress": "In Bearbeitung",
+        "resolved": "Gelöst",
+        "closed": "Geschlossen",
+        "priority": "Priorität",
+        "allPriorities": "Alle Prioritäten",
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "critical": "Kritisch"
+      },
+      "stats": {
+        "total": "Gesamt",
+        "new": "Neu",
+        "inProgress": "In Bearbeitung",
+        "resolved": "Gelöst"
+      },
+      "list": {
+        "noFeedback": "Kein Feedback gefunden",
+        "by": "Von",
+        "screenshots": "Screenshot",
+        "screenshotsPlural": "Screenshots"
+      },
+      "detail": {
+        "submittedBy": "Eingereicht von",
+        "contact": "Kontakt:",
+        "email": "E-Mail:",
+        "status": "Status",
+        "priority": "Priorität",
+        "statusNew": "Neu",
+        "statusInProgress": "In Bearbeitung",
+        "statusResolved": "Gelöst",
+        "statusClosed": "Geschlossen",
+        "priorityLow": "Niedrig",
+        "priorityMedium": "Mittel",
+        "priorityHigh": "Hoch",
+        "priorityCritical": "Kritisch",
+        "updateButton": "Status & Priorität Aktualisieren",
+        "description": "Beschreibung",
+        "screenshots": "Screenshots",
+        "pageUrl": "Seiten-URL",
+        "browserInfo": "Browser-Info",
+        "consoleLogs": "Konsolen-Logs",
+        "internalComments": "Interne Kommentare",
+        "addComment": "Kommentar hinzufügen...",
+        "postComment": "Kommentar Posten",
+        "noComments": "Noch keine internen Kommentare",
+        "cancel": "Abbrechen"
       }
     },
     "moderation": {
       "title": "Inhaltsmoderation",
-      "pending": "Zur Überprüfung",
-      "approve": "Genehmigen",
-      "reject": "Ablehnen",
-      "ban": "Benutzer Sperren"
+      "subtitle": "Gemeldete Inhalte überprüfen und moderieren",
+      "stats": {
+        "pending": "Ausstehend",
+        "resolved": "Gelöst",
+        "dismissed": "Abgewiesen",
+        "total": "Gesamt"
+      },
+      "tabs": {
+        "pending": "Ausstehend",
+        "history": "Historie"
+      },
+      "filters": {
+        "title": "Filter",
+        "searchExperience": "Erfahrung Suchen",
+        "searchPlaceholder": "Nach Titel suchen...",
+        "reason": "Grund",
+        "allReasons": "Alle Gründe",
+        "dateRange": "Datumsbereich",
+        "today": "Heute",
+        "last7Days": "Letzte 7 Tage",
+        "last30Days": "Letzte 30 Tage",
+        "allTime": "Alle Zeit"
+      },
+      "reasons": {
+        "spam": "🚫 Spam",
+        "inappropriate": "⚠️ Unangemessen",
+        "harassment": "😡 Belästigung",
+        "false": "❌ Falsche Geschichte",
+        "privacy": "🔒 Privatsphäre",
+        "other": "❓ Andere"
+      },
+      "bulkActions": {
+        "selected": "ausgewählt",
+        "keepResolve": "Behalten & Lösen",
+        "dismiss": "Abweisen",
+        "deleteExperiences": "Erfahrungen Löschen",
+        "confirmMessage": "Sind Sie sicher, dass Sie {count} Meldung(en) {action} möchten?"
+      },
+      "empty": {
+        "noPending": "Keine ausstehenden Meldungen 🎉",
+        "noMatching": "Keine passenden Meldungen gefunden",
+        "adjustFilters": "Versuchen Sie, Ihre Filter anzupassen",
+        "allCaughtUp": "Alles erledigt! Großartige Arbeit beim Schutz der Community."
+      },
+      "list": {
+        "reportedBy": "Gemeldet von",
+        "reportedAt": "Gemeldet am",
+        "reason": "Grund:",
+        "description": "Beschreibung:",
+        "viewExperience": "Erfahrung Ansehen"
+      },
+      "pagination": {
+        "showing": "Zeige {start}-{end} von {total}",
+        "previous": "Zurück",
+        "next": "Weiter"
+      },
+      "history": {
+        "noHistory": "Keine Moderations-Historie",
+        "status": "Status:",
+        "resolvedOn": "Gelöst am",
+        "dismissedOn": "Abgewiesen am",
+        "moderatedBy": "Moderiert von",
+        "action": "Aktion:",
+        "kept": "Behalten",
+        "deleted": "Gelöscht"
+      },
+      "toast": {
+        "success": "Erfolg",
+        "reportsResolved": "{count} Meldung(en) gelöst",
+        "reportsDismissed": "{count} Meldung(en) abgewiesen",
+        "experiencesDeleted": "{count} Erfahrung(en) gelöscht",
+        "error": "Fehler",
+        "actionFailed": "Aktion fehlgeschlagen. Bitte erneut versuchen."
+      }
     },
     "users": {
       "title": "Benutzerverwaltung",
-      "search": "Benutzer suchen...",
-      "role": "Rolle",
-      "status": "Status",
-      "actions": "Aktionen"
+      "subtitle": "Alle Plattform-Benutzer und Admin-Rollen verwalten",
+      "stats": {
+        "totalUsers": "Benutzer Gesamt",
+        "superAdmins": "🔴 Super-Admins",
+        "contentManagers": "🟡 Content-Manager",
+        "analysts": "🟢 Analysten",
+        "regularUsers": "Normale Benutzer"
+      },
+      "filters": {
+        "allUsers": "Alle Benutzer ({count})",
+        "onlyAdmins": "Nur Admins ({count})",
+        "regularUsers": "Normale Benutzer ({count})"
+      },
+      "roles": {
+        "superAdmin": "🔴 Super-Admin",
+        "contentManager": "🟡 Content-Manager",
+        "analyst": "🟢 Analyst"
+      },
+      "list": {
+        "search": "Benutzer suchen...",
+        "noUsers": "Keine Benutzer gefunden",
+        "experiences": "Erfahrungen",
+        "comments": "Kommentare",
+        "badges": "Abzeichen",
+        "level": "Level",
+        "xp": "XP",
+        "joined": "Beigetreten",
+        "changeRole": "Rolle Ändern",
+        "viewActivity": "Aktivität Ansehen"
+      },
+      "roleDialog": {
+        "title": "Benutzerrolle Ändern",
+        "user": "Benutzer",
+        "role": "Rolle",
+        "regularUser": "Normaler Benutzer (Kein Admin-Zugriff)",
+        "superAdmin": "🔴 Super-Admin (Vollzugriff)",
+        "contentManager": "🟡 Content-Manager (Inhalte Bearbeiten)",
+        "analyst": "🟢 Analyst (Nur Ansicht)",
+        "save": "Speichern",
+        "cancel": "Abbrechen"
+      },
+      "activityDialog": {
+        "title": "Aktivitätsprotokoll",
+        "loading": "Lade Aktivität...",
+        "noActivity": "Noch keine Aktivität",
+        "noActivityDesc": "Dieser Benutzer hat noch keine Änderungen an Fragen oder Kategorien vorgenommen",
+        "created": "erstellt",
+        "updated": "aktualisiert",
+        "deleted": "gelöscht",
+        "close": "Schließen"
+      },
+      "toast": {
+        "success": "Erfolg",
+        "roleUpdated": "Benutzerrolle erfolgreich aktualisiert",
+        "error": "Fehler",
+        "roleUpdateFailed": "Rolle konnte nicht aktualisiert werden"
+      }
+    },
+    "analytics": {
+      "title": "Analytics Dashboard",
+      "subtitle": "Fragen-Performance und Einblicke",
+      "refresh": "Aktualisieren",
+      "exportCsv": "CSV Exportieren",
+      "exportJson": "JSON Exportieren",
+      "filters": {
+        "title": "Filter",
+        "category": "Kategorie",
+        "selectCategory": "Kategorie auswählen",
+        "allCategories": "Alle Kategorien"
+      },
+      "stats": {
+        "totalShown": "Gesamt Angezeigt",
+        "totalAnswered": "Gesamt Beantwortet",
+        "totalSkipped": "Gesamt Übersprungen",
+        "avgAnswerRate": "⌀ Antwortrate",
+        "vsLastWeek": "vs. letzte Woche"
+      },
+      "toast": {
+        "success": "Erfolg",
+        "exported": "Analytics als {format} exportiert",
+        "refreshed": "Analytics aktualisiert",
+        "error": "Fehler",
+        "exportFailed": "Analytics-Export fehlgeschlagen",
+        "refreshFailed": "Analytics-Aktualisierung fehlgeschlagen",
+        "loadFailed": "Analytics konnten nicht geladen werden"
+      }
     },
     "questions": {
       "title": "Fragenverwaltung",
@@ -495,10 +924,22 @@
   },
   "map": {
     "title": "Erfahrungs-Karte",
+    "subtitle": "Erkunde außergewöhnliche Erfahrungen über Raum und Zeit",
+    "backToFeed": "Zurück zum Feed",
+    "locationsCount": "{count} Standorte",
+    "loading": "Lädt...",
+    "categoryFilter": "Kategorie-Filter:",
+    "allCategories": "Alle Kategorien",
+    "categoryLegend": "Kategorie-Legende",
     "cluster": "{count} Erfahrungen",
     "filters": {
       "category": "Nach Kategorie filtern",
       "dateRange": "Datumsbereich"
+    },
+    "empty": {
+      "title": "Keine Erfahrungen Gefunden",
+      "description": "Keine Erfahrungen mit Standortdaten für die ausgewählten Filter gefunden.",
+      "hint": "Versuche den Kategorie-Filter anzupassen oder füge Erfahrungen mit Standortdaten hinzu"
     }
   },
   "timeline": {
@@ -540,8 +981,11 @@
     "ufo_sighting": "UFO-Sichtung",
     "ufo-uap": "UFO/UAP Sichtungen",
     "synchronicity": "Synchronizität",
+    "spiritual": "Spirituell",
     "spiritual_experience": "Spirituelle Erfahrung",
+    "nde": "Nahtoderfahrung",
     "near_death_experience": "Nahtoderfahrung",
+    "psychedelic": "Psychedelisch",
     "psychic_experience": "Psychische Erfahrung",
     "cryptid_encounter": "Kryptid-Begegnung",
     "dreams": "Träume",

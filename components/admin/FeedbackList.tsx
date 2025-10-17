@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { FeedbackDetailDialog } from './FeedbackDetailDialog';
 import { Bug, Lightbulb, MessageSquare, Search, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 type FeedbackType = 'bug' | 'feature' | 'general';
 type FeedbackStatus = 'new' | 'in_progress' | 'resolved' | 'closed';
@@ -41,6 +42,7 @@ interface Feedback {
 }
 
 export function FeedbackList() {
+  const t = useTranslations('admin.feedback');
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [filteredFeedback, setFilteredFeedback] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,7 @@ export function FeedbackList() {
   };
 
   if (loading) {
-    return <div>Loading feedback...</div>;
+    return <div>{t('loading')}</div>;
   }
 
   return (
@@ -151,7 +153,7 @@ export function FeedbackList() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filters
+            {t('filters.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -159,7 +161,7 @@ export function FeedbackList() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search feedback..."
+                placeholder={t('filters.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -168,39 +170,39 @@ export function FeedbackList() {
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={t('filters.type')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="bug">Bug</SelectItem>
-                <SelectItem value="feature">Feature</SelectItem>
-                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="all">{t('filters.allTypes')}</SelectItem>
+                <SelectItem value="bug">{t('filters.bug')}</SelectItem>
+                <SelectItem value="feature">{t('filters.feature')}</SelectItem>
+                <SelectItem value="general">{t('filters.general')}</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t('filters.status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
+                <SelectItem value="new">{t('filters.new')}</SelectItem>
+                <SelectItem value="in_progress">{t('filters.inProgress')}</SelectItem>
+                <SelectItem value="resolved">{t('filters.resolved')}</SelectItem>
+                <SelectItem value="closed">{t('filters.closed')}</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Priority" />
+                <SelectValue placeholder={t('filters.priority')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="all">{t('filters.allPriorities')}</SelectItem>
+                <SelectItem value="critical">{t('filters.critical')}</SelectItem>
+                <SelectItem value="high">{t('filters.high')}</SelectItem>
+                <SelectItem value="medium">{t('filters.medium')}</SelectItem>
+                <SelectItem value="low">{t('filters.low')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -211,7 +213,7 @@ export function FeedbackList() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total</CardDescription>
+            <CardDescription>{t('stats.total')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{feedback.length}</div>
@@ -219,7 +221,7 @@ export function FeedbackList() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>New</CardDescription>
+            <CardDescription>{t('stats.new')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -229,7 +231,7 @@ export function FeedbackList() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>In Progress</CardDescription>
+            <CardDescription>{t('stats.inProgress')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -239,7 +241,7 @@ export function FeedbackList() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Resolved</CardDescription>
+            <CardDescription>{t('stats.resolved')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -254,7 +256,7 @@ export function FeedbackList() {
         {filteredFeedback.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
-              No feedback found
+              {t('list.noFeedback')}
             </CardContent>
           </Card>
         ) : (
@@ -281,14 +283,14 @@ export function FeedbackList() {
                 </div>
                 <CardDescription className="flex items-center gap-4 text-xs">
                   <span>
-                    By {item.user.username} •{' '}
+                    {t('list.by')} {item.user.username} •{' '}
                     {formatDistanceToNow(new Date(item.created_at), {
                       addSuffix: true,
                     })}
                   </span>
                   {((item.screenshots && item.screenshots.length > 0) || item.screenshot_url) && (
                     <Badge variant="outline">
-                      📸 {item.screenshots?.length || 1} Screenshot{(item.screenshots?.length || 1) > 1 ? 's' : ''}
+                      📸 {item.screenshots?.length || 1} {(item.screenshots?.length || 1) > 1 ? t('list.screenshotsPlural') : t('list.screenshots')}
                     </Badge>
                   )}
                 </CardDescription>
