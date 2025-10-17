@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ import { motion } from 'framer-motion'
 interface AskAIProps {
   initialQuestion?: string
   onQuestionChange?: (question: string) => void
+  hideInput?: boolean // Hide the input field (when used with external search bar)
 }
 
 interface Source {
@@ -41,7 +42,7 @@ interface QAResponse {
   }
 }
 
-export function AskAI({ initialQuestion = '', onQuestionChange }: AskAIProps) {
+export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = false }: AskAIProps) {
   const [question, setQuestion] = useState(initialQuestion)
   const [response, setResponse] = useState<QAResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -51,6 +52,21 @@ export function AskAI({ initialQuestion = '', onQuestionChange }: AskAIProps) {
     setQuestion(newQuestion)
     onQuestionChange?.(newQuestion)
   }
+
+  // Auto-submit when initialQuestion changes and input is hidden
+  useEffect(() => {
+    if (hideInput && initialQuestion && initialQuestion !== question) {
+      setQuestion(initialQuestion)
+      // Auto-submit after a short delay
+      const timer = setTimeout(() => {
+        if (initialQuestion.trim().length >= 5) {
+          handleAsk()
+        }
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [initialQuestion, hideInput])
+
 
   const exampleQuestions = [
     'Welche Gemeinsamkeiten haben UFO-Sichtungen am Bodensee?',
@@ -112,50 +128,54 @@ export function AskAI({ initialQuestion = '', onQuestionChange }: AskAIProps) {
 
   return (
     <div className="space-y-6">
-      {/* Question Input */}
-      <form onSubmit={handleAsk} className="space-y-4">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500" />
-            <Input
-              type="text"
-              placeholder="Stelle eine Frage über Erfahrungen... z.B. 'Welche Gemeinsamkeiten haben UFO-Sichtungen?'"
-              value={question}
-              onChange={(e) => handleQuestionChange(e.target.value)}
-              className="pl-10"
-              disabled={isLoading}
-            />
-          </div>
+      {/* Question Input - Only show if not hidden */}
+      {!hideInput && (
+        <>
+          <form onSubmit={handleAsk} className="space-y-4">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-500" />
+                <Input
+                  type="text"
+                  placeholder="Stelle eine Frage über Erfahrungen... z.B. 'Welche Gemeinsamkeiten haben UFO-Sichtungen?'"
+                  value={question}
+                  onChange={(e) => handleQuestionChange(e.target.value)}
+                  className="pl-10"
+                  disabled={isLoading}
+                />
+              </div>
 
-          <Button type="submit" disabled={isLoading || question.trim().length < 5}>
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <MessageSquare className="w-4 h-4 mr-2" />
-            )}
-            Fragen
-          </Button>
-        </div>
-      </form>
-
-      {/* Example Questions */}
-      {!response && !isLoading && (
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">Beispielfragen:</p>
-          <div className="flex flex-wrap gap-2">
-            {exampleQuestions.map((example, i) => (
-              <Button
-                key={i}
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuestionChange(example)}
-                className="text-xs h-auto py-2 px-3 whitespace-normal text-left transition-all hover:scale-105 hover:shadow-md"
-              >
-                {example}
+              <Button type="submit" disabled={isLoading || question.trim().length < 5}>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                )}
+                Fragen
               </Button>
-            ))}
-          </div>
-        </div>
+            </div>
+          </form>
+
+          {/* Example Questions */}
+          {!response && !isLoading && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Beispielfragen:</p>
+              <div className="flex flex-wrap gap-2">
+                {exampleQuestions.map((example, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuestionChange(example)}
+                    className="text-xs h-auto py-2 px-3 whitespace-normal text-left transition-all hover:scale-105 hover:shadow-md"
+                  >
+                    {example}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Error Display */}
@@ -169,7 +189,7 @@ export function AskAI({ initialQuestion = '', onQuestionChange }: AskAIProps) {
       {response && (
         <div className="space-y-4">
           {/* Answer Card */}
-          <Card className="border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20">
+          <Card className="border-blue-500/30">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-2">

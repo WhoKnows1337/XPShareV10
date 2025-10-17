@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SearchPageClient } from './search-page-client'
+import { UnifiedSearchPageClient } from './unified-search-page-client'
 
 interface SearchPageProps {
   searchParams: Promise<{
@@ -23,5 +23,5 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams
   const searchQuery = params.q?.trim()
 
-  return <SearchPageClient initialQuery={searchQuery} />
+  return <UnifiedSearchPageClient initialQuery={searchQuery} />
 }
