@@ -118,6 +118,7 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           location_text: string | null
+          question_answers: Json | null
           story_audio_url: string | null
           story_text: string | null
           story_transcription: string | null
@@ -143,6 +144,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_text?: string | null
+          question_answers?: Json | null
           story_audio_url?: string | null
           story_text?: string | null
           story_transcription?: string | null
@@ -168,6 +170,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_text?: string | null
+          question_answers?: Json | null
           story_audio_url?: string | null
           story_text?: string | null
           story_transcription?: string | null
