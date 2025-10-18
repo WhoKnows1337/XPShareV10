@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Excalidraw, exportToBlob } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
-import type { ExcalidrawImperativeAPI, ExcalidrawImageElement } from '@excalidraw/excalidraw/types/types';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 
@@ -18,7 +17,7 @@ export function ExcalidrawAnnotationEditor({
   onComplete,
   onCancel,
 }: ExcalidrawAnnotationEditorProps) {
-  const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
 
@@ -41,7 +40,7 @@ export function ExcalidrawAnnotationEditor({
         const fileId = `file-${Date.now()}`;
 
         // Create image element for Excalidraw
-        const imageElement: ExcalidrawImageElement = {
+        const imageElement: any = {
           type: 'image',
           id: `screenshot-${Date.now()}`,
           x: 0,
