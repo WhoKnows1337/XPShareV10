@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles, MapPin, Moon, Link2, GitBranch, TrendingUp } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -65,7 +66,7 @@ interface PatternBadgesProps {
  * />
  * ```
  */
-export function PatternBadges({ patterns, compact = false, onClick, vectorWeight = 0.6, ftsWeight = 0.4 }: PatternBadgesProps) {
+export const PatternBadges = memo(function PatternBadges({ patterns, compact = false, onClick, vectorWeight = 0.6, ftsWeight = 0.4 }: PatternBadgesProps) {
   if (!patterns) return null
 
   const hasTemporal = patterns.temporal && patterns.temporal.length > 0
@@ -263,13 +264,13 @@ export function PatternBadges({ patterns, compact = false, onClick, vectorWeight
       )}
     </div>
   )
-}
+})
 
 /**
  * Compact Pattern Count Badge
  * Shows total pattern count as a single badge
  */
-export function PatternCountBadge({ patterns }: { patterns: PatternData }) {
+export const PatternCountBadge = memo(function PatternCountBadge({ patterns }: { patterns: PatternData }) {
   if (!patterns) return null
 
   const totalPatterns =
@@ -292,4 +293,5 @@ export function PatternCountBadge({ patterns }: { patterns: PatternData }) {
       <span className="text-text-tertiary">pattern{totalPatterns > 1 ? 's' : ''}</span>
     </motion.div>
   )
-}
+})
+

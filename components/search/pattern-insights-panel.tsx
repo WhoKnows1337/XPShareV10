@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Card,
@@ -111,7 +111,7 @@ interface PatternInsightsPanelProps {
  * />
  * ```
  */
-export function PatternInsightsPanel({
+export const PatternInsightsPanel = memo(function PatternInsightsPanel({
   patternSummary,
   resultCount,
   onPatternClick,
@@ -122,6 +122,13 @@ export function PatternInsightsPanel({
     tag_network: false,
     cross_category: false,
   })
+
+  const toggleSection = useCallback((section: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }))
+  }, [])
 
   if (!patternSummary || !patternSummary.summary) {
     return null
@@ -143,13 +150,6 @@ export function PatternInsightsPanel({
         </CardHeader>
       </Card>
     )
-  }
-
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }))
   }
 
   return (
@@ -330,12 +330,12 @@ export function PatternInsightsPanel({
       </CardContent>
     </Card>
   )
-}
+})
 
 /**
  * Collapsible Pattern Section
  */
-function PatternSection({
+const PatternSection = memo(function PatternSection({
   icon,
   title,
   count,
@@ -399,4 +399,4 @@ function PatternSection({
       </AnimatePresence>
     </div>
   )
-}
+})
