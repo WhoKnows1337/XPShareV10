@@ -1278,6 +1278,13 @@ export type Database = {
         }
         Returns: Json
       }
+      detect_cross_category_patterns: {
+        Args: {
+          p_experience_ids: string[]
+          p_min_overlap: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
