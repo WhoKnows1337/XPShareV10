@@ -59,9 +59,9 @@ export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = fals
 
   const handleQuestionChange = (newQuestion: string) => {
     setQuestion(newQuestion)
+    // Only propagate change, don't clear results
     onQuestionChange?.(newQuestion)
   }
-
 
   const exampleQuestions = [
     'Welche Gemeinsamkeiten haben UFO-Sichtungen am Bodensee?',
@@ -133,15 +133,14 @@ export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = fals
       // Update ref to track this question
       prevQuestionRef.current = initialQuestion
 
-      // Reset state for new question
-      setResponse(null)
+      // Clear error but keep response visible until new one arrives
       setError(null)
       setQuestion(initialQuestion)
 
       // Debounced auto-submit - wait for user to finish typing
       const timer = setTimeout(() => {
         handleAsk()
-      }, 1200) // Increased from 100ms to 1200ms for proper debouncing
+      }, 1200)
       return () => clearTimeout(timer)
     }
   }, [initialQuestion, hideInput])
@@ -208,6 +207,62 @@ export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = fals
       {error && (
         <div className="p-3 border border-destructive bg-destructive/10 rounded-lg text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {/* Loading Skeleton */}
+      {isLoading && !response && (
+        <div className="space-y-4">
+          {/* Answer Card Skeleton */}
+          <Card className="border-blue-500/30">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                  <CardTitle className="text-lg">AI denkt nach...</CardTitle>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-16 skeleton-shimmer rounded-md" />
+                  <div className="h-12 w-16 skeleton-shimmer rounded-md" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Animated text lines */}
+              <div className="space-y-2">
+                <div className="h-4 skeleton-shimmer rounded w-full" />
+                <div className="h-4 skeleton-shimmer rounded w-11/12" />
+                <div className="h-4 skeleton-shimmer rounded w-10/12" />
+                <div className="h-4 skeleton-shimmer rounded w-full" />
+                <div className="h-4 skeleton-shimmer rounded w-9/12" />
+              </div>
+
+              {/* Loading phases indicator */}
+              <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 animate-pulse">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span>Analysiere relevante Erfahrungen...</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sources Skeleton */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-muted-foreground" />
+              <div className="h-5 w-48 skeleton-shimmer rounded" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="skeleton-shimmer rounded-lg h-32" />
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

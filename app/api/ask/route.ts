@@ -50,93 +50,85 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 2: Find relevant experiences using vector similarity with filters
+    // Step 2: Find relevant experiences using optimized vector similarity
     const supabase = await createClient()
 
-    // Build query with filters
-    let query = supabase
-      .from('experiences')
-      .select('id, title, story_text, category, date_occurred, location_text, tags, embedding')
-      .eq('visibility', 'public')
-      .not('embedding', 'is', null)
+    let withSimilarity: any[] = []
 
-    // Apply filters
-    if (category && category !== 'all') {
-      query = query.eq('category', category)
-    }
-
-    if (dateFrom) {
-      query = query.gte('date_occurred', dateFrom)
-    }
-
-    if (dateTo) {
-      query = query.lte('date_occurred', dateTo)
-    }
-
-    // TODO: Implement witnessesOnly filter with JOIN to experience_witnesses table
-    // if (witnessesOnly) {
-    //   // Need to JOIN with experience_witnesses and count > 0
-    // }
-
-    const { data: relevant, error: searchError } = await query.limit(50)
+    // Use Supabase vector search function for better performance
+    // This leverages pgvector's built-in similarity search instead of client-side calculation
+    const { data: relevant, error: searchError } = await (supabase as any).rpc('match_experiences', {
+      query_embedding: queryEmbedding,
+      match_threshold: 0.3,
+      match_count: maxSources,
+      filter_category: category && category !== 'all' ? category : null,
+      filter_date_from: dateFrom || null,
+      filter_date_to: dateTo || null,
+    })
 
     if (searchError) {
-      console.error('Search error:', searchError)
-      throw searchError
+      console.error('Vector search error:', searchError)
+      // Fallback to old method if RPC fails
+      console.log('Falling back to client-side similarity calculation...')
+
+      let query = supabase
+        .from('experiences')
+        .select('id, title, story_text, category, date_occurred, location_text, tags, embedding')
+        .eq('visibility', 'public')
+        .not('embedding', 'is', null)
+
+      if (category && category !== 'all') {
+        query = query.eq('category', category)
+      }
+      if (dateFrom) query = query.gte('date_occurred', dateFrom)
+      if (dateTo) query = query.lte('date_occurred', dateTo)
+
+      const { data: fallbackData, error: fallbackError } = await query.limit(30)
+
+      if (fallbackError) throw fallbackError
+      if (!fallbackData || fallbackData.length === 0) {
+        return NextResponse.json({
+          answer: 'Ich konnte keine relevanten Erfahrungen zu deiner Frage finden.',
+          sources: [],
+          confidence: 0,
+          totalSources: 0,
+        })
+      }
+
+      // Client-side similarity calculation (fallback)
+      withSimilarity = fallbackData
+        .map((exp: any) => {
+          if (!exp.embedding) return null
+          const expEmbedding = JSON.parse(exp.embedding)
+          let dotProduct = 0, normA = 0, normB = 0
+          for (let i = 0; i < queryEmbedding.length; i++) {
+            dotProduct += queryEmbedding[i] * expEmbedding[i]
+            normA += queryEmbedding[i] * queryEmbedding[i]
+            normB += expEmbedding[i] * expEmbedding[i]
+          }
+          const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+          return { ...exp, similarity }
+        })
+        .filter((exp): exp is NonNullable<typeof exp> => exp !== null && exp.similarity > 0.3)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, maxSources)
+    } else {
+      withSimilarity = relevant || []
     }
 
-    if (!relevant || relevant.length === 0) {
-      return NextResponse.json({
-        answer: 'Ich konnte keine relevanten Erfahrungen zu deiner Frage finden.',
-        sources: [],
-        confidence: 0,
-        totalSources: 0,
-      })
-    }
-
-    // Calculate similarities and sort
-    // Apply client-side filters for tags and location
-    let filteredRelevant = relevant || []
-
+    // Apply client-side filters for tags and location (if not supported by RPC)
     if (tags) {
       const tagList = tags.split(',').map((t: string) => t.trim().toLowerCase())
-      filteredRelevant = filteredRelevant.filter((exp: any) =>
+      withSimilarity = withSimilarity.filter((exp: any) =>
         exp.tags?.some((tag: string) => tagList.includes(tag.toLowerCase()))
       )
     }
 
     if (location) {
-      filteredRelevant = filteredRelevant.filter((exp: any) =>
+      withSimilarity = withSimilarity.filter((exp: any) =>
         exp.location_text?.toLowerCase().includes(location.toLowerCase())
       )
     }
-
-    const withSimilarity = filteredRelevant
-      .map((exp: any) => {
-        if (!exp.embedding) return null
-
-        // Cosine similarity calculation
-        const expEmbedding = JSON.parse(exp.embedding)
-        let dotProduct = 0
-        let normA = 0
-        let normB = 0
-
-        for (let i = 0; i < queryEmbedding.length; i++) {
-          dotProduct += queryEmbedding[i] * expEmbedding[i]
-          normA += queryEmbedding[i] * queryEmbedding[i]
-          normB += expEmbedding[i] * expEmbedding[i]
-        }
-
-        const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
-
-        return {
-          ...exp,
-          similarity,
-        }
-      })
-      .filter((exp): exp is NonNullable<typeof exp> => exp !== null && exp.similarity > 0.3)
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, maxSources)
 
     if (withSimilarity.length === 0) {
       return NextResponse.json({
