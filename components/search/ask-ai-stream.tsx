@@ -51,20 +51,53 @@ export function AskAIStream({
   const [confidence, setConfidence] = useState<number>(0)
   const lastSentQuestion = useRef<string>('')
 
+  // Custom transport that extends DefaultChatTransport to extract response headers
+  const customTransport = new DefaultChatTransport({
+    api: '/api/chat',
+    body: {
+      maxSources: 15,
+      ...(filters?.category && filters.category !== 'all' && { category: filters.category }),
+      ...(filters?.tags && { tags: filters.tags }),
+      ...(filters?.location && { location: filters.location }),
+      ...(filters?.dateFrom && { dateFrom: filters.dateFrom }),
+      ...(filters?.dateTo && { dateTo: filters.dateTo }),
+      ...(filters?.witnessesOnly && { witnessesOnly: filters.witnessesOnly }),
+    },
+    fetch: async (url, options) => {
+      const response = await fetch(url, options)
+
+      // Extract metadata from response headers
+      const sourcesCount = response.headers.get('X-QA-Sources-Count')
+      const confidenceScore = response.headers.get('X-QA-Confidence')
+      const sourcesData = response.headers.get('X-QA-Sources')
+
+      if (confidenceScore) {
+        setConfidence(parseInt(confidenceScore, 10))
+      }
+
+      if (sourcesData) {
+        try {
+          const parsedSources = JSON.parse(sourcesData) as Source[]
+          setSources(parsedSources)
+        } catch (e) {
+          console.error('Failed to parse sources:', e)
+        }
+      }
+
+      // Save to search history
+      try {
+        addToSearchHistory(input, 'ask', undefined, parseInt(sourcesCount || '0', 10))
+      } catch (e) {
+        console.error('Failed to save to history:', e)
+      }
+
+      return response
+    },
+  })
+
   // ✅ useChat with sendMessage (Official AI SDK 5.0 Pattern)
   const { messages, sendMessage, status, error } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      body: {
-        maxSources: 15,
-        ...(filters?.category && filters.category !== 'all' && { category: filters.category }),
-        ...(filters?.tags && { tags: filters.tags }),
-        ...(filters?.location && { location: filters.location }),
-        ...(filters?.dateFrom && { dateFrom: filters.dateFrom }),
-        ...(filters?.dateTo && { dateTo: filters.dateTo }),
-        ...(filters?.witnessesOnly && { witnessesOnly: filters.witnessesOnly }),
-      },
-    }),
+    transport: customTransport,
   })
 
   // Auto-submit when initialQuestion changes (for hideInput mode)
