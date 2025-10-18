@@ -1073,6 +1073,63 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          browser_info: Json | null
+          console_logs: Json | null
+          created_at: string
+          description: string
+          id: string
+          page_url: string | null
+          priority: string
+          screenshot_url: string | null
+          screenshots: Json | null
+          status: string
+          submitter_email: string | null
+          submitter_name: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          browser_info?: Json | null
+          console_logs?: Json | null
+          created_at?: string
+          description: string
+          id?: string
+          page_url?: string | null
+          priority?: string
+          screenshot_url?: string | null
+          screenshots?: Json | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          browser_info?: Json | null
+          console_logs?: Json | null
+          created_at?: string
+          description?: string
+          id?: string
+          page_url?: string | null
+          priority?: string
+          screenshot_url?: string | null
+          screenshots?: Json | null
+          status?: string
+          submitter_email?: string | null
+          submitter_name?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       question_analytics_summary: {
