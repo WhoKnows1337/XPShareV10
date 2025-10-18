@@ -35,6 +35,7 @@ import { RecentSearchesWidget } from '@/components/search/recent-searches-widget
 import { RelatedSearches } from '@/components/search/related-searches'
 import { KeyboardShortcutsModal } from '@/components/search/keyboard-shortcuts-modal'
 import { SavedSearchesManager } from '@/components/search/saved-searches-manager'
+import { PatternInsightsPanel } from '@/components/search/pattern-insights-panel'
 import {
   Sheet,
   SheetContent,
@@ -129,6 +130,25 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
   // Pagination state
   const [displayedCount, setDisplayedCount] = useState(12) // Initial: show 12 results
   const itemsPerPage = 12
+
+  // Pattern filter state
+  const [activePatternFilter, setActivePatternFilter] = useState<{
+    type: 'temporal' | 'geographic' | 'tag_network' | 'cross_category' | null
+    id: string | null
+    label: string
+  } | null>(() => {
+    const patternType = searchParams.get('patternType')
+    const patternId = searchParams.get('patternId')
+    const patternLabel = searchParams.get('patternLabel')
+    if (patternType && patternId) {
+      return {
+        type: patternType as any,
+        id: patternId,
+        label: patternLabel || patternId
+      }
+    }
+    return null
+  })
 
   // Load saved filters on mount and merge with URL params
   useEffect(() => {
@@ -228,6 +248,22 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
       type: 'witnesses',
       label: t('activeFilters.witnesses'),
       value: t('activeFilters.hasWitnesses'),
+    })
+  }
+  // Pattern filter
+  if (activePatternFilter) {
+    const patternLabels = {
+      temporal: '🌙 Temporal Pattern',
+      geographic: '📍 Geographic Pattern',
+      tag_network: '🔗 Tag Network',
+      cross_category: '🌉 Category Bridge'
+    }
+
+    activeFilters.push({
+      key: 'pattern',
+      type: 'pattern' as any,
+      label: patternLabels[activePatternFilter.type as keyof typeof patternLabels] || 'Pattern',
+      value: activePatternFilter.label,
     })
   }
 
@@ -396,6 +432,18 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
 
   // Handle removing individual filter
   const handleRemoveFilter = (key: string) => {
+    // Handle pattern filter separately (it's not part of filters state)
+    if (key === 'pattern') {
+      setActivePatternFilter(null)
+      // Remove pattern params from URL
+      const currentParams = new URLSearchParams(window.location.search)
+      currentParams.delete('patternType')
+      currentParams.delete('patternId')
+      currentParams.delete('patternLabel')
+      router.replace(`${pathname}?${currentParams.toString()}`, { scroll: false })
+      return
+    }
+
     const newFilters = { ...filters }
 
     if (key === 'categories') newFilters.categories = []
@@ -439,24 +487,134 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
     }
   }
 
-  // Filter results based on within-results query (client-side)
-  const filteredResults = useMemo(() => {
-    if (!withinResultsQuery.trim()) {
-      return results
+  // Handle pattern click
+  const handlePatternClick = (type: string, id?: string) => {
+    // Generate label based on pattern type and id (or just type if no id)
+    let label: string
+
+    if (id && metadata?.patterns?.patterns) {
+      // Specific pattern with ID
+      label = id
+      if (type === 'temporal') {
+        const pattern = metadata.patterns.patterns.temporal?.patterns.find(
+          (p: any) => p.pattern_id === id
+        )
+        if (pattern) label = `${pattern.emoji} ${pattern.phase.replace('_', ' ')}`
+      } else if (type === 'geographic') {
+        label = `Cluster #${id}`
+      } else if (type === 'tag_network') {
+        const [tag1, tag2] = id.split('-')
+        label = `#${tag1} ↔ #${tag2}`
+      } else if (type === 'cross_category') {
+        const [cat1, cat2] = id.split('-')
+        label = `${cat1} ↔ ${cat2}`
+      }
+    } else {
+      // Pattern type only (from badge click on experience card)
+      const typeLabels = {
+        temporal: 'Temporal Patterns',
+        geographic: 'Geographic Patterns',
+        tag_network: 'Tag Network Patterns',
+        cross_category: 'Cross-Category Patterns'
+      }
+      label = typeLabels[type as keyof typeof typeLabels] || type
     }
 
-    const searchTerm = withinResultsQuery.toLowerCase()
-
-    return results.filter((exp) => {
-      return (
-        exp.title?.toLowerCase().includes(searchTerm) ||
-        exp.story_text?.toLowerCase().includes(searchTerm) ||
-        exp.category?.toLowerCase().includes(searchTerm) ||
-        exp.location_text?.toLowerCase().includes(searchTerm) ||
-        exp.tags?.some((tag: string) => tag.toLowerCase().includes(searchTerm))
-      )
+    // Set pattern filter state
+    setActivePatternFilter({
+      type: type as any,
+      id: id || null,
+      label
     })
-  }, [results, withinResultsQuery])
+
+    // Update URL parameters
+    const currentParams = new URLSearchParams(window.location.search)
+    currentParams.set('patternType', type)
+    if (id) {
+      currentParams.set('patternId', id)
+    } else {
+      currentParams.delete('patternId')
+    }
+    currentParams.set('patternLabel', label)
+    router.replace(`${pathname}?${currentParams.toString()}`, { scroll: false })
+  }
+
+  // Filter results based on pattern and within-results query (client-side)
+  const filteredResults = useMemo(() => {
+    let filtered = results
+
+    // Apply pattern filter first
+    if (activePatternFilter && metadata?.patterns) {
+      const { type, id } = activePatternFilter
+      let patternExperienceIds: string[] = []
+
+      if (id) {
+        // Filter by specific pattern ID
+        if (type === 'temporal' && metadata.patterns.patterns?.temporal) {
+          const pattern = metadata.patterns.patterns.temporal.patterns.find(
+            (p: any) => p.pattern_id === id
+          )
+          if (pattern) patternExperienceIds = pattern.experiences || []
+        } else if (type === 'geographic' && metadata.patterns.patterns?.geographic) {
+          const pattern = metadata.patterns.patterns.geographic.patterns.find(
+            (p: any) => p.cluster_id.toString() === id
+          )
+          if (pattern) patternExperienceIds = pattern.experiences || []
+        } else if (type === 'tag_network' && metadata.patterns.patterns?.tag_network) {
+          const pattern = metadata.patterns.patterns.tag_network.patterns.find(
+            (p: any) => `${p.tag1}-${p.tag2}` === id
+          )
+          if (pattern) patternExperienceIds = pattern.experiences || []
+        } else if (type === 'cross_category' && metadata.patterns.patterns?.cross_category) {
+          const pattern = metadata.patterns.patterns.cross_category.patterns.find(
+            (p: any) => `${p.category1}-${p.category2}` === id
+          )
+          if (pattern) patternExperienceIds = pattern.experiences || []
+        }
+      } else {
+        // Filter by pattern type only (collect all experiences with this pattern type)
+        if (type === 'temporal' && metadata.patterns.patterns?.temporal) {
+          metadata.patterns.patterns.temporal.patterns.forEach((p: any) => {
+            patternExperienceIds.push(...(p.experiences || []))
+          })
+        } else if (type === 'geographic' && metadata.patterns.patterns?.geographic) {
+          metadata.patterns.patterns.geographic.patterns.forEach((p: any) => {
+            patternExperienceIds.push(...(p.experiences || []))
+          })
+        } else if (type === 'tag_network' && metadata.patterns.patterns?.tag_network) {
+          metadata.patterns.patterns.tag_network.patterns.forEach((p: any) => {
+            patternExperienceIds.push(...(p.experiences || []))
+          })
+        } else if (type === 'cross_category' && metadata.patterns.patterns?.cross_category) {
+          metadata.patterns.patterns.cross_category.patterns.forEach((p: any) => {
+            patternExperienceIds.push(...(p.experiences || []))
+          })
+        }
+      }
+
+      // Filter results to only include experiences in this pattern
+      if (patternExperienceIds.length > 0) {
+        const idSet = new Set(patternExperienceIds)
+        filtered = filtered.filter((exp) => idSet.has(exp.id))
+      }
+    }
+
+    // Apply text search filter
+    if (withinResultsQuery.trim()) {
+      const searchTerm = withinResultsQuery.toLowerCase()
+      filtered = filtered.filter((exp) => {
+        return (
+          exp.title?.toLowerCase().includes(searchTerm) ||
+          exp.story_text?.toLowerCase().includes(searchTerm) ||
+          exp.category?.toLowerCase().includes(searchTerm) ||
+          exp.location_text?.toLowerCase().includes(searchTerm) ||
+          exp.tags?.some((tag: string) => tag.toLowerCase().includes(searchTerm))
+        )
+      })
+    }
+
+    return filtered
+  }, [results, withinResultsQuery, activePatternFilter, metadata])
 
   // Sort filtered results based on selected option
   const sortedResults = useMemo(() => {
@@ -769,6 +927,15 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
         relatedSidebar={
           hasSearched && results.length > 0 ? (
             <div className="space-y-4">
+              {/* Pattern Insights Panel */}
+              {metadata?.patterns && (
+                <PatternInsightsPanel
+                  patternSummary={metadata.patterns}
+                  resultCount={results.length}
+                  onPatternClick={handlePatternClick}
+                />
+              )}
+
               {/* Related Searches */}
               {query.trim().length > 0 && (
                 <RelatedSearches
@@ -1238,6 +1405,7 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
                                 selectionMode={selectionMode}
                                 isSelected={selectedIds.has(experience.id)}
                                 onSelectionChange={handleSelectionChange}
+                                onPatternClick={handlePatternClick}
                               />
                             </motion.div>
                           ))}

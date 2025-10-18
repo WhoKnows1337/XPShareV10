@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Sparkles, MapPin, Moon, Link2, GitBranch, TrendingUp } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { SimilarityExplanationTooltip } from '@/components/search/similarity-explanation-tooltip'
 
 /**
  * Pattern Badge Types
@@ -41,6 +42,8 @@ interface PatternBadgesProps {
   patterns: PatternData
   compact?: boolean
   onClick?: (patternType: PatternType) => void
+  vectorWeight?: number
+  ftsWeight?: number
 }
 
 /**
@@ -62,7 +65,7 @@ interface PatternBadgesProps {
  * />
  * ```
  */
-export function PatternBadges({ patterns, compact = false, onClick }: PatternBadgesProps) {
+export function PatternBadges({ patterns, compact = false, onClick, vectorWeight = 0.6, ftsWeight = 0.4 }: PatternBadgesProps) {
   if (!patterns) return null
 
   const hasTemporal = patterns.temporal && patterns.temporal.length > 0
@@ -101,12 +104,12 @@ export function PatternBadges({ patterns, compact = false, onClick }: PatternBad
                 {!compact && <span className="font-medium">{temporal.count}</span>}
               </motion.button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="glass-card border-glass-border">
+            <TooltipContent side="top" className="bg-slate-900 border-purple-500/50 text-white">
               <p className="font-semibold text-purple-300">
                 <Moon className="inline h-3 w-3 mr-1" />
                 Temporal Echo
               </p>
-              <p className="text-xs text-text-tertiary">
+              <p className="text-xs text-slate-300">
                 {temporal.count} experiences during {temporal.type.replace('_', ' ')}
               </p>
             </TooltipContent>
@@ -138,12 +141,12 @@ export function PatternBadges({ patterns, compact = false, onClick }: PatternBad
                 {!compact && <span className="font-medium">{geo.count}</span>}
               </motion.button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="glass-card border-glass-border">
+            <TooltipContent side="top" className="bg-slate-900 border-emerald-500/50 text-white">
               <p className="font-semibold text-emerald-300">
                 <MapPin className="inline h-3 w-3 mr-1" />
                 Location Cluster
               </p>
-              <p className="text-xs text-text-tertiary">
+              <p className="text-xs text-slate-300">
                 {geo.count} experiences within {Math.round(geo.radius_km)}km radius
               </p>
             </TooltipContent>
@@ -177,12 +180,12 @@ export function PatternBadges({ patterns, compact = false, onClick }: PatternBad
                 )}
               </motion.button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="glass-card border-glass-border">
+            <TooltipContent side="top" className="bg-slate-900 border-amber-500/50 text-white">
               <p className="font-semibold text-amber-300">
                 <Link2 className="inline h-3 w-3 mr-1" />
                 Tag Network
               </p>
-              <p className="text-xs text-text-tertiary">
+              <p className="text-xs text-slate-300">
                 Connected through {patterns.tag_network!.length} tag relationship
                 {patterns.tag_network!.length > 1 ? 's' : ''}
               </p>
@@ -217,12 +220,12 @@ export function PatternBadges({ patterns, compact = false, onClick }: PatternBad
                 )}
               </motion.button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="glass-card border-glass-border">
+            <TooltipContent side="top" className="bg-slate-900 border-rose-500/50 text-white">
               <p className="font-semibold text-rose-300">
                 <GitBranch className="inline h-3 w-3 mr-1" />
                 Category Bridge
               </p>
-              <p className="text-xs text-text-tertiary">
+              <p className="text-xs text-slate-300">
                 Overlaps with {patterns.cross_category!.length} other categor
                 {patterns.cross_category!.length > 1 ? 'ies' : 'y'}
               </p>
@@ -233,39 +236,30 @@ export function PatternBadges({ patterns, compact = false, onClick }: PatternBad
 
       {/* 5. SIMILARITY SCORE */}
       {hasSimilarity && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`
-                  inline-flex items-center gap-1 px-2 py-1 rounded-full
-                  bg-gradient-to-r from-observatory-gold/20 to-yellow-500/20
-                  border border-observatory-gold/30
-                  text-observatory-gold
-                  ${compact ? 'text-xs' : 'text-sm'}
-                `}
-              >
-                <Sparkles className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
-                {!compact && (
-                  <span className="font-medium">
-                    {Math.round(patterns.similarity! * 100)}%
-                  </span>
-                )}
-              </motion.div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="glass-card border-glass-border">
-              <p className="font-semibold text-observatory-gold">
-                <Sparkles className="inline h-3 w-3 mr-1" />
-                Similarity Match
-              </p>
-              <p className="text-xs text-text-tertiary">
-                {Math.round(patterns.similarity! * 100)}% similar to your query
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <SimilarityExplanationTooltip
+          score={patterns.similarity!}
+          vectorWeight={vectorWeight}
+          ftsWeight={ftsWeight}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`
+              inline-flex items-center gap-1 px-2 py-1 rounded-full
+              bg-gradient-to-r from-observatory-gold/20 to-yellow-500/20
+              border border-observatory-gold/30
+              text-observatory-gold
+              ${compact ? 'text-xs' : 'text-sm'}
+            `}
+          >
+            <Sparkles className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+            {!compact && (
+              <span className="font-medium">
+                {Math.round(patterns.similarity! * 100)}%
+              </span>
+            )}
+          </motion.div>
+        </SimilarityExplanationTooltip>
       )}
     </div>
   )

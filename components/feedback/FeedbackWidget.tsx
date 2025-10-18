@@ -1,22 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { Bug, X, GripVertical, Minimize2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeedbackForm } from './FeedbackForm';
 
 // DISABLED: Excalidraw annotation temporarily disabled due to type import issues
-// const ExcalidrawAnnotationEditor = dynamic(
-//   () => import('./ExcalidrawAnnotationEditor').then((mod) => mod.ExcalidrawAnnotationEditor),
-//   { ssr: false }
-// );
 
 export function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [screenshots, setScreenshots] = useState<string[]>([]);
-  const [capturedScreenshot, setCapturedScreenshot] = useState<string | null>(null);
-  const [isAnnotating, setIsAnnotating] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Check if first time seeing feedback widget
@@ -50,10 +43,12 @@ export function FeedbackWidget() {
       // Import screenshot utility dynamically to avoid SSR issues
       const { captureScreenshot } = await import('./screenshot-utils');
 
-      // Capture the screenshot
+      // Capture the screenshot and add it directly (no annotation)
       const dataUrl = await captureScreenshot();
-      setCapturedScreenshot(dataUrl);
-      setIsAnnotating(true);
+      setScreenshots((prev) => [...prev, dataUrl]);
+
+      // Reopen panel
+      setIsOpen(true);
     } catch (error) {
       console.error('Screenshot capture failed:', error);
       // Reopen panel on error
@@ -72,10 +67,12 @@ export function FeedbackWidget() {
       // Import screenshot utility dynamically to avoid SSR issues
       const { captureAreaScreenshot } = await import('./screenshot-utils');
 
-      // Capture the selected area
+      // Capture the selected area and add it directly (no annotation)
       const dataUrl = await captureAreaScreenshot();
-      setCapturedScreenshot(dataUrl);
-      setIsAnnotating(true);
+      setScreenshots((prev) => [...prev, dataUrl]);
+
+      // Reopen panel
+      setIsOpen(true);
     } catch (error) {
       console.error('Area screenshot capture failed:', error);
       // Reopen panel on error (unless user cancelled)
@@ -88,19 +85,6 @@ export function FeedbackWidget() {
     }
   };
 
-  const handleAnnotationComplete = (annotatedDataUrl: string) => {
-    setScreenshots((prev) => [...prev, annotatedDataUrl]);
-    setCapturedScreenshot(null);
-    setIsAnnotating(false);
-    setIsOpen(true);
-  };
-
-  const handleAnnotationCancel = () => {
-    setCapturedScreenshot(null);
-    setIsAnnotating(false);
-    setIsOpen(true);
-  };
-
   const handleRemoveScreenshot = (index: number) => {
     setScreenshots((prev) => prev.filter((_, i) => i !== index));
   };
@@ -108,7 +92,7 @@ export function FeedbackWidget() {
   return (
     <>
       {/* Floating Button */}
-      {!isOpen && !isAnnotating && (
+      {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
           {/* First-time Tooltip */}
           {showTooltip && (

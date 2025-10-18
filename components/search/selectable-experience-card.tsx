@@ -11,6 +11,7 @@ interface SelectableExperienceCardProps {
   isSelected: boolean
   onSelectionChange: (id: string, selected: boolean) => void
   selectionMode: boolean
+  onPatternClick?: (patternType: string) => void
 }
 
 export function SelectableExperienceCard({
@@ -20,6 +21,7 @@ export function SelectableExperienceCard({
   isSelected,
   onSelectionChange,
   selectionMode,
+  onPatternClick,
 }: SelectableExperienceCardProps) {
   return (
     <div className="relative group">
@@ -70,6 +72,7 @@ export function SelectableExperienceCard({
           experience={experience}
           size={size}
           className={className}
+          onPatternClick={onPatternClick}
         />
       </div>
     </div>

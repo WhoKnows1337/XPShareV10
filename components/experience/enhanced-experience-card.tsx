@@ -62,12 +62,14 @@ interface EnhancedExperienceCardProps {
   }
   size?: 'default' | 'large' | 'wide'
   className?: string
+  onPatternClick?: (patternType: string) => void
 }
 
 export function EnhancedExperienceCard({
   experience,
   size = 'default',
   className,
+  onPatternClick,
 }: EnhancedExperienceCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const prefetch = usePrefetch()
@@ -207,7 +209,11 @@ export function EnhancedExperienceCard({
         {/* Pattern Badges */}
         {experience.patterns && (
           <div className="mb-3">
-            <PatternBadges patterns={experience.patterns} compact />
+            <PatternBadges
+              patterns={experience.patterns}
+              compact
+              onClick={onPatternClick}
+            />
           </div>
         )}
 
@@ -253,27 +259,6 @@ export function EnhancedExperienceCard({
             )}
         </div>
       </div>
-
-      {/* Hover Overlay (Quick Actions) */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isHovered ? 1 : 0 }}
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center gap-2 pointer-events-none"
-      >
-        <Button size="sm" variant="secondary" className="pointer-events-auto" asChild>
-          <Link href={`/experiences/${experience.id}`}>
-            <Eye className="w-4 h-4 mr-2" />
-            View
-          </Link>
-        </Button>
-        <Button size="sm" variant="secondary" className="pointer-events-auto">
-          <Heart className="w-4 h-4 mr-2" />
-          Like
-        </Button>
-        <Button size="sm" variant="secondary" className="pointer-events-auto">
-          <Share2 className="w-4 h-4" />
-        </Button>
-      </motion.div>
     </motion.article>
   )
 }
