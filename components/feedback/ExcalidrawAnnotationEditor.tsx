@@ -1,14 +1,15 @@
-// @ts-nocheck
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Excalidraw } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToBlob } from '@excalidraw/excalidraw';
+import '@excalidraw/excalidraw/index.css';
+import type { ExcalidrawImperativeAPI, ExcalidrawImageElement } from '@excalidraw/excalidraw/types/types';
 import { Button } from '@/components/ui/button';
-import { X, Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 interface ExcalidrawAnnotationEditorProps {
   screenshot: string;
-  onComplete: (annotatedDataUrl: string) => void;
+  onComplete: (annotatedImage: string) => void;
   onCancel: () => void;
 }
 
@@ -17,145 +18,256 @@ export function ExcalidrawAnnotationEditor({
   onComplete,
   onCancel,
 }: ExcalidrawAnnotationEditorProps) {
-  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
+  const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
 
   useEffect(() => {
-    // Load screenshot as background image
     const loadScreenshot = async () => {
       try {
-        const response = await fetch(screenshot);
-        const blob = await response.blob();
-        const file = new File([blob], 'screenshot.png', { type: 'image/png' });
-
-        // Create initial data with screenshot as background
+        // Load the screenshot as background image
         const img = new Image();
         img.src = screenshot;
 
-        img.onload = () => {
-          setInitialData({
-            elements: [],
-            appState: {
-              viewBackgroundColor: '#ffffff',
-            },
-            scrollToContent: true,
-            files: {},
-          });
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
 
-          // Add image as element after Excalidraw loads
-          setTimeout(() => {
-            if (excalidrawAPI) {
-              excalidrawAPI.addFiles([{
-                id: 'screenshot-bg',
-                dataURL: screenshot,
-                mimeType: 'image/png',
-                created: Date.now(),
-              }]);
+        const width = img.width;
+        const height = img.height;
 
-              const imageElement = {
-                type: 'image',
-                version: 1,
-                versionNonce: Math.floor(Math.random() * 1000000),
-                isDeleted: false,
-                id: 'screenshot-image',
-                fillStyle: 'solid',
-                strokeWidth: 0,
-                strokeStyle: 'solid',
-                roughness: 0,
-                opacity: 100,
-                angle: 0,
-                x: 0,
-                y: 0,
-                strokeColor: 'transparent',
-                backgroundColor: 'transparent',
-                width: img.width,
-                height: img.height,
-                seed: Math.floor(Math.random() * 1000000),
-                groupIds: [],
-                frameId: null,
-                roundness: null,
-                boundElements: [],
-                updated: Date.now(),
-                link: null,
-                locked: true,
-                fileId: 'screenshot-bg',
-                scale: [1, 1],
-                status: 'saved',
-              };
+        // Generate unique file ID
+        const fileId = `file-${Date.now()}`;
 
-              excalidrawAPI.updateScene({
-                elements: [imageElement],
-              });
-            }
-          }, 100);
+        // Create image element for Excalidraw
+        const imageElement: ExcalidrawImageElement = {
+          type: 'image',
+          id: `screenshot-${Date.now()}`,
+          x: 0,
+          y: 0,
+          width: width,
+          height: height,
+          angle: 0,
+          strokeColor: 'transparent',
+          backgroundColor: 'transparent',
+          fillStyle: 'solid',
+          strokeWidth: 0,
+          strokeStyle: 'solid',
+          roughness: 0,
+          opacity: 100,
+          groupIds: [],
+          frameId: null,
+          roundness: null,
+          seed: Math.floor(Math.random() * 100000),
+          version: 1,
+          versionNonce: Math.floor(Math.random() * 100000),
+          isDeleted: false,
+          boundElements: null,
+          updated: Date.now(),
+          link: null,
+          locked: true, // Lock the background image
+          fileId: fileId as any,
+          status: 'saved',
+          scale: [1, 1],
         };
+
+        // Set initialData with both elements and files
+        setInitialData({
+          elements: [imageElement],
+          files: {
+            [fileId]: {
+              mimeType: 'image/png',
+              id: fileId,
+              dataURL: screenshot,
+              created: Date.now(),
+            },
+          },
+          appState: {
+            viewBackgroundColor: '#ffffff',
+            selectedElementIds: {}, // Prevent background image from being selected
+            currentItemStrokeColor: '#ef4444', // Default red color for annotations
+            activeTool: { type: 'freedraw', locked: false }, // Default to pen tool
+            currentItemStrokeWidth: 1, // Thin stroke
+            currentItemFontFamily: 2, // Normal font (Helvetica)
+          },
+          scrollToContent: true,
+        });
       } catch (error) {
-        console.error('Failed to load screenshot:', error);
+        console.error('Error loading screenshot:', error);
       }
     };
 
-    if (screenshot && excalidrawAPI) {
-      loadScreenshot();
-    }
-  }, [screenshot, excalidrawAPI]);
+    loadScreenshot();
+  }, [screenshot]);
 
-  const handleSave = async () => {
+  const handleComplete = async () => {
     if (!excalidrawAPI) return;
 
+    setIsExporting(true);
     try {
-      // Export as PNG with all annotations
-      const blob = await excalidrawAPI.exportToBlob({
-        mimeType: 'image/png',
-        quality: 0.95,
-        exportPadding: 0,
+      const elements = excalidrawAPI.getSceneElements();
+      const files = excalidrawAPI.getFiles();
+      const appState = excalidrawAPI.getAppState();
+
+      // Export to blob - let Excalidraw calculate dimensions automatically
+      const blob = await exportToBlob({
+        elements,
+        files,
+        appState: {
+          ...appState,
+          exportBackground: true,
+          exportWithDarkMode: false,
+        },
       });
 
-      // Convert blob to data URL
+      // Convert blob to base64
       const reader = new FileReader();
       reader.onloadend = () => {
-        onComplete(reader.result as string);
+        const base64data = reader.result as string;
+        onComplete(base64data);
       };
       reader.readAsDataURL(blob);
     } catch (error) {
-      console.error('Failed to export annotation:', error);
+      console.error('Export error:', error);
+      alert('Failed to export annotated image');
+    } finally {
+      setIsExporting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-        <div>
-          <h2 className="text-lg font-semibold">Annotate Screenshot</h2>
-          <p className="text-sm text-muted-foreground">
-            Draw arrows, add text, or highlight areas
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel}>
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>
-            <Check className="h-4 w-4 mr-2" />
-            Save Annotation
-          </Button>
-        </div>
+    <div className="relative w-full h-screen bg-background">
+      {/* Hide Excalidraw UI elements */}
+      <style>{`
+        /* Hide library button - VERY AGGRESSIVE */
+        .ToolIcon__library,
+        button.ToolIcon__library,
+        label.ToolIcon__library,
+        [data-testid="library-icon"],
+        [aria-label*="Library"],
+        [title*="Library"] {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+
+        /* Hide hamburger menu - all possible selectors */
+        button[aria-label*="Menu"],
+        button[title*="Menu"],
+        .default-menu-trigger,
+        .dropdown-menu-button,
+        button.dropdown-menu-button,
+        .App-menu__left button:first-child,
+        .App-menu .Island:first-child button:first-child {
+          display: none !important;
+        }
+
+        /* Hide help/question mark icon */
+        button[aria-label*="Help"],
+        button[title*="Help"],
+        .HelpButton {
+          display: none !important;
+        }
+
+        /* Hide image insert button */
+        button[aria-label*="Image"],
+        button[title*="Image"],
+        .ToolIcon_type_button[aria-label*="Image"] {
+          display: none !important;
+        }
+
+        /* Hide more tools button */
+        button[aria-label*="More tools"],
+        button[title*="More tools"],
+        .ToolIcon__more {
+          display: none !important;
+        }
+
+        /* Hide Opacity section in properties panel */
+        .properties-content > label:has(.opacity-input),
+        .properties-content > div:has(.opacity-input),
+        .opacity-slider-container {
+          display: none !important;
+        }
+
+        /* Hide Layers section in properties panel */
+        .properties-content .buttonList.buttonList-stackHorizontal:has(button[aria-label*="Send to back"]),
+        .properties-content .buttonList.buttonList-stackHorizontal:has(button[aria-label*="Send backward"]) {
+          display: none !important;
+        }
+
+        /* Hide "Keep selected tool active" / Lock button */
+        button[aria-label*="Lock tool"],
+        button[title*="Lock tool"],
+        button[aria-label*="Keep selected"],
+        .ToolIcon__lock {
+          display: none !important;
+        }
+
+        /* Hide Hand/Panning tool */
+        button[aria-label*="Hand"],
+        button[title*="Hand"],
+        button[data-testid*="hand"],
+        .ToolIcon_type_button[aria-label*="Hand"] {
+          display: none !important;
+        }
+
+        /* Hide any remaining buttons that might be behind "Done" */
+        .App-toolbar__extra-tools-trigger,
+        button.App-toolbar__extra-tools-trigger {
+          display: none !important;
+        }
+      `}</style>
+
+      {/* Action Buttons - Fixed Top Right */}
+      <div className="absolute top-4 right-4 z-[100] flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onCancel}
+          disabled={isExporting}
+        >
+          <X className="mr-2 h-4 w-4" />
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleComplete}
+          disabled={isExporting}
+        >
+          <Check className="mr-2 h-4 w-4" />
+          {isExporting ? 'Exporting...' : 'Done'}
+        </Button>
       </div>
 
-      {/* Excalidraw Canvas */}
-      <div className="flex-1 relative">
-        <Excalidraw
-          excalidrawAPI={(api: any) => setExcalidrawAPI(api)}
-          initialData={initialData}
-          UIOptions={{
-            canvasActions: {
-              loadScene: false,
-              export: false,
-              saveToActiveFile: false,
-            },
-          }}
-        />
+      {/* Excalidraw Editor */}
+      <div className="w-full h-full">
+        {initialData && (
+          <Excalidraw
+            excalidrawAPI={(api) => setExcalidrawAPI(api)}
+            initialData={initialData}
+            viewModeEnabled={false}
+            zenModeEnabled={false}
+            gridModeEnabled={false}
+            theme="light"
+            UIOptions={{
+              canvasActions: {
+                loadScene: false,
+                saveToActiveFile: false,
+                export: false,
+                saveAsImage: false,
+              },
+              welcomeScreen: false,
+              tools: {
+                image: false,
+              },
+            }}
+          />
+        )}
       </div>
     </div>
   );

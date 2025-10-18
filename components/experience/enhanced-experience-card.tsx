@@ -20,7 +20,7 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { usePrefetch } from '@/hooks/use-prefetch'
 import { getShimmerDataURL } from '@/lib/image-blur'
 import { PatternBadges, type PatternData } from '@/components/search/pattern-badges'
@@ -65,7 +65,7 @@ interface EnhancedExperienceCardProps {
   onPatternClick?: (patternType: string) => void
 }
 
-export function EnhancedExperienceCard({
+export const EnhancedExperienceCard = memo(function EnhancedExperienceCard({
   experience,
   size = 'default',
   className,
@@ -261,4 +261,4 @@ export function EnhancedExperienceCard({
       </div>
     </motion.article>
   )
-}
+})
