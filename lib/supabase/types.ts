@@ -1046,6 +1046,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          feedback_id: string
+          id: string
+          is_internal: boolean | null
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          feedback_id: string
+          id?: string
+          is_internal?: boolean | null
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          feedback_id?: string
+          id?: string
+          is_internal?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       question_analytics_summary: {
