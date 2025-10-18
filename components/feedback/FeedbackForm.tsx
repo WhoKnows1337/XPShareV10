@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -33,7 +33,7 @@ const feedbackSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
 });
 
-type FeedbackFormData = z.infer<typeof feedbackSchema>;
+export type FeedbackFormData = z.infer<typeof feedbackSchema>;
 
 interface FeedbackFormProps {
   onSuccess: () => void;
@@ -41,6 +41,8 @@ interface FeedbackFormProps {
   onStartAreaScreenshot: () => void;
   screenshots: string[];
   onRemoveScreenshot: (index: number) => void;
+  formData: FeedbackFormData;
+  onFormDataChange: (data: FeedbackFormData) => void;
 }
 
 export function FeedbackForm({
@@ -49,20 +51,24 @@ export function FeedbackForm({
   onStartAreaScreenshot,
   screenshots,
   onRemoveScreenshot,
+  formData,
+  onFormDataChange,
 }: FeedbackFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
   const form = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
-    defaultValues: {
-      type: 'general',
-      title: '',
-      name: '',
-      email: '',
-      description: '',
-    },
+    values: formData, // Use values instead of defaultValues for controlled state
   });
+
+  // Watch form changes and propagate to parent
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      onFormDataChange(value as FeedbackFormData);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, onFormDataChange]);
 
   const handleScreenshot = () => {
     setIsCapturing(true);
@@ -108,8 +114,8 @@ export function FeedbackForm({
       if (!response.ok) throw new Error('Failed to submit feedback');
 
       toast.success('Feedback submitted successfully!');
-      form.reset();
-      onSuccess(); // This will also clear screenshots in parent
+      // Don't call form.reset() here - parent will reset formData via onSuccess
+      onSuccess(); // This will also clear screenshots and reset formData in parent
     } catch (error) {
       console.error('Feedback submission error:', error);
       toast.error('Failed to submit feedback');

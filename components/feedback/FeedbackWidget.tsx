@@ -2,9 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Bug, X, GripVertical, Minimize2, Info } from 'lucide-react';
+import { Bug, X, GripVertical, ChevronDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeedbackForm } from './FeedbackForm';
+
+// Type for form data persistence
+export type FeedbackFormData = {
+  type: 'bug' | 'feature' | 'general';
+  title: string;
+  name?: string;
+  email?: string;
+  description: string;
+};
 
 // Dynamic import to avoid SSR issues with Excalidraw
 const ExcalidrawAnnotationEditor = dynamic(
@@ -18,6 +27,14 @@ export function FeedbackWidget() {
   const [capturedScreenshot, setCapturedScreenshot] = useState<string | null>(null);
   const [isAnnotating, setIsAnnotating] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  // Persist form state when panel is hidden for screenshot
+  const [formData, setFormData] = useState<FeedbackFormData>({
+    type: 'general',
+    title: '',
+    name: '',
+    email: '',
+    description: '',
+  });
 
   // Check if first time seeing feedback widget
   useEffect(() => {
@@ -161,7 +178,7 @@ export function FeedbackWidget() {
                 className="h-8 w-8"
                 title="Minimize"
               >
-                <Minimize2 className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -184,11 +201,21 @@ export function FeedbackWidget() {
               onSuccess={() => {
                 setIsOpen(false);
                 setScreenshots([]);
+                // Reset form data
+                setFormData({
+                  type: 'general',
+                  title: '',
+                  name: '',
+                  email: '',
+                  description: '',
+                });
               }}
               onStartScreenshot={handleStartScreenshot}
               onStartAreaScreenshot={handleStartAreaScreenshot}
               screenshots={screenshots}
               onRemoveScreenshot={handleRemoveScreenshot}
+              formData={formData}
+              onFormDataChange={setFormData}
             />
           </div>
         </div>

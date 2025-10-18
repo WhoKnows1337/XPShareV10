@@ -20,6 +20,7 @@ export function ExcalidrawAnnotationEditor({
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [initialData, setInitialData] = useState<any>(null);
+  const [showHelp, setShowHelp] = useState(true);
 
   useEffect(() => {
     const loadScreenshot = async () => {
@@ -137,6 +138,32 @@ export function ExcalidrawAnnotationEditor({
 
   return (
     <div className="relative w-full h-screen bg-background">
+      {/* Help Popover - Centered Top, Dismissible */}
+      {showHelp && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] max-w-lg animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-card/95 backdrop-blur-sm border-2 border-border rounded-lg shadow-2xl p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl flex-shrink-0">✏️</span>
+              <div className="flex-1 space-y-2">
+                <h3 className="font-semibold text-base">Annotate Your Screenshot</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Draw, add arrows, or write notes to highlight issues or features. Your annotations help us understand exactly what you mean!
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 flex-shrink-0 -mt-1 -mr-1"
+                onClick={() => setShowHelp(false)}
+                title="Close help"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hide Excalidraw UI elements */}
       <style>{`
         /* Hide library button - VERY AGGRESSIVE */

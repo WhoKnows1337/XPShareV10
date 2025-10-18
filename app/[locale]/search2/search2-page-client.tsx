@@ -87,6 +87,7 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
 
   // Core search state
   const [query, setQuery] = useState(initialQuery || searchParams.get('q') || '')
+  const [submittedQuery, setSubmittedQuery] = useState(initialQuery || searchParams.get('q') || '')  // For Ask mode - only updates on submit
   const [askMode, setAskMode] = useState(searchParams.get('mode') === 'ask')
   const [viewMode, setViewMode] = useState<'grid' | 'table' | 'constellation' | 'graph3d' | 'heatmap'>(
     (searchParams.get('view') as any) || 'grid'
@@ -400,6 +401,7 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
   // Handle search button click
   const handleSearch = (searchQuery: string) => {
     setQuery(searchQuery)
+    setSubmittedQuery(searchQuery)  // Update submitted query for Ask mode
     updateURL({ q: searchQuery })
     if (!askMode) {
       performSearch(searchQuery)
@@ -998,8 +1000,7 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
           askMode ? (
             // ASK MODE - Always render AskAI component
             <AskAI
-              initialQuestion={query}
-              onQuestionChange={setQuery}
+              initialQuestion={submittedQuery}
               hideInput={true}
               filters={{
                 category: filters.categories && filters.categories.length > 0 ? filters.categories[0] : undefined,
