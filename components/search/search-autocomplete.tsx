@@ -239,7 +239,6 @@ export function SearchAutocomplete({
           aria-label="Search input"
           aria-autocomplete="list"
           aria-controls="search-suggestions"
-          aria-expanded={showDropdown}
           aria-activedescendant={
             selectedIndex >= 0 ? `suggestion-${selectedIndex}` : undefined
           }

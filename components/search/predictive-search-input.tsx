@@ -288,7 +288,6 @@ export function PredictiveSearchInput({
           aria-label="Search input"
           aria-autocomplete="list"
           aria-controls="search-suggestions"
-          aria-expanded={showDropdown}
         />
         {query && (
           <button
