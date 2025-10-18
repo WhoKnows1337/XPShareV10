@@ -84,7 +84,7 @@ export function SearchAutocomplete({
     setIsLoading(true)
 
     try {
-      const response = await fetch(\`/api/search/autocomplete?q=\${encodeURIComponent(query)}\`)
+      const response = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(query)}`)
 
       if (!response.ok) {
         throw new Error('Failed to fetch suggestions')
@@ -97,7 +97,7 @@ export function SearchAutocomplete({
       // Announce to screen readers
       setAnnouncementText(
         data.suggestions?.length > 0
-          ? \`\${data.suggestions.length} suggestions found\`
+          ? `${data.suggestions.length} suggestions found`
           : 'No suggestions found'
       )
     } catch (error) {
@@ -182,7 +182,7 @@ export function SearchAutocomplete({
   useEffect(() => {
     if (selectedIndex >= 0 && dropdownRef.current) {
       const selectedElement = dropdownRef.current.querySelector(
-        \`[data-suggestion-index="\${selectedIndex}"]\`
+        `[data-suggestion-index="${selectedIndex}"]`
       )
       selectedElement?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }
@@ -192,7 +192,7 @@ export function SearchAutocomplete({
   const highlightMatch = (text: string, query: string) => {
     if (!query.trim()) return text
 
-    const regex = new RegExp(\`(\${query})\`, 'gi')
+    const regex = new RegExp(`(${query})`, 'gi')
     const parts = text.split(regex)
 
     return (
@@ -241,7 +241,7 @@ export function SearchAutocomplete({
           aria-controls="search-suggestions"
           aria-expanded={showDropdown}
           aria-activedescendant={
-            selectedIndex >= 0 ? \`suggestion-\${selectedIndex}\` : undefined
+            selectedIndex >= 0 ? `suggestion-${selectedIndex}` : undefined
           }
         />
 
@@ -277,7 +277,7 @@ export function SearchAutocomplete({
               return (
                 <motion.button
                   key={suggestion.id}
-                  id={\`suggestion-\${index}\`}
+                  id={`suggestion-${index}`}
                   data-suggestion-index={index}
                   role="option"
                   aria-selected={selectedIndex === index}

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, Telescope, LucideIcon, CheckCircle, Circle, Loader2, Zap } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export interface ProgressStep {
   id: string;
@@ -28,14 +29,19 @@ const iconMap: Record<string, LucideIcon> = {
 
 export function LoadingState({
   icon = 'sparkles',
-  title = 'Verarbeite...',
-  description = 'Einen Moment bitte',
+  title,
+  description,
   showProgress = false,
   progress = 0,
   steps,
   hideCounter = false,
 }: LoadingStateProps) {
+  const t = useTranslations('submit.shared.loading');
   const Icon = iconMap[icon];
+
+  // Use translations as fallback for title and description
+  const finalTitle = title || t('processing');
+  const finalDescription = description || t('wait');
 
   return (
     <div className="flex flex-col items-center justify-center gap-6 py-12">
@@ -127,7 +133,7 @@ export function LoadingState({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          {title}
+          {finalTitle}
         </motion.h2>
         <motion.p
           className="text-xs text-text-secondary"
@@ -135,7 +141,7 @@ export function LoadingState({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          {description}
+          {finalDescription}
         </motion.p>
       </div>
 
@@ -316,6 +322,7 @@ function GlobalProgressBar({ steps }: { steps: ProgressStep[] }) {
  * Step Counter with Remaining Time Display (Feature 4)
  */
 function StepCounter({ steps }: { steps: ProgressStep[] }) {
+  const t = useTranslations('submit.shared.loading');
   const currentStepIndex = steps.findIndex(s => s.status === 'active');
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : steps.length;
   const totalSteps = steps.length;
@@ -333,13 +340,13 @@ function StepCounter({ steps }: { steps: ProgressStep[] }) {
       transition={{ delay: 0.5 }}
     >
       <span>
-        Schritt {currentStep} von {totalSteps}
+        {t('step', { current: currentStep, total: totalSteps })}
       </span>
       {remainingTime > 0 && (
         <>
           <span>•</span>
           <span className="text-observatory-gold">
-            ~{remainingTime}s verbleibend
+            {t('timeRemaining', { time: remainingTime })}
           </span>
         </>
       )}

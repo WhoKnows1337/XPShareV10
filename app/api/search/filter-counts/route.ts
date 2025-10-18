@@ -37,13 +37,13 @@ export async function GET(request: NextRequest) {
     // Base query - only public experiences
     let baseQuery = supabase
       .from('experiences')
-      .select('category, location, tags, witness_count, date_occurred', { count: 'exact' })
+      .select('category, location_text, tags, question_answers, date_occurred', { count: 'exact' })
       .eq('visibility', 'public')
 
     // If there's a search query, filter results
     if (currentQuery) {
       baseQuery = baseQuery.or(
-        \`title.ilike.%\${currentQuery}%,description.ilike.%\${currentQuery}%,location.ilike.%\${currentQuery}%\`
+        `title.ilike.%${currentQuery}%,story_text.ilike.%${currentQuery}%,location_text.ilike.%${currentQuery}%`
       )
     }
 
@@ -79,9 +79,9 @@ export async function GET(request: NextRequest) {
 
     // Calculate location counts (top 20)
     const locationCounts = experiences
-      .filter(exp => exp.location)
+      .filter(exp => exp.location_text)
       .reduce((acc, exp) => {
-        const loc = exp.location!
+        const loc = exp.location_text!
         acc[loc] = (acc[loc] || 0) + 1
         return acc
       }, {} as Record<string, number>)
@@ -104,10 +104,16 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 30)
 
-    // Calculate witness ranges
+    // Calculate witness ranges (from question_answers JSONB)
     const witnessRanges = {
-      noWitnesses: experiences.filter(exp => !exp.witness_count || exp.witness_count === 0).length,
-      hasWitnesses: experiences.filter(exp => exp.witness_count && exp.witness_count > 0).length,
+      noWitnesses: experiences.filter(exp => {
+        const witnesses = exp.question_answers?.witnesses || exp.question_answers?.witness_count
+        return !witnesses || witnesses === 0 || witnesses === '0' || witnesses === 'none'
+      }).length,
+      hasWitnesses: experiences.filter(exp => {
+        const witnesses = exp.question_answers?.witnesses || exp.question_answers?.witness_count
+        return witnesses && witnesses !== 0 && witnesses !== '0' && witnesses !== 'none'
+      }).length,
     }
 
     // Calculate date ranges

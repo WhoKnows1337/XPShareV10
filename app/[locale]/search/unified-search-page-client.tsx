@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { ThreeColumnLayout } from '@/components/layout/three-column-layout'
+import { AdaptiveSearchLayout } from '@/components/search/adaptive-search-layout'
 import { UnifiedSearchBar } from '@/components/search/unified-search-bar'
+import { CompactSearchHeader } from '@/components/search/compact-search-header'
+import { PersistentFiltersSidebar } from '@/components/search/persistent-filters-sidebar'
 import { CollapsibleFilters } from '@/components/search/collapsible-filters'
 import { FilterChips, type ActiveFilter } from '@/components/search/filter-chips'
 import { AnimatedResultsCount } from '@/components/search/animated-results-count'
@@ -12,8 +14,9 @@ import { SearchHistoryDropdown } from '@/components/search/search-history-dropdo
 import { BulkActionBar } from '@/components/search/bulk-action-bar'
 import { SelectableExperienceCard } from '@/components/search/selectable-experience-card'
 import { AskAI } from '@/components/search/ask-ai'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { BentoGrid } from '@/components/ui/bento-grid'
 import {
   Tooltip,
@@ -61,10 +64,15 @@ import {
   Bookmark,
   ChevronDown,
   Loader2,
+  Globe,
+  User,
+  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { loadFilters, saveFilters, clearSavedFilters, mergeFilters } from '@/lib/utils/filter-persistence'
+import { useTranslations } from 'next-intl'
 
 interface UnifiedSearchPageClientProps {
   initialQuery?: string
@@ -74,12 +82,16 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
+  const t = useTranslations('search')
 
   // Core search state
   const [query, setQuery] = useState(initialQuery || searchParams.get('q') || '')
   const [askMode, setAskMode] = useState(searchParams.get('mode') === 'ask')
   const [viewMode, setViewMode] = useState<'grid' | 'table' | 'constellation' | 'graph3d' | 'heatmap'>(
     (searchParams.get('view') as any) || 'grid'
+  )
+  const [searchScope, setSearchScope] = useState<'all' | 'my' | 'following'>(
+    (searchParams.get('scope') as any) || 'all'
   )
 
   // Results state
@@ -88,15 +100,18 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(!!initialQuery || !!searchParams.get('q'))
 
-  // Filters state
+  // Filters state - Initially load from URL params only
   const [filters, setFilters] = useState({
-    category: searchParams.get('category') || '',
-    tags: searchParams.get('tags') || '',
+    categories: searchParams.get('categories')?.split(',').filter(Boolean) || [],
+    tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
     location: searchParams.get('location') || '',
     dateFrom: searchParams.get('dateFrom') || '',
     dateTo: searchParams.get('dateTo') || '',
     witnessesOnly: searchParams.get('witnessesOnly') === 'true',
   })
+
+  // Search-within-results state
+  const [withinResultsQuery, setWithinResultsQuery] = useState('')
 
   // Bulk selection state
   const [selectionMode, setSelectionMode] = useState(false)
@@ -115,38 +130,85 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
   const [displayedCount, setDisplayedCount] = useState(12) // Initial: show 12 results
   const itemsPerPage = 12
 
+  // Load saved filters on mount and merge with URL params
+  useEffect(() => {
+    const savedFilters = loadFilters()
+    const urlFilters = {
+      categories: searchParams.get('categories')?.split(',').filter(Boolean) || [],
+      tags: searchParams.get('tags')?.split(',').filter(Boolean) || [],
+      location: searchParams.get('location') || '',
+      dateFrom: searchParams.get('dateFrom') || '',
+      dateTo: searchParams.get('dateTo') || '',
+      witnessesOnly: searchParams.get('witnessesOnly') === 'true',
+    }
+
+    // Merge URL params (priority) with saved filters
+    const merged = mergeFilters(urlFilters, savedFilters)
+
+    // Only update if there are saved filters to merge
+    const hasUrlFilters = Object.values(urlFilters).some(v =>
+      v === true || (Array.isArray(v) ? v.length > 0 : (v && v !== ''))
+    )
+    const hasSavedFilters = Object.values(savedFilters).some(v =>
+      v === true || (Array.isArray(v) ? v.length > 0 : (v && v !== ''))
+    )
+
+    if (!hasUrlFilters && hasSavedFilters) {
+      setFilters({
+        categories: merged.categories || [],
+        tags: merged.tags || [],
+        location: merged.location || '',
+        dateFrom: merged.dateFrom || '',
+        dateTo: merged.dateTo || '',
+        witnessesOnly: merged.witnessesOnly || false,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    // Only save if at least one filter is active
+    const hasActiveFilters = Object.values(filters).some(v =>
+      v === true || (Array.isArray(v) ? v.length > 0 : (v && v !== ''))
+    )
+    if (hasActiveFilters) {
+      saveFilters(filters)
+    }
+  }, [filters])
+
   // Calculate applied filters count
   const appliedFiltersCount =
-    (filters.category ? 1 : 0) +
-    (filters.tags ? 1 : 0) +
+    (filters.categories && filters.categories.length > 0 ? 1 : 0) +
+    (filters.tags && filters.tags.length > 0 ? 1 : 0) +
     (filters.location ? 1 : 0) +
     (filters.dateFrom || filters.dateTo ? 1 : 0) +
     (filters.witnessesOnly ? 1 : 0)
 
   // Build active filters array for FilterChips
   const activeFilters: ActiveFilter[] = []
-  if (filters.category) {
+  if (filters.categories && filters.categories.length > 0) {
     activeFilters.push({
-      key: 'category',
+      key: 'categories',
       type: 'category',
-      label: 'Category',
-      value: filters.category,
+      label: t('activeFilters.categories'),
+      value: filters.categories.join(', '),
     })
   }
   if (filters.location) {
     activeFilters.push({
       key: 'location',
       type: 'location',
-      label: 'Location',
+      label: t('activeFilters.location'),
       value: filters.location,
     })
   }
-  if (filters.tags) {
+  if (filters.tags && filters.tags.length > 0) {
     activeFilters.push({
       key: 'tags',
       type: 'tags',
-      label: 'Tags',
-      value: filters.tags,
+      label: t('activeFilters.tags'),
+      value: filters.tags.join(', '),
     })
   }
   if (filters.dateFrom || filters.dateTo) {
@@ -156,7 +218,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
     activeFilters.push({
       key: 'dateRange',
       type: 'dateRange',
-      label: 'Date',
+      label: t('activeFilters.date'),
       value: dateValue,
     })
   }
@@ -164,8 +226,8 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
     activeFilters.push({
       key: 'witnesses',
       type: 'witnesses',
-      label: 'Witnesses',
-      value: 'Has witnesses',
+      label: t('activeFilters.witnesses'),
+      value: t('activeFilters.hasWitnesses'),
     })
   }
 
@@ -175,62 +237,74 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
       q?: string
       mode?: string
       view?: string
-      category?: string
-      tags?: string
+      scope?: string
+      categories?: string[]
+      tags?: string[]
       location?: string
       dateFrom?: string
       dateTo?: string
       witnessesOnly?: boolean
     }) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const currentParams = new URLSearchParams(window.location.search)
 
       if (updates.q !== undefined) {
-        if (updates.q) params.set('q', updates.q)
-        else params.delete('q')
+        if (updates.q) currentParams.set('q', updates.q)
+        else currentParams.delete('q')
       }
 
       if (updates.mode !== undefined) {
-        if (updates.mode) params.set('mode', updates.mode)
-        else params.delete('mode')
+        if (updates.mode) currentParams.set('mode', updates.mode)
+        else currentParams.delete('mode')
       }
 
       if (updates.view !== undefined) {
-        params.set('view', updates.view)
+        currentParams.set('view', updates.view)
       }
 
-      if (updates.category !== undefined) {
-        if (updates.category) params.set('category', updates.category)
-        else params.delete('category')
+      if (updates.scope !== undefined) {
+        if (updates.scope && updates.scope !== 'all') currentParams.set('scope', updates.scope)
+        else currentParams.delete('scope')
+      }
+
+      if (updates.categories !== undefined) {
+        if (updates.categories && updates.categories.length > 0) {
+          currentParams.set('categories', updates.categories.join(','))
+        } else {
+          currentParams.delete('categories')
+        }
       }
 
       if (updates.tags !== undefined) {
-        if (updates.tags) params.set('tags', updates.tags)
-        else params.delete('tags')
+        if (updates.tags && updates.tags.length > 0) {
+          currentParams.set('tags', updates.tags.join(','))
+        } else {
+          currentParams.delete('tags')
+        }
       }
 
       if (updates.location !== undefined) {
-        if (updates.location) params.set('location', updates.location)
-        else params.delete('location')
+        if (updates.location) currentParams.set('location', updates.location)
+        else currentParams.delete('location')
       }
 
       if (updates.dateFrom !== undefined) {
-        if (updates.dateFrom) params.set('dateFrom', updates.dateFrom)
-        else params.delete('dateFrom')
+        if (updates.dateFrom) currentParams.set('dateFrom', updates.dateFrom)
+        else currentParams.delete('dateFrom')
       }
 
       if (updates.dateTo !== undefined) {
-        if (updates.dateTo) params.set('dateTo', updates.dateTo)
-        else params.delete('dateTo')
+        if (updates.dateTo) currentParams.set('dateTo', updates.dateTo)
+        else currentParams.delete('dateTo')
       }
 
       if (updates.witnessesOnly !== undefined) {
-        if (updates.witnessesOnly) params.set('witnessesOnly', 'true')
-        else params.delete('witnessesOnly')
+        if (updates.witnessesOnly) currentParams.set('witnessesOnly', 'true')
+        else currentParams.delete('witnessesOnly')
       }
 
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      router.replace(`${pathname}?${currentParams.toString()}`, { scroll: false })
     },
-    [router, pathname, searchParams]
+    [router, pathname]
   )
 
   // Execute unified search
@@ -244,6 +318,8 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
 
       setIsLoading(true)
       setHasSearched(true)
+      // Clear within-results filter when performing new search
+      setWithinResultsQuery('')
 
       try {
         // Build query params
@@ -251,12 +327,17 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
           q: searchQuery,
         })
 
-        if (filters.category) params.set('category', filters.category)
-        if (filters.tags) params.set('tags', filters.tags)
+        if (filters.categories && filters.categories.length > 0) {
+          params.set('categories', filters.categories.join(','))
+        }
+        if (filters.tags && filters.tags.length > 0) {
+          params.set('tags', filters.tags.join(','))
+        }
         if (filters.location) params.set('location', filters.location)
         if (filters.dateFrom) params.set('dateFrom', filters.dateFrom)
         if (filters.dateTo) params.set('dateTo', filters.dateTo)
         if (filters.witnessesOnly) params.set('witnessesOnly', 'true')
+        if (searchScope && searchScope !== 'all') params.set('scope', searchScope)
 
         // Call unified search API
         const response = await fetch(`/api/search/unified?${params.toString()}`)
@@ -277,7 +358,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
         setIsLoading(false)
       }
     },
-    [filters]
+    [filters, searchScope]
   )
 
   // Handle search button click
@@ -317,9 +398,9 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
   const handleRemoveFilter = (key: string) => {
     const newFilters = { ...filters }
 
-    if (key === 'category') newFilters.category = ''
+    if (key === 'categories') newFilters.categories = []
     else if (key === 'location') newFilters.location = ''
-    else if (key === 'tags') newFilters.tags = ''
+    else if (key === 'tags') newFilters.tags = []
     else if (key === 'dateRange') {
       newFilters.dateFrom = ''
       newFilters.dateTo = ''
@@ -332,13 +413,14 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
   // Handle clearing all filters
   const handleClearAllFilters = () => {
     const clearedFilters = {
-      category: '',
-      tags: '',
+      categories: [],
+      tags: [],
       location: '',
       dateFrom: '',
       dateTo: '',
       witnessesOnly: false,
     }
+    clearSavedFilters() // Also clear saved filters from localStorage
     handleFiltersChange(clearedFilters)
   }
 
@@ -357,11 +439,30 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
     }
   }
 
-  // Sort results based on selected option
-  const sortedResults = useMemo(() => {
-    if (!results || results.length === 0) return results
+  // Filter results based on within-results query (client-side)
+  const filteredResults = useMemo(() => {
+    if (!withinResultsQuery.trim()) {
+      return results
+    }
 
-    const sorted = [...results]
+    const searchTerm = withinResultsQuery.toLowerCase()
+
+    return results.filter((exp) => {
+      return (
+        exp.title?.toLowerCase().includes(searchTerm) ||
+        exp.story_text?.toLowerCase().includes(searchTerm) ||
+        exp.category?.toLowerCase().includes(searchTerm) ||
+        exp.location_text?.toLowerCase().includes(searchTerm) ||
+        exp.tags?.some((tag: string) => tag.toLowerCase().includes(searchTerm))
+      )
+    })
+  }, [results, withinResultsQuery])
+
+  // Sort filtered results based on selected option
+  const sortedResults = useMemo(() => {
+    if (!filteredResults || filteredResults.length === 0) return filteredResults
+
+    const sorted = [...filteredResults]
 
     switch (sortBy) {
       case 'date_desc':
@@ -386,7 +487,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
       default:
         return sorted // Keep original order (already sorted by relevance from API)
     }
-  }, [results, sortBy])
+  }, [filteredResults, sortBy])
 
   // Paginate sorted results (frontend pagination)
   const displayedResults = useMemo(() => {
@@ -466,13 +567,13 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
     const url = window.location.href
     if (navigator.share) {
       navigator.share({
-        title: `${selectedIds.size} Experiences from XP-Share`,
-        text: `Check out these ${selectedIds.size} experiences I found`,
+        title: t('selection.share', { count: selectedIds.size }),
+        text: t('selection.shareText', { count: selectedIds.size }),
         url,
       })
     } else {
       navigator.clipboard.writeText(url)
-      alert('Search URL copied to clipboard!')
+      alert(t('selection.urlCopied'))
     }
   }
 
@@ -535,9 +636,9 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
       <Sheet open={showSavedSearches} onOpenChange={setShowSavedSearches}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Saved Searches</SheetTitle>
+            <SheetTitle>{t('sidebar.savedSearches')}</SheetTitle>
             <SheetDescription>
-              Manage your saved searches and set up alerts for new matches
+              {t('sidebar.savedSearchesDescription')}
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6">
@@ -558,229 +659,279 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
         onShare={handleBulkShare}
       />
 
-      <ThreeColumnLayout
-        leftSidebar={
-          <div className="sticky top-4 space-y-4">
-            {/* Popular Searches */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Popular Searches</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['UFO Bodensee', 'Lucid Dreams', 'Ayahuasca', 'Paranormal', 'Meditation'].map((term) => (
-                    <Button
-                      key={term}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setQuery(term)
-                        setAskMode(false)
-                        updateURL({ q: term, mode: undefined })
-                        performSearch(term)
-                      }}
-                      className="text-xs transition-all hover:scale-105 hover:shadow-md hover:border-primary/50"
-                    >
-                      {term}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Search Stats */}
-            {metadata && (
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-3">Search Stats</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Results:</span>
-                      <span className="font-medium">{results.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Time:</span>
-                      <span className="font-medium">{metadata.executionTime}ms</span>
-                    </div>
-                    {metadata.intent?.vectorWeight !== undefined && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Semantic:</span>
-                        <span className="font-medium">{Math.round(metadata.intent.vectorWeight * 100)}%</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Share Search Link */}
-            {hasSearched && results.length > 0 && (
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-3">Share Search</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full transition-all hover:scale-105 hover:shadow-md"
-                    onClick={() => {
-                      const url = window.location.href
-                      navigator.clipboard.writeText(url)
-                    }}
-                  >
-                    Copy Link
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">Share this search with others</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        }
-        rightPanel={
-          <div className="space-y-4">
-            {/* Live Search Activity */}
-            <RecentSearchesWidget />
-
-            {/* Related Searches - Show after successful search */}
-            {hasSearched && query.trim().length > 0 && (
-              <RelatedSearches
-                currentQuery={query}
-                onSearchSelect={(selectedQuery) => {
-                  setQuery(selectedQuery)
-                  setAskMode(false)
-                  updateURL({ q: selectedQuery, mode: undefined })
-                  performSearch(selectedQuery)
-                }}
-                language="en"
-                category={filters.category || null}
-              />
-            )}
-
-            {/* Saved Searches Quick Access */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Saved Searches</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Save searches and get alerts for new matches
-                </p>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start transition-all hover:scale-105 hover:shadow-md hover:border-primary/50"
-                  onClick={() => setShowSavedSearches(true)}
-                >
-                  <Bookmark className="w-4 h-4 mr-2" />
-                  Manage Saved Searches
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Search Tips */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Search Tips</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {askMode ? (
-                    <>
-                      <li>• Ask questions about patterns in experiences</li>
-                      <li>• AI analyzes and cites specific sources</li>
-                      <li>• Get insights across multiple reports</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>• Type naturally or use keywords</li>
-                      <li>• System automatically detects intent</li>
-                      <li>• Toggle Ask mode for Q&A</li>
-                      <li>• Use filters to refine results</li>
-                      <li>• Press <kbd className="px-1 py-0.5 text-xs font-semibold bg-muted border border-border rounded">?</kbd> for shortcuts</li>
-                    </>
-                  )}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Links */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Explore More</h3>
-                <div className="flex flex-col gap-2">
-                  <Link href="/feed">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start transition-all hover:scale-105 hover:shadow-md"
-                    >
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Browse Feed
-                    </Button>
-                  </Link>
-                  <Link href="/categories">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start transition-all hover:scale-105 hover:shadow-md"
-                    >
-                      <Sliders className="w-4 h-4 mr-2" />
-                      Categories
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        }
-        mainContent={
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="text-center">
+      {/* ADAPTIVE LAYOUT - Empty vs Results State */}
+      <AdaptiveSearchLayout
+        mode={hasSearched && results.length > 0 ? 'results' : 'empty'}
+        searchHeader={
+          hasSearched && results.length > 0 ? (
+            // RESULTS STATE: Compact Header
+            <CompactSearchHeader
+              query={query}
+              onQueryChange={setQuery}
+              onSearch={handleSearch}
+              isLoading={isLoading}
+              askMode={askMode}
+              onAskModeToggle={handleAskModeToggle}
+              searchScope={searchScope}
+              onScopeChange={(scope) => {
+                setSearchScope(scope)
+                updateURL({ scope })
+                if (query.trim() && !askMode) {
+                  performSearch(query)
+                }
+              }}
+            />
+          ) : (
+            // EMPTY STATE: Large Hero Search
+            <div className="text-center space-y-6">
               <div className="mb-4 flex justify-center">
                 <div className="rounded-full bg-primary/10 p-4">
                   <SearchIcon className="h-8 w-8 text-primary" />
                 </div>
               </div>
-              <h1 className="mb-2 text-4xl font-bold">Search Experiences</h1>
+              <h1 className="mb-2 text-4xl font-bold">{t('title')}</h1>
               <p className="text-muted-foreground">
-                AI-powered search with automatic intent detection
+                {t('subtitle')}
               </p>
-            </div>
-
-            {/* Search History Dropdown */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-muted-foreground">Intelligent Search</h2>
-              <SearchHistoryDropdown
-                onSearchSelect={(item) => {
-                  setQuery(item.query)
-                  setAskMode(item.searchType === 'ask')
-                  updateURL({ q: item.query, mode: item.searchType === 'ask' ? 'ask' : undefined })
-                  if (item.searchType !== 'ask') {
-                    performSearch(item.query)
-                  }
-                }}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-medium text-muted-foreground">{t('intelligentSearch')}</h2>
+                <SearchHistoryDropdown
+                  onSearchSelect={(item) => {
+                    setQuery(item.query)
+                    setAskMode(item.searchType === 'ask')
+                    updateURL({ q: item.query, mode: item.searchType === 'ask' ? 'ask' : undefined })
+                    if (item.searchType !== 'ask') {
+                      performSearch(item.query)
+                    }
+                  }}
+                />
+              </div>
+              <UnifiedSearchBar
+                value={query}
+                onChange={setQuery}
+                onSearch={handleSearch}
+                isLoading={isLoading}
+                askMode={askMode}
+                onAskModeToggle={handleAskModeToggle}
               />
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="flex items-center justify-center gap-2"
+              >
+                <Button
+                  variant={searchScope === 'all' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setSearchScope('all')
+                    updateURL({ scope: 'all' })
+                  }}
+                >
+                  <Globe className="h-4 w-4 mr-2" />
+                  {t('scope.all')}
+                </Button>
+                <Button
+                  variant={searchScope === 'my' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setSearchScope('my')
+                    updateURL({ scope: 'my' })
+                  }}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  {t('scope.my')}
+                </Button>
+                <Button
+                  variant={searchScope === 'following' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => {
+                    setSearchScope('following')
+                    updateURL({ scope: 'following' })
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  {t('scope.following')}
+                </Button>
+              </motion.div>
             </div>
-
-            {/* Unified Search Bar */}
-            <UnifiedSearchBar
-              value={query}
-              onChange={setQuery}
-              onSearch={handleSearch}
-              isLoading={isLoading}
-              askMode={askMode}
-              onAskModeToggle={handleAskModeToggle}
-            />
-
-            {/* Collapsible Filters - Available in both Search and Ask modes */}
-            <CollapsibleFilters
+          )
+        }
+        filtersSidebar={
+          hasSearched && results.length > 0 && !askMode ? (
+            <PersistentFiltersSidebar
               filters={filters}
               onFiltersChange={handleFiltersChange}
               appliedFiltersCount={appliedFiltersCount}
             />
+          ) : null
+        }
+        relatedSidebar={
+          hasSearched && results.length > 0 ? (
+            <div className="space-y-4">
+              {/* Related Searches */}
+              {query.trim().length > 0 && (
+                <RelatedSearches
+                  currentQuery={query}
+                  onSearchSelect={(selectedQuery) => {
+                    setQuery(selectedQuery)
+                    setAskMode(false)
+                    updateURL({ q: selectedQuery, mode: undefined })
+                    performSearch(selectedQuery)
+                  }}
+                  language="en"
+                  category={filters.categories && filters.categories.length > 0 ? filters.categories[0] : null}
+                />
+              )}
 
-            {/* Filter Chips - Show active filters as removable badges */}
-            {activeFilters.length > 0 && (
-              <FilterChips
-                filters={activeFilters}
-                onRemoveFilter={handleRemoveFilter}
-                onClearAll={handleClearAllFilters}
-                className="mt-4"
-              />
-            )}
+              {/* Quick Stats */}
+              {metadata && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Quick Stats</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Results</span>
+                      <span className="font-medium">{results.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Time</span>
+                      <span className="font-medium">{metadata.executionTime}ms</span>
+                    </div>
+                    {metadata.intent?.vectorWeight !== undefined && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Vector</span>
+                        <span className="font-medium">{Math.round(metadata.intent.vectorWeight * 100)}%</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Saved Searches Quick Access */}
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-3 text-sm">{t('sidebar.savedSearches')}</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-xs"
+                    onClick={() => setShowSavedSearches(true)}
+                  >
+                    <Bookmark className="w-3 h-3 mr-2" />
+                    Manage
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null
+        }
+        mainContent={
+          !hasSearched || results.length === 0 ? (
+            // EMPTY STATE CONTENT
+            <div className="space-y-8 mt-8">
+              {/* Popular Searches */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    {t('sidebar.popularSearches')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {['UFO Bodensee', 'Lucid Dreams', 'Ayahuasca', 'Paranormal', 'Meditation', 'NDE'].map((term) => (
+                      <Button
+                        key={term}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setQuery(term)
+                          setAskMode(false)
+                          updateURL({ q: term, mode: undefined })
+                          performSearch(term)
+                        }}
+                        className="transition-all hover:scale-105 hover:shadow-md hover:border-primary/50"
+                      >
+                        {term}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Tips Grid */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">🔍 Search Tips</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-2">
+                    <p>• Use quotes for exact matches</p>
+                    <p>• Try natural questions</p>
+                    <p>• Filter by category</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">💬 Ask Mode</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-2">
+                    <p>• Get AI-powered answers</p>
+                    <p>• Ask complex questions</p>
+                    <p>• Get summaries</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">⚡ Quick Access</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-2">
+                    <p>• Press "/" to focus search</p>
+                    <p>• "?" for shortcuts</p>
+                    <p>• Save frequent searches</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Explore Links */}
+              <div className="grid md:grid-cols-2 gap-3">
+                <Link href="/feed">
+                  <Card className="hover:shadow-md transition-all cursor-pointer">
+                    <CardContent className="pt-6 flex items-center gap-3">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <div>
+                        <h4 className="font-semibold">{t('sidebar.browseFeed')}</h4>
+                        <p className="text-xs text-muted-foreground">Discover latest experiences</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+                <Link href="/categories">
+                  <Card className="hover:shadow-md transition-all cursor-pointer">
+                    <CardContent className="pt-6 flex items-center gap-3">
+                      <Sliders className="h-5 w-5 text-primary" />
+                      <div>
+                        <h4 className="font-semibold">{t('sidebar.categories')}</h4>
+                        <p className="text-xs text-muted-foreground">Browse by category</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            // RESULTS STATE CONTENT
+            <div className="space-y-4">
+              {/* Filter Chips - Show active filters as removable badges */}
+              {activeFilters.length > 0 && (
+                <FilterChips
+                  filters={activeFilters}
+                  onRemoveFilter={handleRemoveFilter}
+                  onClearAll={handleClearAllFilters}
+                />
+              )}
 
             {/* Ask Mode Content */}
             {askMode ? (
@@ -792,7 +943,19 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <AskAI initialQuestion={query} onQuestionChange={setQuery} hideInput={true} filters={filters} />
+                  <AskAI
+                    initialQuestion={query}
+                    onQuestionChange={setQuery}
+                    hideInput={true}
+                    filters={{
+                      category: filters.categories && filters.categories.length > 0 ? filters.categories[0] : undefined,
+                      tags: filters.tags && filters.tags.length > 0 ? filters.tags.join(',') : undefined,
+                      location: filters.location,
+                      dateFrom: filters.dateFrom,
+                      dateTo: filters.dateTo,
+                      witnessesOnly: filters.witnessesOnly,
+                    }}
+                  />
                 </motion.div>
               </AnimatePresence>
             ) : (
@@ -810,9 +973,9 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                       <CardContent className="py-16">
                         <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
                           <SearchIcon className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                          <h3 className="mb-2 text-lg font-semibold">Start Your Search</h3>
+                          <h3 className="mb-2 text-lg font-semibold">{t('startSearch')}</h3>
                           <p className="mb-6 text-sm text-muted-foreground">
-                            Enter a query above or try a popular search
+                            {t('startSearchDescription')}
                           </p>
                         </div>
                       </CardContent>
@@ -852,26 +1015,69 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
 
                     {/* Animated Results Count */}
                     <AnimatedResultsCount
-                      count={results.length}
+                      count={withinResultsQuery ? filteredResults.length : results.length}
                       queryTime={metadata?.executionTime}
                       query={query}
                       className="mb-4"
                     />
 
+                    {/* Search-within-Results Input (only appears when there are results) */}
+                    <AnimatePresence>
+                      {results.length > 5 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden"
+                        >
+                          <Card className="bg-muted/30 border-dashed">
+                            <CardContent className="py-3">
+                              <div className="flex items-center gap-3">
+                                <SearchIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <Input
+                                  type="text"
+                                  value={withinResultsQuery}
+                                  onChange={(e) => setWithinResultsQuery(e.target.value)}
+                                  placeholder={t('filterWithin')}
+                                  className="flex-1 h-9 bg-background"
+                                />
+                                {withinResultsQuery && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setWithinResultsQuery('')}
+                                    className="flex-shrink-0"
+                                  >
+                                    {t('clear')}
+                                  </Button>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {withinResultsQuery
+                                  ? t('showingResults', { filtered: filteredResults.length, total: results.length })
+                                  : t('narrowDown')}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {/* Results Header with Sort and View Switcher */}
                     <div className="flex items-center justify-between flex-wrap gap-3">
                       {/* Sort Dropdown - Left Side */}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Sort:</span>
+                        <span className="text-xs text-muted-foreground">{t('sort.label')}</span>
                         <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
                           <SelectTrigger className="w-[140px] h-9">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="relevance">Relevance</SelectItem>
-                            <SelectItem value="date_desc">Newest First</SelectItem>
-                            <SelectItem value="date_asc">Oldest First</SelectItem>
-                            <SelectItem value="similarity">Similarity</SelectItem>
+                            <SelectItem value="relevance">{t('sort.relevance')}</SelectItem>
+                            <SelectItem value="date_desc">{t('sort.dateDesc')}</SelectItem>
+                            <SelectItem value="date_asc">{t('sort.dateAsc')}</SelectItem>
+                            <SelectItem value="similarity">{t('sort.similarity')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -892,20 +1098,20 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                           ) : (
                             <Square className="w-4 h-4 mr-2" />
                           )}
-                          {selectionMode ? 'Exit Selection' : 'Select'}
+                          {selectionMode ? t('selection.exitSelection') : t('selection.select')}
                         </Button>
 
                         {/* Select All */}
                         {selectionMode && (
                           <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                            {selectedIds.size === results.length ? 'Deselect All' : 'Select All'}
+                            {selectedIds.size === results.length ? t('selection.deselectAll') : t('selection.selectAll')}
                           </Button>
                         )}
 
                         {/* View Mode Switcher */}
                         <TooltipProvider>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground mr-2">View:</span>
+                            <span className="text-xs text-muted-foreground mr-2">{t('viewMode.label')}</span>
                             <div className="flex rounded-md border">
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -919,7 +1125,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Grid View</p>
+                                  <p>{t('viewMode.grid')}</p>
                                 </TooltipContent>
                               </Tooltip>
                               <Tooltip>
@@ -934,7 +1140,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Table View</p>
+                                  <p>{t('viewMode.table')}</p>
                                 </TooltipContent>
                               </Tooltip>
                               <Tooltip>
@@ -949,7 +1155,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Constellation View</p>
+                                  <p>{t('viewMode.constellation')}</p>
                                 </TooltipContent>
                               </Tooltip>
                               <Tooltip>
@@ -964,7 +1170,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>3D Graph View</p>
+                                  <p>{t('viewMode.graph3d')}</p>
                                 </TooltipContent>
                               </Tooltip>
                               <Tooltip>
@@ -979,7 +1185,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Heatmap View</p>
+                                  <p>{t('viewMode.heatmap')}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </div>
@@ -1094,7 +1300,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                           className="group transition-all hover:scale-105 hover:shadow-md hover:border-primary/50"
                         >
                           <ChevronDown className="w-5 h-5 mr-2 group-hover:animate-bounce" />
-                          Load More ({sortedResults.length - displayedCount} remaining)
+                          {t('loadMore', { remaining: sortedResults.length - displayedCount })}
                         </Button>
                       </motion.div>
                     )}
@@ -1108,7 +1314,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                         className="flex justify-center mt-8"
                       >
                         <p className="text-sm text-muted-foreground">
-                          All {sortedResults.length} results loaded
+                          {t('allLoaded', { count: sortedResults.length })}
                         </p>
                       </motion.div>
                     )}
@@ -1124,7 +1330,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                     <ZeroResultsSuggestions
                       query={query}
                       language="en"
-                      category={filters.category || null}
+                      category={filters.categories && filters.categories.length > 0 ? filters.categories[0] : null}
                       onSuggestionClick={(suggestion) => {
                         setQuery(suggestion)
                         updateURL({ q: suggestion })
@@ -1136,7 +1342,7 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
               </AnimatePresence>
             )}
           </div>
-        }
+        )}
       />
     </>
   )

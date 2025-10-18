@@ -1130,6 +1130,87 @@ export type Database = {
         }
         Relationships: []
       }
+      recent_searches: {
+        Row: {
+          created_at: string | null
+          filters: Json | null
+          id: string
+          query_text: string
+          result_count: number | null
+          search_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          filters?: Json | null
+          id?: string
+          query_text: string
+          result_count?: number | null
+          search_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          filters?: Json | null
+          id?: string
+          query_text?: string
+          result_count?: number | null
+          search_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      search_queries: {
+        Row: {
+          clicked_position: number | null
+          clicked_result_id: string | null
+          created_at: string | null
+          execution_time_ms: number | null
+          filters: Json | null
+          id: string
+          language: string | null
+          query_text: string
+          result_count: number | null
+          search_type: string
+          session_id: string | null
+          time_to_click_ms: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_position?: number | null
+          clicked_result_id?: string | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          filters?: Json | null
+          id?: string
+          language?: string | null
+          query_text: string
+          result_count?: number | null
+          search_type: string
+          session_id?: string | null
+          time_to_click_ms?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_position?: number | null
+          clicked_result_id?: string | null
+          created_at?: string | null
+          execution_time_ms?: number | null
+          filters?: Json | null
+          id?: string
+          language?: string | null
+          query_text?: string
+          result_count?: number | null
+          search_type?: string
+          session_id?: string | null
+          time_to_click_ms?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       question_analytics_summary: {

@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, MapPin, Tag, Calendar, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 export interface ActiveFilter {
   key: string
@@ -52,6 +53,8 @@ const filterTypeConfig = {
  * - Responsive layout
  */
 export function FilterChips({ filters, onRemoveFilter, onClearAll, className }: FilterChipsProps) {
+  const t = useTranslations('search.filters')
+
   if (filters.length === 0) return null
 
   return (
@@ -89,7 +92,7 @@ export function FilterChips({ filters, onRemoveFilter, onClearAll, className }: 
                 <button
                   onClick={() => onRemoveFilter(filter.key)}
                   className="ml-1 -mr-1 p-0.5 rounded-full hover:bg-black/10 transition-colors"
-                  aria-label={`Remove ${filter.label} filter`}
+                  aria-label={t('removeFilter', { label: filter.label })}
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -109,7 +112,7 @@ export function FilterChips({ filters, onRemoveFilter, onClearAll, className }: 
             onClick={onClearAll}
             className="px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
           >
-            Clear all
+            {t('clearAllChips')}
           </motion.button>
         )}
       </AnimatePresence>

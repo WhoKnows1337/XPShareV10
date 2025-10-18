@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Search, Users, ArrowRight, Telescope, GitBranch, Zap } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const t = await getTranslations('home');
   return (
     <main className="flex min-h-screen flex-col bg-space-deep relative">
       {/* Hero Section with Starfield */}
@@ -21,23 +23,19 @@ export default function HomePage() {
 
           {/* Main Heading */}
           <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl text-text-primary">
-            Share Your{' '}
-            <span className="bg-gradient-to-r from-observatory-gold via-amber-300 to-observatory-gold bg-clip-text text-transparent animate-gradient">
-              Extraordinary
-            </span>{' '}
-            Experiences
+            {t('hero.title')}
           </h1>
 
           {/* Subtitle */}
           <p className="mb-10 text-xl sm:text-2xl text-text-secondary max-w-3xl mx-auto">
-            Connect with others who've experienced the unexplained. Share paranormal events, UFO sightings, synchronicities, and more.
+            {t('hero.subtitle')}
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center mb-8">
             <Link href="/signup">
               <Button size="lg" className="btn-observatory w-full sm:w-auto group">
-                Get Started
+                {t('hero.getStarted')}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -47,7 +45,7 @@ export default function HomePage() {
                 variant="outline"
                 className="w-full sm:w-auto glass-card border-glass-border hover:border-observatory-gold/50 text-text-primary hover:text-observatory-gold"
               >
-                Sign In
+                {t('hero.signIn')}
               </Button>
             </Link>
           </div>
@@ -56,15 +54,15 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-text-tertiary">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-observatory-gold" />
-              <span>Thousands of experiences</span>
+              <span>{t('stats.experiences')}</span>
             </div>
             <div className="flex items-center gap-2">
               <GitBranch className="h-4 w-4 text-observatory-gold" />
-              <span>AI-powered pattern matching</span>
+              <span>{t('stats.aiMatching')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-observatory-gold" />
-              <span>Gamified community</span>
+              <span>{t('stats.gamified')}</span>
             </div>
           </div>
         </div>
@@ -75,10 +73,10 @@ export default function HomePage() {
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-text-primary mb-4">
-              Explore & Connect
+              {t('features.title')}
             </h2>
             <p className="text-lg text-text-secondary">
-              A platform designed for extraordinary experiences
+              {t('features.subtitle')}
             </p>
           </div>
 
@@ -91,10 +89,10 @@ export default function HomePage() {
                 </div>
               </div>
               <h3 className="mb-3 text-xl font-bold text-text-primary text-center group-hover:text-observatory-gold transition-colors">
-                Share Experiences
+                {t('features.share.title')}
               </h3>
               <p className="text-text-secondary text-center">
-                Tell your story through text, voice, photos, or sketches with our intelligent 4-step submission flow and AI assistance
+                {t('features.share.description')}
               </p>
             </div>
 
@@ -106,10 +104,10 @@ export default function HomePage() {
                 </div>
               </div>
               <h3 className="mb-3 text-xl font-bold text-text-primary text-center group-hover:text-observatory-gold transition-colors">
-                Discover Patterns
+                {t('features.discover.title')}
               </h3>
               <p className="text-text-secondary text-center">
-                Find connections with similar experiences worldwide using our advanced AI-powered pattern matching algorithm
+                {t('features.discover.description')}
               </p>
             </div>
 
@@ -121,10 +119,10 @@ export default function HomePage() {
                 </div>
               </div>
               <h3 className="mb-3 text-xl font-bold text-text-primary text-center group-hover:text-observatory-gold transition-colors">
-                Join Community
+                {t('features.community.title')}
               </h3>
               <p className="text-text-secondary text-center">
-                Connect with others who've had similar encounters. Earn XP, unlock badges, and level up as you contribute
+                {t('features.community.description')}
               </p>
             </div>
           </div>
@@ -139,14 +137,14 @@ export default function HomePage() {
         <div className="container mx-auto max-w-4xl text-center relative z-10">
           <div className="glass-card p-12">
             <h2 className="mb-4 text-3xl font-bold sm:text-4xl text-text-primary">
-              Ready to Share Your Story?
+              {t('cta.title')}
             </h2>
             <p className="mb-8 text-lg text-text-secondary">
-              Join our community and help map the unexplained. Earn rewards, unlock badges, and connect with others.
+              {t('cta.subtitle')}
             </p>
             <Link href="/signup">
               <Button size="lg" className="btn-observatory w-full sm:w-auto group">
-                Create Free Account
+                {t('cta.signup')}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -161,7 +159,7 @@ export default function HomePage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Free forever</span>
+                <span>{t('trust.free')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-success-soft" fill="currentColor" viewBox="0 0 20 20">
@@ -171,7 +169,7 @@ export default function HomePage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>No credit card required</span>
+                <span>{t('trust.noCard')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-success-soft" fill="currentColor" viewBox="0 0 20 20">
@@ -181,7 +179,7 @@ export default function HomePage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Privacy first</span>
+                <span>{t('trust.privacy')}</span>
               </div>
             </div>
           </div>

@@ -18,19 +18,20 @@ import { CommandPalette } from '@/components/browse/command-palette';
 import { useTranslations } from 'next-intl';
 
 const categories = [
-  { slug: 'ufo', name: 'UFO Sichtungen', icon: '🛸' },
-  { slug: 'paranormal', name: 'Paranormal', icon: '👻' },
-  { slug: 'dreams', name: 'Träume', icon: '💭' },
-  { slug: 'psychedelic', name: 'Psychedelic', icon: '🍄' },
-  { slug: 'spiritual', name: 'Spiritual', icon: '🙏' },
-  { slug: 'synchronicity', name: 'Synchronicity', icon: '🔮' },
-  { slug: 'nde', name: 'Near-Death', icon: '💫' },
-  { slug: 'other', name: 'Other', icon: '📦' },
+  { slug: 'ufo-uap', icon: '🛸' },
+  { slug: 'paranormal', icon: '👻' },
+  { slug: 'dreams', icon: '💭' },
+  { slug: 'psychedelic', icon: '🍄' },
+  { slug: 'spiritual', icon: '🙏' },
+  { slug: 'synchronicity', icon: '🔮' },
+  { slug: 'nde', icon: '💫' },
+  { slug: 'other', icon: '📦' },
 ];
 
 export function Navbar() {
   const { user, signOut, loading, isAdmin } = useAuth();
   const t = useTranslations('nav');
+  const tCategories = useTranslations('categories');
 
   const getInitials = (email: string) => {
     return (
@@ -69,7 +70,7 @@ export function Navbar() {
                 className="text-sm font-medium text-text-secondary transition-colors hover:text-observatory-gold flex items-center gap-1"
               >
                 <Search className="h-4 w-4" />
-                Search
+                {t('search')}
               </Link>
 
               {/* Categories Dropdown */}
@@ -81,7 +82,7 @@ export function Navbar() {
                     className="gap-1 text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10"
                   >
                     <FolderOpen className="h-4 w-4" />
-                    Categories
+                    {t('categories')}
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -96,7 +97,7 @@ export function Navbar() {
                         className="cursor-pointer flex items-center gap-2 text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10 focus:text-observatory-gold focus:bg-observatory-gold/10"
                       >
                         <span className="text-lg">{category.icon}</span>
-                        <span>{category.name}</span>
+                        <span>{tCategories(category.slug)}</span>
                       </Link>
                     </DropdownMenuItem>
                   ))}
@@ -176,7 +177,7 @@ export function Navbar() {
                       className="cursor-pointer text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10 focus:text-observatory-gold focus:bg-observatory-gold/10"
                     >
                       <History className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Search History
+                      {t('searchHistory')}
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (

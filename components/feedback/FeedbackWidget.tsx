@@ -1,10 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Bug, X, GripVertical, Minimize2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeedbackForm } from './FeedbackForm';
-import { AnnotationEditor } from './AnnotationEditor';
+
+// Dynamic import to avoid SSR issues with Excalidraw (uses navigator)
+const ExcalidrawAnnotationEditor = dynamic(
+  () => import('./ExcalidrawAnnotationEditor').then((mod) => mod.ExcalidrawAnnotationEditor),
+  { ssr: false }
+);
 
 export function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -191,7 +197,7 @@ export function FeedbackWidget() {
       {/* Full-screen Annotation Editor */}
       {isAnnotating && capturedScreenshot && (
         <div className="fixed inset-0 z-[100] bg-background">
-          <AnnotationEditor
+          <ExcalidrawAnnotationEditor
             screenshot={capturedScreenshot}
             onComplete={handleAnnotationComplete}
             onCancel={handleAnnotationCancel}

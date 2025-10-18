@@ -4,10 +4,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Search, MessageSquare, Sparkles, Loader2, TrendingUp } from 'lucide-react'
+import { Search, MessageSquare, Sparkles, Loader2, TrendingUp, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { detectQueryIntent, getIntentIcon, getIntentColorClass, getIntentFeedback } from '@/lib/search/intent-detection'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface UnifiedSearchBarProps {
   value: string
@@ -34,6 +36,7 @@ export function UnifiedSearchBar({
   onAskModeToggle,
   placeholder,
 }: UnifiedSearchBarProps) {
+  const t = useTranslations('search')
   const [intent, setIntent] = useState<any>(null)
   const [feedback, setFeedback] = useState<string>('')
   const [isTyping, setIsTyping] = useState(false)
@@ -88,11 +91,7 @@ export function UnifiedSearchBar({
 
     setIsLoadingSuggestions(true)
     try {
-      const res = await fetch('/api/search/autocomplete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit: 6 })
-      })
+      const res = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(query)}`)
 
       if (!res.ok) throw new Error('Autocomplete failed')
 
@@ -216,8 +215,8 @@ export function UnifiedSearchBar({
             placeholder={
               placeholder ||
               (askMode
-                ? "Ask a question about experiences..."
-                : "Search experiences... (e.g., 'UFO sightings in desert' or 'lucid dreams')")
+                ? t('askPlaceholder')
+                : t('placeholder'))
             }
             className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
             disabled={isLoading}
@@ -256,7 +255,7 @@ export function UnifiedSearchBar({
                     "transition-all duration-300",
                     askMode && "bg-green-600 hover:bg-green-700"
                   )}
-                  title={askMode ? "Switch to Search mode" : "Switch to Ask mode"}
+                  title={askMode ? t('switchToSearch') : t('switchToAsk')}
                 >
                   <MessageSquare className="h-4 w-4" />
                 </Button>
@@ -281,12 +280,12 @@ export function UnifiedSearchBar({
                   {askMode ? (
                     <>
                       <MessageSquare className="h-4 w-4 mr-1" />
-                      Ask
+                      {t('askButton')}
                     </>
                   ) : (
                     <>
                       <Search className="h-4 w-4 mr-1" />
-                      Search
+                      {t('searchButton')}
                     </>
                   )}
                 </Button>
@@ -296,42 +295,53 @@ export function UnifiedSearchBar({
         </div>
 
         {/* Autocomplete Suggestions Dropdown */}
-        <AnimatePresence>
-          {showSuggestions && suggestions.length > 0 && (
-            <motion.div
-              ref={dropdownRef}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-full left-0 right-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-md border bg-popover shadow-lg"
-            >
-              <div className="p-2">
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={`${suggestion.text}-${index}`}
-                    onClick={() => handleSelectSuggestion(suggestion.text)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm transition-colors overflow-hidden',
-                      'hover:bg-accent hover:text-accent-foreground',
-                      selectedSuggestionIndex === index && 'bg-accent text-accent-foreground'
-                    )}
-                  >
-                    {suggestion.source === 'ai' ? (
-                      <Sparkles className="h-4 w-4 flex-shrink-0 text-purple-500" />
-                    ) : (
-                      <TrendingUp className="h-4 w-4 flex-shrink-0 text-blue-500" />
-                    )}
-                    <span className="flex-1 min-w-0 truncate font-medium">{suggestion.text}</span>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
-                      {suggestion.source === 'ai' ? 'AI' : 'Popular'}
-                    </span>
-                  </button>
-                ))}
+        <ErrorBoundary
+          fallback={
+            <div className="absolute top-full left-0 right-0 z-50 mt-2 rounded-md border bg-muted/50 p-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <AlertCircle className="h-4 w-4" />
+                <span>{t('suggestions.unavailable')}</span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          }
+        >
+          <AnimatePresence>
+            {showSuggestions && suggestions.length > 0 && (
+              <motion.div
+                ref={dropdownRef}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-full left-0 right-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-md border bg-popover shadow-lg"
+              >
+                <div className="p-2">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={`${suggestion.text}-${index}`}
+                      onClick={() => handleSelectSuggestion(suggestion.text)}
+                      className={cn(
+                        'flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm transition-colors overflow-hidden',
+                        'hover:bg-accent hover:text-accent-foreground',
+                        selectedSuggestionIndex === index && 'bg-accent text-accent-foreground'
+                      )}
+                    >
+                      {suggestion.source === 'ai' ? (
+                        <Sparkles className="h-4 w-4 flex-shrink-0 text-purple-500" />
+                      ) : (
+                        <TrendingUp className="h-4 w-4 flex-shrink-0 text-blue-500" />
+                      )}
+                      <span className="flex-1 min-w-0 truncate font-medium">{suggestion.text}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                        {suggestion.source === 'ai' ? t('suggestions.ai') : t('suggestions.popular')}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </ErrorBoundary>
 
         {/* Subtle Hint Text Below */}
         <AnimatePresence mode="wait">
@@ -344,9 +354,7 @@ export function UnifiedSearchBar({
               className="mt-2 px-1"
             >
               <p className="text-xs text-muted-foreground">
-                💡 Try: <span className="font-medium">"UFO sightings"</span> or{' '}
-                <span className="font-medium">"experiences with glowing orbs"</span> or{' '}
-                <span className="font-medium">"What are common themes in NDEs?"</span>
+                {t('hints')}
               </p>
             </motion.div>
           )}
@@ -375,7 +383,7 @@ export function UnifiedSearchBar({
               <p className="flex-1">{feedback}</p>
               {intent?.confidence && (
                 <Badge variant="outline" className="text-xs">
-                  {Math.round(intent.confidence * 100)}% confidence
+                  {Math.round(intent.confidence * 100)}% {t('confidence')}
                 </Badge>
               )}
             </div>

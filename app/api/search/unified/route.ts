@@ -20,12 +20,15 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q') || ''
-    const category = searchParams.get('category')
-    const tags = searchParams.get('tags')
+    const categoriesParam = searchParams.get('categories')
+    const categories = categoriesParam ? categoriesParam.split(',').filter(Boolean) : []
+    const tagsParam = searchParams.get('tags')
+    const tags = tagsParam ? tagsParam.split(',').filter(Boolean) : []
     const location = searchParams.get('location')
     const dateFrom = searchParams.get('dateFrom')
     const dateTo = searchParams.get('dateTo')
     const witnessesOnly = searchParams.get('witnessesOnly') === 'true'
+    const scope = searchParams.get('scope') || 'all' // 'all' | 'my' | 'following'
     const language = searchParams.get('language') || 'en'
 
     const supabase = await createClient()
@@ -102,7 +105,7 @@ export async function GET(request: Request) {
         p_language: language,
         p_vector_weight: intent.vectorWeight, // Dynamic weighting!
         p_fts_weight: intent.ftsWeight,
-        p_category: category || null,
+        p_category: categories.length === 1 ? categories[0] : null, // Pass single category to RPC if only one selected
         p_limit: 50,
       })
 
@@ -111,6 +114,22 @@ export async function GET(request: Request) {
         searchError = error
       } else {
         hybridResults = data || []
+
+        // Load user profiles for hybrid results (hybrid_search doesn't include them)
+        if (hybridResults.length > 0) {
+          const userIds = [...new Set(hybridResults.map((exp: any) => exp.user_id))]
+          const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('id, username, display_name, avatar_url')
+            .in('id', userIds)
+
+          // Map profiles to experiences
+          const profileMap = new Map(profiles?.map(p => [p.id, p]) || [])
+          hybridResults = hybridResults.map((exp: any) => ({
+            ...exp,
+            user_profiles: profileMap.get(exp.user_id) || null
+          }))
+        }
       }
     } catch (err) {
       console.error('Hybrid search exception:', err)
@@ -145,16 +164,17 @@ export async function GET(request: Request) {
     // Step 4: Apply additional filters (client-side for flexibility)
     let filteredResults = hybridResults
 
-    if (category && category !== 'all') {
-      filteredResults = filteredResults.filter(
-        (exp) => exp.category === category
+    if (categories.length > 0) {
+      filteredResults = filteredResults.filter((exp) =>
+        categories.includes(exp.category)
       )
     }
 
-    if (tags) {
-      const tagList = tags.split(',').map((t) => t.trim().toLowerCase())
+    if (tags.length > 0) {
       filteredResults = filteredResults.filter((exp) =>
-        exp.tags?.some((tag: string) => tagList.includes(tag.toLowerCase()))
+        exp.tags?.some((tag: string) =>
+          tags.some(filterTag => tag.toLowerCase().includes(filterTag.toLowerCase()))
+        )
       )
     }
 
@@ -182,6 +202,26 @@ export async function GET(request: Request) {
       )
     }
 
+    // Step 4.5: Apply scope filter (My Experiences / Following)
+    if (scope === 'my') {
+      filteredResults = filteredResults.filter((exp) => exp.user_id === user.id)
+    } else if (scope === 'following') {
+      // Get list of user IDs that current user follows
+      const { data: following, error: followError } = await supabase
+        .from('user_follows')
+        .select('following_id')
+        .eq('follower_id', user.id)
+
+      if (followError) {
+        console.warn('Failed to fetch following list:', followError)
+      } else {
+        const followingIds = following?.map((f) => f.following_id) || []
+        filteredResults = filteredResults.filter((exp) =>
+          followingIds.includes(exp.user_id)
+        )
+      }
+    }
+
     const executionTime = Date.now() - startTime
 
     // Step 5: Track search analytics
@@ -192,7 +232,7 @@ export async function GET(request: Request) {
         p_result_count: filteredResults.length,
         p_search_type: 'unified_hybrid',
         p_filters: {
-          category,
+          categories,
           tags,
           location,
           dateRange: dateFrom || dateTo ? { from: dateFrom, to: dateTo } : null,
@@ -217,8 +257,8 @@ export async function GET(request: Request) {
           feedback: getIntentFeedbackMessage(intent, query),
         },
         appliedFilters: {
-          category: category || 'all',
-          tags: tags || null,
+          categories: categories,
+          tags: tags,
           location: location || null,
           dateRange: dateFrom || dateTo ? { from: dateFrom, to: dateTo } : null,
           witnessesOnly,

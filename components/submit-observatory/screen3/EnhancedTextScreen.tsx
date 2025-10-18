@@ -258,8 +258,8 @@ export function EnhancedTextScreen() {
     return (
       <LoadingState
         icon="sparkles"
-        title="KI analysiert deine Antworten..."
-        description="Ergänze deinen Text mit Details aus deiner Erfahrung"
+        title={t('loadingTitle')}
+        description={t('loadingDescription')}
       />
     );
   }
@@ -274,7 +274,7 @@ export function EnhancedTextScreen() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-text-primary">
-              Dein Text
+              {t('yourText')}
             </h3>
 
             {/* Segmented Control - AI Mode Toggle */}
@@ -300,7 +300,7 @@ export function EnhancedTextScreen() {
                     ${isEnhancing ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
                   `}
                 >
-                  Original
+                  {t('original')}
                 </button>
 
                 {/* AI Mode Button */}
@@ -326,11 +326,11 @@ export function EnhancedTextScreen() {
                   {isEnhancing ? (
                     <>
                       <Loader2 className="w-3 h-3 animate-spin" />
-                      <span>Loading...</span>
+                      <span>{t('loading')}</span>
                     </>
                   ) : (
                     <>
-                      ✨ <span>KI-Angereichert</span>
+                      ✨ <span>{t('aiEnriched')}</span>
                     </>
                   )}
                 </button>
@@ -339,8 +339,8 @@ export function EnhancedTextScreen() {
               {/* Explanation Text */}
               <p className="text-[10px] text-text-tertiary text-right max-w-[200px] leading-tight">
                 {screen3.enhancementEnabled
-                  ? 'Deine Wahl wird gespeichert • Jederzeit änderbar'
-                  : 'KI ergänzt Details aus deinen Antworten'
+                  ? t('choiceSaved')
+                  : t('aiAddsDetails')
                 }
               </p>
             </div>

@@ -65,10 +65,10 @@ export async function GET(request: NextRequest) {
 
     // 1. Recent searches from user's search history
     const { data: recentSearches } = await supabase
-      .from('search_history')
-      .select('query')
+      .from('recent_searches')
+      .select('query_text')
       .eq('user_id', user.id)
-      .ilike('query', `%${correctedQuery}%`)
+      .ilike('query_text', `%${correctedQuery}%`)
       .order('created_at', { ascending: false })
       .limit(3)
 
@@ -77,23 +77,23 @@ export async function GET(request: NextRequest) {
         ...recentSearches.map((s, idx) => ({
           id: `recent-${idx}`,
           type: 'recent' as const,
-          text: s.query,
+          text: s.query_text,
         }))
       )
     }
 
     // 2. Trending searches (most searched in last 7 days)
     const { data: trendingSearches } = await supabase
-      .from('search_history')
-      .select('query')
+      .from('search_queries')
+      .select('query_text')
       .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-      .ilike('query', `%${correctedQuery}%`)
+      .ilike('query_text', `%${correctedQuery}%`)
       .limit(100)
 
     if (trendingSearches && trendingSearches.length > 0) {
       // Count occurrences
       const queryCount = trendingSearches.reduce((acc, s) => {
-        acc[s.query] = (acc[s.query] || 0) + 1
+        acc[s.query_text] = (acc[s.query_text] || 0) + 1
         return acc
       }, {} as Record<string, number>)
 
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       const trending = Object.entries(queryCount)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 3)
-        .filter(([q]) => !recentSearches?.some(r => r.query === q)) // Avoid duplicates
+        .filter(([q]) => !recentSearches?.some(r => r.query_text === q)) // Avoid duplicates
 
       suggestions.push(
         ...trending.map(([text, count], idx) => ({
@@ -155,17 +155,17 @@ export async function GET(request: NextRequest) {
     // 4. Location suggestions
     const { data: locations } = await supabase
       .from('experiences')
-      .select('location')
-      .not('location', 'is', null)
-      .ilike('location', `%${correctedQuery}%`)
+      .select('location_text')
+      .not('location_text', 'is', null)
+      .ilike('location_text', `%${correctedQuery}%`)
       .eq('visibility', 'public')
       .limit(50)
 
     if (locations && locations.length > 0) {
       // Count unique locations
       const locationCount = locations.reduce((acc, l) => {
-        if (l.location) {
-          acc[l.location] = (acc[l.location] || 0) + 1
+        if (l.location_text) {
+          acc[l.location_text] = (acc[l.location_text] || 0) + 1
         }
         return acc
       }, {} as Record<string, number>)

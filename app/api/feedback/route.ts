@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
     const {
       type,
       title,
+      name,
+      email,
       description,
       screenshots,
       page_url,
@@ -89,6 +91,8 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         type,
         title,
+        submitter_name: name || null,
+        submitter_email: email || null,
         description,
         page_url,
         browser_info,

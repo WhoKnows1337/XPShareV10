@@ -633,6 +633,18 @@ export function AnnotationEditor({
             </Button>
           </div>
         </div>
+
+        {/* Actions - Right Side */}
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+            <X className="mr-2 h-4 w-4" />
+            Cancel
+          </Button>
+          <Button type="button" size="sm" onClick={handleComplete}>
+            <Check className="mr-2 h-4 w-4" />
+            Done
+          </Button>
+        </div>
       </div>
 
       {/* Canvas */}
@@ -655,18 +667,6 @@ export function AnnotationEditor({
           className={tool === 'select' ? 'cursor-pointer' : 'cursor-crosshair'}
           style={{ display: 'block' }}
         />
-      </div>
-
-      {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4 z-[105] flex justify-center gap-3">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          <X className="mr-2 h-4 w-4" />
-          Cancel
-        </Button>
-        <Button type="button" onClick={handleComplete}>
-          <Check className="mr-2 h-4 w-4" />
-          Done
-        </Button>
       </div>
 
       {/* Text Box Input Modal */}

@@ -2,6 +2,7 @@
 
 import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 interface NavigationButtonsProps {
   onBack?: () => void;
@@ -23,14 +24,18 @@ export function NavigationButtons({
   onReset,
   canGoBack = true,
   canGoNext = true,
-  nextLabel = 'Weiter',
-  backLabel = 'Zurück',
+  nextLabel,
+  backLabel,
   nextLoading = false,
   showNext = true,
   showReset = false,
   resetConfirm = false,
 }: NavigationButtonsProps) {
-  // Save status functionality removed per user request
+  const t = useTranslations('submit.shared.navigation');
+
+  // Use translations as fallback for labels
+  const finalNextLabel = nextLabel || t('next');
+  const finalBackLabel = backLabel || t('back');
 
   return (
     <div className="grid grid-cols-3 gap-4 pt-6">
@@ -45,7 +50,7 @@ export function NavigationButtons({
             className="group"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            {backLabel}
+            {finalBackLabel}
           </Button>
         )}
         {showReset && onReset && (
@@ -56,7 +61,7 @@ export function NavigationButtons({
             className="text-xs"
           >
             <RotateCcw className="w-3 h-3" />
-            {resetConfirm ? 'Sicher?' : 'Reset'}
+            {resetConfirm ? t('confirm') : t('reset')}
           </Button>
         )}
       </div>
@@ -79,11 +84,11 @@ export function NavigationButtons({
             {nextLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
+                {t('processing')}
               </>
             ) : (
               <>
-                {nextLabel}
+                {finalNextLabel}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </>
             )}

@@ -5,17 +5,18 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { ChevronDown, ChevronUp, Sliders, X, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { DateRangeSlider } from './date-range-slider'
+import { MultiSelectFilter, MultiSelectOption } from './multi-select-filter'
+import { useTranslations } from 'next-intl'
 
 interface CollapsibleFiltersProps {
   filters: {
-    category?: string
-    tags?: string
+    categories?: string[]
+    tags?: string[]
     location?: string
     dateFrom?: string
     dateTo?: string
@@ -30,9 +31,23 @@ export function CollapsibleFilters({
   onFiltersChange,
   appliedFiltersCount = 0,
 }: CollapsibleFiltersProps) {
+  const t = useTranslations('search.filters')
+  const tCategories = useTranslations('categories')
   const [isOpen, setIsOpen] = useState(false)
   const [filterCounts, setFilterCounts] = useState<any>(null)
   const [isLoadingCounts, setIsLoadingCounts] = useState(false)
+
+  // Define category options
+  const categoryOptions: MultiSelectOption[] = [
+    { value: 'ufo', label: tCategories('ufo-uap'), icon: '🛸', count: filterCounts?.categories?.ufo },
+    { value: 'paranormal', label: tCategories('paranormal'), icon: '👻', count: filterCounts?.categories?.paranormal },
+    { value: 'dreams', label: tCategories('dreams'), icon: '💭', count: filterCounts?.categories?.dreams },
+    { value: 'psychedelic', label: tCategories('psychedelic'), icon: '🍄', count: filterCounts?.categories?.psychedelic },
+    { value: 'spiritual', label: tCategories('spiritual'), icon: '🙏', count: filterCounts?.categories?.spiritual },
+    { value: 'synchronicity', label: tCategories('synchronicity'), icon: '✨', count: filterCounts?.categories?.synchronicity },
+    { value: 'nde', label: tCategories('nde'), icon: '💫', count: filterCounts?.categories?.nde },
+    { value: 'other', label: tCategories('other'), icon: '🔮', count: filterCounts?.categories?.other },
+  ]
 
   // Fetch filter counts on mount
   useEffect(() => {
@@ -60,8 +75,8 @@ export function CollapsibleFilters({
 
   const handleClearFilters = () => {
     onFiltersChange({
-      category: '',
-      tags: '',
+      categories: [],
+      tags: [],
       location: '',
       dateFrom: '',
       dateTo: '',
@@ -87,7 +102,7 @@ export function CollapsibleFilters({
         >
           <div className="flex items-center gap-2">
             <Sliders className="h-4 w-4" />
-            <span>Filters</span>
+            <span>{t('label')}</span>
             {hasActiveFilters && (
               <Badge variant="secondary" className="h-5 px-1.5">
                 {appliedFiltersCount}
@@ -114,72 +129,43 @@ export function CollapsibleFilters({
           >
             <Card>
               <CardContent className="pt-6 space-y-4">
-                {/* Category Filter with Counts */}
+                {/* Category Filter with Multi-Select */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="category-filter">Category</Label>
+                    <Label>{t('categories')}</Label>
                     {isLoadingCounts && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                   </div>
-                  <Select
-                    value={filters.category || 'all'}
-                    onValueChange={(value) =>
-                      handleFilterChange('category', value === 'all' ? '' : value)
-                    }
-                  >
-                    <SelectTrigger id="category-filter">
-                      <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="ufo">
-                        🛸 UFO Sighting {filterCounts?.categories?.ufo && `(${filterCounts.categories.ufo})`}
-                      </SelectItem>
-                      <SelectItem value="paranormal">
-                        👻 Paranormal {filterCounts?.categories?.paranormal && `(${filterCounts.categories.paranormal})`}
-                      </SelectItem>
-                      <SelectItem value="dreams">
-                        💭 Dream Experience {filterCounts?.categories?.dreams && `(${filterCounts.categories.dreams})`}
-                      </SelectItem>
-                      <SelectItem value="psychedelic">
-                        🍄 Psychedelic {filterCounts?.categories?.psychedelic && `(${filterCounts.categories.psychedelic})`}
-                      </SelectItem>
-                      <SelectItem value="spiritual">
-                        🙏 Spiritual {filterCounts?.categories?.spiritual && `(${filterCounts.categories.spiritual})`}
-                      </SelectItem>
-                      <SelectItem value="synchronicity">
-                        ✨ Synchronicity {filterCounts?.categories?.synchronicity && `(${filterCounts.categories.synchronicity})`}
-                      </SelectItem>
-                      <SelectItem value="nde">
-                        💫 Near-Death Experience {filterCounts?.categories?.nde && `(${filterCounts.categories.nde})`}
-                      </SelectItem>
-                      <SelectItem value="other">
-                        🔮 Other Experience {filterCounts?.categories?.other && `(${filterCounts.categories.other})`}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <MultiSelectFilter
+                    options={categoryOptions}
+                    selectedValues={filters.categories || []}
+                    onChange={(values) => handleFilterChange('categories', values)}
+                    placeholder={t('categoriesPlaceholder')}
+                    emptyText={t('categoriesEmpty')}
+                  />
                 </div>
 
                 {/* Location Filter */}
                 <div className="space-y-2">
-                  <Label htmlFor="location-filter">Location</Label>
+                  <Label htmlFor="location-filter">{t('location')}</Label>
                   <Input
                     id="location-filter"
                     type="text"
-                    placeholder="e.g., 'Berlin', 'California', 'desert'"
+                    placeholder={t('locationPlaceholder')}
                     value={filters.location || ''}
                     onChange={(e) => handleFilterChange('location', e.target.value)}
                   />
                 </div>
 
-                {/* Tags Filter */}
+                {/* Tags Filter with Multi-Select */}
                 <div className="space-y-2">
-                  <Label htmlFor="tags-filter">Tags (comma-separated)</Label>
-                  <Input
-                    id="tags-filter"
-                    type="text"
-                    placeholder="e.g., 'night, glowing, orb'"
-                    value={filters.tags || ''}
-                    onChange={(e) => handleFilterChange('tags', e.target.value)}
+                  <Label>{t('tags')}</Label>
+                  <MultiSelectFilter
+                    options={[]} // No predefined options for tags
+                    selectedValues={filters.tags || []}
+                    onChange={(values) => handleFilterChange('tags', values)}
+                    placeholder={t('tagsPlaceholder')}
+                    emptyText={t('tagsEmpty')}
+                    allowCustom={true}
                   />
                 </div>
 
@@ -196,10 +182,10 @@ export function CollapsibleFilters({
                 <div className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
                   <div className="space-y-0.5">
                     <Label htmlFor="witnesses-only" className="text-sm font-medium cursor-pointer">
-                      Only with witnesses
+                      {t('witnessesOnly')}
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      Show experiences that had witnesses present
+                      {t('witnessesOnlyDescription')}
                     </p>
                   </div>
                   <Button
@@ -209,7 +195,7 @@ export function CollapsibleFilters({
                     size="sm"
                     onClick={() => handleFilterChange('witnessesOnly', !filters.witnessesOnly)}
                   >
-                    {filters.witnessesOnly ? 'On' : 'Off'}
+                    {filters.witnessesOnly ? t('on') : t('off')}
                   </Button>
                 </div>
 
@@ -228,7 +214,7 @@ export function CollapsibleFilters({
                       className="w-full text-muted-foreground hover:text-destructive"
                     >
                       <X className="h-4 w-4 mr-2" />
-                      Clear All Filters
+                      {t('clearAll')}
                     </Button>
                   </motion.div>
                 )}

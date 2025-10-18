@@ -39,19 +39,19 @@ export function AIAnalysisScreen() {
   const [enrichmentSteps, setEnrichmentSteps] = useState<ProgressStep[]>([
     {
       id: '1',
-      label: 'Attribute einarbeiten',
+      label: t('enrichmentSteps.step1'),
       status: 'pending',
       estimatedDuration: 2
     },
     {
       id: '2',
-      label: 'Kontext hinzufügen',
+      label: t('enrichmentSteps.step2'),
       status: 'pending',
       estimatedDuration: 3
     },
     {
       id: '3',
-      label: 'Titel finalisieren',
+      label: t('enrichmentSteps.step3'),
       status: 'pending',
       estimatedDuration: 2
     },
@@ -61,17 +61,17 @@ export function AIAnalysisScreen() {
   const [analysisSteps, setAnalysisSteps] = useState<ProgressStep[]>([
     {
       id: '1',
-      label: 'Scanne XP',
+      label: t('analysisSteps.step1'),
       status: 'pending'
     },
     {
       id: '2',
-      label: 'Extrahiere Details',
+      label: t('analysisSteps.step2'),
       status: 'pending'
     },
     {
       id: '3',
-      label: 'Generiere Metadaten',
+      label: t('analysisSteps.step3'),
       status: 'pending'
     },
   ]);
@@ -115,9 +115,9 @@ export function AIAnalysisScreen() {
     
     // Reset analysis steps to pending (no time counters)
     setAnalysisSteps([
-      { id: '1', label: 'Scanne XP', status: 'pending' },
-      { id: '2', label: 'Extrahiere Details', status: 'pending' },
-      { id: '3', label: 'Generiere Metadaten', status: 'pending' },
+      { id: '1', label: t('analysisSteps.step1'), status: 'pending' },
+      { id: '2', label: t('analysisSteps.step2'), status: 'pending' },
+      { id: '3', label: t('analysisSteps.step3'), status: 'pending' },
     ]);
     
     try {
@@ -232,9 +232,9 @@ export function AIAnalysisScreen() {
 
     // Reset steps to initial state
     setEnrichmentSteps([
-      { id: '1', label: 'Attribute einarbeiten', status: 'pending', estimatedDuration: 2 },
-      { id: '2', label: 'Kontext hinzufügen', status: 'pending', estimatedDuration: 3 },
-      { id: '3', label: 'Titel finalisieren', status: 'pending', estimatedDuration: 2 },
+      { id: '1', label: t('enrichmentSteps.step1'), status: 'pending', estimatedDuration: 2 },
+      { id: '2', label: t('enrichmentSteps.step2'), status: 'pending', estimatedDuration: 3 },
+      { id: '3', label: t('enrichmentSteps.step3'), status: 'pending', estimatedDuration: 2 },
     ]);
 
     let enrichedTextContent = screen1.text; // Fallback to original
@@ -349,7 +349,7 @@ export function AIAnalysisScreen() {
       <LoadingState
         icon="telescope"
         title={t('analyzing')}
-        description="KI erkennt Kategorie & Tags, erstellt Titel & Preview-Zusammenfassung"
+        description={t('analyzingDescription')}
         steps={analysisSteps}
         hideCounter={true}
       />
@@ -362,7 +362,7 @@ export function AIAnalysisScreen() {
       <LoadingState
         icon="sparkles"
         title={t('enriching')}
-        description="Dein Text wird mit KI-Power aufgewertet"
+        description={t('enrichingDescription')}
         steps={enrichmentSteps}
       />
     );

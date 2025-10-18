@@ -36,12 +36,12 @@ export function FilesWitnessesScreen() {
         screen4: { ...state.screen4, visibility },
       }));
 
-      toast.loading('Publishing your experience...', { id: 'publish' });
+      toast.loading(t('toast.publishing'), { id: 'publish' });
 
       // Step 1: Upload files if any
       const uploadedFileUrls: string[] = [];
       if (screen4.files.length > 0) {
-        toast.loading(`Uploading ${screen4.files.length} file(s)...`, { id: 'publish' });
+        toast.loading(t('toast.uploadingFiles', { count: screen4.files.length }), { id: 'publish' });
 
         for (let i = 0; i < screen4.files.length; i++) {
           const file = screen4.files[i];
@@ -108,7 +108,7 @@ export function FilesWitnessesScreen() {
       };
 
       // Step 3: Publish experience
-      toast.loading('Creating your experience...', { id: 'publish' });
+      toast.loading(t('toast.creating'), { id: 'publish' });
 
       const publishRes = await fetch('/api/submit/publish', {
         method: 'POST',
@@ -124,7 +124,7 @@ export function FilesWitnessesScreen() {
       const result = await publishRes.json();
 
       // Success!
-      toast.success('Experience published successfully!', { id: 'publish' });
+      toast.success(t('toast.publishSuccess'), { id: 'publish' });
 
       // Clear the draft and navigate to success screen
       reset();
@@ -135,9 +135,9 @@ export function FilesWitnessesScreen() {
       // Show rewards notification
       if (result.xpEarned > 0) {
         setTimeout(() => {
-          toast.success(`+${result.xpEarned} XP earned!`, {
+          toast.success(t('toast.xpEarned', { xp: result.xpEarned }), {
             description: result.badgesEarned.length > 0
-              ? `Badges earned: ${result.badgesEarned.join(', ')}`
+              ? t('toast.badgesEarned', { badges: result.badgesEarned.join(', ') })
               : undefined,
           });
         }, 500);
@@ -145,15 +145,15 @@ export function FilesWitnessesScreen() {
 
       if (result.leveledUp) {
         setTimeout(() => {
-          toast.success(`Level Up! You're now level ${result.newLevel}! 🎉`);
+          toast.success(t('toast.levelUp', { level: result.newLevel }));
         }, 1000);
       }
 
     } catch (error: any) {
       console.error('Publish error:', error);
-      toast.error('Failed to publish', {
+      toast.error(t('toast.publishError'), {
         id: 'publish',
-        description: error.message || 'Please try again',
+        description: error.message || t('toast.tryAgain'),
       });
     } finally {
       setPublishing(false);
