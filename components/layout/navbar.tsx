@@ -65,13 +65,49 @@ export function Navbar() {
                 {t('feed')}
               </Link>
 
-              <Link
-                href="/search"
-                className="text-sm font-medium text-text-secondary transition-colors hover:text-observatory-gold flex items-center gap-1"
-              >
-                <Search className="h-4 w-4" />
-                {t('search')}
-              </Link>
+              {/* Search Toggle */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10"
+                  >
+                    <Search className="h-4 w-4" />
+                    {t('search')}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-56 glass-card border-glass-border bg-space-deep/95 backdrop-blur-lg"
+                >
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/search"
+                      className="cursor-pointer flex items-center gap-2 text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10 focus:text-observatory-gold focus:bg-observatory-gold/10"
+                    >
+                      <Search className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Classic Search</span>
+                        <span className="text-xs text-text-tertiary">Standard search & filters</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/search2"
+                      className="cursor-pointer flex items-center gap-2 text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10 focus:text-observatory-gold focus:bg-observatory-gold/10"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Pattern Discovery</span>
+                        <span className="text-xs text-text-tertiary">AI patterns & insights</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Categories Dropdown */}
               <DropdownMenu>

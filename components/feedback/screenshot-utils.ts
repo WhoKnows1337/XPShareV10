@@ -22,8 +22,6 @@ export async function captureScreenshot(): Promise<string> {
     // modern-screenshot supports oklch() and other modern CSS out-of-the-box!
     const dataUrl = await domToPng(document.body, {
       quality: 0.95,
-      // Add extra options for better quality
-      pixelRatio: window.devicePixelRatio || 1,
     });
 
     return dataUrl;

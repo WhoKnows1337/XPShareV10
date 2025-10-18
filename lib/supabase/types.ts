@@ -1365,6 +1365,34 @@ export type Database = {
         }
         Returns: Json
       }
+      get_similarity_explanation: {
+        Args: {
+          p_experience_id1: string
+          p_experience_id2: string
+        }
+        Returns: Json
+      }
+      analyze_tag_network: {
+        Args: {
+          p_experience_ids: string[]
+          p_min_cooccurrence?: number
+        }
+        Returns: Json
+      }
+      get_pattern_summary: {
+        Args: {
+          p_experience_ids: string[]
+          p_options?: Json
+        }
+        Returns: Json
+      }
+      get_top_searches: {
+        Args: {
+          days_ago?: number
+          limit_count?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

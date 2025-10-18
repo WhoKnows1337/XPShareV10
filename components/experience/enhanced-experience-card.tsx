@@ -23,6 +23,7 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { usePrefetch } from '@/hooks/use-prefetch'
 import { getShimmerDataURL } from '@/lib/image-blur'
+import { PatternBadges, type PatternData } from '@/components/search/pattern-badges'
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -52,6 +53,7 @@ interface EnhancedExperienceCardProps {
     hero_image_url?: string
     is_verified?: boolean
     similar_count?: number
+    patterns?: PatternData
     user_profiles?: {
       username: string
       display_name: string
@@ -199,6 +201,13 @@ export function EnhancedExperienceCard({
                 +{experience.tags.length - 3}
               </Badge>
             )}
+          </div>
+        )}
+
+        {/* Pattern Badges */}
+        {experience.patterns && (
+          <div className="mb-3">
+            <PatternBadges patterns={experience.patterns} compact />
           </div>
         )}
 

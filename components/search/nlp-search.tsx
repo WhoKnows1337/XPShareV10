@@ -84,8 +84,8 @@ export function NLPSearch({ onResults, initialQuery = '', onQueryChange }: NLPSe
           <SearchAutocomplete
             value={query}
             onChange={handleQueryChange}
-            onSearch={(q) => {
-              setQuery(q)
+            onSelect={(suggestion) => {
+              setQuery(suggestion.text)
               handleSearch()
             }}
             placeholder="e.g., UFO Sichtungen am Bodensee im Sommer mit mehreren Zeugen"

@@ -6,11 +6,11 @@ import { Bug, X, GripVertical, Minimize2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeedbackForm } from './FeedbackForm';
 
-// Dynamic import to avoid SSR issues with Excalidraw (uses navigator)
-const ExcalidrawAnnotationEditor = dynamic(
-  () => import('./ExcalidrawAnnotationEditor').then((mod) => mod.ExcalidrawAnnotationEditor),
-  { ssr: false }
-);
+// DISABLED: Excalidraw annotation temporarily disabled due to type import issues
+// const ExcalidrawAnnotationEditor = dynamic(
+//   () => import('./ExcalidrawAnnotationEditor').then((mod) => mod.ExcalidrawAnnotationEditor),
+//   { ssr: false }
+// );
 
 export function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -194,8 +194,8 @@ export function FeedbackWidget() {
         </div>
       )}
 
-      {/* Full-screen Annotation Editor */}
-      {isAnnotating && capturedScreenshot && (
+      {/* Full-screen Annotation Editor - DISABLED */}
+      {/* {isAnnotating && capturedScreenshot && (
         <div className="fixed inset-0 z-[100] bg-background">
           <ExcalidrawAnnotationEditor
             screenshot={capturedScreenshot}
@@ -203,7 +203,7 @@ export function FeedbackWidget() {
             onCancel={handleAnnotationCancel}
           />
         </div>
-      )}
+      )} */}
     </>
   );
 }

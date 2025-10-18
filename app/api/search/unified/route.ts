@@ -224,6 +224,123 @@ export async function GET(request: Request) {
 
     const executionTime = Date.now() - startTime
 
+    // Step 4.6: Detect patterns across all results
+    let patternSummary: any = null
+    let experiencePatterns: Record<string, any> = {}
+
+    console.log('🔍 BEFORE PATTERN DETECTION:', {
+      filteredResultsCount: filteredResults.length,
+      hybridResultsCount: hybridResults.length
+    })
+
+    if (filteredResults.length > 0) {
+      console.log('✅ ENTERING PATTERN DETECTION BLOCK')
+      try {
+        const experienceIds = filteredResults.map(exp => exp.id)
+        console.log('📍 Experience IDs:', experienceIds.slice(0, 5))
+
+        // Get comprehensive pattern summary
+        const { data: patternData, error: patternError } = await supabase.rpc('get_pattern_summary', {
+          p_experience_ids: experienceIds,
+          p_options: JSON.stringify({
+            epsilon_km: 50,
+            min_points: 2,
+            min_cooccurrence: 2
+          })
+        })
+
+        if (!patternError && patternData) {
+          // Type assertion for Json response
+          const patternInfo = patternData as any
+          patternSummary = patternInfo
+          console.log('✨ PATTERN DETECTION SUCCESS:', {
+            totalPatterns: patternInfo.summary?.total_patterns_found,
+            temporal: patternInfo.patterns?.temporal?.count,
+            geographic: patternInfo.patterns?.geographic?.count,
+            tagNetwork: patternInfo.patterns?.tag_network?.count,
+            crossCategory: patternInfo.patterns?.cross_category?.count
+          })
+
+          // Map patterns to individual experiences (for badges)
+          filteredResults = filteredResults.map((exp: any) => {
+            const patterns: any = {
+              temporal: [],
+              geographic: [],
+              tag_network: [],
+              cross_category: [],
+            }
+
+            // Check which patterns this experience belongs to
+            if (patternInfo.patterns?.temporal?.patterns) {
+              patternInfo.patterns.temporal.patterns.forEach((p: any) => {
+                if (p.experiences?.includes(exp.id)) {
+                  patterns.temporal.push({
+                    type: p.metadata.phase,
+                    emoji: p.metadata.emoji,
+                    count: p.pattern_count
+                  })
+                }
+              })
+            }
+
+            if (patternInfo.patterns?.geographic?.patterns) {
+              patternInfo.patterns.geographic.patterns.forEach((p: any) => {
+                if (p.experiences?.includes(exp.id)) {
+                  patterns.geographic.push({
+                    cluster_id: p.cluster_id,
+                    count: p.pattern_count,
+                    center: {
+                      lat: p.metadata.center_lat,
+                      lng: p.metadata.center_lng
+                    },
+                    radius_km: p.metadata.radius_km
+                  })
+                }
+              })
+            }
+
+            if (patternInfo.patterns?.tag_network?.patterns) {
+              patternInfo.patterns.tag_network.patterns.forEach((p: any) => {
+                if (p.experiences?.includes(exp.id)) {
+                  patterns.tag_network.push({
+                    tags: [p.tag1, p.tag2],
+                    count: p.cooccurrence_count,
+                    strength: p.metadata.strength
+                  })
+                }
+              })
+            }
+
+            if (patternInfo.patterns?.cross_category?.patterns) {
+              patternInfo.patterns.cross_category.patterns.forEach((p: any) => {
+                if (p.experiences?.includes(exp.id)) {
+                  patterns.cross_category.push({
+                    categories: [p.category1, p.category2],
+                    count: p.overlap_count,
+                    type: p.metadata.pattern_type
+                  })
+                }
+              })
+            }
+
+            return {
+              ...exp,
+              patterns
+            }
+          })
+        } else if (patternError) {
+          console.warn('⚠️ PATTERN RPC ERROR:', patternError)
+        } else {
+          console.warn('⚠️ NO PATTERN DATA RETURNED')
+        }
+      } catch (patternError) {
+        console.error('❌ PATTERN DETECTION EXCEPTION:', patternError)
+        // Continue without patterns
+      }
+    } else {
+      console.log('⏭️ SKIPPING PATTERN DETECTION: No results (count:', filteredResults.length, ')')
+    }
+
     // Step 5: Track search analytics
     try {
       await (supabase as any).rpc('track_search', {
@@ -245,7 +362,7 @@ export async function GET(request: Request) {
       console.warn('Failed to track search:', trackError)
     }
 
-    // Step 6: Return results with intent metadata for UI feedback
+    // Step 6: Return results with intent metadata AND pattern insights for UI
     return NextResponse.json({
       results: filteredResults,
       metadata: {
@@ -263,6 +380,7 @@ export async function GET(request: Request) {
           dateRange: dateFrom || dateTo ? { from: dateFrom, to: dateTo } : null,
           witnessesOnly,
         },
+        patterns: patternSummary, // Full pattern summary for insights panel
         executionTime,
       },
     })

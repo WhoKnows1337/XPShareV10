@@ -135,7 +135,6 @@ export function PersistentFiltersSidebar({
           onChange={(values) => handleFilterChange('categories', values)}
           placeholder={t('categoriesPlaceholder')}
           emptyText={t('categoriesEmpty')}
-          showCounts={true}
         />
       </div>
 
