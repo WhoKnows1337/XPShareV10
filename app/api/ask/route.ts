@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Build query with filters
     let query = supabase
       .from('experiences')
-      .select('id, title, story_text, category, date_occurred, location_text, tags, witness_count, embedding')
+      .select('id, title, story_text, category, date_occurred, location_text, tags, embedding')
       .eq('visibility', 'public')
       .not('embedding', 'is', null)
 
@@ -73,9 +73,10 @@ export async function POST(req: NextRequest) {
       query = query.lte('date_occurred', dateTo)
     }
 
-    if (witnessesOnly) {
-      query = query.gt('witness_count', 0)
-    }
+    // TODO: Implement witnessesOnly filter with JOIN to experience_witnesses table
+    // if (witnessesOnly) {
+    //   // Need to JOIN with experience_witnesses and count > 0
+    // }
 
     const { data: relevant, error: searchError } = await query.limit(50)
 

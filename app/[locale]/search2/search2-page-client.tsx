@@ -995,7 +995,22 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
           ) : null
         }
         mainContent={
-          !hasSearched || results.length === 0 ? (
+          askMode ? (
+            // ASK MODE - Always render AskAI component
+            <AskAI
+              initialQuestion={query}
+              onQuestionChange={setQuery}
+              hideInput={true}
+              filters={{
+                category: filters.categories && filters.categories.length > 0 ? filters.categories[0] : undefined,
+                tags: filters.tags && filters.tags.length > 0 ? filters.tags.join(',') : undefined,
+                location: filters.location,
+                dateFrom: filters.dateFrom,
+                dateTo: filters.dateTo,
+                witnessesOnly: filters.witnessesOnly,
+              }}
+            />
+          ) : !hasSearched || results.length === 0 ? (
             // EMPTY STATE CONTENT
             <div className="space-y-8 mt-8">
               {/* Popular Searches */}
@@ -1100,33 +1115,7 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
                 />
               )}
 
-            {/* Ask Mode Content */}
-            {askMode ? (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key="ask-mode"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <AskAI
-                    initialQuestion={query}
-                    onQuestionChange={setQuery}
-                    hideInput={true}
-                    filters={{
-                      category: filters.categories && filters.categories.length > 0 ? filters.categories[0] : undefined,
-                      tags: filters.tags && filters.tags.length > 0 ? filters.tags.join(',') : undefined,
-                      location: filters.location,
-                      dateFrom: filters.dateFrom,
-                      dateTo: filters.dateTo,
-                      witnessesOnly: filters.witnessesOnly,
-                    }}
-                  />
-                </motion.div>
-              </AnimatePresence>
-            ) : (
-              /* Search Mode Content */
+              {/* Search Mode Content */}
               <AnimatePresence mode="wait">
                 {!hasSearched ? (
                   <motion.div
@@ -1508,7 +1497,6 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
                   </motion.div>
                 )}
               </AnimatePresence>
-            )}
           </div>
         )}
       />

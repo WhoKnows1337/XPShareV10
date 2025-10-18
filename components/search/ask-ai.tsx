@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -55,25 +55,12 @@ export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = fals
   const [response, setResponse] = useState<QAResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const prevQuestionRef = useRef<string>('')
 
   const handleQuestionChange = (newQuestion: string) => {
     setQuestion(newQuestion)
     onQuestionChange?.(newQuestion)
   }
-
-  // Auto-submit when initialQuestion changes and input is hidden
-  useEffect(() => {
-    if (hideInput && initialQuestion && initialQuestion !== question) {
-      setQuestion(initialQuestion)
-      // Auto-submit after a short delay
-      const timer = setTimeout(() => {
-        if (initialQuestion.trim().length >= 5) {
-          handleAsk()
-        }
-      }, 100)
-      return () => clearTimeout(timer)
-    }
-  }, [initialQuestion, hideInput])
 
 
   const exampleQuestions = [
@@ -134,6 +121,30 @@ export function AskAI({ initialQuestion = '', onQuestionChange, hideInput = fals
       setIsLoading(false)
     }
   }
+
+  // Auto-submit when initialQuestion changes and hideInput is true
+  useEffect(() => {
+    if (hideInput && initialQuestion && initialQuestion.trim().length >= 5) {
+      // Check if question actually changed - prevent duplicate submissions
+      if (initialQuestion === prevQuestionRef.current) {
+        return
+      }
+
+      // Update ref to track this question
+      prevQuestionRef.current = initialQuestion
+
+      // Reset state for new question
+      setResponse(null)
+      setError(null)
+      setQuestion(initialQuestion)
+
+      // Debounced auto-submit - wait for user to finish typing
+      const timer = setTimeout(() => {
+        handleAsk()
+      }, 1200) // Increased from 100ms to 1200ms for proper debouncing
+      return () => clearTimeout(timer)
+    }
+  }, [initialQuestion, hideInput])
 
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 80) return 'text-green-600 dark:text-green-400'
