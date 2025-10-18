@@ -262,7 +262,7 @@ export function AnnotationEditor({
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (!ctx || !startPos) return;
+    if (!canvas || !ctx || !startPos) return;
 
     if (tool === 'pen') {
       ctx.lineTo(pos.x, pos.y);
