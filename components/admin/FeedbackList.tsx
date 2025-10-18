@@ -30,6 +30,7 @@ interface Feedback {
   description: string;
   page_url: string;
   screenshot_url?: string;
+  screenshots?: string[];
   browser_info?: any;
   console_logs?: any;
   created_at: string;
