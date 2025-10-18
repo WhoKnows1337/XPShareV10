@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
             },
           ],
           temperature: 0.7,
-          maxTokens: 100,
+          maxOutputTokens: 100,
         })
         return result.toUIMessageStreamResponse()
       }
@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
           },
         ],
         temperature: 0.7,
-        maxTokens: 100,
+        maxOutputTokens: 100,
       })
       return result.toUIMessageStreamResponse()
     }
@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       temperature: 0.7,
-      maxTokens: 1500,
+      maxOutputTokens: 1500,
       // Add metadata to response headers
       onFinish: async ({ text, finishReason, usage }) => {
         const executionTime = Date.now() - startTime

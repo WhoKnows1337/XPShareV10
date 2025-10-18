@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -52,44 +53,18 @@ export function AskAIStream({
 
   // ✅ useChat with sendMessage (Official AI SDK 5.0 Pattern)
   const { messages, sendMessage, status, error } = useChat({
-    body: {
-      maxSources: 15,
-      ...(filters?.category && filters.category !== 'all' && { category: filters.category }),
-      ...(filters?.tags && { tags: filters.tags }),
-      ...(filters?.location && { location: filters.location }),
-      ...(filters?.dateFrom && { dateFrom: filters.dateFrom }),
-      ...(filters?.dateTo && { dateTo: filters.dateTo }),
-      ...(filters?.witnessesOnly && { witnessesOnly: filters.witnessesOnly }),
-    },
-    onResponse: async (response) => {
-      // Extract metadata from response headers
-      const sourcesCount = response.headers.get('X-QA-Sources-Count')
-      const confidenceScore = response.headers.get('X-QA-Confidence')
-      const sourcesData = response.headers.get('X-QA-Sources')
-
-      if (confidenceScore) {
-        setConfidence(parseInt(confidenceScore, 10))
-      }
-
-      if (sourcesData) {
-        try {
-          const parsedSources = JSON.parse(sourcesData) as Source[]
-          setSources(parsedSources)
-        } catch (e) {
-          console.error('Failed to parse sources:', e)
-        }
-      }
-
-      // Save to search history
-      try {
-        addToSearchHistory(input, 'ask', undefined, parseInt(sourcesCount || '0', 10))
-      } catch (e) {
-        console.error('Failed to save to history:', e)
-      }
-    },
-    onError: (err) => {
-      console.error('Streaming error:', err)
-    },
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: {
+        maxSources: 15,
+        ...(filters?.category && filters.category !== 'all' && { category: filters.category }),
+        ...(filters?.tags && { tags: filters.tags }),
+        ...(filters?.location && { location: filters.location }),
+        ...(filters?.dateFrom && { dateFrom: filters.dateFrom }),
+        ...(filters?.dateTo && { dateTo: filters.dateTo }),
+        ...(filters?.witnessesOnly && { witnessesOnly: filters.witnessesOnly }),
+      },
+    }),
   })
 
   // Auto-submit when initialQuestion changes (for hideInput mode)
