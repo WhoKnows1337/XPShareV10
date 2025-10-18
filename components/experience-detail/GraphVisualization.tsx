@@ -38,7 +38,7 @@ function GraphLoader({ nodes, edges }: { nodes: GraphNode[]; edges: GraphEdge[] 
   const sigma = useSigma()
 
   useEffect(() => {
-    const graph = new Graph()
+    const graph = new Graph() as any
 
     // Add nodes
     nodes.forEach((node) => {
