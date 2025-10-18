@@ -107,11 +107,13 @@ export async function GET(request: NextRequest) {
     // Calculate witness ranges (from question_answers JSONB)
     const witnessRanges = {
       noWitnesses: experiences.filter(exp => {
-        const witnesses = exp.question_answers?.witnesses || exp.question_answers?.witness_count
+        const questionAnswers = exp.question_answers as { witnesses?: number | string; witness_count?: number | string } | null
+        const witnesses = questionAnswers?.witnesses || questionAnswers?.witness_count
         return !witnesses || witnesses === 0 || witnesses === '0' || witnesses === 'none'
       }).length,
       hasWitnesses: experiences.filter(exp => {
-        const witnesses = exp.question_answers?.witnesses || exp.question_answers?.witness_count
+        const questionAnswers = exp.question_answers as { witnesses?: number | string; witness_count?: number | string } | null
+        const witnesses = questionAnswers?.witnesses || questionAnswers?.witness_count
         return witnesses && witnesses !== 0 && witnesses !== '0' && witnesses !== 'none'
       }).length,
     }
