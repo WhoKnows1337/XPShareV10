@@ -1285,6 +1285,86 @@ export type Database = {
         }
         Returns: Json
       }
+      detect_geographic_clusters: {
+        Args: {
+          p_experience_ids: string[]
+          p_epsilon_km?: number
+          p_min_points?: number
+        }
+        Returns: Json
+      }
+      detect_temporal_patterns: {
+        Args: {
+          p_experience_ids: string[]
+        }
+        Returns: Json
+      }
+      find_similar_experiences: {
+        Args: {
+          query_embedding: any
+          category_filter?: string | null
+          similarity_threshold?: number
+          max_results?: number
+        }
+        Returns: Json
+      }
+      find_geographic_clusters: {
+        Args: {
+          center_lat: number
+          center_lng: number
+          search_radius_km?: number
+          category_filter?: string | null
+        }
+        Returns: Json
+      }
+      find_temporal_clusters: {
+        Args: {
+          target_date: string
+          days_window?: number
+          category_filter?: string | null
+        }
+        Returns: Json
+      }
+      find_experiences_by_shared_attributes: {
+        Args: {
+          p_experience_id: string
+          p_threshold?: number
+          p_limit?: number
+        }
+        Returns: Json
+      }
+      find_similar_users: {
+        Args: {
+          target_user_id: string
+          match_threshold?: number
+          match_count?: number
+        }
+        Returns: Json
+      }
+      find_interested_users: {
+        Args: {
+          category_filter?: string | null
+          location_filter?: string | null
+          max_users?: number
+        }
+        Returns: Json
+      }
+      find_attribute_geographic_clusters: {
+        Args: {
+          p_attribute_key: string
+          p_attribute_value: string
+          p_min_count?: number
+        }
+        Returns: Json
+      }
+      find_attribute_temporal_patterns: {
+        Args: {
+          p_attribute_key: string
+          p_attribute_value: string
+          p_granularity?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
