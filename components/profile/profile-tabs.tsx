@@ -70,6 +70,12 @@ const profileTabs: ProfileTab[] = [
     description: 'Find users with similar extraordinary experiences',
   },
   {
+    id: 'connections',
+    label: 'Connections',
+    icon: <Users className="h-4 w-4" />,
+    description: 'XP Twins, Location, Patterns & Mutual connections',
+  },
+  {
     id: 'stats',
     label: 'Stats',
     icon: <BarChart3 className="h-4 w-4" />,

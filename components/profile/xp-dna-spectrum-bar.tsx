@@ -2,19 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-
-const CATEGORY_COLORS: Record<string, string> = {
-  'ufo-uap': '#7C3AED',
-  'nde-obe': '#2563EB',
-  'dreams': '#0891B2',
-  'psychedelics': '#DB2777',
-  'paranormal-anomalies': '#DC2626',
-  'synchronicity': '#EA580C',
-  'ghosts-spirits': '#6366F1',
-  'altered-states': '#8B5CF6',
-  'glitch-matrix': '#10B981',
-  'prophecy-premonition': '#F59E0B',
-}
+import { getCategoryColor } from '@/lib/constants/categories'
 
 interface XPDNASpectrumBarProps {
   categoryDistribution: Record<string, number>
@@ -33,7 +21,7 @@ export function XPDNASpectrumBar({ categoryDistribution }: XPDNASpectrumBarProps
       category,
       percentage: (count / total) * 100,
       count,
-      color: CATEGORY_COLORS[category] || '#64748b',
+      color: getCategoryColor(category),
     }))
 
   return (

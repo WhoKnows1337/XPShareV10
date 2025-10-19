@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -84,6 +84,8 @@ export function ProfileClientTabs({
 }: ProfileClientTabsProps) {
   const searchParams = useSearchParams()
   const currentTab = searchParams.get('tab') || 'experiences'
+  const [xpTwinsData, setXpTwinsData] = useState<any[]>([])
+  const [loadingXpTwins, setLoadingXpTwins] = useState(false)
 
   // Prefetch similarity data on mount if viewing other profile
   React.useEffect(() => {
@@ -112,6 +114,37 @@ export function ProfileClientTabs({
         })
     }
   }, [isOwnProfile, currentUserId, profileUser.id])
+
+  // Fetch XP Twins data when Connections tab is active
+  useEffect(() => {
+    if (currentTab === 'connections' && !loadingXpTwins && xpTwinsData.length === 0) {
+      setLoadingXpTwins(true)
+      fetch(`/api/users/${profileUser.id}/similar?limit=20&minSimilarity=0.3`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.similar_users) {
+            // Transform to ConnectionsTab format
+            const formattedTwins = data.similar_users.map((twin: any) => ({
+              id: twin.user_id,
+              username: twin.username,
+              display_name: twin.display_name,
+              avatar_url: twin.avatar_url,
+              bio: twin.bio,
+              total_xp: twin.total_xp || 0,
+              level: Math.floor((twin.total_xp || 0) / 100) + 1,
+              isConnected: false, // TODO: Check actual connection status
+              metadata: {
+                similarity: twin.similarity_score,
+                sharedCategories: twin.shared_categories || []
+              }
+            }))
+            setXpTwinsData(formattedTwins)
+          }
+        })
+        .catch(err => console.error('Failed to fetch XP twins:', err))
+        .finally(() => setLoadingXpTwins(false))
+    }
+  }, [currentTab, profileUser.id, loadingXpTwins, xpTwinsData.length])
 
   const getInitials = (name: string) => {
     return name
@@ -186,9 +219,40 @@ export function ProfileClientTabs({
         return (
           <ConnectionsTab
             userId={profileUser.id}
+            xpTwins={xpTwinsData}
+            locationConnections={[]} // TODO: Implement location-based connections
+            patternConnections={[]} // TODO: Implement pattern-based connections
+            mutualConnections={[]} // TODO: Implement mutual connections
             onConnect={async (userId) => {
-              // TODO: Implement connection logic
-              console.log('Connect to user:', userId)
+              try {
+                const response = await fetch('/api/connections', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    addressee_id: userId,
+                    message: null,
+                  }),
+                })
+
+                const data = await response.json()
+
+                if (!response.ok) {
+                  if (response.status === 409) {
+                    alert(`Connection already exists (Status: ${data.existing_status})`)
+                  } else {
+                    alert(data.error || 'Failed to create connection')
+                  }
+                  return
+                }
+
+                alert('Connection request sent successfully!')
+                // Refresh XP twins data to update connection status
+                setXpTwinsData([])
+                setLoadingXpTwins(false)
+              } catch (err) {
+                console.error('Error creating connection:', err)
+                alert('Failed to send connection request')
+              }
             }}
             onViewProfile={(userId) => {
               // userId is UUID - will be redirected by middleware to username

@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, Users, MapPin, Lightbulb, Target, Award } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface EnhancedStatsGridProps {
   totalXp: number
@@ -77,16 +78,47 @@ export function EnhancedStatsGrid({
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {stats.map((stat, index) => (
-        <Card key={index} className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className={`w-12 h-12 rounded-full ${stat.bg} flex items-center justify-center mb-3`}>
-              {stat.icon}
-            </div>
-            <p className="text-2xl font-bold mb-1">{stat.value}</p>
-            <p className="text-sm font-medium text-foreground mb-1">{stat.label}</p>
-            <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
-          </CardContent>
-        </Card>
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.4,
+            delay: index * 0.1,
+            ease: "easeOut"
+          }}
+          whileHover={{
+            scale: 1.05,
+            transition: { duration: 0.2 }
+          }}
+        >
+          <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+            <CardContent className="p-6">
+              <motion.div
+                className={`w-12 h-12 rounded-full ${stat.bg} flex items-center justify-center mb-3`}
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+              >
+                {stat.icon}
+              </motion.div>
+              <motion.p
+                className="text-2xl font-bold mb-1"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  delay: index * 0.1 + 0.2,
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15
+                }}
+              >
+                {stat.value}
+              </motion.p>
+              <p className="text-sm font-medium text-foreground mb-1">{stat.label}</p>
+              <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ))}
     </div>
   )

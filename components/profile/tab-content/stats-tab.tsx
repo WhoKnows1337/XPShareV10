@@ -1,13 +1,16 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
+import { ActivityHeatmap } from '@/components/profile/activity-heatmap'
 
 export function StatsTab({ userId }: { userId: string }) {
   return (
-    <Card>
-      <CardContent className="py-12 text-center">
-        <p className="text-muted-foreground">Stats tab content coming soon...</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <ActivityHeatmap userId={userId} />
+
+      {/* TODO: Add more stat visualizations */}
+      {/* - Category breakdown chart */}
+      {/* - Experience timeline */}
+      {/* - Collaboration network graph */}
+    </div>
   )
 }
