@@ -36,7 +36,7 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
   const id = profile.id
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-8">
+    <div className="min-h-screen bg-space-deep py-8">
       <div className="container mx-auto max-w-2xl px-4">
         <ProfileEditForm
           userId={id}
