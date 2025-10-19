@@ -3,16 +3,19 @@
 /**
  * XP Twins Sidebar Card
  *
- * Shows the TOP XP Twin match for the viewed user
+ * Shows 3-5 most similar users to the viewed profile
  * Only displayed on OTHER users' profiles (not own profile)
- * Fetches similarity data from user_similarity_cache table
+ * Fetches from /api/users/[id]/similar
  */
 
 import React, { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { XPTwinsCard } from './xp-twins-card'
-import { Card, CardContent } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Loader2, Users, TrendingUp, ArrowRight } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface XPTwinsSidebarCardProps {
   /**
@@ -31,24 +34,14 @@ interface XPTwinsSidebarCardProps {
   isOwnProfile: boolean
 }
 
-interface SimilarityData {
-  score: number
+interface SimilarUser {
+  user_id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  similarity_score: number
   shared_categories: string[]
-  match_quality: 'EXCELLENT' | 'VERY_GOOD' | 'GOOD' | 'FAIR'
-}
-
-interface SharedExperience {
-  id: string
-  title: string
-  category: string
-  created_at: string
-}
-
-function getMatchQuality(score: number): 'EXCELLENT' | 'VERY_GOOD' | 'GOOD' | 'FAIR' {
-  if (score >= 0.8) return 'EXCELLENT'
-  if (score >= 0.7) return 'VERY_GOOD'
-  if (score >= 0.5) return 'GOOD'
-  return 'FAIR'
+  total_xp: number
 }
 
 export function XPTwinsSidebarCard({
@@ -56,114 +49,33 @@ export function XPTwinsSidebarCard({
   currentUserId,
   isOwnProfile
 }: XPTwinsSidebarCardProps) {
-  const [similarity, setSimilarity] = useState<SimilarityData | null>(null)
-  const [sharedExperiences, setSharedExperiences] = useState<SharedExperience[]>([])
+  const [similarUsers, setSimilarUsers] = useState<SimilarUser[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-  const [isConnecting, setIsConnecting] = useState(false)
 
   useEffect(() => {
     // Don't show on own profile
-    if (isOwnProfile || !currentUserId) {
+    if (isOwnProfile) {
       setLoading(false)
       return
     }
 
-    async function fetchSimilarity() {
+    async function fetchSimilarUsers() {
       try {
-        const supabase = createClient()
+        const response = await fetch(`/api/users/${profileUserId}/similar?limit=5&minSimilarity=0.3`)
+        if (!response.ok) throw new Error('Failed to fetch')
+        const data = await response.json()
 
-        // Fetch similarity between current user and profile user
-        // Query handles both user_id < similar_user_id and vice versa
-        // @ts-ignore - user_similarity_cache table types not yet generated
-        const { data, error: queryError } = await supabase
-          // @ts-ignore
-          .from('user_similarity_cache')
-          // @ts-ignore
-          .select('similarity_score, shared_categories')
-          .or(`and(user_id.eq.${currentUserId},similar_user_id.eq.${profileUserId}),and(user_id.eq.${profileUserId},similar_user_id.eq.${currentUserId})`)
-          .maybeSingle()
-
-        // If queryError but not "no rows" error, log it
-        if (queryError && queryError.code !== 'PGRST116') {
-          console.error('Error fetching similarity:', {
-            code: queryError.code,
-            message: queryError.message,
-            details: queryError.details,
-            hint: queryError.hint
-          })
-          setError(true)
-          return
-        }
-
-        // If no data (not yet calculated), this is OK - just don't show the card
-        if (!data) {
-          setLoading(false)
-          return
-        }
-
-        if (data) {
-          // @ts-ignore
-          setSimilarity({
-            // @ts-ignore
-            score: Number(data.similarity_score),
-            // @ts-ignore
-            shared_categories: data.shared_categories || [],
-            // @ts-ignore
-            match_quality: getMatchQuality(Number(data.similarity_score))
-          })
-        }
-
-        // Fetch shared experiences (where both users are witnesses)
-        const { data: sharedExps } = await supabase
-          .from('experiences')
-          .select('id, title, category, created_at')
-          .eq('visibility', 'public')
-          .in('id',
-            supabase.rpc('get_shared_experience_ids', {
-              user1_id: currentUserId,
-              user2_id: profileUserId
-            })
-          )
-          .limit(10)
-          .order('created_at', { ascending: false })
-
-        // Fallback: Manual query if RPC doesn't exist yet
-        if (!sharedExps) {
-          // Query for experiences where both users appear as witnesses
-          const { data: witnessData } = await supabase
-            .from('experience_witnesses')
-            .select('experience_id')
-
-          // Find experience_ids that appear for both users
-          const user1Witnesses = witnessData?.filter(w => w.user_id === currentUserId).map(w => w.experience_id) || []
-          const user2Witnesses = witnessData?.filter(w => w.user_id === profileUserId).map(w => w.experience_id) || []
-          const sharedIds = user1Witnesses.filter(id => user2Witnesses.includes(id))
-
-          if (sharedIds.length > 0) {
-            const { data: experiences } = await supabase
-              .from('experiences')
-              .select('id, title, category, created_at')
-              .in('id', sharedIds)
-              .eq('visibility', 'public')
-              .limit(10)
-              .order('created_at', { ascending: false })
-
-            setSharedExperiences(experiences || [])
-          }
-        } else {
-          setSharedExperiences(sharedExps || [])
-        }
+        setSimilarUsers(data.similar_users || [])
       } catch (err) {
-        console.error('Error:', err)
-        setError(true)
+        console.error('Error fetching similar users:', err)
+        setSimilarUsers([])
       } finally {
         setLoading(false)
       }
     }
 
-    fetchSimilarity()
-  }, [profileUserId, currentUserId, isOwnProfile])
+    fetchSimilarUsers()
+  }, [profileUserId, isOwnProfile])
 
   // Don't render on own profile
   if (isOwnProfile) {
@@ -181,53 +93,85 @@ export function XPTwinsSidebarCard({
     )
   }
 
-  // Error or no similarity found
-  if (error || !similarity) {
-    return null // Silently hide if no match
-  }
-
-  // Only show if similarity is meaningful (>30%)
-  if (similarity.score < 0.3) {
-    return null
-  }
-
-  const handleConnect = async () => {
-    setIsConnecting(true)
-    try {
-      const response = await fetch('/api/connections', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          addressee_id: profileUserId,
-          message: null,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        console.error('Failed to create connection:', data.error)
-        alert(data.error || 'Failed to create connection')
-        return
-      }
-
-      alert('Connection request sent successfully!')
-    } catch (err) {
-      console.error('Error creating connection:', err)
-      alert('Failed to send connection request')
-    } finally {
-      setIsConnecting(false)
-    }
+  // No similar users found
+  if (similarUsers.length === 0) {
+    return null // Silently hide if no matches
   }
 
   return (
-    <XPTwinsCard
-      similarity={similarity}
-      sharedExperiences={sharedExperiences}
-      onConnect={handleConnect}
-      isConnecting={isConnecting}
-    />
+    <Card className="border-2">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Users className="h-5 w-5 text-primary" />
+            Similar Users
+          </CardTitle>
+          <Badge variant="secondary">{similarUsers.length}</Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {/* User List - Show up to 5 */}
+        {similarUsers.slice(0, 5).map((user, index) => (
+          <motion.div
+            key={user.user_id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Link
+              href={`/profile/${user.username}`}
+              className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors group"
+            >
+              {/* Avatar */}
+              <Avatar className="h-10 w-10 flex-shrink-0">
+                <AvatarImage src={user.avatar_url || ''} />
+                <AvatarFallback>
+                  {(user.display_name || user.username || 'U')[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">
+                  {user.display_name || user.username}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-primary">
+                      {Math.round(user.similarity_score * 100)}%
+                    </span>
+                  </div>
+                  {user.shared_categories.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      · {user.shared_categories.length} categories
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Arrow Icon */}
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
+            </Link>
+          </motion.div>
+        ))}
+
+        {/* View All Link - Use first user's username to construct profile link, fallback to connections tab */}
+        {similarUsers.length > 0 && (
+          <Link href={`?tab=connections`}>
+            <Button variant="outline" size="sm" className="w-full mt-2">
+              <Users className="mr-2 h-4 w-4" />
+              View All XP Twins
+            </Button>
+          </Link>
+        )}
+
+        {/* Description */}
+        <p className="text-xs text-muted-foreground text-center pt-2">
+          Users with similar experience profiles
+        </p>
+      </CardContent>
+    </Card>
   )
 }

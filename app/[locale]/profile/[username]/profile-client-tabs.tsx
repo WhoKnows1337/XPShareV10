@@ -364,22 +364,72 @@ export function ProfileClientTabs({
                   </span>
                 </div>
               </div>
+
+              {/* XP DNA Spectrum Bar - Above the Fold */}
+              {Object.keys(categoryDistribution).length > 0 && (
+                <div className="mt-6">
+                  <XPDNASpectrumBar categoryDistribution={categoryDistribution} />
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
-              {isOwnProfile && (
+            <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+              {isOwnProfile ? (
                 <>
                   <DownloadReportButton
                     userId={profileUser.id}
                     userName={profileUser.username}
                   />
                   <Link href={`/settings`}>
-                    <Button variant="outline">
+                    <Button variant="outline" className="w-full sm:w-auto">
                       <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
                       Edit Profile
                     </Button>
                   </Link>
+                </>
+              ) : (
+                <>
+                  {/* Connect/Follow Button for other profiles */}
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/connections', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            addressee_id: profileUser.id,
+                            message: null,
+                          }),
+                        })
+
+                        const data = await response.json()
+
+                        if (!response.ok) {
+                          if (response.status === 409) {
+                            alert(`Connection already exists (Status: ${data.existing_status})`)
+                          } else {
+                            alert(data.error || 'Failed to create connection')
+                          }
+                          return
+                        }
+
+                        alert('Connection request sent successfully!')
+                      } catch (err) {
+                        console.error('Error creating connection:', err)
+                        alert('Failed to send connection request')
+                      }
+                    }}
+                  >
+                    <Users className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Connect
+                  </Button>
+                  {/* Message Button (Future Enhancement) */}
+                  {/* <Button variant="outline" className="w-full sm:w-auto">
+                    <Mail className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Message
+                  </Button> */}
                 </>
               )}
             </div>
@@ -407,12 +457,9 @@ export function ProfileClientTabs({
         className="mb-8"
         mainContent={
           <>
-            {/* XP DNA Spectrum Bar & Category Radar */}
+            {/* Category Radar Chart (XP DNA Spectrum Bar moved to Profile Header) */}
             {Object.keys(categoryDistribution).length > 0 && (
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <XPDNASpectrumBar categoryDistribution={categoryDistribution} />
-                <CategoryRadarChart categoryDistribution={categoryDistribution} />
-              </div>
+              <CategoryRadarChart categoryDistribution={categoryDistribution} />
             )}
 
             {/* Streak Widget, Activity Chart, and Activity Heatmap */}
