@@ -212,7 +212,7 @@ export function XPTwinsCard({
             variant="outline"
             size="sm"
             className="flex-1"
-            onClick={() => window.open(`/profile/${twin.user_id}`, '_blank')}
+            onClick={() => window.open(`/profile/${twin.username}`, '_blank')}
           >
             View Profile
           </Button>

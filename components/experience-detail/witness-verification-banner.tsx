@@ -78,7 +78,7 @@ export function WitnessVerificationBanner({
 
                 {/* First Witness */}
                 <div className="flex items-center gap-3 mb-2">
-                  <Link href={`/profile/${firstWitness.user_id}`} className="flex items-center gap-2 hover:opacity-80">
+                  <Link href={`/profile/${firstWitness.username}`} className="flex items-center gap-2 hover:opacity-80">
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={firstWitness.avatar_url} />
                       <AvatarFallback>
@@ -137,7 +137,7 @@ export function WitnessVerificationBanner({
                     >
                       {verifiedWitnesses.map((witness) => (
                         <div key={witness.id} className="flex items-start gap-3">
-                          <Link href={`/profile/${witness.user_id}`} className="flex items-center gap-2 hover:opacity-80">
+                          <Link href={`/profile/${witness.username}`} className="flex items-center gap-2 hover:opacity-80">
                             <Avatar className="w-8 h-8">
                               <AvatarImage src={witness.avatar_url} />
                               <AvatarFallback>

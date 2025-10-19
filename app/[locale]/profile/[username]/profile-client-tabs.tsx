@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,10 @@ import { DownloadReportButton } from '@/components/profile/download-report-butto
 import { ProfileTabs } from '@/components/profile/profile-tabs'
 import { ActivityChart } from '@/components/profile/activity-chart'
 import { StreakWidget } from '@/components/gamification/StreakWidget'
-import { XPTwinsTabContent, XPDNABadge } from '@/components/profile/xp-twins'
+import { XPTwinsTabContent } from '@/components/profile/xp-twins'
+import { XPDNABadge } from '@/components/profile/xp-dna-badge'
+import { SimilarityScoreBadge } from '@/components/profile/similarity-score-badge'
+import { ConnectionsTab } from '@/components/profile/connections-tab'
 import {
   ExperiencesTab,
   DraftsTab,
@@ -35,6 +38,8 @@ import { EnhancedStatsGrid } from '@/components/profile/enhanced-stats-grid'
 import { CategoryRadarChart } from '@/components/profile/category-radar-chart'
 import { XPDNASpectrumBar } from '@/components/profile/xp-dna-spectrum-bar'
 import { MobileActionBar } from '@/components/profile/mobile-action-bar'
+import { ProfileLayoutGrid } from '@/components/profile/profile-layout-grid'
+import { XPTwinsSidebarCard } from '@/components/profile/xp-twins-sidebar-card'
 
 interface ProfileClientTabsProps {
   profileUser: any
@@ -54,6 +59,9 @@ interface ProfileClientTabsProps {
   totalContributions: number
   topCategories: string[]
   categoryDistribution: Record<string, number>
+  percentile: number
+  geographicReach: number
+  connectionsCount: number
 }
 
 export function ProfileClientTabs({
@@ -69,10 +77,41 @@ export function ProfileClientTabs({
   longestStreak,
   totalContributions,
   topCategories,
-  categoryDistribution
+  categoryDistribution,
+  percentile,
+  geographicReach,
+  connectionsCount
 }: ProfileClientTabsProps) {
   const searchParams = useSearchParams()
   const currentTab = searchParams.get('tab') || 'experiences'
+
+  // Prefetch similarity data on mount if viewing other profile
+  React.useEffect(() => {
+    if (!isOwnProfile && currentUserId && profileUser.id) {
+      // Prefetch similarity data in background
+      fetch(`/api/users/similarity?user1=${currentUserId}&user2=${profileUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.similarity) {
+            // Cache the result for instant badge display
+            try {
+              sessionStorage.setItem(
+                `similarity_${currentUserId}_${profileUser.id}`,
+                JSON.stringify({
+                  data: data.similarity,
+                  timestamp: Date.now(),
+                })
+              )
+            } catch (e) {
+              // Ignore storage errors
+            }
+          }
+        })
+        .catch(() => {
+          // Silently fail - badge will fetch when needed
+        })
+    }
+  }, [isOwnProfile, currentUserId, profileUser.id])
 
   const getInitials = (name: string) => {
     return name
@@ -143,6 +182,20 @@ export function ProfileClientTabs({
             isOwnProfile={isOwnProfile}
           />
         )
+      case 'connections':
+        return (
+          <ConnectionsTab
+            userId={profileUser.id}
+            onConnect={async (userId) => {
+              // TODO: Implement connection logic
+              console.log('Connect to user:', userId)
+            }}
+            onViewProfile={(userId) => {
+              // userId is UUID - will be redirected by middleware to username
+              window.location.href = `/profile/${userId}`
+            }}
+          />
+        )
       default:
         return (
           <Card>
@@ -186,6 +239,14 @@ export function ProfileClientTabs({
                     size="lg"
                     showLabel={true}
                     className="mt-2 md:mt-0"
+                  />
+                )}
+
+                {/* Similarity Score Badge - only on other profiles */}
+                {!isOwnProfile && currentUserId && (
+                  <SimilarityScoreBadge
+                    profileUserId={profileUser.id}
+                    currentUserId={currentUserId}
                   />
                 )}
               </div>
@@ -236,7 +297,7 @@ export function ProfileClientTabs({
         </CardContent>
       </Card>
 
-      {/* Enhanced Stats Grid (6-8 cards) */}
+      {/* Enhanced Stats Grid (6-8 cards) - Full Width */}
       <div className="mb-8">
         <EnhancedStatsGrid
           totalXp={totalXP}
@@ -245,22 +306,46 @@ export function ProfileClientTabs({
           longestStreak={longestStreak}
           totalExperiences={stats.experiencesCount}
           totalContributions={totalContributions}
+          percentile={percentile}
+          geographicReach={geographicReach}
+          connectionsCount={connectionsCount}
         />
       </div>
 
-      {/* XP DNA Spectrum Bar & Category Radar */}
-      {Object.keys(categoryDistribution).length > 0 && (
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <XPDNASpectrumBar categoryDistribution={categoryDistribution} />
-          <CategoryRadarChart categoryDistribution={categoryDistribution} />
-        </div>
-      )}
+      {/* 2-Column Grid Layout: Main Content (left 2/3) + Sidebar (right 1/3) */}
+      <ProfileLayoutGrid
+        className="mb-8"
+        mainContent={
+          <>
+            {/* XP DNA Spectrum Bar & Category Radar */}
+            {Object.keys(categoryDistribution).length > 0 && (
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <XPDNASpectrumBar categoryDistribution={categoryDistribution} />
+                <CategoryRadarChart categoryDistribution={categoryDistribution} />
+              </div>
+            )}
 
-      {/* Streak Widget and Activity Chart */}
-      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <StreakWidget userId={profileUser.id} />
-        <ActivityChart userId={profileUser.id} />
-      </div>
+            {/* Streak Widget and Activity Chart */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <StreakWidget userId={profileUser.id} />
+              <ActivityChart userId={profileUser.id} />
+            </div>
+          </>
+        }
+        sidebarContent={
+          <>
+            {/* XP Twins Card - Only on OTHER profiles */}
+            <XPTwinsSidebarCard
+              profileUserId={profileUser.id}
+              currentUserId={currentUserId}
+              isOwnProfile={isOwnProfile}
+            />
+
+            {/* TODO: Pattern Contributions Card */}
+            {/* TODO: Connections Preview Card */}
+          </>
+        }
+      />
 
       {/* Profile Tabs - New 9-Tab System */}
       <ProfileTabs

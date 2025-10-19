@@ -91,7 +91,7 @@ export function SimilarUsersCard({ userId }: SimilarUsersCardProps) {
         {similarUsers.map((user) => (
           <Link
             key={user.id}
-            href={`/profile/${user.id}`}
+            href={`/profile/${user.username}`}
             className="block group"
           >
             <div className="flex items-start gap-3 p-3 rounded-lg transition-all hover:bg-white/80 hover:shadow-md">

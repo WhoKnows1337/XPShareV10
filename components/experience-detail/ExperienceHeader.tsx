@@ -154,7 +154,7 @@ export function ExperienceHeader({
         <div className="flex items-center justify-between px-6 py-4">
           {/* Left: User Info */}
           <div className="flex items-center gap-3">
-            <Link href={`/@${user.username}`} aria-label={`View profile of ${displayName}`}>
+            <Link href={`/profile/${user.username}`} aria-label={`View profile of ${displayName}`}>
               <Avatar className="h-10 w-10">
                 {user.avatar_url && (
                   <AvatarImage src={user.avatar_url} alt={`${displayName}'s avatar`} />
@@ -168,7 +168,7 @@ export function ExperienceHeader({
                   <AnonymousBadge />
                 ) : (
                   <Link
-                    href={`/@${user.username}`}
+                    href={`/profile/${user.username}`}
                     className="font-semibold hover:underline"
                     aria-label={`View profile of ${displayName}`}
                   >

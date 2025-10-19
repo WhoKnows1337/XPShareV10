@@ -54,7 +54,7 @@ export function LinkedExperiences({
             return (
               <Card key={linked.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  <Link href={`/@${linked.user_profiles.username}`}>
+                  <Link href={`/profile/${linked.user_profiles.username}`}>
                     <Avatar className="h-10 w-10">
                       {linked.user_profiles.avatar_url && (
                         <AvatarImage src={linked.user_profiles.avatar_url} />
@@ -65,7 +65,7 @@ export function LinkedExperiences({
                   <div className="flex-1">
                     <div className="mb-1 flex items-center gap-2">
                       <Link
-                        href={`/@${linked.user_profiles.username}`}
+                        href={`/profile/${linked.user_profiles.username}`}
                         className="font-semibold hover:underline"
                       >
                         @{linked.user_profiles.username}

@@ -158,7 +158,7 @@ export function RelatedSidebar({
             </Avatar>
 
             <Link
-              href={`/@${user.username}`}
+              href={`/profile/${user.username}`}
               className="font-semibold text-lg hover:underline mb-1"
             >
               {displayName}
@@ -247,7 +247,7 @@ export function RelatedSidebar({
 
             {currentUserId && isOwnProfile && (
               <Button variant="outline" className="w-full" size="sm" asChild>
-                <Link href={`/@${user.username}`}>View Profile</Link>
+                <Link href={`/profile/${user.username}`}>View Profile</Link>
               </Button>
             )}
           </div>

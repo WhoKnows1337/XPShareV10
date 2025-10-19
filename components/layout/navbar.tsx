@@ -29,7 +29,7 @@ const categories = [
 ];
 
 export function Navbar() {
-  const { user, signOut, loading, isAdmin } = useAuth();
+  const { user, signOut, loading, isAdmin, username } = useAuth();
   const t = useTranslations('nav');
   const tCategories = useTranslations('categories');
 
@@ -186,12 +186,12 @@ export function Navbar() {
                 >
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium text-text-primary">{user.email}</p>
-                    <p className="text-xs text-text-tertiary">@{user.user_metadata?.username || 'user'}</p>
+                    <p className="text-xs text-text-tertiary">@{username || user.user_metadata?.username || 'user'}</p>
                   </div>
                   <DropdownMenuSeparator className="bg-glass-border" />
                   <DropdownMenuItem asChild>
                     <Link
-                      href={`/profile/${user.id}`}
+                      href={`/profile/${username || user.id}`}
                       className="cursor-pointer text-text-secondary hover:text-observatory-gold hover:bg-observatory-gold/10 focus:text-observatory-gold focus:bg-observatory-gold/10"
                     >
                       <User className="mr-2 h-4 w-4" aria-hidden="true" />

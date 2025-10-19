@@ -10,6 +10,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   isAdmin: boolean
+  username: string | null
   signUp: (email: string, password: string, username: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
@@ -23,27 +24,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [username, setUsername] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
-  // Check admin status when user changes
+  // Check admin status and fetch username when user changes
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    const checkAdminStatusAndUsername = async () => {
       if (!user?.id) {
         setIsAdmin(false)
+        setUsername(null)
         return
       }
 
-      // Check is_admin field first (primary method)
+      // Fetch profile data (is_admin and username)
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('is_admin')
+        .select('is_admin, username')
         .eq('id', user.id)
         .single()
 
-      if (profile?.is_admin) {
-        setIsAdmin(true)
-        return
+      if (profile) {
+        setIsAdmin(profile.is_admin || false)
+        setUsername(profile.username || null)
+
+        // If user is admin, return early
+        if (profile.is_admin) {
+          return
+        }
+      } else {
+        setIsAdmin(false)
+        setUsername(null)
       }
 
       // Also check admin_roles table (for role-based system)
@@ -60,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(false)
     }
 
-    checkAdminStatus()
+    checkAdminStatusAndUsername()
   }, [user, supabase])
 
   useEffect(() => {
@@ -122,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut()
+    setUsername(null)
     router.push('/login')
   }
 
@@ -144,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     isAdmin,
+    username,
     signUp,
     signIn,
     signOut,

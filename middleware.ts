@@ -45,23 +45,54 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protected routes that require authentication (with locale prefix)
-  const protectedRoutes = ['/feed', '/profile', '/settings', '/submit', '/map', '/timeline', '/experiences', '/admin', '/categories']
-  // Public routes that should NOT require authentication
-  const publicRoutes: string[] = []
   const pathname = request.nextUrl.pathname
-
   // Remove locale prefix to check route
   const pathnameWithoutLocale = pathname.replace(/^\/(de|en|fr|es)/, '') || '/'
 
-  // Check if route is explicitly public first
-  const isPublicRoute = publicRoutes.some((route) =>
-    pathnameWithoutLocale.startsWith(route)
-  )
+  // UUID to Username redirect for profile pages - BEFORE auth check!
+  // Pattern: /profile/[uuid] → /profile/[username]
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const profileMatch = pathnameWithoutLocale.match(/^\/profile\/([^\/]+)/)
 
-  const isProtectedRoute = !isPublicRoute && protectedRoutes.some((route) =>
+  if (profileMatch && uuidRegex.test(profileMatch[1])) {
+    const uuid = profileMatch[1]
+
+    try {
+      // Lookup username by UUID
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('username')
+        .eq('id', uuid)
+        .single()
+
+      if (!error && data?.username) {
+        // Redirect to username-based URL with 301 Permanent Redirect
+        const url = request.nextUrl.clone()
+        const locale = pathname.match(/^\/(de|en|fr|es)/)?.[1] || ''
+        url.pathname = locale
+          ? `/${locale}/profile/${data.username}`
+          : `/profile/${data.username}`
+
+        return NextResponse.redirect(url, { status: 301 })
+      }
+    } catch (error) {
+      console.error('Error looking up username for UUID redirect:', error)
+      // Continue to allow the request through if lookup fails
+    }
+  }
+
+  // Protected routes that require authentication (with locale prefix)
+  // Note: /profile/[username] is PUBLIC, but /profile/[username]/edit is PROTECTED
+  const protectedRoutes = ['/feed', '/settings', '/submit', '/map', '/timeline', '/admin', '/categories']
+  const protectedProfileRoutes = ['/edit'] // Sub-routes of /profile that are protected
+
+  const isProtectedProfileRoute = pathnameWithoutLocale.match(/^\/profile\/[^\/]+\/(.+)/)
+    ? protectedProfileRoutes.some(route => pathnameWithoutLocale.includes(route))
+    : false
+
+  const isProtectedRoute = protectedRoutes.some((route) =>
     pathnameWithoutLocale.startsWith(route)
-  )
+  ) || isProtectedProfileRoute
 
   // Redirect to login if accessing protected route without auth
   if (isProtectedRoute && !user) {

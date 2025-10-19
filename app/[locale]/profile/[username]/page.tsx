@@ -4,12 +4,73 @@ import { ProfileClientTabs } from './profile-client-tabs'
 
 interface ProfilePageProps {
   params: Promise<{
-    id: string
+    username: string
   }>
 }
 
+/**
+ * Calculate user's percentile ranking based on total XP
+ * Returns percentile (e.g., 10 means "Top 10%")
+ */
+async function calculatePercentile(supabase: any, userXP: number): Promise<number> {
+  // Count total users
+  const { count: totalUsers } = await supabase
+    .from('user_profiles')
+    .select('*', { count: 'exact', head: true })
+
+  if (!totalUsers || totalUsers === 0) return 50
+
+  // Count users with MORE XP than current user
+  const { count: usersAbove } = await supabase
+    .from('user_profiles')
+    .select('*', { count: 'exact', head: true })
+    .gt('total_xp', userXP)
+
+  const usersAboveCount = usersAbove || 0
+  const percentile = Math.round((usersAboveCount / totalUsers) * 100)
+  
+  return Math.max(1, Math.min(99, percentile)) // Clamp between 1-99
+}
+
+/**
+ * Calculate geographic reach from user's experiences
+ * Returns count of unique countries where experiences occurred
+ */
+async function calculateGeographicReach(supabase: any, userId: string): Promise<number> {
+  const { data: experiences } = await supabase
+    .from('experiences')
+    .select('location_country')
+    .eq('user_id', userId)
+    .not('location_country', 'is', null)
+
+  if (!experiences || experiences.length === 0) return 0
+
+  // Count unique countries
+  const uniqueCountries = new Set(
+    experiences.map((exp: any) => exp.location_country).filter(Boolean)
+  )
+
+  return uniqueCountries.size
+}
+
+/**
+ * Calculate connections count from user_similarity_cache
+ * Returns count of users with similarity score >= 0.3
+ */
+async function calculateConnectionsCount(supabase: any, userId: string): Promise<number> {
+  // @ts-ignore - user_similarity_cache table types not yet generated
+  const { count } = await supabase
+    // @ts-ignore
+    .from('user_similarity_cache')
+    .select('*', { count: 'exact', head: true })
+    // @ts-ignore
+    .or(`user_id.eq.${userId},similar_user_id.eq.${userId}`)
+
+  return count || 0
+}
+
 export default async function ProfilePage({ params }: ProfilePageProps) {
-  const { id } = await params
+  const { username } = await params
   const supabase = await createClient()
 
   // Get current user
@@ -17,16 +78,19 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     data: { user: currentUser },
   } = await supabase.auth.getUser()
 
-  // Fetch profile data directly from database
+  // Fetch profile data directly from database by username
   const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('*')
-    .eq('id', id)
+    .eq('username', username)
     .single()
 
   if (profileError || !profile) {
     notFound()
   }
+
+  // Use profile.id for subsequent queries
+  const id = profile.id
 
   // Get user badges with full badge data
   const { data: userBadges } = await supabase
@@ -142,6 +206,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     privateCount = privateExp || 0
   }
 
+  // Calculate enhanced stats: percentile, geographic reach, and connections count
+  const [percentile, geographicReach, connectionsCount] = await Promise.all([
+    calculatePercentile(supabase, profile.total_xp || 0),
+    calculateGeographicReach(supabase, id),
+    calculateConnectionsCount(supabase, id)
+  ])
+
   const stats = {
     experiencesCount: experienceCount || 0,
     draftsCount,
@@ -164,6 +235,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         totalContributions={profileData.total_contributions}
         topCategories={topCategories}
         categoryDistribution={categoryDistribution}
+        percentile={percentile}
+        geographicReach={geographicReach}
+        connectionsCount={connectionsCount}
       />
     </div>
   )

@@ -58,7 +58,7 @@ export function ProfileEditForm({ userId, initialData }: ProfileEditFormProps) {
 
       setSuccess(true)
       setTimeout(() => {
-        router.push(`/profile/${userId}`)
+        router.push(`/profile/${initialData.username}`)
         router.refresh()
       }, 1500)
     } catch (err) {
@@ -196,7 +196,7 @@ export function ProfileEditForm({ userId, initialData }: ProfileEditFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push(`/profile/${userId}`)}
+              onClick={() => router.push(`/profile/${initialData.username}`)}
               disabled={loading}
             >
               Cancel

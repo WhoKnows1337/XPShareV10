@@ -4,12 +4,12 @@ import { ProfileEditForm } from '@/components/profile/edit-form'
 
 interface EditProfilePageProps {
   params: Promise<{
-    id: string
+    username: string
   }>
 }
 
 export default async function EditProfilePage({ params }: EditProfilePageProps) {
-  const { id } = await params
+  const { username } = await params
   const supabase = await createClient()
 
   // Get current user
@@ -17,21 +17,23 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Only allow users to edit their own profile
-  if (!user || user.id !== id) {
-    redirect('/login')
-  }
-
-  // Get user profile
+  // Get user profile by username
   const { data: profile, error } = await supabase
     .from('user_profiles')
     .select('*')
-    .eq('id', id)
+    .eq('username', username)
     .single()
 
   if (error || !profile) {
     notFound()
   }
+
+  // Only allow users to edit their own profile
+  if (!user || user.id !== profile.id) {
+    redirect('/login')
+  }
+
+  const id = profile.id
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-8">

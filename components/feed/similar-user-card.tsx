@@ -89,7 +89,7 @@ export function SimilarUserCard({ currentUserId }: SimilarUserCardProps) {
           </div>
         )}
 
-        <Link href={`/profile/${similarUser.user_id}`}>
+        <Link href={`/profile/${similarUser.username}`}>
           <Button className="w-full" size="sm">
             Connect with @{similarUser.username}
           </Button>
