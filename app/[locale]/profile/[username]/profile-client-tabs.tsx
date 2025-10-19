@@ -10,6 +10,7 @@ import {
   Settings,
   MapPin,
   Calendar,
+  Users,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
