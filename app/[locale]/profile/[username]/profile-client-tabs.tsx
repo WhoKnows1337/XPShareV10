@@ -89,6 +89,8 @@ export function ProfileClientTabs({
   const currentTab = searchParams.get('tab') || 'experiences'
   const [xpTwinsData, setXpTwinsData] = useState<any[]>([])
   const [loadingXpTwins, setLoadingXpTwins] = useState(false)
+  const [patternContributions, setPatternContributions] = useState<any[]>([])
+  const [loadingPatterns, setLoadingPatterns] = useState(false)
 
   // Prefetch similarity data on mount if viewing other profile
   React.useEffect(() => {
@@ -148,6 +150,27 @@ export function ProfileClientTabs({
         .finally(() => setLoadingXpTwins(false))
     }
   }, [currentTab, profileUser.id, loadingXpTwins, xpTwinsData.length])
+
+  // Fetch Pattern Contributions data on mount
+  useEffect(() => {
+    if (!loadingPatterns && patternContributions.length === 0) {
+      setLoadingPatterns(true)
+      fetch(`/api/users/${profileUser.id}/pattern-contributions`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.contributions && data.contributions.length > 0) {
+            setPatternContributions(data.contributions)
+          } else {
+            setPatternContributions([]) // Empty state
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch pattern contributions:', err)
+          setPatternContributions([])
+        })
+        .finally(() => setLoadingPatterns(false))
+    }
+  }, [profileUser.id, loadingPatterns, patternContributions.length])
 
   const getInitials = (name: string) => {
     return name
@@ -413,8 +436,8 @@ export function ProfileClientTabs({
 
             {/* Pattern Contributions Card */}
             <PatternContributionsCard
-              contributions={[]}
-              totalPatterns={0}
+              contributions={patternContributions}
+              totalPatterns={patternContributions.length}
               title="Pattern Discoveries"
               maxVisible={3}
             />
