@@ -1710,4 +1710,1199 @@ xl: 1280px  // Large desktop
 
 ---
 
+## 🎨 MICRO-INTERACTIONS & ANIMATION BEST PRACTICES
+
+### Hover & Focus States
+
+**Critical for Trust & Usability:**
+
+```typescript
+// components/profile/interactive-stat-card.tsx
+export function InteractiveStatCard({ stat }: { stat: Stat }) {
+  return (
+    <Card className="group hover-lift transition-all duration-300">
+      {/* Hover Elevation */}
+      <style jsx>{`
+        .hover-lift {
+          transition: transform var(--duration-quick) var(--ease-elegant),
+                      box-shadow var(--duration-quick) var(--ease-elegant);
+        }
+        .hover-lift:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-moderate);
+        }
+      `}</style>
+
+      <CardContent className="relative">
+        {/* Icon with Scale on Hover */}
+        <div className="relative">
+          <Icon className="transition-transform group-hover:scale-110" />
+
+          {/* Hover Tooltip */}
+          <AnimatePresence>
+            {isHovered && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 5 }}
+                className="absolute top-full mt-2"
+              >
+                <Tooltip content={stat.description} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Value with Counter Animation */}
+        <AnimatedNumber value={stat.value} />
+
+        {/* Subtle Background Glow on Hover */}
+        <div className="absolute inset-0 bg-primary/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### Skeleton Loading States
+
+**Critical für Perceived Performance:**
+
+```typescript
+// components/profile/profile-skeleton.tsx
+export function ProfileSkeleton() {
+  return (
+    <div className="animate-pulse space-y-8">
+      {/* Header Skeleton */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex gap-6">
+            {/* Avatar */}
+            <div className="h-32 w-32 rounded-full bg-muted loading-shimmer" />
+
+            {/* Info */}
+            <div className="flex-1 space-y-3">
+              <div className="h-8 w-48 bg-muted rounded loading-shimmer" />
+              <div className="h-4 w-32 bg-muted rounded loading-shimmer" />
+              <div className="h-12 w-full bg-muted rounded loading-shimmer" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats Grid Skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-6">
+              <div className="space-y-2">
+                <div className="h-12 w-12 rounded-full bg-muted loading-shimmer mx-auto" />
+                <div className="h-6 w-16 bg-muted rounded loading-shimmer mx-auto" />
+                <div className="h-3 w-20 bg-muted rounded loading-shimmer mx-auto" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Shimmer Animation CSS
+const shimmerStyles = `
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+`;
+```
+
+### Button & Interactive States
+
+```typescript
+// Best Practice: All interactive elements
+export const interactionStyles = {
+  // Focus Ring (WCAG AAA)
+  focusRing: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+
+  // Active Press State
+  active: 'active:scale-95 transition-transform',
+
+  // Disabled State
+  disabled: 'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
+
+  // Loading State
+  loading: 'relative disabled:opacity-100',
+};
+
+// Example Usage
+<Button
+  className={cn(
+    'transition-all duration-200',
+    interactionStyles.focusRing,
+    interactionStyles.active,
+    interactionStyles.disabled
+  )}
+  disabled={isLoading}
+>
+  {isLoading && (
+    <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+      <Loader2 className="h-4 w-4 animate-spin" />
+    </div>
+  )}
+  <span className={cn(isLoading && 'opacity-0')}>
+    Connect
+  </span>
+</Button>
+```
+
+### Page Transitions
+
+```typescript
+// app/[locale]/profile/[id]/layout.tsx
+import { AnimatePresence, motion } from 'framer-motion';
+
+export default function ProfileLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+```
+
+---
+
+## ♿ ACCESSIBILITY (WCAG 2.1 AAA)
+
+### Skip Links
+
+```typescript
+// components/profile/skip-links.tsx
+export function SkipLinks() {
+  return (
+    <>
+      <a
+        href="#profile-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded"
+      >
+        Skip to Profile Content
+      </a>
+      <a
+        href="#profile-tabs"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-32 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded"
+      >
+        Skip to Tabs
+      </a>
+    </>
+  );
+}
+```
+
+### ARIA Labels & Live Regions
+
+```typescript
+// components/profile/xp-twins-card.tsx (Accessible Version)
+export function XPTwinsCard({ similarity }: { similarity: SimilarityData }) {
+  const matchPercent = Math.round(similarity.score * 100);
+
+  return (
+    <Card
+      role="region"
+      aria-labelledby="xp-twins-title"
+      aria-describedby="xp-twins-description"
+    >
+      <CardHeader>
+        <CardTitle id="xp-twins-title">
+          <span aria-label={`${matchPercent} percent match with you`}>
+            🎯 {matchPercent}% MATCH WITH YOU!
+          </span>
+        </CardTitle>
+        <CardDescription id="xp-twins-description">
+          You share {similarity.shared_categories.length} common categories with this user
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        {/* Live Region for Dynamic Updates */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {connectionStatus === 'connecting' && 'Sending connection request'}
+          {connectionStatus === 'connected' && 'Connection request sent successfully'}
+        </div>
+
+        {/* Accessible Button Group */}
+        <div role="group" aria-label="Connection actions" className="flex gap-2">
+          <Button
+            onClick={handleConnect}
+            aria-label={`Connect with ${similarity.user.username}`}
+            aria-describedby="connect-description"
+          >
+            <UserPlus className="mr-2 h-4 w-4" aria-hidden="true" />
+            Connect
+          </Button>
+          <span id="connect-description" className="sr-only">
+            Send a connection request to start collaborating
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### Keyboard Navigation
+
+```typescript
+// components/profile/category-radar-chart.tsx (Keyboard Accessible)
+export function CategoryRadarChart({ stats }: { stats: CategoryStat[] }) {
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev === null ? 0 : (prev + 1) % stats.length));
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedIndex((prev) =>
+          prev === null ? stats.length - 1 : (prev - 1 + stats.length) % stats.length
+        );
+        break;
+      case 'Home':
+        e.preventDefault();
+        setFocusedIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setFocusedIndex(stats.length - 1);
+        break;
+    }
+  };
+
+  return (
+    <Card role="figure" aria-labelledby="chart-title">
+      <CardHeader>
+        <CardTitle id="chart-title">XP DNA Distribution</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Accessible Chart Alternative */}
+        <table className="sr-only" role="table" aria-label="Category distribution data">
+          <caption>Experience category distribution by percentage</caption>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Percentage</th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stats.map(stat => (
+              <tr key={stat.category}>
+                <td>{stat.category}</td>
+                <td>{stat.percentage}%</td>
+                <td>{stat.experience_count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Visual Chart */}
+        <div aria-hidden="true">
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart data={chartData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="category" />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} />
+              <Radar
+                name="Categories"
+                dataKey="value"
+                stroke="hsl(var(--primary))"
+                fill="hsl(var(--primary))"
+                fillOpacity={0.6}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Keyboard-Navigable List */}
+        <div
+          role="list"
+          className="mt-4 space-y-2"
+          onKeyDown={(e) => handleKeyDown(e, focusedIndex ?? 0)}
+        >
+          {stats.map((stat, index) => (
+            <div
+              key={stat.category}
+              role="listitem"
+              tabIndex={focusedIndex === index ? 0 : -1}
+              ref={(el) => focusedIndex === index && el?.focus()}
+              className="flex items-center gap-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {/* ... stat content ... */}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+## 📱 MOBILE-FIRST & RESPONSIVE DESIGN
+
+### Touch Targets (Minimum 44x44px)
+
+```typescript
+// Mobile-optimized touch targets
+export const TOUCH_TARGETS = {
+  minimum: '44px', // Apple HIG & Material Design
+  comfortable: '48px', // Recommended
+  large: '56px', // For primary actions
+};
+
+// Example Implementation
+<Button
+  className="min-h-[44px] min-w-[44px] md:min-h-[40px] md:min-w-[40px]"
+  size="icon"
+>
+  <Heart className="h-5 w-5" />
+</Button>
+```
+
+### Thumb Zone Optimization
+
+```typescript
+// components/profile/mobile-action-bar.tsx
+export function MobileActionBar() {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 md:hidden">
+      {/* Actions in Thumb-Friendly Bottom Area */}
+      <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+        <Button size="lg" className="min-h-[48px]">
+          <UserPlus className="mr-2 h-5 w-5" />
+          Connect
+        </Button>
+        <Button size="lg" variant="outline" className="min-h-[48px]">
+          <MessageCircle className="mr-2 h-5 w-5" />
+          Message
+        </Button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Responsive Breakpoints Strategy
+
+```typescript
+// tailwind.config.ts - XPShare Breakpoints
+module.exports = {
+  theme: {
+    screens: {
+      'xs': '375px',  // Small phones
+      'sm': '640px',  // Large phones
+      'md': '768px',  // Tablets
+      'lg': '1024px', // Desktop
+      'xl': '1280px', // Large desktop
+      '2xl': '1536px', // Extra large
+    },
+  },
+};
+
+// Usage Example
+<div className="
+  grid grid-cols-1          // Mobile: 1 column
+  sm:grid-cols-2            // Phone landscape: 2 columns
+  md:grid-cols-3            // Tablet: 3 columns
+  lg:grid-cols-4            // Desktop: 4 columns
+  gap-3 sm:gap-4 lg:gap-6   // Progressive spacing
+">
+  {/* Stats Cards */}
+</div>
+```
+
+### Mobile Navigation Patterns
+
+```typescript
+// Progressive Disclosure für Tabs
+export function ResponsiveProfileTabs() {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  if (isMobile) {
+    return (
+      <Sheet open={isExpanded} onOpenChange={setIsExpanded}>
+        <SheetTrigger asChild>
+          <Button variant="outline" className="w-full">
+            <Menu className="mr-2 h-4 w-4" />
+            Browse Tabs
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="h-[80vh]">
+          <div className="py-4 space-y-2">
+            {tabs.map(tab => (
+              <Link
+                key={tab.id}
+                href={`?tab=${tab.id}`}
+                className="flex items-center gap-3 p-4 rounded-lg hover:bg-accent min-h-[48px]"
+              >
+                {tab.icon}
+                <span className="text-lg">{tab.label}</span>
+              </Link>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: Horizontal tabs
+  return <HorizontalTabs tabs={tabs} />;
+}
+```
+
+---
+
+## ⚡ PERFORMANCE OPTIMIZATION
+
+### Image Optimization
+
+```typescript
+// components/profile/optimized-avatar.tsx
+import Image from 'next/image';
+import { getPlaiceholder } from 'plaiceholder';
+
+interface OptimizedAvatarProps {
+  src: string;
+  alt: string;
+  size?: number;
+  priority?: boolean;
+}
+
+export async function OptimizedAvatar({
+  src,
+  alt,
+  size = 128,
+  priority = false
+}: OptimizedAvatarProps) {
+  // Generate blur placeholder
+  const { base64 } = await getPlaiceholder(src);
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <Image
+        src={src}
+        alt={alt}
+        width={size}
+        height={size}
+        className="rounded-full object-cover"
+        placeholder="blur"
+        blurDataURL={base64}
+        priority={priority}
+        sizes={`${size}px`}
+        quality={85}
+      />
+    </div>
+  );
+}
+```
+
+### Code Splitting & Lazy Loading
+
+```typescript
+// app/[locale]/profile/[id]/page.tsx
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+
+// Lazy load heavy components
+const CategoryRadarChart = dynamic(() =>
+  import('@/components/profile/category-radar-chart').then(mod => mod.CategoryRadarChart),
+  {
+    loading: () => <ChartSkeleton />,
+    ssr: false, // Client-side only
+  }
+);
+
+const ActivityHeatmap = dynamic(() =>
+  import('@/components/profile/activity-heatmap').then(mod => mod.ActivityHeatmap),
+  {
+    loading: () => <HeatmapSkeleton />,
+    ssr: false,
+  }
+);
+
+const XPTwinsCard = dynamic(() =>
+  import('@/components/profile/xp-twins-card').then(mod => mod.XPTwinsCard),
+  {
+    loading: () => <TwinsSkeleton />,
+  }
+);
+
+export default function ProfilePage() {
+  return (
+    <div>
+      {/* Critical content renders immediately */}
+      <ProfileHeader />
+      <UserStats />
+
+      {/* Heavy charts lazy loaded */}
+      <Suspense fallback={<ChartSkeleton />}>
+        <CategoryRadarChart stats={stats} />
+      </Suspense>
+
+      <Suspense fallback={<HeatmapSkeleton />}>
+        <ActivityHeatmap userId={userId} />
+      </Suspense>
+
+      {/* XP Twins only loads when scrolled into view */}
+      <LazyLoadOnVisible>
+        <XPTwinsCard userId={userId} />
+      </LazyLoadOnVisible>
+    </div>
+  );
+}
+
+// Intersection Observer for lazy loading
+function LazyLoadOnVisible({ children }: { children: React.ReactNode }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return <div ref={ref}>{isVisible ? children : <div className="h-64" />}</div>;
+}
+```
+
+### Data Fetching Optimization
+
+```typescript
+// Parallel Data Fetching
+export async function ProfilePage({ params }: ProfilePageProps) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  // Fetch all data in parallel
+  const [profile, categoryStats, patternContributions, similarUsers] = await Promise.all([
+    supabase.from('user_profiles').select('*').eq('id', id).single(),
+    supabase.from('user_category_stats').select('*').eq('user_id', id),
+    supabase.from('user_pattern_contributions').select('*').eq('user_id', id).limit(5),
+    supabase.from('user_similarity').select('*').eq('user_id', id).limit(10),
+  ]);
+
+  return <ProfileClientTabs {...data} />;
+}
+```
+
+### Virtualized Lists (für große Datenmengen)
+
+```typescript
+// components/profile/virtualized-connections-list.tsx
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+export function VirtualizedConnectionsList({ connections }: { connections: User[] }) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: connections.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 80, // Estimated height per item
+    overscan: 5, // Render 5 extra items above/below viewport
+  });
+
+  return (
+    <div ref={parentRef} className="h-[600px] overflow-auto">
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => (
+          <div
+            key={virtualItem.key}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: `${virtualItem.size}px`,
+              transform: `translateY(${virtualItem.start}px)`,
+            }}
+          >
+            <ConnectionCard connection={connections[virtualItem.index]} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 🎭 EMPTY STATES & ONBOARDING
+
+### New User Empty States
+
+```typescript
+// components/profile/empty-state-onboarding.tsx
+export function EmptyStateOnboarding({ type }: { type: 'experiences' | 'connections' | 'badges' }) {
+  const states = {
+    experiences: {
+      illustration: <EmptyExperiencesIllustration />,
+      title: 'Your XP Journey Starts Here',
+      description: 'Share your first extraordinary experience and start connecting with others who\'ve had similar moments.',
+      primaryAction: {
+        label: 'Share Your First XP',
+        href: '/submit',
+        icon: <Plus />,
+      },
+      secondaryActions: [
+        { label: 'Explore Examples', href: '/feed' },
+        { label: 'Watch Tutorial', onClick: () => startTutorial() },
+      ],
+    },
+    connections: {
+      illustration: <EmptyConnectionsIllustration />,
+      title: 'Find Your XP Twins',
+      description: 'You haven\'t connected with anyone yet. Share experiences to find users with similar stories.',
+      primaryAction: {
+        label: 'Share an Experience',
+        href: '/submit',
+      },
+      secondaryActions: [
+        { label: 'Browse Community', href: '/feed' },
+      ],
+      motivationalQuote: '"Every connection starts with a shared moment."',
+    },
+    badges: {
+      illustration: <EmptyBadgesIllustration />,
+      title: 'Start Earning Badges',
+      description: 'Complete actions to unlock achievements and climb the leaderboard.',
+      primaryAction: {
+        label: 'View All Badges',
+        onClick: () => openBadgesModal(),
+      },
+      nextSteps: [
+        { action: 'Share your first experience', xp: 50, badge: 'First Steps' },
+        { action: 'Get 5 pattern confirmations', xp: 100, badge: 'Pattern Hunter' },
+      ],
+    },
+  };
+
+  const state = states[type];
+
+  return (
+    <Card className="border-dashed border-2">
+      <CardContent className="py-12 text-center space-y-6">
+        {/* Illustration */}
+        <div className="flex justify-center">
+          {state.illustration}
+        </div>
+
+        {/* Title & Description */}
+        <div className="space-y-2 max-w-md mx-auto">
+          <h3 className="text-2xl font-bold">{state.title}</h3>
+          <p className="text-muted-foreground">{state.description}</p>
+        </div>
+
+        {/* Motivational Quote */}
+        {state.motivationalQuote && (
+          <blockquote className="italic text-sm text-muted-foreground">
+            {state.motivationalQuote}
+          </blockquote>
+        )}
+
+        {/* Next Steps (Badges Specific) */}
+        {state.nextSteps && (
+          <div className="space-y-2 max-w-sm mx-auto">
+            <h4 className="font-semibold">Next Steps:</h4>
+            {state.nextSteps.map((step, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <span className="text-sm">{step.action}</span>
+                <Badge variant="secondary">+{step.xp} XP</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {state.primaryAction.href ? (
+            <Link href={state.primaryAction.href}>
+              <Button size="lg" className="w-full sm:w-auto">
+                {state.primaryAction.icon}
+                {state.primaryAction.label}
+              </Button>
+            </Link>
+          ) : (
+            <Button size="lg" onClick={state.primaryAction.onClick}>
+              {state.primaryAction.label}
+            </Button>
+          )}
+
+          {state.secondaryActions?.map((action, i) => (
+            <Button key={i} variant="outline" size="lg" asChild={!!action.href}>
+              {action.href ? (
+                <Link href={action.href}>{action.label}</Link>
+              ) : (
+                <button onClick={action.onClick}>{action.label}</button>
+              )}
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### Loading States (Progressive Enhancement)
+
+```typescript
+// Progressive loading strategy
+export function ProfilePageWithProgressive() {
+  return (
+    <>
+      {/* 1. Show critical content immediately (SSR) */}
+      <ProfileHeader user={user} />
+
+      {/* 2. Show skeleton for stats while loading */}
+      <Suspense fallback={<StatsSkeleton />}>
+        <UserStats stats={stats} />
+      </Suspense>
+
+      {/* 3. Show empty state with loading for dynamic data */}
+      <Suspense fallback={<TwinsSkeleton />}>
+        <XPTwinsSection userId={userId} />
+      </Suspense>
+    </>
+  );
+}
+```
+
+---
+
+## 📊 DATA VISUALIZATION BEST PRACTICES
+
+### Chart Accessibility
+
+```typescript
+// components/profile/accessible-activity-chart.tsx
+export function AccessibleActivityChart({ data }: { data: ActivityData[] }) {
+  const chartId = useId();
+  const descriptionId = `${chartId}-description`;
+  const tableId = `${chartId}-table`;
+
+  return (
+    <Card role="figure" aria-labelledby={chartId} aria-describedby={descriptionId}>
+      <CardHeader>
+        <CardTitle id={chartId}>Monthly Activity</CardTitle>
+        <CardDescription id={descriptionId}>
+          Your experience submissions over the last 12 months
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        {/* Visual Chart (hidden from screen readers) */}
+        <div aria-hidden="true">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data}>
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="count" fill="hsl(var(--primary))" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Accessible Data Table (visible to screen readers only) */}
+        <table id={tableId} className="sr-only">
+          <caption>Monthly experience submissions data</caption>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Experiences Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item) => (
+              <tr key={item.month}>
+                <td>{item.month}</td>
+                <td>{item.count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Summary Stats */}
+        <div className="mt-4 grid grid-cols-3 gap-4 text-center" role="region" aria-label="Summary statistics">
+          <div>
+            <p className="text-2xl font-bold">{data.reduce((sum, d) => sum + d.count, 0)}</p>
+            <p className="text-xs text-muted-foreground">Total</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold">
+              {(data.reduce((sum, d) => sum + d.count, 0) / data.length).toFixed(1)}
+            </p>
+            <p className="text-xs text-muted-foreground">Avg/Month</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold">{Math.max(...data.map(d => d.count))}</p>
+            <p className="text-xs text-muted-foreground">Peak</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### Interactive Tooltips
+
+```typescript
+// Advanced tooltip with keyboard support
+export function ChartWithAccessibleTooltips() {
+  const [focusedPoint, setFocusedPoint] = useState<number | null>(null);
+
+  return (
+    <div
+      role="application"
+      aria-label="Interactive activity chart"
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') setFocusedPoint(prev => Math.max(0, (prev ?? 0) - 1));
+        if (e.key === 'ArrowRight') setFocusedPoint(prev => Math.min(data.length - 1, (prev ?? 0) + 1));
+      }}
+      tabIndex={0}
+    >
+      <BarChart>
+        <Bar dataKey="count">
+          {data.map((entry, index) => (
+            <Cell
+              key={index}
+              fill={index === focusedPoint ? 'hsl(var(--primary))' : 'hsl(var(--muted))'}
+              onFocus={() => setFocusedPoint(index)}
+              tabIndex={0}
+              aria-label={`${entry.month}: ${entry.count} experiences`}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+
+      {/* Tooltip for focused point */}
+      <AnimatePresence>
+        {focusedPoint !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute bg-popover text-popover-foreground p-3 rounded-lg shadow-lg"
+            role="tooltip"
+          >
+            <p className="font-semibold">{data[focusedPoint].month}</p>
+            <p className="text-sm">{data[focusedPoint].count} experiences</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+```
+
+---
+
+## 🔒 SECURITY & PRIVACY
+
+### Rate Limiting für Connections
+
+```typescript
+// lib/rate-limit.ts
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, '1 h'), // 10 connections per hour
+  analytics: true,
+});
+
+export async function checkConnectionRateLimit(userId: string) {
+  const { success, limit, reset, remaining } = await ratelimit.limit(
+    `connect:${userId}`
+  );
+
+  return {
+    allowed: success,
+    limit,
+    remaining,
+    reset: new Date(reset),
+  };
+}
+
+// Usage in API
+export async function POST(request: Request) {
+  const { userId } = await request.json();
+  const rateLimit = await checkConnectionRateLimit(userId);
+
+  if (!rateLimit.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: 'Rate limit exceeded',
+        retryAfter: rateLimit.reset,
+      }),
+      { status: 429 }
+    );
+  }
+
+  // Process connection...
+}
+```
+
+### Content Security Policy
+
+```typescript
+// next.config.js
+const securityHeaders = [
+  {
+    key: 'Content-Security-Policy',
+    value: `
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: https://avatars.githubusercontent.com https://images.unsplash.com;
+      font-src 'self';
+      connect-src 'self' https://*.supabase.co;
+    `.replace(/\s{2,}/g, ' ').trim()
+  },
+  {
+    key: 'X-Frame-Options',
+    value: 'DENY'
+  },
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff'
+  },
+  {
+    key: 'Referrer-Policy',
+    value: 'origin-when-cross-origin'
+  }
+];
+
+module.exports = {
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
+    ];
+  },
+};
+```
+
+---
+
+## 🧪 TESTING STRATEGY
+
+### Component Tests
+
+```typescript
+// __tests__/components/xp-twins-card.test.tsx
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { XPTwinsCard } from '@/components/profile/xp-twins-card';
+
+describe('XPTwinsCard', () => {
+  it('displays similarity percentage correctly', () => {
+    const similarity = { score: 0.87, shared_categories: ['UFO', 'Dreams'] };
+    render(<XPTwinsCard similarity={similarity} />);
+
+    expect(screen.getByText(/87% MATCH/i)).toBeInTheDocument();
+  });
+
+  it('is keyboard accessible', async () => {
+    const user = userEvent.setup();
+    render(<XPTwinsCard similarity={mockData} />);
+
+    const connectButton = screen.getByRole('button', { name: /connect/i });
+    await user.tab();
+
+    expect(connectButton).toHaveFocus();
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(mockConnectHandler).toHaveBeenCalled();
+    });
+  });
+
+  it('announces connection status to screen readers', async () => {
+    render(<XPTwinsCard similarity={mockData} />);
+
+    const liveRegion = screen.getByRole('status');
+    expect(liveRegion).toHaveAttribute('aria-live', 'polite');
+  });
+});
+```
+
+### Accessibility Tests
+
+```typescript
+// __tests__/a11y/profile-page.test.tsx
+import { axe, toHaveNoViolations } from 'jest-axe';
+
+expect.extend(toHaveNoViolations);
+
+describe('Profile Page Accessibility', () => {
+  it('has no WCAG violations', async () => {
+    const { container } = render(<ProfilePage {...mockProps} />);
+    const results = await axe(container);
+
+    expect(results).toHaveNoViolations();
+  });
+
+  it('has proper heading hierarchy', () => {
+    render(<ProfilePage {...mockProps} />);
+
+    const headings = screen.getAllByRole('heading');
+    const levels = headings.map(h => parseInt(h.tagName[1]));
+
+    // Check no skipped heading levels
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1);
+    }
+  });
+});
+```
+
+---
+
+## 📈 ANALYTICS & MONITORING
+
+### User Behavior Tracking
+
+```typescript
+// lib/analytics.ts
+export const trackProfileEvent = {
+  view: (userId: string) => {
+    analytics.track('Profile Viewed', {
+      userId,
+      timestamp: new Date(),
+    });
+  },
+
+  connect: (userId: string, targetUserId: string, similarityScore: number) => {
+    analytics.track('Connection Initiated', {
+      userId,
+      targetUserId,
+      similarityScore,
+      timestamp: new Date(),
+    });
+  },
+
+  tabSwitch: (userId: string, fromTab: string, toTab: string) => {
+    analytics.track('Profile Tab Switched', {
+      userId,
+      fromTab,
+      toTab,
+      timestamp: new Date(),
+    });
+  },
+};
+
+// Usage
+<Button onClick={() => {
+  handleConnect();
+  trackProfileEvent.connect(currentUser.id, profileUser.id, similarity.score);
+}}>
+  Connect
+</Button>
+```
+
+### Performance Monitoring
+
+```typescript
+// lib/performance.ts
+import { onCLS, onFID, onLCP, onFCP, onTTFB } from 'web-vitals';
+
+export function reportWebVitals() {
+  onCLS((metric) => {
+    analytics.track('Web Vitals', {
+      name: 'CLS',
+      value: metric.value,
+      rating: metric.rating,
+    });
+  });
+
+  onFID((metric) => {
+    analytics.track('Web Vitals', {
+      name: 'FID',
+      value: metric.value,
+      rating: metric.rating,
+    });
+  });
+
+  onLCP((metric) => {
+    analytics.track('Web Vitals', {
+      name: 'LCP',
+      value: metric.value,
+      rating: metric.rating,
+      page: 'Profile',
+    });
+  });
+}
+```
+
+---
+
 **Fazit:** Dies ist ein Community-First Redesign, das XPShare's Kernmission unterstützt: Menschen mit außergewöhnlichen Erlebnissen zu verbinden und Patterns gemeinsam zu entdecken. Der Fokus liegt auf **Meaningful Connections** statt Vanity Metrics.
+
+**Jetzt mit 100% State-of-the-art Best Practices:**
+- ✅ Micro-Interactions & Animations
+- ✅ WCAG 2.1 AAA Accessibility
+- ✅ Mobile-First & Touch-Optimized
+- ✅ Performance & Code Splitting
+- ✅ Empty States & Onboarding
+- ✅ Accessible Data Visualization
+- ✅ Security & Privacy
+- ✅ Testing & Monitoring

@@ -15,7 +15,7 @@ export async function GET() {
     }
 
     // Get XP Twins stats using database function
-    const { data, error } = await supabase.rpc('get_xp_twins_stats', {
+    const { data, error } = await (supabase as any).rpc('get_xp_twins_stats', {
       p_user_id: user.id
     })
 

@@ -109,6 +109,9 @@ export function addToSearchHistory(
     console.error('Failed to save search history:', error)
   }
 
+  // Update popular queries tracking (Search 5.0)
+  updatePopularQueries(query, resultCount)
+
   return newItem
 }
 
@@ -234,5 +237,214 @@ export function importSearchHistory(jsonData: string): void {
   } catch (error) {
     console.error('Failed to import search history:', error)
     throw new Error('Invalid search history file')
+  }
+}
+
+// ============================================================================
+// SEARCH 5.0: Popular Queries & Autocomplete Support
+// ============================================================================
+
+/**
+ * Query frequency data for popular query tracking
+ */
+export interface QueryFrequency {
+  query: string
+  count: number
+  lastUsed: string
+  averageResults: number
+}
+
+const POPULAR_QUERIES_KEY = 'xpshare_popular_queries'
+const MAX_POPULAR_QUERIES = 50
+
+/**
+ * Get popular queries based on frequency
+ * Used for autocomplete suggestions in SmartSearchInput
+ *
+ * @param limit - Maximum number of queries to return (default: 10)
+ * @param searchType - Filter by search type (optional)
+ * @returns Array of popular query strings sorted by frequency
+ */
+export function getPopularQueries(
+  limit: number = 10,
+  searchType?: 'hybrid' | 'nlp' | 'ask' | 'advanced'
+): string[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const frequencies = getQueryFrequencies()
+
+    // Filter by search type if specified
+    let filtered = frequencies
+    if (searchType) {
+      const history = getSearchHistory()
+      const typeQueries = new Set(
+        history.filter(h => h.searchType === searchType).map(h => h.query)
+      )
+      filtered = frequencies.filter(f => typeQueries.has(f.query))
+    }
+
+    return filtered
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map(f => f.query)
+  } catch (error) {
+    console.error('Failed to get popular queries:', error)
+    return []
+  }
+}
+
+/**
+ * Get query frequency data for analytics
+ */
+export function getQueryFrequencies(): QueryFrequency[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const stored = localStorage.getItem(POPULAR_QUERIES_KEY)
+    if (!stored) {
+      // Initialize from existing history
+      return calculateQueryFrequencies()
+    }
+
+    return JSON.parse(stored) as QueryFrequency[]
+  } catch (error) {
+    console.error('Failed to load query frequencies:', error)
+    return []
+  }
+}
+
+/**
+ * Calculate query frequencies from search history
+ * Called automatically when popular queries data is missing
+ */
+function calculateQueryFrequencies(): QueryFrequency[] {
+  const history = getSearchHistory()
+  const frequencyMap = new Map<string, QueryFrequency>()
+
+  history.forEach(item => {
+    const normalized = item.query.trim().toLowerCase()
+    if (!normalized) return
+
+    const existing = frequencyMap.get(normalized)
+    if (existing) {
+      existing.count++
+      existing.lastUsed = item.timestamp
+      if (item.resultCount !== undefined) {
+        existing.averageResults =
+          (existing.averageResults * (existing.count - 1) + item.resultCount) / existing.count
+      }
+    } else {
+      frequencyMap.set(normalized, {
+        query: item.query, // Keep original casing
+        count: 1,
+        lastUsed: item.timestamp,
+        averageResults: item.resultCount || 0
+      })
+    }
+  })
+
+  const frequencies = Array.from(frequencyMap.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, MAX_POPULAR_QUERIES)
+
+  // Save for future use
+  try {
+    localStorage.setItem(POPULAR_QUERIES_KEY, JSON.stringify(frequencies))
+  } catch (error) {
+    console.error('Failed to save query frequencies:', error)
+  }
+
+  return frequencies
+}
+
+/**
+ * Update popular queries tracking after a search
+ * Should be called by addToSearchHistory automatically
+ *
+ * @param query - Search query
+ * @param resultCount - Number of results found
+ */
+export function updatePopularQueries(query: string, resultCount: number = 0): void {
+  if (typeof window === 'undefined') return
+
+  const normalized = query.trim().toLowerCase()
+  if (!normalized) return
+
+  const frequencies = getQueryFrequencies()
+  const existingIndex = frequencies.findIndex(
+    f => f.query.toLowerCase() === normalized
+  )
+
+  if (existingIndex !== -1) {
+    // Update existing query
+    const existing = frequencies[existingIndex]
+    existing.count++
+    existing.lastUsed = new Date().toISOString()
+    existing.averageResults =
+      (existing.averageResults * (existing.count - 1) + resultCount) / existing.count
+  } else {
+    // Add new query
+    frequencies.push({
+      query,
+      count: 1,
+      lastUsed: new Date().toISOString(),
+      averageResults: resultCount
+    })
+  }
+
+  // Sort and trim
+  const sorted = frequencies
+    .sort((a, b) => b.count - a.count)
+    .slice(0, MAX_POPULAR_QUERIES)
+
+  try {
+    localStorage.setItem(POPULAR_QUERIES_KEY, JSON.stringify(sorted))
+  } catch (error) {
+    console.error('Failed to update popular queries:', error)
+  }
+}
+
+/**
+ * Get autocomplete suggestions based on partial query
+ * Combines popular queries with history for better UX
+ *
+ * @param partial - Partial query string (min 3 chars)
+ * @param limit - Max suggestions to return (default: 5)
+ * @returns Array of matching query suggestions
+ */
+export function getAutocompleteSuggestions(
+  partial: string,
+  limit: number = 5
+): string[] {
+  if (typeof window === 'undefined') return []
+  if (partial.length < 3) return []
+
+  const normalized = partial.toLowerCase().trim()
+  const popular = getPopularQueries(20) // Get top 20 popular
+  const recent = getRecentSearches(10).map(h => h.query)
+
+  // Combine and deduplicate
+  const allQueries = [...new Set([...popular, ...recent])]
+
+  // Filter by partial match
+  const matches = allQueries
+    .filter(q => q.toLowerCase().includes(normalized))
+    .slice(0, limit)
+
+  return matches
+}
+
+/**
+ * Clear popular queries cache
+ * Useful for testing or when data becomes stale
+ */
+export function clearPopularQueries(): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    localStorage.removeItem(POPULAR_QUERIES_KEY)
+  } catch (error) {
+    console.error('Failed to clear popular queries:', error)
   }
 }

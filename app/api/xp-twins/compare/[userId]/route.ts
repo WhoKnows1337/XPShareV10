@@ -25,7 +25,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     // Get user comparison using database function
-    const { data, error } = await supabase.rpc('get_user_comparison', {
+    const { data, error } = await (supabase as any).rpc('get_user_comparison', {
       p_user1_id: user.id,
       p_user2_id: userId
     })

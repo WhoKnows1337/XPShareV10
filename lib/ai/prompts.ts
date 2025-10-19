@@ -1,13 +1,16 @@
 /**
  * Centralized prompt management for AI-powered Q&A
  * Maintains consistent prompts across the application
+ *
+ * Search 5.0: Pattern Discovery with Multi-Turn Conversation Support
  */
 
 import { Source } from '@/types/ai-answer'
+import { Pattern, Search5Response } from '@/types/search5'
 
 /**
- * System prompt for RAG Q&A analyst
- * Optimized for experience analysis and pattern detection
+ * DEPRECATED: Legacy RAG System Prompt (for backward compatibility)
+ * Use PATTERN_DISCOVERY_SYSTEM_PROMPT for Search 5.0
  */
 export const RAG_SYSTEM_PROMPT = `Du bist ein Analyst für außergewöhnliche Erfahrungen auf XPShare. Beantworte Fragen basierend auf echten Erfahrungsberichten aus unserer Datenbank.
 
@@ -39,6 +42,42 @@ export const RAG_SYSTEM_PROMPT = `Du bist ein Analyst für außergewöhnliche Er
 - Verwende [Erfahrung #X] für wichtige Beispiele
 - Zeige relevante Kontexte und Zitate
 - Verlinke ähnliche Erfahrungen wenn passend`
+
+/**
+ * Search 5.0: Pattern Discovery System Prompt
+ * Optimized for structured pattern extraction with OpenAI JSON Schema
+ */
+export const PATTERN_DISCOVERY_SYSTEM_PROMPT = `Du bist ein Pattern Discovery Assistant für außergewöhnliche Erfahrungen.
+
+Deine Aufgabe:
+1. Analysiere die bereitgestellten Erfahrungen
+2. Identifiziere 2-4 klare PATTERNS (Muster)
+3. Jedes Pattern muss haben:
+   - Typ (color/temporal/behavior/location/attribute)
+   - Titel (prägnant)
+   - Finding (ein Satz mit Zahlen/Prozenten)
+   - Strukturierte Daten für Visualisierung
+   - Source IDs
+
+Pattern-Typen:
+- color: Farben die häufig vorkommen (z.B. "Orange UFOs")
+- temporal: Zeitliche Muster (Jahreszeit, Monat, Tageszeit)
+- behavior: Verhaltensweisen (lautlos, schwebend, plötzliches Verschwinden)
+- location: Geografische Cluster (Bodensee, bestimmte Regionen)
+- attribute: Tags/Kategorien die korrelieren
+
+Wichtig:
+- NUR Patterns die in >= 30% der Quellen vorkommen
+- Zahlen MÜSSEN korrekt sein (count aus sources)
+- Findings müssen verifizierbar sein
+- Verwende sourceIds Array um Quellen zu referenzieren
+- Confidence Score: 0-100 basierend auf Pattern-Stärke
+
+Beispiel Finding:
+"Orange wird in 12 von 15 Sichtungen (80%) als Hauptfarbe berichtet"
+
+Output Format:
+JSON mit patterns[], serendipity (optional), metadata`
 
 /**
  * Build context from experiences for RAG
@@ -86,6 +125,86 @@ export function sanitizeQuestion(question: string): string {
   cleaned = cleaned.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
 
   return cleaned
+}
+
+/**
+ * Search 5.0: Build pattern discovery prompt with sources
+ * Used for structured pattern extraction with OpenAI JSON Schema
+ */
+export function buildPatternDiscoveryPrompt(question: string, sources: Source[]): string {
+  const sourceList = sources.map((s, i) =>
+    `[${i+1}] ${s.title} | Category: ${s.category} | Date: ${s.date_occurred || 'Unknown'} | Location: ${s.location_text || 'Unknown'}
+${(s.fullText || s.excerpt || '').substring(0, 300)}...`
+  ).join('\n\n')
+
+  return `Frage: ${question}
+
+Verfügbare Quellen (${sources.length}):
+${sourceList}
+
+Analysiere diese Quellen und extrahiere 2-4 klare Patterns.
+Fokus: Was verbindet diese Erfahrungen? Welche Gemeinsamkeiten fallen auf?`
+}
+
+/**
+ * Search 5.0: Build conversational prompt for multi-turn dialogue
+ * Includes conversation history for context-aware pattern discovery
+ *
+ * @param currentQuery - Current user question
+ * @param sources - Matched experience sources
+ * @param conversationHistory - Previous turns (max 3)
+ * @param previousPatterns - All patterns found in conversation so far
+ */
+export function buildConversationalPrompt(
+  currentQuery: string,
+  sources: Source[],
+  conversationHistory?: Array<{ query: string; patterns: Pattern[] }>,
+  previousPatterns?: Pattern[]
+): string {
+  const conversationDepth = conversationHistory?.length || 0
+
+  if (conversationDepth === 0) {
+    // First turn - standard pattern discovery prompt
+    return buildPatternDiscoveryPrompt(currentQuery, sources)
+  }
+
+  // Multi-turn prompt with context awareness
+  const contextSummary = conversationHistory!.map((turn, i) => `
+Turn ${i + 1} Query: "${turn.query}"
+Found Patterns: ${turn.patterns.map(p => p.type).join(', ')}
+`).join('\n')
+
+  const exploredPatternTypes = [...new Set(previousPatterns?.map(p => p.type) || [])]
+
+  const sourceList = sources.map((s, i) =>
+    `[${i+1}] ${s.title} | Category: ${s.category} | Date: ${s.date_occurred || 'Unknown'} | Location: ${s.location_text || 'Unknown'}
+${(s.fullText || s.excerpt || '').substring(0, 300)}...`
+  ).join('\n\n')
+
+  return `You are analyzing experiences in a multi-turn conversation (Turn ${conversationDepth + 1}).
+
+**Conversation Context**:
+${contextSummary}
+
+**Previous Pattern Types Explored**:
+${exploredPatternTypes.join(', ')}
+
+**Current Query**: "${currentQuery}"
+
+**Available Sources (${sources.length})**:
+${sourceList}
+
+**Instructions**:
+1. Consider the conversation flow - is the user:
+   - Refining previous query? → Focus on similar patterns with adjusted parameters
+   - Pivoting to new topic? → Provide fresh perspective
+   - Asking follow-up? → Reference previous findings ("As seen in UFO pattern...")
+
+2. Avoid repeating exact patterns from previous turns
+3. If query references previous results ("show more like..."), prioritize those pattern types
+4. Maintain conversation coherence while discovering new insights
+
+Generate 2-4 new patterns now.`
 }
 
 /**

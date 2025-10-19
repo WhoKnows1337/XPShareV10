@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { Starfield } from '@/components/layout/Starfield';
 import { FeedbackProvider } from '@/components/feedback/FeedbackProvider';
+import { ConversationProvider } from '@/components/search/conversation-context';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -76,12 +77,14 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
-              <RootLayoutClient>
-                <ConditionalNavbar />
-                {children}
-                <Toaster position="top-right" richColors />
-                <FeedbackProvider />
-              </RootLayoutClient>
+              <ConversationProvider>
+                <RootLayoutClient>
+                  <ConditionalNavbar />
+                  {children}
+                  <Toaster position="top-right" richColors />
+                  <FeedbackProvider />
+                </RootLayoutClient>
+              </ConversationProvider>
             </AuthProvider>
           </QueryProvider>
         </NextIntlClientProvider>

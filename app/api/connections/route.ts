@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') // pending, accepted, rejected, blocked
 
-    let query = supabase
+    let query = (supabase as any)
       .from('user_connections')
       .select(`
         id,
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     }
 
     // Transform data to include direction info
-    const connections = (data || []).map(conn => ({
+    const connections = (data || []).map((conn: any) => ({
       ...conn,
       direction: conn.requester_id === user.id ? 'outgoing' : 'incoming',
       other_user: conn.requester_id === user.id ? conn.addressee : conn.requester
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     }
 
     // Check if connection already exists
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from('user_connections')
       .select('id, status')
       .or(`and(requester_id.eq.${user.id},addressee_id.eq.${addressee_id}),and(requester_id.eq.${addressee_id},addressee_id.eq.${user.id})`)
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     }
 
     // Calculate similarity score
-    const { data: similarity } = await supabase.rpc('calculate_user_similarity', {
+    const { data: similarity } = await (supabase as any).rpc('calculate_user_similarity', {
       user1_id: user.id,
       user2_id: addressee_id
     })
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     const similarityScore = similarity?.score || 0
 
     // Create connection request
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('user_connections')
       .insert({
         requester_id: user.id,
@@ -153,7 +153,7 @@ export async function PATCH(request: Request) {
     }
 
     // Update connection (RLS will ensure user is authorized)
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('user_connections')
       .update({ status })
       .eq('id', connection_id)
@@ -195,7 +195,7 @@ export async function DELETE(request: Request) {
     }
 
     // Delete connection (RLS will ensure user is authorized)
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('user_connections')
       .delete()
       .eq('id', connectionId)

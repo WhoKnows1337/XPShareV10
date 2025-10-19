@@ -25,6 +25,7 @@ import {
 } from '@/lib/ai/prompts'
 import { detectSerendipity } from '@/lib/patterns/serendipity'
 import { parseSearch5Response, Search5ResponseSchema } from '@/lib/validation/search5-schemas'
+import { patternDiscoveryCircuitBreaker } from '@/lib/patterns/error-recovery'
 import { Source } from '@/types/ai-answer'
 import { Pattern } from '@/types/search5'
 
@@ -337,29 +338,73 @@ export async function POST(req: NextRequest) {
       prompt = buildPatternDiscoveryPrompt(question, filteredSources)
     }
 
-    const result = await generateText({
-      model: openai('gpt-4o'),
-      system: PATTERN_DISCOVERY_SYSTEM_PROMPT,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }],
-      temperature: 0.7,
-      maxTokens: 2000 as any, // AI SDK type issue workaround
-      // ✅ CRITICAL: Structured output with JSON Schema
-      experimental_providerMetadata: {
-        openai: {
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: "pattern_discovery",
-              schema: PATTERN_DISCOVERY_SCHEMA,
-              strict: true
+    // ⏱️ P0 FEATURE: Timeout Handling (15s max) + Circuit Breaker
+    const TIMEOUT_MS = 15000
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Pattern discovery timeout (15s limit exceeded)')), TIMEOUT_MS)
+    })
+
+    const generationPromise = patternDiscoveryCircuitBreaker.execute(() =>
+      generateText({
+        model: openai('gpt-4o'),
+        system: PATTERN_DISCOVERY_SYSTEM_PROMPT,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
+        temperature: 0.7,
+        // @ts-expect-error - AI SDK 5.0 type issue with maxTokens
+        maxTokens: 2000,
+        // ✅ CRITICAL: Structured output with JSON Schema
+        experimental_providerMetadata: {
+          openai: {
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "pattern_discovery",
+                schema: PATTERN_DISCOVERY_SCHEMA,
+                strict: true
+              }
             }
           }
         }
+      })
+    )
+
+    let result
+    try {
+      result = await Promise.race([generationPromise, timeoutPromise])
+    } catch (timeoutError: any) {
+      console.error('⏱️ Pattern discovery error:', timeoutError)
+
+      // Check if it's a circuit breaker error
+      if (timeoutError.message?.includes('Circuit breaker')) {
+        return NextResponse.json({
+          error: 'Service temporarily unavailable',
+          message: 'Pattern discovery is experiencing issues. Please try again in a few moments.',
+          metadata: {
+            confidence: 0,
+            sourceCount: filteredSources.length,
+            patternsFound: 0,
+            executionTime: Date.now() - startTime,
+            warnings: ['Circuit breaker open - too many recent failures']
+          }
+        }, { status: 503 })
       }
-    })
+
+      // Regular timeout error
+      return NextResponse.json({
+        error: 'Search timeout',
+        message: 'Pattern discovery took too long. Please try a simpler question or reduce the number of sources.',
+        metadata: {
+          confidence: 0,
+          sourceCount: filteredSources.length,
+          patternsFound: 0,
+          executionTime: TIMEOUT_MS,
+          warnings: ['Timeout after 15 seconds']
+        }
+      }, { status: 504 })
+    }
 
     // Step 5: Parse and validate LLM output with Zod
     let parsedOutput: any

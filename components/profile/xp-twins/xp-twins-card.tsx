@@ -151,7 +151,6 @@ export function XPTwinsCard({
           <Progress
             value={twin.similarity_score}
             className="h-2 mt-2"
-            indicatorClassName={level.color.replace('text-', 'bg-')}
           />
         </div>
       </CardHeader>

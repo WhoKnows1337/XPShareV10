@@ -20,6 +20,21 @@ import { ProfileTabs } from '@/components/profile/profile-tabs'
 import { ActivityChart } from '@/components/profile/activity-chart'
 import { StreakWidget } from '@/components/gamification/StreakWidget'
 import { XPTwinsTabContent, XPDNABadge } from '@/components/profile/xp-twins'
+import {
+  ExperiencesTab,
+  DraftsTab,
+  PrivateTab,
+  CommentsTab,
+  LikedTab,
+  CollaborationsTab,
+  StatsTab,
+  BadgesTab,
+  ImpactTab,
+} from '@/components/profile/tab-content'
+import { EnhancedStatsGrid } from '@/components/profile/enhanced-stats-grid'
+import { CategoryRadarChart } from '@/components/profile/category-radar-chart'
+import { XPDNASpectrumBar } from '@/components/profile/xp-dna-spectrum-bar'
+import { MobileActionBar } from '@/components/profile/mobile-action-bar'
 
 interface ProfileClientTabsProps {
   profileUser: any
@@ -73,6 +88,54 @@ export function ProfileClientTabs({
   // Render tab content based on current tab
   const renderTabContent = () => {
     switch (currentTab) {
+      case 'experiences':
+        return (
+          <ExperiencesTab
+            userId={profileUser.id}
+            isOwnProfile={isOwnProfile}
+          />
+        )
+      case 'drafts':
+        return isOwnProfile ? (
+          <DraftsTab userId={profileUser.id} />
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">
+                This user's drafts are private
+              </p>
+            </CardContent>
+          </Card>
+        )
+      case 'private':
+        return isOwnProfile ? (
+          <PrivateTab userId={profileUser.id} />
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">
+                This user's private experiences are not visible
+              </p>
+            </CardContent>
+          </Card>
+        )
+      case 'comments':
+        return <CommentsTab userId={profileUser.id} />
+      case 'liked':
+        return (
+          <LikedTab
+            userId={profileUser.id}
+            isOwnProfile={isOwnProfile}
+          />
+        )
+      case 'collaborations':
+        return <CollaborationsTab userId={profileUser.id} />
+      case 'stats':
+        return <StatsTab userId={profileUser.id} />
+      case 'badges':
+        return <BadgesTab userId={profileUser.id} />
+      case 'impact':
+        return <ImpactTab userId={profileUser.id} />
       case 'xp-twins':
         return (
           <XPTwinsTabContent
@@ -80,17 +143,7 @@ export function ProfileClientTabs({
             isOwnProfile={isOwnProfile}
           />
         )
-      case 'experiences':
-      case 'drafts':
-      case 'private':
-      case 'comments':
-      case 'liked':
-      case 'collaborations':
-      case 'stats':
-      case 'badges':
-      case 'impact':
       default:
-        // Placeholder for other tabs - to be implemented
         return (
           <Card>
             <CardContent className="py-12 text-center">
@@ -183,9 +236,9 @@ export function ProfileClientTabs({
         </CardContent>
       </Card>
 
-      {/* Stats */}
+      {/* Enhanced Stats Grid (6-8 cards) */}
       <div className="mb-8">
-        <UserStats
+        <EnhancedStatsGrid
           totalXp={totalXP}
           level={level}
           currentStreak={currentStreak}
@@ -194,6 +247,14 @@ export function ProfileClientTabs({
           totalContributions={totalContributions}
         />
       </div>
+
+      {/* XP DNA Spectrum Bar & Category Radar */}
+      {Object.keys(categoryDistribution).length > 0 && (
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <XPDNASpectrumBar categoryDistribution={categoryDistribution} />
+          <CategoryRadarChart categoryDistribution={categoryDistribution} />
+        </div>
+      )}
 
       {/* Streak Widget and Activity Chart */}
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -211,6 +272,9 @@ export function ProfileClientTabs({
       <div className="mt-6">
         {renderTabContent()}
       </div>
+
+      {/* Mobile Action Bar */}
+      <MobileActionBar isOwnProfile={isOwnProfile} />
     </div>
   )
 }

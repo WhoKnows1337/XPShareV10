@@ -173,8 +173,7 @@ export function UserComparisonModal({
               </div>
               <Progress
                 value={data.similarity.score * 100}
-                className="h-3"
-                indicatorClassName="bg-gradient-to-r from-purple-600 to-blue-600"
+                className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-purple-600 [&>div]:to-blue-600"
               />
             </div>
 
