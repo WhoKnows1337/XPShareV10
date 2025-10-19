@@ -16,6 +16,7 @@ export interface Source {
   date_occurred?: string
   location_text?: string
   attributes?: string[]
+  exactMatch?: boolean  // True if keywords/tags match exactly (not just semantic similarity)
 }
 
 /**

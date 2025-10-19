@@ -23,6 +23,9 @@ import { XPTwinsTabContent } from '@/components/profile/xp-twins'
 import { XPDNABadge } from '@/components/profile/xp-dna-badge'
 import { SimilarityScoreBadge } from '@/components/profile/similarity-score-badge'
 import { ConnectionsTab } from '@/components/profile/connections-tab'
+import { ActivityHeatmap } from '@/components/profile/activity-heatmap'
+import { PatternContributionsCard } from '@/components/profile/pattern-contributions-card'
+import { ExperienceMap } from '@/components/profile/experience-map'
 import {
   ExperiencesTab,
   DraftsTab,
@@ -389,11 +392,14 @@ export function ProfileClientTabs({
               </div>
             )}
 
-            {/* Streak Widget and Activity Chart */}
+            {/* Streak Widget, Activity Chart, and Activity Heatmap */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <StreakWidget userId={profileUser.id} />
               <ActivityChart userId={profileUser.id} />
             </div>
+
+            {/* Activity Heatmap - Full Width */}
+            <ActivityHeatmap userId={profileUser.id} title="Contribution Calendar" />
           </>
         }
         sidebarContent={
@@ -405,8 +411,15 @@ export function ProfileClientTabs({
               isOwnProfile={isOwnProfile}
             />
 
-            {/* TODO: Pattern Contributions Card */}
-            {/* TODO: Connections Preview Card */}
+            {/* Pattern Contributions Card */}
+            <PatternContributionsCard
+              contributions={[]}
+              totalPatterns={0}
+              title="Pattern Discoveries"
+              maxVisible={3}
+            />
+
+            {/* TODO: Connections Preview Card (Future Enhancement) */}
           </>
         }
       />

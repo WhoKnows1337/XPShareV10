@@ -15,6 +15,7 @@
  */
 
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp,
   MapPin,
@@ -216,9 +217,15 @@ export function PatternCard({
   // ============================================================================
 
   return (
-    <Card className={cn('overflow-hidden transition-all hover:shadow-md', className)}>
-      {/* Header */}
-      <CardHeader className={cn('pb-3', config.bg, config.border, 'border-l-4')}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      whileHover={{ scale: 1.01 }}
+    >
+      <Card className={cn('overflow-hidden transition-all hover:shadow-md', className)}>
+        {/* Header */}
+        <CardHeader className={cn('pb-3', config.bg, config.border, 'border-l-4')}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
             {/* Pattern Type Badge */}
@@ -265,19 +272,25 @@ export function PatternCard({
           </div>
 
           {/* Expand Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-shrink-0"
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ duration: 0.2 }}
           >
-            <ChevronDown
-              className={cn(
-                'h-4 w-4 transition-transform',
-                isExpanded && 'rotate-180'
-              )}
-            />
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex-shrink-0"
+            >
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 transition-transform',
+                  isExpanded && 'rotate-180'
+                )}
+              />
+            </Button>
+          </motion.div>
         </div>
 
         {/* Confidence Progress */}
@@ -290,8 +303,15 @@ export function PatternCard({
       </CardHeader>
 
       {/* Expanded Content */}
-      {isExpanded && (
-        <CardContent className="pt-4 space-y-4">
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <CardContent className="pt-4 space-y-4">
           {/* Data Visualization Preview */}
           {pattern.data && (
             <div className="space-y-3">
@@ -398,11 +418,16 @@ export function PatternCard({
             </h4>
             <div className="grid gap-2">
               {patternSources.slice(0, 5).map((source, i) => (
-                <Link
+                <motion.div
                   key={source.id}
-                  href={`/experiences/${source.id}`}
-                  className="group flex items-start gap-3 p-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.3 }}
                 >
+                  <Link
+                    href={`/experiences/${source.id}`}
+                    className="group flex items-start gap-3 p-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+                  >
                   <Badge variant="outline" className="font-mono flex-shrink-0">
                     #{i + 1}
                   </Badge>
@@ -423,7 +448,8 @@ export function PatternCard({
                     </div>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                </Link>
+                  </Link>
+                </motion.div>
               ))}
 
               {patternSources.length > 5 && (
@@ -433,8 +459,11 @@ export function PatternCard({
               )}
             </div>
           </div>
-        </CardContent>
-      )}
-    </Card>
+            </CardContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </Card>
+    </motion.div>
   )
 }

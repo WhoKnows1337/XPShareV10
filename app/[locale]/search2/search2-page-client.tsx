@@ -13,7 +13,7 @@ import { LoadingProgressBar } from '@/components/search/loading-progress-bar'
 import { SearchHistoryDropdown } from '@/components/search/search-history-dropdown'
 import { BulkActionBar } from '@/components/search/bulk-action-bar'
 import { SelectableExperienceCard } from '@/components/search/selectable-experience-card'
-import { AskAI } from '@/components/search/ask-ai'
+import { PatternDiscovery } from '@/components/search/pattern-discovery'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -998,10 +998,11 @@ export function Search2PageClient({ initialQuery = '' }: UnifiedSearchPageClient
         }
         mainContent={
           askMode ? (
-            // ASK MODE - Always render AskAI component
-            <AskAI
+            // ASK MODE - Pattern Discovery (Search 5.0)
+            <PatternDiscovery
               initialQuestion={submittedQuery}
               hideInput={true}
+              autoSubmit={true}
               filters={{
                 category: filters.categories && filters.categories.length > 0 ? filters.categories[0] : undefined,
                 tags: filters.tags && filters.tags.length > 0 ? filters.tags.join(',') : undefined,

@@ -22,6 +22,7 @@ import { QueryRefinementPanel } from './query-refinement-panel'
 import { ConversationHistory } from './conversation-history'
 import { ResearchQualityCard } from './research-quality-card'
 import { LowConfidenceWarning } from './low-confidence-warning'
+import { EmptyResultsState } from './empty-results-state'
 import { ProgressivePatternGrid } from './progressive-pattern-grid'
 import { SerendipityCard } from './serendipity-card'
 import { SourcesSection } from './sources-section'
@@ -32,6 +33,7 @@ import { Search5Response, QueryRefinements } from '@/types/search5'
 import { addToSearchHistory } from '@/lib/utils/search-history'
 import { cn } from '@/lib/utils'
 import { AlertCircle } from 'lucide-react'
+import { trackSearch5Success, trackSearch5Error, trackEmptyResults } from '@/lib/analytics/search5-tracking'
 
 // ============================================================================
 // TYPES
@@ -70,6 +72,7 @@ export function AskAIStructured({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [response, setResponse] = useState<Search5Response | null>(null)
+  const [lastQuery, setLastQuery] = useState<string>('')
   const [refinements, setRefinements] = useState<QueryRefinements>(
     initialRefinements || {
       confidenceThreshold: 0,
@@ -94,6 +97,9 @@ export function AskAIStructured({
    * Execute pattern discovery search
    */
   const executeSearch = useCallback(async (query: string) => {
+    // Store query for empty state
+    setLastQuery(query)
+
     // 🚫 P0 FEATURE: Abort any in-flight requests
     if (abortControllerRef.current) {
       console.log('🚫 Aborting previous request')
@@ -107,9 +113,10 @@ export function AskAIStructured({
     setIsLoading(true)
     setError(null)
 
+    // Get conversation context for multi-turn support (outside try block for error handler access)
+    const conversationContext = getConversationContext()
+
     try {
-      // Get conversation context for multi-turn support
-      const conversationContext = getConversationContext()
 
       // Build messages array for AI SDK format
       const messages: Array<{ role: string; content: string }> = []
@@ -183,6 +190,26 @@ export function AskAIStructured({
         data.metadata.sourceCount
       )
 
+      // 📊 Analytics: Track successful search
+      trackSearch5Success(
+        query,
+        data,
+        conversationContext.length,
+        refinements
+      ).catch(err => console.warn('Analytics tracking failed:', err))
+
+      // 📊 Analytics: Track empty results if applicable
+      if (data.patterns.length === 0) {
+        trackEmptyResults({
+          query,
+          sourceCount: data.sources.length,
+          hasFilters: !!(refinements.categories || refinements.dateRange),
+          filters: refinements,
+          suggestedAction: data.sources.length === 0 ? 'broaden_query' : 'rephrase_question',
+          timestamp: new Date()
+        }).catch(err => console.warn('Analytics tracking failed:', err))
+      }
+
       console.log('✅ Search 5.0 complete:', {
         patterns: data.patterns.length,
         sources: data.sources.length,
@@ -199,6 +226,20 @@ export function AskAIStructured({
 
       console.error('Search error:', err)
       setError(err.message || 'An unexpected error occurred')
+
+      // 📊 Analytics: Track error
+      const errorType = err.message?.includes('timeout') ? 'timeout' :
+                        err.message?.includes('Rate limit') ? 'rate_limited' :
+                        err.message?.includes('Circuit breaker') ? 'circuit_breaker' :
+                        err.message?.includes('Invalid JSON') ? 'validation_error' :
+                        'unknown'
+
+      trackSearch5Error(
+        query,
+        errorType,
+        Date.now() - Date.now(), // We don't have exact timing here
+        conversationContext.length
+      ).catch(err => console.warn('Analytics tracking failed:', err))
     } finally {
       setIsLoading(false)
     }
@@ -264,6 +305,13 @@ export function AskAIStructured({
     // Scroll to search input and focus it
     window.scrollTo({ top: 0, behavior: 'smooth' })
     // Focus will be handled by the SmartSearchInput component
+  }, [])
+
+  const handleClearRefinementFilters = useCallback(() => {
+    setRefinements({
+      confidenceThreshold: 0,
+      maxSources: 15
+    })
   }, [])
 
   // ============================================================================
@@ -394,8 +442,21 @@ export function AskAIStructured({
             />
           )}
 
-          {/* Pattern Grid */}
-          {filteredPatterns.length > 0 ? (
+          {/* Pattern Grid or Empty State */}
+          {response.patterns.length === 0 ? (
+            // No patterns from API - show comprehensive empty state
+            <EmptyResultsState
+              query={lastQuery}
+              sourceCount={response.sources.length}
+              activeFilters={{
+                category: refinements.categories?.[0],
+                dateRange: refinements.dateRange
+              }}
+              onRetryWithSuggestion={handleSearch}
+              onClearFilters={handleClearRefinementFilters}
+            />
+          ) : filteredPatterns.length > 0 ? (
+            // Patterns visible after filters
             <ProgressivePatternGrid
               patterns={filteredPatterns}
               sources={response.sources}
@@ -405,6 +466,7 @@ export function AskAIStructured({
               onCitationClick={handleCitationClick}
             />
           ) : (
+            // Patterns exist but hidden by quick filters
             <div className="text-center py-12 bg-muted/30 rounded-lg">
               <p className="text-muted-foreground">
                 Keine Patterns entsprechen den aktiven Filtern.

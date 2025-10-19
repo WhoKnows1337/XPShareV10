@@ -47,7 +47,15 @@ export async function transcribeAudio(audioFile: File) {
 
 /**
  * Generate embedding for text (1536 dimensions with text-embedding-3-small)
- * Note: Using text-embedding-3-small due to pgvector's 2000 dimension limit
+ *
+ * Note: We use text-embedding-3-small instead of text-embedding-3-large because:
+ * - Supabase pgvector 0.8.0 has a 2,000 dimension limit for indexes (IVFFlat & HNSW)
+ * - text-embedding-3-large produces 3,072 dimensions (too large for indexed searches)
+ * - text-embedding-3-small is cost-effective ($0.02/1M vs $0.13/1M tokens)
+ * - For our dataset size (~111 experiences), the accuracy difference is negligible
+ *
+ * Future: When pgvector 0.9.0+ becomes available on Supabase (16,000 dim limit),
+ * we can upgrade to text-embedding-3-large with dimensions reduced to 1536 for compatibility.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const response = await openai.embeddings.create({

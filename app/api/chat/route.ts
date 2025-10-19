@@ -1,10 +1,9 @@
 /**
  * Search 5.0 - Pattern Discovery API
  *
- * Complete refactor from streaming to structured output with:
- * - generateText() instead of streamText() for JSON Schema support
- * - OpenAI Structured Outputs (JSON Schema enforcement)
- * - Zod runtime validation with error recovery
+ * AI SDK 5.0 structured outputs with:
+ * - generateObject() with native Zod schema validation
+ * - Automatic type safety and runtime validation
  * - Serendipity detection (cross-category patterns)
  * - Multi-turn conversation context
  * - Cost control (rate limiting, token tracking)
@@ -13,10 +12,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
+import { generateObject } from 'ai'
 import { createClient } from '@/lib/supabase/server'
 import { generateEmbedding } from '@/lib/openai/client'
+import { openai, gpt4o } from '@/lib/openai/ai-sdk-client'
 import {
   PATTERN_DISCOVERY_SYSTEM_PROMPT,
   buildPatternDiscoveryPrompt,
@@ -24,81 +23,12 @@ import {
   sanitizeQuestion
 } from '@/lib/ai/prompts'
 import { detectSerendipity } from '@/lib/patterns/serendipity'
-import { parseSearch5Response, Search5ResponseSchema } from '@/lib/validation/search5-schemas'
+import { PatternDiscoveryOutputSchema } from '@/lib/validation/search5-schemas'
 import { patternDiscoveryCircuitBreaker } from '@/lib/patterns/error-recovery'
+import { trackRateLimit } from '@/lib/analytics/search5-tracking'
+import { extractKeywords, keywordsToTags } from '@/lib/search/keyword-extraction'
 import { Source } from '@/types/ai-answer'
 import { Pattern } from '@/types/search5'
-
-/**
- * OpenAI JSON Schema for Structured Outputs
- * Enforces response structure at LLM generation time
- */
-const PATTERN_DISCOVERY_SCHEMA = {
-  type: "object",
-  properties: {
-    patterns: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          type: {
-            type: "string",
-            enum: ["color", "temporal", "behavior", "location", "attribute"]
-          },
-          title: { type: "string" },
-          finding: { type: "string" },
-          confidence: { type: "number", minimum: 0, maximum: 100 },
-          sourceIds: {
-            type: "array",
-            items: { type: "string" }
-          },
-          citationIds: {
-            type: "array",
-            items: { type: "number" }
-          },
-          data: {
-            type: "object",
-            properties: {
-              distribution: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    label: { type: "string" },
-                    count: { type: "number" },
-                    percentage: { type: "number" }
-                  },
-                  required: ["label", "count"]
-                }
-              },
-              timeline: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    month: { type: "string" },
-                    count: { type: "number" },
-                    highlight: { type: "boolean" }
-                  },
-                  required: ["month", "count"]
-                }
-              }
-            }
-          },
-          visualizationType: {
-            type: "string",
-            enum: ["bar", "timeline", "map", "tag-cloud"]
-          }
-        },
-        required: ["type", "title", "finding", "sourceIds", "data"]
-      },
-      minItems: 0,
-      maxItems: 10
-    }
-  },
-  required: ["patterns"],
-  additionalProperties: false
-}
 
 /**
  * Extract question from AI SDK messages array
@@ -156,8 +86,9 @@ function extractConversationHistory(messages: any[]): Array<{ query: string; pat
     }
   }
 
-  // Return last 3 turns only
-  return history.slice(-3)
+  // Return full conversation history for unlimited exploration
+  // Note: Very long conversations may hit token limits - monitor usage
+  return history
 }
 
 /**
@@ -185,6 +116,63 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now()
 
   try {
+    // ✅ P1 FEATURE: Rate Limiting (per-user/IP)
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    const { patternDiscoveryLimiter, getIdentifier, calculateEstimatedTokens } = await import('@/lib/rate-limit/in-memory-limiter')
+    const identifier = getIdentifier(req.headers, user?.id)
+    
+    const rateLimitResult = await patternDiscoveryLimiter.check(identifier)
+
+    if (!rateLimitResult.success) {
+      console.warn('🚫 Rate limit exceeded:', {
+        identifier: user?.id ? `user:${user.id.substring(0, 8)}...` : identifier,
+        limit: rateLimitResult.limit,
+        reset: new Date(rateLimitResult.reset).toISOString()
+      })
+
+      // 📊 Analytics: Track rate limit hit
+      trackRateLimit({
+        identifier,
+        limit: rateLimitResult.limit,
+        endpoint: 'pattern_discovery',
+        userId: user?.id,
+        timestamp: new Date()
+      }).catch(err => console.warn('Analytics tracking failed:', err))
+
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: `Too many pattern discovery requests. You can make ${rateLimitResult.limit} requests per minute. Please try again in ${Math.ceil((rateLimitResult.reset - Date.now()) / 1000)} seconds.`,
+          metadata: {
+            confidence: 0,
+            sourceCount: 0,
+            patternsFound: 0,
+            executionTime: Date.now() - startTime,
+            warnings: ['Rate limit exceeded']
+          }
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+            'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+          }
+        }
+      )
+    }
+
+    console.log('✅ Rate limit check passed:', {
+      identifier: user?.id ? `user:${user.id.substring(0, 8)}...` : identifier,
+      remaining: rateLimitResult.remaining,
+      limit: rateLimitResult.limit
+    })
+
     const body = await req.json()
 
     // ✅ Extract and validate request
@@ -216,10 +204,16 @@ export async function POST(req: NextRequest) {
       witnessesOnly,
     } = body
 
+    // Extract keywords for structured filtering
+    const keywords = extractKeywords(question)
+    const searchTags = keywordsToTags(keywords)
+
     console.log('🔍 Search 5.0 Pattern Discovery:', {
       question: question.substring(0, 50),
       maxSources,
-      filters: { category, tags, location, dateFrom, dateTo, witnessesOnly }
+      filters: { category, tags, location, dateFrom, dateTo, witnessesOnly },
+      extractedKeywords: keywords,
+      searchTags
     })
 
     // Step 1: Generate embedding for question
@@ -237,9 +231,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 2: Find relevant experiences using vector similarity
-    const supabase = await createClient()
-
+    // Step 2: Find relevant experiences using vector similarity + structured filters
     const { data: relevant, error: searchError } = await (supabase as any).rpc('match_experiences', {
       query_embedding: queryEmbedding,
       match_threshold: 0.3,
@@ -247,6 +239,8 @@ export async function POST(req: NextRequest) {
       filter_category: category && category !== 'all' ? category : null,
       filter_date_from: dateFrom || null,
       filter_date_to: dateTo || null,
+      filter_tags: searchTags.length > 0 ? searchTags : null,
+      filter_keywords: keywords.length > 0 ? keywords : null,
     })
 
     if (searchError) {
@@ -271,7 +265,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Map to Source type
+    // Map to Source type and track exact matches
     const sources: Source[] = relevant.map((exp: any) => ({
       id: exp.id,
       title: exp.title,
@@ -281,8 +275,13 @@ export async function POST(req: NextRequest) {
       similarity: exp.similarity,
       date_occurred: exp.date_occurred,
       location_text: exp.location_text,
-      attributes: exp.tags
+      attributes: exp.tags,
+      exactMatch: exp.exact_match || false
     }))
+
+    // Count exact matches
+    const exactMatchCount = sources.filter(s => s.exactMatch).length
+    const hasPartialMatchesOnly = sources.length > 0 && exactMatchCount === 0
 
     // Apply client-side filters
     let filteredSources = sources
@@ -338,36 +337,25 @@ export async function POST(req: NextRequest) {
       prompt = buildPatternDiscoveryPrompt(question, filteredSources)
     }
 
-    // ⏱️ P0 FEATURE: Timeout Handling (15s max) + Circuit Breaker
-    const TIMEOUT_MS = 15000
+    // ⏱️ P0 FEATURE: Timeout Handling (20s max for Structured Outputs) + Circuit Breaker
+    const TIMEOUT_MS = 20000 // Increased for OpenAI Structured Outputs Mode (strictJsonSchema)
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Pattern discovery timeout (15s limit exceeded)')), TIMEOUT_MS)
+      setTimeout(() => reject(new Error('Pattern discovery timeout (20s limit exceeded)')), TIMEOUT_MS)
     })
 
     const generationPromise = patternDiscoveryCircuitBreaker.execute(() =>
-      generateText({
-        model: openai('gpt-4o'),
+      generateObject({
+        model: gpt4o,
+        schema: PatternDiscoveryOutputSchema,
+        schemaName: 'PatternDiscoveryOutput',
+        schemaDescription: 'Structured pattern discovery output with 2-4 patterns and optional follow-up suggestions',
         system: PATTERN_DISCOVERY_SYSTEM_PROMPT,
-        messages: [{
-          role: 'user',
-          content: prompt
-        }],
-        temperature: 0.7,
+        prompt: prompt,
+        temperature: 0.3, // Lower temperature for more consistent JSON generation
         // @ts-expect-error - AI SDK 5.0 type issue with maxTokens
-        maxTokens: 2000,
-        // ✅ CRITICAL: Structured output with JSON Schema
-        experimental_providerMetadata: {
-          openai: {
-            response_format: {
-              type: "json_schema",
-              json_schema: {
-                name: "pattern_discovery",
-                schema: PATTERN_DISCOVERY_SCHEMA,
-                strict: true
-              }
-            }
-          }
-        }
+        maxTokens: 3000, // Increased to prevent truncation
+        // Note: strictJsonSchema disabled - OpenAI Structured Outputs Mode doesn't support optional nested objects
+        // Using regular JSON Schema with Zod validation instead
       })
     )
 
@@ -401,41 +389,27 @@ export async function POST(req: NextRequest) {
           sourceCount: filteredSources.length,
           patternsFound: 0,
           executionTime: TIMEOUT_MS,
-          warnings: ['Timeout after 15 seconds']
+          warnings: ['Timeout after 20 seconds']
         }
       }, { status: 504 })
     }
 
-    // Step 5: Parse and validate LLM output with Zod
-    let parsedOutput: any
-    try {
-      parsedOutput = JSON.parse(result.text)
-    } catch (parseError: any) {
-      console.error('JSON parse error:', parseError)
-      return NextResponse.json({
-        error: 'Invalid JSON from LLM',
-        details: parseError.message,
-        metadata: {
-          confidence: 0,
-          sourceCount: filteredSources.length,
-          patternsFound: 0,
-          executionTime: Date.now() - startTime,
-          warnings: ['LLM returned invalid JSON']
-        }
-      }, { status: 500 })
-    }
+    // ✅ P1 FEATURE: Token Usage Tracking
+    const estimatedTokens = calculateEstimatedTokens(messages)
+    console.log('💰 Token usage estimate:', {
+      input: estimatedTokens,
+      totalCost: `~$${(estimatedTokens * 0.00001).toFixed(4)}` // Rough estimate for gpt-4o
+    })
 
-    // ✅ Runtime validation with Zod (error recovery)
-    const validated = parseSearch5Response({
-      patterns: parsedOutput.patterns || [],
-      sources: filteredSources,
-      metadata: {
-        confidence: 0, // Will calculate below
-        sourceCount: filteredSources.length,
-        patternsFound: parsedOutput.patterns?.length || 0,
-        executionTime: Date.now() - startTime,
-        warnings: []
-      }
+    // Step 5: Extract patterns from generateObject() result
+    // Result is already validated and typed thanks to Zod schema!
+    const { summary, patterns, followUpSuggestions } = result.object
+
+    console.log('✅ Pattern discovery complete:', {
+      summary: summary?.substring(0, 100) + '...',
+      patterns: patterns.length,
+      followUpSuggestions: followUpSuggestions?.length || 0,
+      executionTime: `${Date.now() - startTime}ms`
     })
 
     // Step 6: Detect serendipity (cross-category connections)
@@ -457,10 +431,6 @@ export async function POST(req: NextRequest) {
     const executionTime = Date.now() - startTime
 
     // Step 8: Track analytics
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
     try {
       await (supabase as any).rpc('track_search', {
         p_query_text: question,
@@ -483,10 +453,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 9: Build final response
+    const warnings: string[] = []
+
+    // Add warning if only partial matches (no exact keyword/tag matches)
+    if (hasPartialMatchesOnly && keywords.length > 0) {
+      warnings.push(
+        `Keine exakten Treffer für "${keywords.slice(0, 2).join(', ')}" gefunden. Zeige themenverwandte Erfahrungen.`
+      )
+    }
+
     const response = {
-      patterns: validated.patterns,
+      summary,
+      patterns,
+      followUpSuggestions,
       serendipity,
-      sources: validated.sources.map(s => ({
+      sources: filteredSources.map(s => ({
         id: s.id,
         title: s.title,
         category: s.category,
@@ -497,20 +478,31 @@ export async function POST(req: NextRequest) {
       })),
       metadata: {
         confidence,
-        sourceCount: validated.sources.length,
-        patternsFound: validated.patterns.length,
+        sourceCount: filteredSources.length,
+        patternsFound: patterns.length,
         executionTime,
-        warnings: validated.metadata.warnings
+        warnings,
+        exactMatchCount,
+        hasPartialMatchesOnly
       }
     }
 
     console.log('✅ Pattern discovery complete:', {
       patterns: response.patterns.length,
+      followUpSuggestions: followUpSuggestions?.length || 0,
       confidence,
-      executionTime: `${executionTime}ms`
+      executionTime: `${executionTime}ms`,
+      remainingRequests: rateLimitResult.remaining
     })
 
-    return NextResponse.json(response)
+    // Add rate limit headers to successful response
+    return NextResponse.json(response, {
+      headers: {
+        'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': rateLimitResult.reset.toString()
+      }
+    })
 
   } catch (error: any) {
     console.error('Pattern discovery error:', error)

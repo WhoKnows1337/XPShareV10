@@ -260,14 +260,150 @@ export function SearchInputSkeleton({ className }: { className?: string }) {
 }
 
 // ============================================================================
+// PROGRESSIVE LOADING INDICATOR
+// ============================================================================
+
+import { Loader2, Search, Brain, Zap } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
+export type LoadingStage = 'embedding' | 'searching' | 'analyzing'
+
+export interface ProgressiveLoadingIndicatorProps {
+  className?: string
+  /** Current loading stage */
+  stage?: LoadingStage
+  /** Auto-advance through stages (for demo/fallback) */
+  autoAdvance?: boolean
+}
+
+const STAGE_CONFIG = {
+  embedding: {
+    icon: Zap,
+    label: 'Embedding query',
+    description: 'Converting your question to semantic vectors',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10'
+  },
+  searching: {
+    icon: Search,
+    label: 'Searching experiences',
+    description: 'Finding relevant patterns in the database',
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10'
+  },
+  analyzing: {
+    icon: Brain,
+    label: 'Analyzing patterns',
+    description: 'AI is discovering hidden patterns',
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10'
+  }
+}
+
+const STAGE_ORDER: LoadingStage[] = ['embedding', 'searching', 'analyzing']
+
+export function ProgressiveLoadingIndicator({
+  className,
+  stage,
+  autoAdvance = true
+}: ProgressiveLoadingIndicatorProps) {
+  const [currentStageIndex, setCurrentStageIndex] = useState(0)
+
+  // Auto-advance through stages if no stage prop provided
+  useEffect(() => {
+    if (!autoAdvance || stage) return
+
+    const interval = setInterval(() => {
+      setCurrentStageIndex(prev => (prev + 1) % STAGE_ORDER.length)
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [autoAdvance, stage])
+
+  const activeStage = stage || STAGE_ORDER[currentStageIndex]
+  const config = STAGE_CONFIG[activeStage]
+  const Icon = config.icon
+
+  return (
+    <div className={cn('space-y-4', className)}>
+      {/* Current stage indicator */}
+      <div className={cn(
+        'flex items-center gap-4 p-4 rounded-lg border',
+        config.bgColor,
+        'border-border'
+      )}>
+        <div className="relative">
+          <Icon className={cn('w-6 h-6', config.color)} />
+          <Loader2 className="w-6 h-6 animate-spin absolute inset-0 text-muted-foreground/30" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className={cn('font-medium', config.color)}>
+            {config.label}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {config.description}
+          </div>
+        </div>
+      </div>
+
+      {/* Progress bar showing all stages */}
+      <div className="flex items-center gap-2">
+        {STAGE_ORDER.map((stageName, index) => {
+          const stageConfig = STAGE_CONFIG[stageName]
+          const StageIcon = stageConfig.icon
+          const isActive = stageName === activeStage
+          const isCompleted = STAGE_ORDER.indexOf(activeStage) > index
+
+          return (
+            <div key={stageName} className="flex items-center flex-1">
+              {/* Stage dot/icon */}
+              <div
+                className={cn(
+                  'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all',
+                  isActive && cn(stageConfig.bgColor, 'border-current', stageConfig.color),
+                  isCompleted && 'bg-primary border-primary text-primary-foreground',
+                  !isActive && !isCompleted && 'border-muted bg-muted/30 text-muted-foreground'
+                )}
+              >
+                <StageIcon className="w-4 h-4" />
+              </div>
+
+              {/* Connecting line */}
+              {index < STAGE_ORDER.length - 1 && (
+                <div
+                  className={cn(
+                    'flex-1 h-0.5 mx-2 transition-colors',
+                    isCompleted ? 'bg-primary' : 'bg-muted'
+                  )}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Stage labels */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {STAGE_ORDER.map((stageName) => (
+          <div key={stageName} className="flex-1 text-center">
+            {STAGE_CONFIG[stageName].label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
 // COMPLETE PAGE SKELETON
 // ============================================================================
 
 export function Search5LoadingSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn('space-y-8 animate-in fade-in duration-500', className)}>
-      {/* Search Input */}
-      <SearchInputSkeleton />
+      {/* Progressive Loading Indicator */}
+      <ProgressiveLoadingIndicator autoAdvance={true} />
 
       {/* Quality Card */}
       <QualityCardSkeleton />

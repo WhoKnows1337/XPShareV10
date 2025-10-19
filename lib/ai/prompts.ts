@@ -46,13 +46,22 @@ export const RAG_SYSTEM_PROMPT = `Du bist ein Analyst für außergewöhnliche Er
 /**
  * Search 5.0: Pattern Discovery System Prompt
  * Optimized for structured pattern extraction with OpenAI JSON Schema
+ * Updated with follow-up question generation
  */
 export const PATTERN_DISCOVERY_SYSTEM_PROMPT = `Du bist ein Pattern Discovery Assistant für außergewöhnliche Erfahrungen.
 
 Deine Aufgabe:
-1. Analysiere die bereitgestellten Erfahrungen
-2. Identifiziere 2-4 klare PATTERNS (Muster)
-3. Jedes Pattern muss haben:
+1. Erstelle eine SUMMARY (Zusammenfassung):
+   - Natürliche Sprache, 2-4 Sätze
+   - Beantworte die Nutzerfrage direkt
+   - Integriere konkrete Zahlen und Prozente
+   - Schreibe flüssig und lesbar (nicht stichwortartig)
+   - Beispiel: "Die häufigsten Farben in UFO-Sichtungen sind multicolor Lichter (33%), gefolgt von grün (20%) und orange (13%). Besonders interessant: Berlin und London sind mit je 3 Sichtungen (20%) die häufigsten Orte."
+
+2. Analysiere die bereitgestellten Erfahrungen
+3. Identifiziere 2-4 klare PATTERNS (Muster)
+4. Generiere 3-5 FOLLOW-UP QUESTIONS basierend auf den Patterns
+5. Jedes Pattern muss haben:
    - Typ (color/temporal/behavior/location/attribute)
    - Titel (prägnant)
    - Finding (ein Satz mit Zahlen/Prozenten)
@@ -76,8 +85,23 @@ Wichtig:
 Beispiel Finding:
 "Orange wird in 12 von 15 Sichtungen (80%) als Hauptfarbe berichtet"
 
+Follow-Up Questions Regeln:
+- Generiere 3-5 interessante Follow-up Fragen basierend auf den entdeckten Patterns
+- Fragen sollten tiefer in spezifische Patterns eintauchen
+- Ermutige cross-category Exploration (z.B. "Gibt es einen Zusammenhang zwischen Farbe und Tageszeit?")
+- Fragen sollten konkret und beantwortbar sein
+- Jede Frage braucht eine "reason" (warum ist das interessant?)
+- Kategorisiere Fragen nach Typ (color/temporal/behavior/location/attribute/cross-category)
+
+Beispiel Follow-Up:
+{
+  "question": "Gibt es einen Zusammenhang zwischen orangen UFOs und der Tageszeit?",
+  "category": "cross-category",
+  "reason": "Das Farbmuster könnte durch atmosphärische Bedingungen zu bestimmten Tageszeiten erklärt werden"
+}
+
 Output Format:
-JSON mit patterns[], serendipity (optional), metadata`
+JSON mit summary (string), patterns[], followUpSuggestions[]`
 
 /**
  * Build context from experiences for RAG
@@ -133,7 +157,7 @@ export function sanitizeQuestion(question: string): string {
  */
 export function buildPatternDiscoveryPrompt(question: string, sources: Source[]): string {
   const sourceList = sources.map((s, i) =>
-    `[${i+1}] ${s.title} | Category: ${s.category} | Date: ${s.date_occurred || 'Unknown'} | Location: ${s.location_text || 'Unknown'}
+    `[${i+1}] ID: ${s.id} | ${s.title} | Category: ${s.category} | Date: ${s.date_occurred || 'Unknown'} | Location: ${s.location_text || 'Unknown'}
 ${(s.fullText || s.excerpt || '').substring(0, 300)}...`
   ).join('\n\n')
 
@@ -143,12 +167,14 @@ Verfügbare Quellen (${sources.length}):
 ${sourceList}
 
 Analysiere diese Quellen und extrahiere 2-4 klare Patterns.
-Fokus: Was verbindet diese Erfahrungen? Welche Gemeinsamkeiten fallen auf?`
+Fokus: Was verbindet diese Erfahrungen? Welche Gemeinsamkeiten fallen auf?
+
+WICHTIG: Verwende für sourceIds die ID-Werte (UUIDs) aus den Quellen, NICHT die Nummern [1], [2], etc.`
 }
 
 /**
  * Search 5.0: Build conversational prompt for multi-turn dialogue
- * Includes conversation history for context-aware pattern discovery
+ * Enhanced with richer context and conversation flow detection
  *
  * @param currentQuery - Current user question
  * @param sources - Matched experience sources
@@ -168,43 +194,177 @@ export function buildConversationalPrompt(
     return buildPatternDiscoveryPrompt(currentQuery, sources)
   }
 
-  // Multi-turn prompt with context awareness
-  const contextSummary = conversationHistory!.map((turn, i) => `
-Turn ${i + 1} Query: "${turn.query}"
-Found Patterns: ${turn.patterns.map(p => p.type).join(', ')}
-`).join('\n')
+  // Build rich context summary with key findings
+  const contextSummary = conversationHistory!.map((turn, i) => {
+    const topPatterns = turn.patterns
+      .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+      .slice(0, 2)
+      .map(p => `${p.type}: "${p.title}" (${p.confidence}% conf)`)
+      .join(', ')
 
-  const exploredPatternTypes = [...new Set(previousPatterns?.map(p => p.type) || [])]
+    return `Turn ${i + 1}: "${turn.query}"
+   → Key Findings: ${topPatterns || 'No patterns found'}
+   → ${turn.patterns.length} patterns discovered`
+  }).join('\n')
+
+  // Detect conversation flow type
+  const lastQuery = conversationHistory![conversationHistory!.length - 1]?.query.toLowerCase()
+  const currentQueryLower = currentQuery.toLowerCase()
+  const flowType = detectConversationFlow(lastQuery, currentQueryLower, previousPatterns)
+
+  // Group patterns by type for better context
+  const patternTypeStats: Record<string, number> = {}
+  previousPatterns?.forEach(p => {
+    patternTypeStats[p.type] = (patternTypeStats[p.type] || 0) + 1
+  })
+  const exploredStats = Object.entries(patternTypeStats)
+    .map(([type, count]) => `${type} (${count}x)`)
+    .join(', ')
+
+  // Get pattern details for cross-referencing
+  const keyPreviousPatterns = previousPatterns
+    ?.sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+    .slice(0, 3)
+    .map(p => `• ${p.type}: "${p.title}" - ${p.finding}`)
+    .join('\n') || 'None yet'
 
   const sourceList = sources.map((s, i) =>
-    `[${i+1}] ${s.title} | Category: ${s.category} | Date: ${s.date_occurred || 'Unknown'} | Location: ${s.location_text || 'Unknown'}
+    `[${i+1}] ID: ${s.id} | ${s.title} | Category: ${s.category} | Date: ${s.date_occurred || 'Unknown'} | Location: ${s.location_text || 'Unknown'}
 ${(s.fullText || s.excerpt || '').substring(0, 300)}...`
   ).join('\n\n')
 
   return `You are analyzing experiences in a multi-turn conversation (Turn ${conversationDepth + 1}).
 
-**Conversation Context**:
+**Conversation History**:
 ${contextSummary}
 
-**Previous Pattern Types Explored**:
-${exploredPatternTypes.join(', ')}
+**Pattern Types Already Explored**:
+${exploredStats}
+
+**Top 3 Previous Discoveries** (for reference/comparison):
+${keyPreviousPatterns}
 
 **Current Query**: "${currentQuery}"
+**Detected Flow Type**: ${flowType}
 
 **Available Sources (${sources.length})**:
 ${sourceList}
 
-**Instructions**:
-1. Consider the conversation flow - is the user:
-   - Refining previous query? → Focus on similar patterns with adjusted parameters
-   - Pivoting to new topic? → Provide fresh perspective
-   - Asking follow-up? → Reference previous findings ("As seen in UFO pattern...")
+**Context-Aware Instructions**:
 
-2. Avoid repeating exact patterns from previous turns
-3. If query references previous results ("show more like..."), prioritize those pattern types
-4. Maintain conversation coherence while discovering new insights
+${getFlowSpecificInstructions(flowType)}
 
-Generate 2-4 new patterns now.`
+**Cross-Turn Analysis Guidelines**:
+1. When user refines query, build upon previous findings:
+   - Compare/contrast with earlier patterns
+   - Show progression or changes
+   - Example: "While earlier we found X, now with refined focus we see Y..."
+
+2. When user pivots to new topic:
+   - Acknowledge the shift
+   - Find connections to previous discoveries if relevant
+   - Example: "Shifting from temporal to geographic patterns..."
+
+3. When user asks follow-up:
+   - Explicitly reference previous patterns
+   - Use pattern IDs or titles from earlier turns
+   - Example: "Building on the orange color pattern from Turn 1..."
+
+4. Pattern Diversity:
+   - Avoid exact repetition of previous pattern findings
+   - If same type (e.g., color), find different aspects
+   - Prioritize unexplored pattern types when possible
+
+5. Confidence Calibration:
+   - If patterns weaken with refinement, reflect that in confidence scores
+   - If patterns strengthen, increase confidence
+
+Generate 2-4 new patterns that advance the conversation.`
+}
+
+/**
+ * Detect conversation flow type from query evolution
+ */
+function detectConversationFlow(
+  previousQuery: string,
+  currentQuery: string,
+  previousPatterns?: Pattern[]
+): string {
+  if (!previousQuery) return 'Initial Query'
+
+  // Detect refinement (adds specificity)
+  const refinementKeywords = ['genauer', 'spezifisch', 'nur', 'welche von', 'davon']
+  if (refinementKeywords.some(kw => currentQuery.includes(kw))) {
+    return 'Refinement (adding specificity)'
+  }
+
+  // Detect follow-up (references previous)
+  const followUpKeywords = ['mehr', 'andere', 'weitere', 'ähnliche', 'auch']
+  if (followUpKeywords.some(kw => currentQuery.includes(kw))) {
+    return 'Follow-Up (exploring similar)'
+  }
+
+  // Detect pivot (completely different pattern type)
+  const previousTypes = new Set(previousPatterns?.map(p => p.type) || [])
+  const currentMentionsNewType =
+    (currentQuery.includes('zeit') && !previousTypes.has('temporal')) ||
+    (currentQuery.includes('ort') && !previousTypes.has('location')) ||
+    (currentQuery.includes('farbe') && !previousTypes.has('color'))
+
+  if (currentMentionsNewType) {
+    return 'Pivot (exploring different dimension)'
+  }
+
+  // Detect broadening (removes constraints)
+  const broadeningKeywords = ['allgemein', 'insgesamt', 'überall', 'alle']
+  if (broadeningKeywords.some(kw => currentQuery.includes(kw))) {
+    return 'Broadening (removing constraints)'
+  }
+
+  // Default: continuation
+  return 'Continuation (exploring related aspects)'
+}
+
+/**
+ * Get flow-specific instructions for the LLM
+ */
+function getFlowSpecificInstructions(flowType: string): string {
+  switch (true) {
+    case flowType.startsWith('Refinement'):
+      return `This is a REFINEMENT query. The user wants more specific insights:
+- Narrow down previous findings with added constraints
+- Show how patterns change with refinement
+- Maintain connection to broader patterns from previous turns
+- Use phrases like "When focusing on [constraint], we see..."`
+
+    case flowType.startsWith('Follow-Up'):
+      return `This is a FOLLOW-UP query. The user wants to explore similar territory:
+- Find patterns similar to previous discoveries
+- Show variations or extensions of existing patterns
+- Reference specific previous findings explicitly
+- Use phrases like "Similar to [previous pattern], we also find..."`
+
+    case flowType.startsWith('Pivot'):
+      return `This is a PIVOT query. The user is exploring a new dimension:
+- Provide fresh perspective on different aspect
+- Look for connections to previous findings if natural
+- Avoid forcing references to unrelated previous patterns
+- Use phrases like "Shifting focus to [new aspect]..."`
+
+    case flowType.startsWith('Broadening'):
+      return `This is a BROADENING query. The user wants the bigger picture:
+- Show how patterns generalize when constraints are removed
+- Compare specific vs. general findings
+- Aggregate insights from previous turns if relevant
+- Use phrases like "Expanding beyond [previous constraint], we observe..."`
+
+    default:
+      return `This is a CONTINUATION query. Maintain conversation coherence:
+- Build naturally on the conversation flow
+- Reference previous findings when relevant
+- Discover new insights that complement earlier patterns
+- Keep the analytical narrative consistent`
+  }
 }
 
 /**

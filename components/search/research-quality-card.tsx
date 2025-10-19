@@ -11,9 +11,11 @@
  * - Warnings
  *
  * @see docs/masterdocs/search5.md (Part 2.1 - Response Metadata)
+ * @see docs/masterdocs/search5.md (Part 3.6 - Micro-Interactions)
  */
 
 import React from 'react'
+import { motion } from 'framer-motion'
 import {
   AlertCircle,
   CheckCircle2,
@@ -153,7 +155,11 @@ export function ResearchQualityCard({
   // ============================================================================
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      whileHover={{ scale: 1.02 }}
       className={cn(
         'border rounded-lg overflow-hidden',
         hasWarnings && 'border-destructive/50',
@@ -196,13 +202,18 @@ export function ResearchQualityCard({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="bg-background p-3 md:p-4 hover:bg-accent/50 transition-colors cursor-help">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="bg-background p-3 md:p-4 hover:bg-accent/50 transition-colors cursor-help"
+              >
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <Database className="h-3 w-3 md:h-4 md:w-4" />
                   <span className="text-xs font-medium">Quellen</span>
                 </div>
                 <div className="text-xl md:text-2xl font-bold">{sourceCount}</div>
-              </div>
+              </motion.div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p className="text-xs max-w-[200px]">
@@ -216,13 +227,18 @@ export function ResearchQualityCard({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="bg-background p-3 md:p-4 hover:bg-accent/50 transition-colors cursor-help">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="bg-background p-3 md:p-4 hover:bg-accent/50 transition-colors cursor-help"
+              >
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <TrendingUp className="h-3 w-3 md:h-4 md:w-4" />
                   <span className="text-xs font-medium">Patterns</span>
                 </div>
                 <div className="text-xl md:text-2xl font-bold">{patternsFound}</div>
-              </div>
+              </motion.div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p className="text-xs max-w-[200px]">
@@ -236,7 +252,12 @@ export function ResearchQualityCard({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="bg-background p-3 md:p-4 hover:bg-accent/50 transition-colors cursor-help">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="bg-background p-3 md:p-4 hover:bg-accent/50 transition-colors cursor-help"
+              >
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <Clock className="h-3 w-3 md:h-4 md:w-4" />
                   <span className="text-xs font-medium">Zeit</span>
@@ -244,7 +265,7 @@ export function ResearchQualityCard({
                 <div className="text-xl md:text-2xl font-bold">
                   {formatExecutionTime(executionTime)}
                 </div>
-              </div>
+              </motion.div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p className="text-xs max-w-[200px]">
@@ -307,7 +328,7 @@ export function ResearchQualityCard({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

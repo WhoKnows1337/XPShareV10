@@ -13,7 +13,7 @@ import { LoadingProgressBar } from '@/components/search/loading-progress-bar'
 import { SearchHistoryDropdown } from '@/components/search/search-history-dropdown'
 import { BulkActionBar } from '@/components/search/bulk-action-bar'
 import { SelectableExperienceCard } from '@/components/search/selectable-experience-card'
-import { AskAI } from '@/components/search/ask-ai'
+import { AskAIStructured } from '@/components/search/ask-ai-structured'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -943,17 +943,16 @@ export function UnifiedSearchPageClient({ initialQuery = '' }: UnifiedSearchPage
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <AskAI
-                    initialQuestion={query}
-                    onQuestionChange={setQuery}
-                    hideInput={true}
-                    filters={{
-                      category: filters.categories && filters.categories.length > 0 ? filters.categories[0] : undefined,
-                      tags: filters.tags && filters.tags.length > 0 ? filters.tags.join(',') : undefined,
-                      location: filters.location,
-                      dateFrom: filters.dateFrom,
-                      dateTo: filters.dateTo,
-                      witnessesOnly: filters.witnessesOnly,
+                  <AskAIStructured
+                    initialQuery={query}
+                    initialRefinements={{
+                      categories: filters.categories && filters.categories.length > 0 ? filters.categories : undefined,
+                      dateRange: filters.dateFrom || filters.dateTo ? {
+                        from: filters.dateFrom || '',
+                        to: filters.dateTo || ''
+                      } : undefined,
+                      maxSources: 15,
+                      confidenceThreshold: 0,
                     }}
                   />
                 </motion.div>

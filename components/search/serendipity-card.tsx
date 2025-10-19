@@ -11,6 +11,7 @@
  */
 
 import React from 'react'
+import { motion } from 'framer-motion'
 import {
   Sparkles,
   ArrowRight,
@@ -89,14 +90,20 @@ export function SerendipityCard({
   // ============================================================================
 
   return (
-    <Card
-      className={cn(
-        'overflow-hidden border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5',
-        className
-      )}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      whileHover={{ scale: 1.02, rotate: [0, -0.5, 0.5, 0] }}
     >
-      {/* Header with gradient */}
-      <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white pb-4">
+      <Card
+        className={cn(
+          'overflow-hidden border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5',
+          className
+        )}
+      >
+        {/* Header with gradient */}
+        <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
             {/* Serendipity Badge */}
@@ -147,11 +154,22 @@ export function SerendipityCard({
           </div>
 
           {/* Sparkles Icon */}
-          <div className="flex-shrink-0">
+          <motion.div
+            className="flex-shrink-0"
+            animate={{
+              rotate: [0, 10, -10, 0],
+              scale: [1, 1.1, 1.1, 1]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatType: 'reverse'
+            }}
+          >
             <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
               <Sparkles className="h-6 w-6 text-white" />
             </div>
-          </div>
+          </motion.div>
         </div>
       </CardHeader>
 
@@ -179,12 +197,17 @@ export function SerendipityCard({
             </h4>
 
             <div className="space-y-2">
-              {experiences.slice(0, 3).map((exp) => (
-                <Link
+              {experiences.slice(0, 3).map((exp, i) => (
+                <motion.div
                   key={exp.id}
-                  href={`/experiences/${exp.id}`}
-                  className="group flex items-start gap-3 p-3 bg-muted/50 hover:bg-muted rounded-lg transition-all hover:shadow-sm"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.15, duration: 0.4 }}
                 >
+                  <Link
+                    href={`/experiences/${exp.id}`}
+                    className="group flex items-start gap-3 p-3 bg-muted/50 hover:bg-muted rounded-lg transition-all hover:shadow-sm"
+                  >
                   {/* Similarity Badge */}
                   <TooltipProvider>
                     <Tooltip>
@@ -221,7 +244,8 @@ export function SerendipityCard({
 
                   {/* External Link Icon */}
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-purple-600 transition-colors flex-shrink-0" />
-                </Link>
+                  </Link>
+                </motion.div>
               ))}
 
               {/* Show More Indicator */}
@@ -236,14 +260,20 @@ export function SerendipityCard({
 
         {/* Explore Action */}
         <div className="pt-2">
-          <Button
-            onClick={() => onExplore?.(targetCategory)}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.2 }}
           >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Erkunde {targetCategory}-Berichte
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+            <Button
+              onClick={() => onExplore?.(targetCategory)}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Erkunde {targetCategory}-Berichte
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </motion.div>
         </div>
 
         {/* Info Box */}
@@ -263,7 +293,8 @@ export function SerendipityCard({
           </div>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </motion.div>
   )
 }
 
@@ -280,7 +311,11 @@ export function SerendipityBanner({
   const similarityPercent = Math.round(similarity * 100)
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      whileHover={{ scale: 1.02 }}
       className={cn(
         'bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg p-4',
         className
@@ -312,6 +347,6 @@ export function SerendipityBanner({
           <ArrowRight className="h-3 w-3 ml-1" />
         </Button>
       </div>
-    </div>
+    </motion.div>
   )
 }

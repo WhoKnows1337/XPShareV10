@@ -17,6 +17,16 @@ export type { Source }
 // ============================================================================
 
 /**
+ * LLM-generated follow-up question suggestion
+ * @see docs/masterdocs/search5.md (Part 3.9 - Follow-up Questions)
+ */
+export interface FollowUpSuggestion {
+  question: string                                            // The follow-up question
+  category?: 'color' | 'temporal' | 'behavior' | 'location' | 'attribute' | 'cross-category'
+  reason: string                                              // Why this is interesting
+}
+
+/**
  * Main response structure from Search 5.0 API
  * Uses OpenAI Structured Outputs (JSON Schema) for guaranteed format
  */
@@ -28,10 +38,15 @@ export interface Search5Response {
     patternsFound: number       // Number of patterns detected
     executionTime: number       // Response time in ms
     warnings: string[]          // e.g., "Older XPs not included in results"
+    exactMatchCount?: number    // Number of sources with exact keyword/tag matches
+    hasPartialMatchesOnly?: boolean  // True if no exact matches, only semantic similarity
   }
 
   /** Structured patterns (main content) */
   patterns: Pattern[]
+
+  /** LLM-generated follow-up questions based on discovered patterns */
+  followUpSuggestions?: FollowUpSuggestion[]
 
   /** Serendipity discovery (unexpected but relevant connections) */
   serendipity?: SerendipityConnection
@@ -149,33 +164,6 @@ export interface QueryRefinements {
 export interface QueryRefinementPanelProps {
   onRefine: (refinements: QueryRefinements) => void
   activeRefinements?: QueryRefinements
-}
-
-// ============================================================================
-// MULTI-TURN CONVERSATION TYPES (Part 3.12)
-// ============================================================================
-
-/**
- * Single turn in conversation history
- * Persisted to localStorage for session recovery
- */
-export interface ConversationTurn {
-  id: string                       // UUID for turn
-  timestamp: Date                  // When query was made
-  query: string                    // User's question
-  response: Search5Response        // Full API response
-  refinements?: QueryRefinements   // Applied filters
-}
-
-/**
- * Context value for conversation management
- */
-export interface ConversationContextValue {
-  history: ConversationTurn[]
-  addTurn: (query: string, response: Search5Response, refinements?: QueryRefinements) => void
-  clearHistory: () => void
-  getPreviousPatterns: () => Pattern[]
-  getConversationContext: () => string  // JSON summary for LLM
 }
 
 // ============================================================================
@@ -303,15 +291,6 @@ export interface FollowUpQuestionsProps {
   onQuestionClick: (question: string) => void
   patterns?: Pattern[]
   conversationDepth?: number
-}
-
-/**
- * Props for ConversationHistory sidebar
- */
-export interface ConversationHistoryProps {
-  history: ConversationTurn[]
-  onTurnClick: (turn: ConversationTurn) => void
-  onClearHistory: () => void
 }
 
 // ============================================================================
