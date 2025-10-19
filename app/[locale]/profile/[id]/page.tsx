@@ -60,6 +60,27 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', id)
 
+  // Get category distribution for XP DNA Badge
+  const { data: categoryData } = await supabase
+    .from('experiences')
+    .select('category')
+    .eq('user_id', id)
+    .eq('visibility', 'public')
+
+  // Calculate category distribution
+  const categoryDistribution: Record<string, number> = {}
+  categoryData?.forEach((exp: any) => {
+    if (exp.category) {
+      categoryDistribution[exp.category] = (categoryDistribution[exp.category] || 0) + 1
+    }
+  })
+
+  // Get top 3 categories
+  const topCategories = Object.entries(categoryDistribution)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([cat]) => cat)
+
   // Calculate level
   const level = Math.floor((profile.total_xp || 0) / 100) + 1
 
@@ -141,6 +162,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         currentStreak={profileData.current_streak}
         longestStreak={profileData.longest_streak}
         totalContributions={profileData.total_contributions}
+        topCategories={topCategories}
+        categoryDistribution={categoryDistribution}
       />
     </div>
   )

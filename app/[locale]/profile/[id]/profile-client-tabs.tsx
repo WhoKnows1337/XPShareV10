@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -18,6 +19,7 @@ import { DownloadReportButton } from '@/components/profile/download-report-butto
 import { ProfileTabs } from '@/components/profile/profile-tabs'
 import { ActivityChart } from '@/components/profile/activity-chart'
 import { StreakWidget } from '@/components/gamification/StreakWidget'
+import { XPTwinsTabContent, XPDNABadge } from '@/components/profile/xp-twins'
 
 interface ProfileClientTabsProps {
   profileUser: any
@@ -35,6 +37,8 @@ interface ProfileClientTabsProps {
   currentStreak: number
   longestStreak: number
   totalContributions: number
+  topCategories: string[]
+  categoryDistribution: Record<string, number>
 }
 
 export function ProfileClientTabs({
@@ -48,8 +52,13 @@ export function ProfileClientTabs({
   level,
   currentStreak,
   longestStreak,
-  totalContributions
+  totalContributions,
+  topCategories,
+  categoryDistribution
 }: ProfileClientTabsProps) {
+  const searchParams = useSearchParams()
+  const currentTab = searchParams.get('tab') || 'experiences'
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -60,6 +69,39 @@ export function ProfileClientTabs({
   }
 
   const displayName = profileUser.display_name || profileUser.username
+
+  // Render tab content based on current tab
+  const renderTabContent = () => {
+    switch (currentTab) {
+      case 'xp-twins':
+        return (
+          <XPTwinsTabContent
+            userId={profileUser.id}
+            isOwnProfile={isOwnProfile}
+          />
+        )
+      case 'experiences':
+      case 'drafts':
+      case 'private':
+      case 'comments':
+      case 'liked':
+      case 'collaborations':
+      case 'stats':
+      case 'badges':
+      case 'impact':
+      default:
+        // Placeholder for other tabs - to be implemented
+        return (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">
+                {currentTab.charAt(0).toUpperCase() + currentTab.slice(1)} tab content coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        )
+    }
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -77,8 +119,23 @@ export function ProfileClientTabs({
 
             {/* Profile Info */}
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold">{displayName}</h1>
-              <p className="text-slate-600">@{profileUser.username}</p>
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-2">
+                <div>
+                  <h1 className="text-3xl font-bold">{displayName}</h1>
+                  <p className="text-slate-600">@{profileUser.username}</p>
+                </div>
+
+                {/* XP DNA Badge - only show if user has categories */}
+                {topCategories.length > 0 && (
+                  <XPDNABadge
+                    topCategories={topCategories}
+                    categoryDistribution={categoryDistribution}
+                    size="lg"
+                    showLabel={true}
+                    className="mt-2 md:mt-0"
+                  />
+                )}
+              </div>
 
               {profileUser.bio && (
                 <p className="mt-2 text-slate-700">{profileUser.bio}</p>
@@ -149,6 +206,11 @@ export function ProfileClientTabs({
         userId={profileUser.id}
         isOwnProfile={isOwnProfile}
       />
+
+      {/* Tab Content */}
+      <div className="mt-6">
+        {renderTabContent()}
+      </div>
     </div>
   )
 }

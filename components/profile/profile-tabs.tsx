@@ -13,6 +13,7 @@ import {
   Trophy,
   Globe2,
   FileEdit,
+  Sparkles,
 } from 'lucide-react'
 
 interface ProfileTab {
@@ -61,6 +62,12 @@ const profileTabs: ProfileTab[] = [
     label: 'Collaborations',
     icon: <Users className="h-4 w-4" />,
     description: 'Collaborative experiences and witness contributions',
+  },
+  {
+    id: 'xp-twins',
+    label: 'XP Twins',
+    icon: <Sparkles className="h-4 w-4" />,
+    description: 'Find users with similar extraordinary experiences',
   },
   {
     id: 'stats',
