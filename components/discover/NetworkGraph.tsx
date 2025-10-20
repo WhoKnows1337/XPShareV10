@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Network, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
+import { Network, ZoomIn, ZoomOut, Maximize2, Minimize2, Scan } from 'lucide-react'
 
 /**
  * Network Graph Component
@@ -57,9 +57,11 @@ export function NetworkGraph({
   onEdgeClick,
 }: NetworkGraphProps) {
   const graphRef = useRef<any>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
   const [highlightNodes, setHighlightNodes] = useState(new Set())
   const [highlightEdges, setHighlightEdges] = useState(new Set())
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Add default colors if not provided
   const enrichedNodes = nodes.map((node) => ({
@@ -123,6 +125,32 @@ export function NetworkGraph({
     }
   }
 
+  const handleFullscreen = async () => {
+    if (!containerRef.current) return
+
+    try {
+      if (!isFullscreen) {
+        await containerRef.current.requestFullscreen()
+        setIsFullscreen(true)
+      } else {
+        await document.exitFullscreen()
+        setIsFullscreen(false)
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err)
+    }
+  }
+
+  // Listen for fullscreen changes (e.g., ESC key)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
   return (
     <Card>
       <CardHeader>
@@ -139,9 +167,9 @@ export function NetworkGraph({
       </CardHeader>
 
       <CardContent>
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
           {/* Graph Canvas */}
-          <div className="h-[500px] w-full rounded-lg border overflow-hidden bg-background">
+          <div className={`w-full rounded-lg border overflow-hidden bg-background ${isFullscreen ? 'h-screen' : 'h-[500px]'}`}>
             <ForceGraph2D
               ref={graphRef}
               graphData={graphData}
@@ -216,8 +244,18 @@ export function NetworkGraph({
               size="icon"
               onClick={handleFitView}
               className="shadow-md"
+              title="Fit to view"
             >
-              <Maximize2 className="h-4 w-4" />
+              <Scan className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={handleFullscreen}
+              className="shadow-md"
+              title={isFullscreen ? 'Exit fullscreen (ESC)' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
           </div>
 
