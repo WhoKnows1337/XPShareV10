@@ -184,7 +184,7 @@ Update this file as you complete tasks. Mark your progress daily.
 - [x] ✅ Implement popups
 - [x] ✅ Auto-center calculation
 - [x] ✅ Responsive design
-- [ ] 📋 Create Tool UI wrapper (MapToolUI)
+- [x] ✅ Create Tool UI wrapper (MapToolUI)
 
 ### Timeline Visualization
 
@@ -194,7 +194,7 @@ Update this file as you complete tasks. Mark your progress daily.
 - [x] ✅ Support multiple granularities
 - [x] ✅ Support grouping by category
 - [x] ✅ Responsive design
-- [ ] 📋 Create Tool UI wrapper (TimelineToolUI)
+- [x] ✅ Create Tool UI wrapper (TimelineToolUI)
 
 ### Network Visualization
 
@@ -204,7 +204,7 @@ Update this file as you complete tasks. Mark your progress daily.
 - [x] ✅ Node coloring by category
 - [x] ✅ Link weight visualization
 - [x] ✅ Interactive controls
-- [ ] 📋 Create Tool UI wrapper (NetworkToolUI)
+- [x] ✅ Create Tool UI wrapper (NetworkToolUI)
 
 ### Heatmap Visualization
 
@@ -212,7 +212,7 @@ Update this file as you complete tasks. Mark your progress daily.
 - [x] ✅ Implement category × time matrix
 - [x] ✅ Color intensity scaling
 - [x] ✅ Responsive design
-- [ ] 📋 Create Tool UI wrapper (HeatmapToolUI)
+- [x] ✅ Create Tool UI wrapper (HeatmapToolUI)
 
 ### Dashboard (Multi-Viz)
 
