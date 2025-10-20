@@ -1,20 +1,21 @@
-import { openai } from '@ai-sdk/openai'
-import { generateText } from 'ai'
-
 /**
  * Generate a short title for a chat based on the first user message
- * Uses OpenAI to create concise, descriptive titles (max 60 chars)
+ * Calls API route to use OpenAI for concise, descriptive titles (max 60 chars)
  */
 export async function generateChatTitle(firstMessage: string): Promise<string> {
   try {
-    const { text } = await generateText({
-      model: openai('gpt-4o-mini'),
-      prompt: `Generate a very short, concise title (max 60 characters) for a conversation that starts with this user message: "${firstMessage}"\n\nOnly return the title, nothing else. Make it descriptive and relevant.`,
-      maxTokens: 20,
-      temperature: 0.7,
+    const response = await fetch('/api/discover/generate-title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: firstMessage }),
     })
 
-    return text.trim().replace(/^["']|["']$/g, '') // Remove surrounding quotes
+    if (!response.ok) {
+      throw new Error('Failed to generate title')
+    }
+
+    const { title } = await response.json()
+    return title
   } catch (error) {
     console.error('Error generating title:', error)
     // Fallback: Use first 60 chars of message

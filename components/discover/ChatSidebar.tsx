@@ -128,42 +128,44 @@ function ChatItem({ chat, isActive, onClick, onDelete }: ChatItemProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
-    <button
-      onClick={onClick}
+    <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'w-full text-left p-3 rounded-md transition-colors group',
+        'relative rounded-md transition-colors group',
         'hover:bg-muted',
         isActive && 'bg-muted border-l-2 border-primary'
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">
-            {chat.title || 'Untitled Chat'}
-          </p>
-          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>
-              {formatDistanceToNow(new Date(chat.updated_at), {
-                addSuffix: true,
-              })}
-            </span>
+      <button
+        onClick={onClick}
+        className="w-full text-left p-3"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">
+              {chat.title || 'Untitled Chat'}
+            </p>
+            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>
+                {formatDistanceToNow(new Date(chat.updated_at), {
+                  addSuffix: true,
+                })}
+              </span>
+            </div>
           </div>
         </div>
-        {isHovered && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onDelete}
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Delete chat"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
-    </button>
+      </button>
+      {isHovered && (
+        <button
+          onClick={onDelete}
+          className="absolute top-2 right-2 h-6 w-6 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent flex items-center justify-center"
+          aria-label="Delete chat"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      )}
+    </div>
   )
 }
