@@ -133,20 +133,20 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Search Tools
 
-- [ ] 📋 `advanced_search` - `/lib/tools/search/advanced-search.ts`
-  - [ ] 📋 Category filtering
-  - [ ] 📋 Location filtering
-  - [ ] 📋 Time range filtering
-  - [ ] 📋 Date range filtering
-  - [ ] 📋 Attribute filtering (post-filter)
-  - [ ] 📋 Tag filtering
-  - [ ] 📋 Geographic radius filtering
+- [x] ✅ `advanced_search` - `/lib/tools/search/advanced-search.ts`
+  - [x] ✅ Category filtering
+  - [x] ✅ Location filtering
+  - [x] ✅ Time range filtering
+  - [x] ✅ Date range filtering
+  - [x] ✅ Attribute filtering (post-filter)
+  - [x] ✅ Tag filtering
+  - [x] ✅ Geographic radius filtering
   - [ ] 📋 Unit tests
 
-- [ ] 📋 `search_by_attributes` - `/lib/tools/search/search-by-attributes.ts`
-- [ ] 📋 `semantic_search` - `/lib/tools/search/semantic-search.ts`
-- [ ] 📋 `full_text_search` - `/lib/tools/search/full-text-search.ts`
-- [ ] 📋 `geo_search` - `/lib/tools/search/geo-search.ts`
+- [x] ✅ `search_by_attributes` - `/lib/tools/search/search-by-attributes.ts`
+- [x] ✅ `semantic_search` - `/lib/tools/search/semantic-search.ts`
+- [x] ✅ `full_text_search` - `/lib/tools/search/full-text-search.ts`
+- [x] ✅ `geo_search` - `/lib/tools/search/geo-search.ts`
 
 ### Analytics Tools
 
