@@ -29,13 +29,13 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### SQL Functions - Search
 
-- [ ] 📋 Implement `search_by_attributes()`
-  - [ ] 📋 Write function code
-  - [ ] 📋 Test with 'equals' operator
-  - [ ] 📋 Test with 'contains' operator
-  - [ ] 📋 Test with 'exists' operator
-  - [ ] 📋 Test AND/OR logic
-  - [ ] 📋 Performance test (< 2s)
+- [x] ✅ Implement `search_by_attributes()`
+  - [x] ✅ Write function code
+  - [x] ✅ Test with 'equals' operator
+  - [x] ✅ Test with 'contains' operator
+  - [x] ✅ Test with 'exists' operator
+  - [x] ✅ Test AND/OR logic
+  - [x] ✅ Performance test (< 2s)
 
 - [ ] 📋 Implement `geo_search()`
   - [ ] 📋 Write function code
