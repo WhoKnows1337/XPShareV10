@@ -1,12 +1,18 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
-import { NetworkGraph3DWrapper } from '@/components/discover/NetworkGraph3DWrapper'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import { NetworkArgs, NetworkResult } from '@/types/discovery-tools'
 import { NetworkSkeletonLoader } from '@/components/discover/skeleton-loaders'
 import { LazyChart } from '@/components/discover/LazyChart'
 import { XPShareTool, XPShareToolHeader, ToolContent, ToolInput } from '@/components/ai-elements/xpshare-tool'
+
+// Dynamic import to avoid SSR issues with 3d-force-graph
+const NetworkGraph3DWrapper = dynamic(
+  () => import('@/components/discover/NetworkGraph3DWrapper').then(mod => ({ default: mod.NetworkGraph3DWrapper })),
+  { ssr: false, loading: () => <NetworkSkeletonLoader /> }
+)
 
 interface NetworkToolUIProps {
   part: {
