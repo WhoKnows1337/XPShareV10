@@ -72,6 +72,7 @@
     "@types/three": "^0.180.0",
     "@vercel/analytics": "^1.4.1",
     "@xyflow/react": "^12.9.0",
+    "3d-force-graph": "^1.79.0",
     "ai": "^5.0.76",
     "cal-heatmap": "^4.2.4",
     "canvas-confetti": "^1.9.3",

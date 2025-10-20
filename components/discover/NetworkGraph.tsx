@@ -173,8 +173,13 @@ export function NetworkGraph({
             <ForceGraph2D
               ref={graphRef}
               graphData={graphData}
+              width={isFullscreen ? window.innerWidth : undefined}
+              height={isFullscreen ? window.innerHeight : 500}
               nodeLabel="label"
               nodeAutoColorBy="category"
+              enableNodeDrag={true}
+              enableZoomInteraction={true}
+              enablePanInteraction={true}
               nodeCanvasObject={(node: any, ctx, globalScale) => {
                 const label = node.label
                 const fontSize = 12 / globalScale

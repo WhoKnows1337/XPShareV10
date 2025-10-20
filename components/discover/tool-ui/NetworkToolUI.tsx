@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { NetworkGraph } from '@/components/discover/NetworkGraph'
+import { NetworkGraph3DWrapper } from '@/components/discover/NetworkGraph3DWrapper'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import { NetworkArgs, NetworkResult } from '@/types/discovery-tools'
 import { NetworkSkeletonLoader } from '@/components/discover/skeleton-loaders'
@@ -31,12 +31,12 @@ export function NetworkToolUI({ part, onRetry }: NetworkToolUIProps) {
       return (
         <LazyChart fallback={<NetworkSkeletonLoader />}>
           <div className="space-y-2">
-            <NetworkGraph
+            <NetworkGraph3DWrapper
               nodes={part.output.nodes}
               edges={part.output.edges}
               title={`Network: ${part.input.query}`}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground text-center">
               Found {part.output.edges.length} connections between {part.output.total} experiences
             </p>
           </div>
