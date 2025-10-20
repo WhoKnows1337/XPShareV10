@@ -113,18 +113,17 @@ export default function DiscoverPage() {
   useEffect(() => {
     const chatId = searchParams.get('chat')
     if (chatId && chatId !== currentChatId) {
-      // Set the currentChatId immediately from URL
+      // Don't call handleChatSelect to avoid updating URL again
       setCurrentChatId(chatId)
       setChatHasTitle(true)
 
-      // Load messages
       loadMessages(chatId).then((loadedMessages) => {
         if (loadedMessages) {
           setMessages(loadedMessages)
         }
       })
     }
-  }, [searchParams, currentChatId, loadMessages, setMessages]) // Fix dependencies
+  }, [searchParams, currentChatId, loadMessages, setMessages]) // Include all dependencies
 
   // Auto-save messages when they change and generate title for first message
   useEffect(() => {
