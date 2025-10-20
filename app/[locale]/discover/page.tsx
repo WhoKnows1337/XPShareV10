@@ -3,7 +3,6 @@
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useState } from 'react'
-import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import {
   TimelineToolUI,
@@ -97,16 +96,10 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="container mx-auto h-screen flex flex-col p-4 max-w-5xl overflow-hidden">
-      {/* Header */}
-      <div className="py-4 flex items-center justify-between flex-shrink-0">
-        <div>
-          <h1 className="text-3xl font-bold">AI Discovery</h1>
-          <p className="text-muted-foreground mt-1">
-            Explore patterns, connections, and insights in extraordinary experiences
-          </p>
-        </div>
-        {messages.length > 0 && (
+    <div className="container mx-auto h-[100dvh] flex flex-col px-4 py-2 max-w-5xl">
+      {/* Header - Only show Export/Clear when messages exist */}
+      {messages.length > 0 && (
+        <div className="py-2 flex items-center justify-end flex-shrink-0 mb-2">
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -125,31 +118,57 @@ export default function DiscoverPage() {
               Clear
             </Button>
           </div>
-        )}
-      </div>
-
-      <Separator className="mb-4 flex-shrink-0" />
+        </div>
+      )}
 
       {/* Scrollable Conversation Area */}
-      <Conversation className="flex-1 mb-4 overflow-y-auto">
+      <Conversation className="flex-1 min-h-0 mb-1 overflow-y-auto">
         <ConversationContent>
           {messages.length === 0 && (
-            <ConversationEmptyState
-              title="Discover Hidden Patterns"
-              description="Ask me about patterns, connections, or insights"
-            >
-              <div className="flex flex-wrap gap-2 justify-center mt-6" role="group" aria-label="Suggested queries">
-                {suggestions.map((s) => (
-                  <Suggestion
-                    key={s}
-                    suggestion={s}
-                    onClick={(suggestion) => handleSuggestionClick(suggestion)}
-                    disabled={isLoading}
-                    aria-label={`Ask: ${s}`}
-                  />
-                ))}
+            <div className="flex flex-col items-center justify-center h-full text-center px-4">
+              <div className="max-w-2xl space-y-6">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-bold text-foreground">
+                    Can I help you discover patterns?
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    Ready to analyze patterns, connections, and insights across 40+ categories of extraordinary experiences.
+                    Ask me anything about UFO sightings, dreams, NDEs, synchronicities, and more.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-center text-xs">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary">
+                    <span>⚡</span> 4 Analysis Tools
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500">
+                    <span>🗺️</span> Geographic Maps
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-500">
+                    <span>📊</span> Timeline Analysis
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-500">
+                    <span>🔗</span> Network Graphs
+                  </span>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Try me with a prompt — I might surprise you
+                </p>
+
+                <div className="flex flex-wrap gap-2 justify-center" role="group" aria-label="Suggested queries">
+                  {suggestions.map((s) => (
+                    <Suggestion
+                      key={s}
+                      suggestion={s}
+                      onClick={(suggestion) => handleSuggestionClick(suggestion)}
+                      disabled={isLoading}
+                      aria-label={`Ask: ${s}`}
+                    />
+                  ))}
+                </div>
               </div>
-            </ConversationEmptyState>
+            </div>
           )}
 
         {messages.map((message, index) => {
@@ -234,10 +253,10 @@ export default function DiscoverPage() {
       </Conversation>
 
       {/* Sticky Input Area */}
-      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-4">
+      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-1.5">
         {/* Persistierende Suggestions - ÜBER der Textbox */}
         {messages.length > 0 && (
-          <div className="flex gap-1.5 mb-3 flex-wrap justify-center" role="group" aria-label="Quick actions">
+          <div className="flex gap-1.5 mb-2 flex-wrap justify-center" role="group" aria-label="Quick actions">
             {suggestions.map((s) => (
               <Suggestion
                 key={s}
@@ -253,11 +272,9 @@ export default function DiscoverPage() {
 
         {/* AI Elements PromptInput */}
         <PromptInput
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (!input?.trim() || isLoading) return
-            sendMessage({ text: input })
-            setInput('')
+          onSubmit={(data) => {
+            if (!data.text?.trim() || isLoading) return
+            sendMessage({ text: data.text })
           }}
         >
           <PromptInputBody>
