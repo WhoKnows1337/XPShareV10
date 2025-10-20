@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +14,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import {
   ChevronLeft,
@@ -44,7 +53,6 @@ export function ChatSidebar({
 
   const handleDelete = async (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm('Are you sure you want to delete this conversation?')) return
     await deleteChat(chatId)
   }
 
@@ -103,7 +111,7 @@ export function ChatSidebar({
       </div>
 
       {/* Chat List */}
-      <ScrollArea className="flex-1 px-3">
+      <div className="flex-1 px-3 overflow-y-auto overflow-x-visible">
         {loading ? (
           <div className="space-y-2 py-2">
             {[1, 2, 3].map((i) => (
@@ -131,7 +139,7 @@ export function ChatSidebar({
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   )
 }
@@ -147,6 +155,7 @@ interface ChatItemProps {
 function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [newTitle, setNewTitle] = useState(chat.title || '')
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const handleRename = () => {
     if (newTitle.trim() && newTitle !== chat.title) {
@@ -168,7 +177,7 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
     <TooltipProvider delayDuration={500}>
       <div
         className={cn(
-          'relative rounded-md transition-colors group',
+          'relative rounded-md transition-colors group overflow-visible',
           'hover:bg-muted',
           isActive && 'bg-muted border-l-2 border-primary'
         )}
@@ -187,12 +196,12 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
           </div>
         ) : (
           <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onClick}
-                  className="w-full text-left p-3 pr-12"
-                >
+            <div
+              onClick={onClick}
+              className="w-full text-left p-3 pr-12 relative cursor-pointer"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
@@ -208,51 +217,79 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
                       </div>
                     </div>
                   </div>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="right"
-                className="max-w-xs bg-popover text-popover-foreground border shadow-md"
-                sideOffset={5}
-              >
-                <p className="text-sm">{chat.title || 'Untitled Chat'}</p>
-              </TooltipContent>
-            </Tooltip>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  className="max-w-xs bg-popover text-popover-foreground border shadow-md"
+                  sideOffset={5}
+                >
+                  <p className="text-sm">{chat.title || 'Untitled Chat'}</p>
+                </TooltipContent>
+              </Tooltip>
 
-            <div className="absolute top-3 right-2 z-10">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="h-7 w-7 rounded-md opacity-100 hover:bg-accent flex items-center justify-center border border-border/40"
-                    aria-label="Chat options"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setIsRenaming(true)
-                    }}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={onDelete}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Options Button - Outside tooltip, with stopPropagation */}
+              <div className="absolute top-2 right-2 z-50">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="h-6 w-6 rounded-md opacity-0 group-hover:opacity-100 hover:bg-accent flex items-center justify-center transition-all"
+                      aria-label="Chat options"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setIsRenaming(true)
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowDeleteDialog(true)
+                      }}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this conversation and all its messages. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                onDelete(e as any)
+                setShowDeleteDialog(false)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   )
 }

@@ -82,10 +82,10 @@ export default function DiscoverPage() {
   })
 
   const suggestions = [
-    'UFO Heatmap',
-    'Dream Patterns',
-    'UFO Map',
-    'NDE Connections',
+    'UFO Heatmap', // Heatmap Tool
+    'Dream Timeline', // Timeline Tool
+    'UFO Locations Map', // Geographic Map Tool
+    'Category Connections', // Network Tool
   ]
 
   // Conversation Persistence (legacy - kept for export)
