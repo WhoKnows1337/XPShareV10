@@ -82,7 +82,7 @@ export function TimelineToolUI({ part, onRetry }: TimelineToolUIProps) {
 
   return (
     <XPShareTool
-      defaultOpen={part.state === 'output-available'}
+      defaultOpen={true}
       category="Dreams"
       showGradient
     >

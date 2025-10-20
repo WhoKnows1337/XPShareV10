@@ -76,7 +76,7 @@ export function MapToolUI({ part, onRetry }: MapToolUIProps) {
 
   return (
     <XPShareTool
-      defaultOpen={part.state === 'output-available'}
+      defaultOpen={true}
       category="UFO"
       showGradient
     >

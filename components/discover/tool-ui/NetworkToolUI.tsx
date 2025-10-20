@@ -77,7 +77,7 @@ export function NetworkToolUI({ part, onRetry }: NetworkToolUIProps) {
 
   return (
     <XPShareTool
-      defaultOpen={part.state === 'output-available'}
+      defaultOpen={true}
       category="Synchronicity"
       showGradient
     >

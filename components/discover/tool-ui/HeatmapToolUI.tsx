@@ -76,7 +76,7 @@ export function HeatmapToolUI({ part, onRetry }: HeatmapToolUIProps) {
 
   return (
     <XPShareTool
-      defaultOpen={part.state === 'output-available'}
+      defaultOpen={true}
       category="Consciousness"
       showGradient
     >

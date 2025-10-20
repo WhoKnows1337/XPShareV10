@@ -97,7 +97,7 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="container mx-auto h-screen flex flex-col p-4 max-w-5xl">
+    <div className="container mx-auto h-screen flex flex-col p-4 max-w-5xl overflow-hidden">
       {/* Header */}
       <div className="py-4 flex items-center justify-between flex-shrink-0">
         <div>
@@ -131,7 +131,7 @@ export default function DiscoverPage() {
       <Separator className="mb-4 flex-shrink-0" />
 
       {/* Scrollable Conversation Area */}
-      <Conversation className="flex-1 mb-4 overflow-hidden">
+      <Conversation className="flex-1 mb-4 overflow-y-auto">
         <ConversationContent>
           {messages.length === 0 && (
             <ConversationEmptyState
@@ -184,7 +184,7 @@ export default function DiscoverPage() {
                     // Text part - use Response component for streaming markdown
                     if (part.type === 'text') {
                       return (
-                        <MessageContent key={i}>
+                        <MessageContent key={i} variant="flat">
                           <Response>{part.text}</Response>
                         </MessageContent>
                       )
@@ -237,7 +237,7 @@ export default function DiscoverPage() {
       <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-4">
         {/* Persistierende Suggestions - ÜBER der Textbox */}
         {messages.length > 0 && (
-          <div className="flex gap-2 mb-4 flex-wrap justify-center" role="group" aria-label="Quick actions">
+          <div className="flex gap-1.5 mb-3 flex-wrap justify-center" role="group" aria-label="Quick actions">
             {suggestions.map((s) => (
               <Suggestion
                 key={s}
@@ -245,6 +245,7 @@ export default function DiscoverPage() {
                 onClick={(suggestion) => handleSuggestionClick(suggestion)}
                 disabled={isLoading}
                 aria-label={`Ask: ${s}`}
+                className="text-xs py-1 px-2"
               />
             ))}
           </div>
