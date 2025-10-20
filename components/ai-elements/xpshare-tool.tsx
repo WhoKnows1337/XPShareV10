@@ -64,22 +64,24 @@ export const XPShareToolHeader = ({
     : undefined
 
   return (
-    <ToolHeader
-      className={cn(
-        'transition-all duration-300',
-        // Subtle gradient overlay with opacity for better readability
-        category && showGradient && 'bg-gradient-to-r',
-        // Ensure text remains readable
-        category && showGradient && 'text-foreground',
-        className
+    <div className={cn(category && showGradient && 'relative overflow-hidden')}>
+      {category && showGradient && gradient && (
+        <div
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{ backgroundImage: gradient }}
+          aria-hidden="true"
+        />
       )}
-      style={gradient ? {
-        backgroundImage: gradient,
-        // Reduce gradient opacity for better text contrast
-        opacity: 0.85
-      } : undefined}
-      {...props}
-    />
+      <ToolHeader
+        className={cn(
+          'transition-all duration-300 relative z-10',
+          // Ensure text remains readable with strong contrast
+          category && showGradient && 'text-foreground font-medium',
+          className
+        )}
+        {...props}
+      />
+    </div>
   )
 }
 

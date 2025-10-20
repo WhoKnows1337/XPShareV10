@@ -57,10 +57,10 @@ export default function DiscoverPage() {
   const isLoading = status === 'submitted' || status === 'streaming'
 
   const suggestions = [
-    'Show me a heatmap of UFO sightings by category',
-    'What patterns exist in dreams over time?',
-    'Map global UFO sightings',
-    'Find connections between NDEs',
+    'UFO Heatmap',
+    'Dream Patterns',
+    'UFO Map',
+    'NDE Connections',
   ]
 
   // Conversation Persistence
@@ -96,11 +96,12 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="h-[calc(100dvh-4rem)] w-full max-w-5xl mx-auto flex flex-col overflow-hidden">
+    <div className="h-[calc(100dvh-4rem)] w-full flex flex-col overflow-hidden">
       {/* Header - Only show Export/Clear when messages exist */}
       {messages.length > 0 && (
-        <div className="py-2 px-4 flex items-center justify-end flex-shrink-0">
-          <div className="flex gap-2">
+        <div className="py-2 flex-shrink-0">
+          <div className="max-w-4xl mx-auto px-4 flex items-center justify-end">
+            <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -117,13 +118,14 @@ export default function DiscoverPage() {
             >
               Clear
             </Button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Scrollable Conversation Area */}
-      <Conversation className="flex-1 min-h-0 overflow-y-auto px-4">
-        <ConversationContent>
+      <Conversation className="flex-1 min-h-0 overflow-y-auto">
+        <ConversationContent className="max-w-4xl mx-auto px-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="max-w-2xl space-y-6">
@@ -253,10 +255,11 @@ export default function DiscoverPage() {
       </Conversation>
 
       {/* Sticky Input Area */}
-      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-2">
-        {/* Persistierende Suggestions - ÜBER der Textbox */}
-        {messages.length > 0 && (
-          <div className="flex gap-1.5 mb-2 flex-wrap justify-center" role="group" aria-label="Quick actions">
+      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-2">
+        <div className="max-w-4xl mx-auto px-4">
+          {/* Persistierende Suggestions - ÜBER der Textbox */}
+          {messages.length > 0 && (
+            <div className="flex gap-1.5 mb-2 flex-wrap justify-center" role="group" aria-label="Quick actions">
             {suggestions.map((s) => (
               <Suggestion
                 key={s}
@@ -264,11 +267,11 @@ export default function DiscoverPage() {
                 onClick={(suggestion) => handleSuggestionClick(suggestion)}
                 disabled={isLoading}
                 aria-label={`Ask: ${s}`}
-                className="text-xs py-1 px-2"
+                className="text-[11px] py-0.5 px-2 leading-tight whitespace-nowrap"
               />
             ))}
-          </div>
-        )}
+            </div>
+          )}
 
         {/* AI Elements PromptInput */}
         <PromptInput
@@ -306,13 +309,14 @@ export default function DiscoverPage() {
             </PromptInputSubmit>
           </PromptInputFooter>
         </PromptInput>
-        <p id="input-description" className="sr-only">
-          Type your question about patterns, connections, or insights in extraordinary experiences
-        </p>
+          <p id="input-description" className="sr-only">
+            Type your question about patterns, connections, or insights in extraordinary experiences
+          </p>
 
-        <p className="text-xs text-muted-foreground text-center mt-1 pb-2">
-          Powered by AI • Data from 40+ categories of extraordinary experiences
-        </p>
+          <p className="text-xs text-muted-foreground text-center mt-1 pb-2">
+            Powered by AI • Data from 40+ categories of extraordinary experiences
+          </p>
+        </div>
       </div>
     </div>
   )
