@@ -7,7 +7,9 @@
 export { TimelineChart } from './TimelineChart'
 export { SimpleChart } from './SimpleChart'
 export { ExperienceMap } from './ExperienceMap'
+export { NetworkGraph } from './NetworkGraph'
 
 export type { TimelineChartProps } from './TimelineChart'
 export type { SimpleChartProps } from './SimpleChart'
 export type { ExperienceMapProps } from './ExperienceMap'
+export type { NetworkGraphProps, NetworkNode, NetworkLink } from './NetworkGraph'
