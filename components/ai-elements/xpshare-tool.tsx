@@ -67,11 +67,17 @@ export const XPShareToolHeader = ({
     <ToolHeader
       className={cn(
         'transition-all duration-300',
-        // Add gradient background for category
+        // Subtle gradient overlay with opacity for better readability
         category && showGradient && 'bg-gradient-to-r',
+        // Ensure text remains readable
+        category && showGradient && 'text-foreground',
         className
       )}
-      style={gradient ? { backgroundImage: gradient } : undefined}
+      style={gradient ? {
+        backgroundImage: gradient,
+        // Reduce gradient opacity for better text contrast
+        opacity: 0.85
+      } : undefined}
       {...props}
     />
   )

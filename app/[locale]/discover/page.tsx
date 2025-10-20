@@ -33,9 +33,10 @@ import {
   PromptInputActionMenuTrigger,
   PromptInputActionMenuContent,
   PromptInputActionAddAttachments,
+  PromptInputSpeechButton,
   PromptInputSubmit,
 } from '@/components/ai-elements/prompt-input'
-import { Send, Paperclip } from 'lucide-react'
+import { Send, Paperclip, Mic } from 'lucide-react'
 
 /**
  * AI Discovery Interface
@@ -97,7 +98,8 @@ export default function DiscoverPage() {
 
   return (
     <div className="container mx-auto h-screen flex flex-col p-4 max-w-5xl">
-      <div className="py-4 flex items-center justify-between">
+      {/* Header */}
+      <div className="py-4 flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-3xl font-bold">AI Discovery</h1>
           <p className="text-muted-foreground mt-1">
@@ -126,9 +128,10 @@ export default function DiscoverPage() {
         )}
       </div>
 
-      <Separator className="mb-4" />
+      <Separator className="mb-4 flex-shrink-0" />
 
-      <Conversation className="mb-4">
+      {/* Scrollable Conversation Area */}
+      <Conversation className="flex-1 mb-4 overflow-hidden">
         <ConversationContent>
           {messages.length === 0 && (
             <ConversationEmptyState
@@ -230,63 +233,69 @@ export default function DiscoverPage() {
         <ConversationScrollButton />
       </Conversation>
 
-      {/* Persistierende Suggestions */}
-      {messages.length > 0 && (
-        <div className="flex gap-2 mb-4 flex-wrap justify-center" role="group" aria-label="Quick actions">
-          {suggestions.map((s) => (
-            <Suggestion
-              key={s}
-              suggestion={s}
-              onClick={(suggestion) => handleSuggestionClick(suggestion)}
+      {/* Sticky Input Area */}
+      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-4">
+        {/* Persistierende Suggestions - ÜBER der Textbox */}
+        {messages.length > 0 && (
+          <div className="flex gap-2 mb-4 flex-wrap justify-center" role="group" aria-label="Quick actions">
+            {suggestions.map((s) => (
+              <Suggestion
+                key={s}
+                suggestion={s}
+                onClick={(suggestion) => handleSuggestionClick(suggestion)}
+                disabled={isLoading}
+                aria-label={`Ask: ${s}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* AI Elements PromptInput */}
+        <PromptInput
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!input?.trim() || isLoading) return
+            sendMessage({ text: input })
+            setInput('')
+          }}
+        >
+          <PromptInputBody>
+            <PromptInputTextarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about patterns, connections, or insights..."
               disabled={isLoading}
-              aria-label={`Ask: ${s}`}
+              aria-label="Message input"
+              aria-describedby="input-description"
             />
-          ))}
-        </div>
-      )}
+          </PromptInputBody>
+          <PromptInputFooter>
+            <PromptInputTools>
+              <PromptInputActionMenu>
+                <PromptInputActionMenuTrigger>
+                  <Paperclip className="size-4" />
+                </PromptInputActionMenuTrigger>
+                <PromptInputActionMenuContent>
+                  <PromptInputActionAddAttachments />
+                </PromptInputActionMenuContent>
+              </PromptInputActionMenu>
+              <PromptInputSpeechButton>
+                <Mic className="size-4" />
+              </PromptInputSpeechButton>
+            </PromptInputTools>
+            <PromptInputSubmit disabled={isLoading || !input?.trim()}>
+              <Send className="size-4" />
+            </PromptInputSubmit>
+          </PromptInputFooter>
+        </PromptInput>
+        <p id="input-description" className="sr-only">
+          Type your question about patterns, connections, or insights in extraordinary experiences
+        </p>
 
-      {/* AI Elements PromptInput */}
-      <PromptInput
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (!input?.trim() || isLoading) return
-          sendMessage({ text: input })
-          setInput('')
-        }}
-      >
-        <PromptInputBody>
-          <PromptInputTextarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about patterns, connections, or insights..."
-            disabled={isLoading}
-            aria-label="Message input"
-            aria-describedby="input-description"
-          />
-        </PromptInputBody>
-        <PromptInputFooter>
-          <PromptInputTools>
-            <PromptInputActionMenu>
-              <PromptInputActionMenuTrigger>
-                <Paperclip className="size-4" />
-              </PromptInputActionMenuTrigger>
-              <PromptInputActionMenuContent>
-                <PromptInputActionAddAttachments />
-              </PromptInputActionMenuContent>
-            </PromptInputActionMenu>
-          </PromptInputTools>
-          <PromptInputSubmit disabled={isLoading || !input?.trim()}>
-            <Send className="size-4" />
-          </PromptInputSubmit>
-        </PromptInputFooter>
-      </PromptInput>
-      <p id="input-description" className="sr-only">
-        Type your question about patterns, connections, or insights in extraordinary experiences
-      </p>
-
-      <p className="text-xs text-muted-foreground text-center mt-2">
-        Powered by AI • Data from 40+ categories of extraordinary experiences
-      </p>
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          Powered by AI • Data from 40+ categories of extraordinary experiences
+        </p>
+      </div>
     </div>
   )
 }
