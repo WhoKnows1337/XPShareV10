@@ -20,7 +20,7 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Database Setup
 
-- [ ] 📋 Enable PostgreSQL extensions (vector, postgis, pg_trgm)
+- [x] ✅ Enable PostgreSQL extensions (vector, postgis, pg_trgm)
 - [ ] 📋 Add FTS columns to experiences table
 - [ ] 📋 Add geography columns for spatial queries
 - [ ] 📋 Create composite indexes (category+date, category+location)
