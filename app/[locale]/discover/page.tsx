@@ -5,7 +5,6 @@ import { DefaultChatTransport } from 'ai'
 import { useState } from 'react'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   TimelineToolUI,
   MapToolUI,
@@ -24,6 +23,19 @@ import {
   ConversationEmptyState,
 } from '@/components/ai-elements/conversation'
 import { Suggestion } from '@/components/ai-elements/suggestion'
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputTools,
+  PromptInputActionMenu,
+  PromptInputActionMenuTrigger,
+  PromptInputActionMenuContent,
+  PromptInputActionAddAttachments,
+  PromptInputSubmit,
+} from '@/components/ai-elements/prompt-input'
+import { Send, Paperclip } from 'lucide-react'
 
 /**
  * AI Discovery Interface
@@ -218,24 +230,56 @@ export default function DiscoverPage() {
         <ConversationScrollButton />
       </Conversation>
 
-      <form onSubmit={handleSubmit} className="flex gap-2" role="search" aria-label="Ask a question">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about patterns, connections, or insights..."
-          disabled={isLoading}
-          className="flex-1"
-          aria-label="Message input"
-          aria-describedby="input-description"
-        />
-        <Button
-          type="submit"
-          disabled={isLoading || !input?.trim()}
-          aria-label={isLoading ? 'Processing...' : 'Send message'}
-        >
-          Send
-        </Button>
-      </form>
+      {/* Persistierende Suggestions */}
+      {messages.length > 0 && (
+        <div className="flex gap-2 mb-4 flex-wrap justify-center" role="group" aria-label="Quick actions">
+          {suggestions.map((s) => (
+            <Suggestion
+              key={s}
+              suggestion={s}
+              onClick={(suggestion) => handleSuggestionClick(suggestion)}
+              disabled={isLoading}
+              aria-label={`Ask: ${s}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* AI Elements PromptInput */}
+      <PromptInput
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!input?.trim() || isLoading) return
+          sendMessage({ text: input })
+          setInput('')
+        }}
+      >
+        <PromptInputBody>
+          <PromptInputTextarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask about patterns, connections, or insights..."
+            disabled={isLoading}
+            aria-label="Message input"
+            aria-describedby="input-description"
+          />
+        </PromptInputBody>
+        <PromptInputFooter>
+          <PromptInputTools>
+            <PromptInputActionMenu>
+              <PromptInputActionMenuTrigger>
+                <Paperclip className="size-4" />
+              </PromptInputActionMenuTrigger>
+              <PromptInputActionMenuContent>
+                <PromptInputActionAddAttachments />
+              </PromptInputActionMenuContent>
+            </PromptInputActionMenu>
+          </PromptInputTools>
+          <PromptInputSubmit disabled={isLoading || !input?.trim()}>
+            <Send className="size-4" />
+          </PromptInputSubmit>
+        </PromptInputFooter>
+      </PromptInput>
       <p id="input-description" className="sr-only">
         Type your question about patterns, connections, or insights in extraordinary experiences
       </p>
