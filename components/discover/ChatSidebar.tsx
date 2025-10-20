@@ -223,7 +223,7 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="h-7 w-7 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent flex items-center justify-center border border-border/40"
+                    className="h-7 w-7 rounded-md opacity-100 hover:bg-accent flex items-center justify-center border border-border/40"
                     aria-label="Chat options"
                     onClick={(e) => e.stopPropagation()}
                   >

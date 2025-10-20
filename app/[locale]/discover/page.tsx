@@ -98,15 +98,17 @@ export default function DiscoverPage() {
 
   // Handle chat selection
   const handleChatSelect = useCallback(async (chatId: string) => {
-    if (chatId === currentChatId) return // Prevent unnecessary reloads
-
+    // Always allow selection to ensure UI updates properly
     setCurrentChatId(chatId)
     setChatHasTitle(true) // Assume existing chats have titles
 
-    const loadedMessages = await loadMessages(chatId)
-    if (loadedMessages) {
-      setInitialMessages(loadedMessages)
-      setMessages(loadedMessages)
+    // Only reload messages if switching to a different chat
+    if (chatId !== currentChatId) {
+      const loadedMessages = await loadMessages(chatId)
+      if (loadedMessages) {
+        setInitialMessages(loadedMessages)
+        setMessages(loadedMessages)
+      }
     }
 
     // Update URL without triggering reload
@@ -130,7 +132,7 @@ export default function DiscoverPage() {
   useEffect(() => {
     const chatId = searchParams.get('chat')
     if (chatId && chatId !== currentChatId) {
-      // Don't call handleChatSelect to avoid updating URL again
+      // Update state to match URL (source of truth)
       setCurrentChatId(chatId)
       setChatHasTitle(true)
 
@@ -141,7 +143,7 @@ export default function DiscoverPage() {
         }
       })
     }
-  }, [searchParams, currentChatId, loadMessages, setMessages]) // Include all dependencies
+  }, [searchParams]) // Only depend on searchParams to avoid race conditions
 
   // Auto-save messages when they change and generate title for first message
   useEffect(() => {
