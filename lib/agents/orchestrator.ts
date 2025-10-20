@@ -12,6 +12,9 @@ import { openai } from '@ai-sdk/openai'
 import { generateText, tool } from 'ai'
 import { z } from 'zod'
 import type { AgentMessage } from '@/types/ai-system'
+import { QueryAgent } from './query-agent'
+import { VizAgent } from './viz-agent'
+import { InsightAgent } from './insight-agent'
 
 // ============================================================================
 // System Prompt
@@ -99,6 +102,16 @@ interface OrchestratorResponse {
 // ============================================================================
 
 export class OrchestratorAgent {
+  private queryAgent: QueryAgent
+  private vizAgent: VizAgent
+  private insightAgent: InsightAgent
+
+  constructor() {
+    this.queryAgent = new QueryAgent()
+    this.vizAgent = new VizAgent()
+    this.insightAgent = new InsightAgent()
+  }
+
   /**
    * Process user message and orchestrate specialist agents
    */
@@ -241,40 +254,24 @@ export class OrchestratorAgent {
   }
 
   /**
-   * Placeholder for Query Agent execution
-   * Will be replaced with actual QueryAgent instance
+   * Execute Query Agent
    */
   private async executeQueryAgent(task: string, parameters: any): Promise<any> {
-    // TODO: Implement with actual QueryAgent
-    return {
-      results: [],
-      count: 0,
-      summary: 'Query Agent not yet implemented',
-    }
+    return await this.queryAgent.execute(task, parameters)
   }
 
   /**
-   * Placeholder for Viz Agent execution
-   * Will be replaced with actual VizAgent instance
+   * Execute Viz Agent
    */
   private async executeVizAgent(task: string, data: any): Promise<any> {
-    // TODO: Implement with actual VizAgent
-    return {
-      type: 'placeholder',
-      message: 'Viz Agent not yet implemented',
-    }
+    return await this.vizAgent.execute(task, data)
   }
 
   /**
-   * Placeholder for Insight Agent execution
-   * Will be replaced with actual InsightAgent instance
+   * Execute Insight Agent
    */
   private async executeInsightAgent(task: string, context: any): Promise<any> {
-    // TODO: Implement with actual InsightAgent
-    return {
-      insights: [],
-      message: 'Insight Agent not yet implemented',
-    }
+    return await this.insightAgent.execute(task, context)
   }
 
   /**
