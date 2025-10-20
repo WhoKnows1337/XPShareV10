@@ -2,8 +2,10 @@
 
 import { Card } from '@/components/ui/card'
 import { ExperienceMapCard } from '@/components/discover/ExperienceMapCard'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { GeographicArgs, GeographicResult } from '@/types/discovery-tools'
+import { MapSkeletonLoader } from '@/components/discover/skeleton-loaders'
+import { LazyChart } from '@/components/discover/LazyChart'
 
 interface MapToolUIProps {
   part: {
@@ -18,32 +20,22 @@ interface MapToolUIProps {
 
 export function MapToolUI({ part }: MapToolUIProps) {
   if (part.state === 'input-available') {
-    return (
-      <Card className="p-6 border-l-4 border-green-500 bg-green-50/50">
-        <div className="flex items-center gap-3">
-          <Loader2 className="h-5 w-5 animate-spin text-green-500" />
-          <div>
-            <p className="font-medium text-green-900">Mapping global locations</p>
-            <p className="text-sm text-green-700">
-              Searching for: "{part.input.query}"
-            </p>
-          </div>
-        </div>
-      </Card>
-    )
+    return <MapSkeletonLoader />
   }
 
   if (part.state === 'output-available' && part.output) {
     return (
-      <div className="space-y-2">
-        <ExperienceMapCard
-          markers={part.output.markers}
-          title={`Map: ${part.input.query}`}
-        />
-        <p className="text-xs text-muted-foreground">
-          Mapped {part.output.total} locations
-        </p>
-      </div>
+      <LazyChart fallback={<MapSkeletonLoader />}>
+        <div className="space-y-2">
+          <ExperienceMapCard
+            markers={part.output.markers}
+            title={`Map: ${part.input.query}`}
+          />
+          <p className="text-xs text-muted-foreground">
+            Mapped {part.output.total} locations
+          </p>
+        </div>
+      </LazyChart>
     )
   }
 

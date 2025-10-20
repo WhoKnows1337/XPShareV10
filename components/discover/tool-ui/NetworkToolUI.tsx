@@ -2,8 +2,10 @@
 
 import { Card } from '@/components/ui/card'
 import { NetworkGraph } from '@/components/discover/NetworkGraph'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { NetworkArgs, NetworkResult } from '@/types/discovery-tools'
+import { NetworkSkeletonLoader } from '@/components/discover/skeleton-loaders'
+import { LazyChart } from '@/components/discover/LazyChart'
 
 interface NetworkToolUIProps {
   part: {
@@ -18,33 +20,23 @@ interface NetworkToolUIProps {
 
 export function NetworkToolUI({ part }: NetworkToolUIProps) {
   if (part.state === 'input-available') {
-    return (
-      <Card className="p-6 border-l-4 border-purple-500 bg-purple-50/50">
-        <div className="flex items-center gap-3">
-          <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
-          <div>
-            <p className="font-medium text-purple-900">Finding connections</p>
-            <p className="text-sm text-purple-700">
-              Searching for: "{part.input.query}"
-            </p>
-          </div>
-        </div>
-      </Card>
-    )
+    return <NetworkSkeletonLoader />
   }
 
   if (part.state === 'output-available' && part.output) {
     return (
-      <div className="space-y-2">
-        <NetworkGraph
-          nodes={part.output.nodes}
-          edges={part.output.edges}
-          title={`Network: ${part.input.query}`}
-        />
-        <p className="text-xs text-muted-foreground">
-          Found {part.output.edges.length} connections between {part.output.total} experiences
-        </p>
-      </div>
+      <LazyChart fallback={<NetworkSkeletonLoader />}>
+        <div className="space-y-2">
+          <NetworkGraph
+            nodes={part.output.nodes}
+            edges={part.output.edges}
+            title={`Network: ${part.input.query}`}
+          />
+          <p className="text-xs text-muted-foreground">
+            Found {part.output.edges.length} connections between {part.output.total} experiences
+          </p>
+        </div>
+      </LazyChart>
     )
   }
 

@@ -2,8 +2,10 @@
 
 import { Card } from '@/components/ui/card'
 import { HeatmapChart } from '@/components/discover/HeatmapChart'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { HeatmapArgs, HeatmapResult } from '@/types/discovery-tools'
+import { HeatmapSkeletonLoader } from '@/components/discover/skeleton-loaders'
+import { LazyChart } from '@/components/discover/LazyChart'
 
 interface HeatmapToolUIProps {
   part: {
@@ -18,32 +20,22 @@ interface HeatmapToolUIProps {
 
 export function HeatmapToolUI({ part }: HeatmapToolUIProps) {
   if (part.state === 'input-available') {
-    return (
-      <Card className="p-6 border-l-4 border-orange-500 bg-orange-50/50">
-        <div className="flex items-center gap-3">
-          <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
-          <div>
-            <p className="font-medium text-orange-900">Analyzing category trends</p>
-            <p className="text-sm text-orange-700">
-              Searching for: "{part.input.query}"
-            </p>
-          </div>
-        </div>
-      </Card>
-    )
+    return <HeatmapSkeletonLoader />
   }
 
   if (part.state === 'output-available' && part.output) {
     return (
-      <div className="space-y-2">
-        <HeatmapChart
-          data={part.output.data}
-          title={`Heatmap: ${part.input.query}`}
-        />
-        <p className="text-xs text-muted-foreground">
-          Analyzed {part.output.total} experiences across categories and time periods
-        </p>
-      </div>
+      <LazyChart fallback={<HeatmapSkeletonLoader />}>
+        <div className="space-y-2">
+          <HeatmapChart
+            data={part.output.data}
+            title={`Heatmap: ${part.input.query}`}
+          />
+          <p className="text-xs text-muted-foreground">
+            Analyzed {part.output.total} experiences across categories and time periods
+          </p>
+        </div>
+      </LazyChart>
     )
   }
 
