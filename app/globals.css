@@ -145,13 +145,13 @@
 
   /* Fix: Ensure scrolling works */
   html {
-    overflow-y: scroll !important;
+    overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
   }
 
   body {
-    overflow-y: scroll !important;
+    overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
     min-height: 100vh;

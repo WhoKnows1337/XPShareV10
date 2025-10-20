@@ -96,10 +96,10 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="h-[100dvh] w-full max-w-5xl mx-auto flex flex-col px-4 py-1 overflow-hidden">
+    <div className="h-[calc(100dvh-4rem)] w-full max-w-5xl mx-auto flex flex-col overflow-hidden">
       {/* Header - Only show Export/Clear when messages exist */}
       {messages.length > 0 && (
-        <div className="py-2 flex items-center justify-end flex-shrink-0 mb-2">
+        <div className="py-2 px-4 flex items-center justify-end flex-shrink-0">
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -122,10 +122,10 @@ export default function DiscoverPage() {
       )}
 
       {/* Scrollable Conversation Area */}
-      <Conversation className="flex-1 min-h-0 mb-1 overflow-y-auto">
+      <Conversation className="flex-1 min-h-0 overflow-y-auto px-4">
         <ConversationContent>
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="max-w-2xl space-y-6">
                 <div className="space-y-3">
                   <h2 className="text-2xl font-bold text-foreground">
@@ -253,7 +253,7 @@ export default function DiscoverPage() {
       </Conversation>
 
       {/* Sticky Input Area */}
-      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-1">
+      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pt-2">
         {/* Persistierende Suggestions - ÜBER der Textbox */}
         {messages.length > 0 && (
           <div className="flex gap-1.5 mb-2 flex-wrap justify-center" role="group" aria-label="Quick actions">
@@ -310,7 +310,7 @@ export default function DiscoverPage() {
           Type your question about patterns, connections, or insights in extraordinary experiences
         </p>
 
-        <p className="text-xs text-muted-foreground text-center mt-1">
+        <p className="text-xs text-muted-foreground text-center mt-1 pb-2">
           Powered by AI • Data from 40+ categories of extraordinary experiences
         </p>
       </div>
