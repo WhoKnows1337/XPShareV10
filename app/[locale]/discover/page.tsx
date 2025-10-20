@@ -84,6 +84,7 @@ export default function DiscoverPage() {
   // Handle chat selection
   const handleChatSelect = useCallback(async (chatId: string) => {
     setCurrentChatId(chatId)
+    setChatHasTitle(true) // Assume existing chats have titles
     router.push(`/discover?chat=${chatId}`)
 
     const loadedMessages = await loadMessages(chatId)
@@ -100,8 +101,9 @@ export default function DiscoverPage() {
       setChatHasTitle(false)
       router.push(`/discover?chat=${newChatId}`)
       setMessages([])
+      await loadChats() // Refresh sidebar to show new chat immediately
     }
-  }, [router, createChat, setMessages])
+  }, [router, createChat, setMessages, loadChats])
 
   // Load chat from URL parameter
   useEffect(() => {

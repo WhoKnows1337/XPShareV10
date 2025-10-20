@@ -186,13 +186,13 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
         </div>
       ) : (
         <>
-          <button
-            onClick={onClick}
-            className="w-full text-left p-3 pr-10"
-          >
-            <TooltipProvider delayDuration={500}>
-              <Tooltip>
-                <TooltipTrigger asChild>
+          <TooltipProvider delayDuration={500}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onClick}
+                  className="w-full text-left p-3 pr-12"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
@@ -208,15 +208,19 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
                       </div>
                     </div>
                   </div>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-xs">
-                  <p>{chat.title || 'Untitled Chat'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </button>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="max-w-xs bg-popover text-popover-foreground border shadow-md"
+                sideOffset={5}
+              >
+                <p className="text-sm">{chat.title || 'Untitled Chat'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-3 right-3 z-10">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -224,7 +228,7 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
                   aria-label="Chat options"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical className="h-3 w-3" />
+                  <MoreVertical className="h-3.5 w-3.5" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
