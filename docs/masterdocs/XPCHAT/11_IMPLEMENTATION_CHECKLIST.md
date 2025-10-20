@@ -177,13 +177,13 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Map Visualization
 
-- [ ] 📋 Create `/components/viz/ExperienceMap.tsx`
-- [ ] 📋 Install Leaflet dependencies
-- [ ] 📋 Implement marker rendering
-- [ ] 📋 Implement category colors
-- [ ] 📋 Implement popups
-- [ ] 📋 Auto-center calculation
-- [ ] 📋 Responsive design
+- [x] ✅ Create `/components/viz/ExperienceMap.tsx`
+- [x] ✅ Install Leaflet dependencies
+- [x] ✅ Implement marker rendering
+- [x] ✅ Implement category colors
+- [x] ✅ Implement popups
+- [x] ✅ Auto-center calculation
+- [x] ✅ Responsive design
 - [ ] 📋 Create Tool UI wrapper (MapToolUI)
 
 ### Timeline Visualization
