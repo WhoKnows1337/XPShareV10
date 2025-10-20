@@ -115,6 +115,17 @@ export function NetworkGraph({
     }
   }
 
+  // Auto-fit view on mount and when nodes change
+  useEffect(() => {
+    if (graphRef.current && nodes.length > 0) {
+      // Wait for initial layout to settle
+      const timer = setTimeout(() => {
+        graphRef.current?.zoomToFit(400)
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [nodes.length])
+
   return (
     <Card>
       <CardHeader>
