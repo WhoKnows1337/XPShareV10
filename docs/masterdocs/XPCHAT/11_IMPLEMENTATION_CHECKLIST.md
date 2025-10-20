@@ -173,7 +173,7 @@ Update this file as you complete tasks. Mark your progress daily.
 - [x] ✅ Detect temporal data
 - [x] ✅ Detect connections
 - [x] ✅ Calculate ratios
-- [ ] 📋 Unit tests
+- [x] ✅ Unit tests
 
 ### Map Visualization
 
@@ -225,9 +225,9 @@ Update this file as you complete tasks. Mark your progress daily.
 ### Viz Agent Integration
 
 - [x] ✅ Update VizAgent to use new components
-- [ ] 📋 Test auto-selection with real queries
-- [ ] 📋 Measure selection accuracy
-- [ ] 📋 Optimize data transformers
+- [x] ✅ Test auto-selection with real queries
+- [x] ✅ Measure selection accuracy
+- [x] ✅ Optimize data transformers
 
 ---
 
