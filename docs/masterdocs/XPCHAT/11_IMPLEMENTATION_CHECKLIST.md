@@ -23,8 +23,8 @@ Update this file as you complete tasks. Mark your progress daily.
 - [x] ✅ Enable PostgreSQL extensions (vector, postgis, pg_trgm)
 - [x] ✅ Add FTS columns to experiences table
 - [x] ✅ Add geography columns for spatial queries
-- [ ] 📋 Create composite indexes (category+date, category+location)
-- [ ] 📋 Create vector similarity index (ivfflat)
+- [x] ✅ Create composite indexes (category+date, category+location)
+- [x] ✅ Create vector similarity index (ivfflat)
 - [ ] 📋 Test all indexes with EXPLAIN ANALYZE
 
 ### SQL Functions - Search
