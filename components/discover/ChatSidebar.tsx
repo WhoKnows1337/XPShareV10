@@ -165,28 +165,28 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
   }
 
   return (
-    <div
-      className={cn(
-        'relative rounded-md transition-colors group',
-        'hover:bg-muted',
-        isActive && 'bg-muted border-l-2 border-primary'
-      )}
-    >
-      {isRenaming ? (
-        <div className="p-3">
-          <input
-            type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleRename}
-            autoFocus
-            className="w-full px-2 py-1 text-sm bg-background border rounded"
-          />
-        </div>
-      ) : (
-        <>
-          <TooltipProvider delayDuration={500}>
+    <TooltipProvider delayDuration={500}>
+      <div
+        className={cn(
+          'relative rounded-md transition-colors group',
+          'hover:bg-muted',
+          isActive && 'bg-muted border-l-2 border-primary'
+        )}
+      >
+        {isRenaming ? (
+          <div className="p-3">
+            <input
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleRename}
+              autoFocus
+              className="w-full px-2 py-1 text-sm bg-background border rounded"
+            />
+          </div>
+        ) : (
+          <>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -218,41 +218,41 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
                 <p className="text-sm">{chat.title || 'Untitled Chat'}</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
 
-          <div className="absolute top-3 right-3 z-10">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="h-6 w-6 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent flex items-center justify-center"
-                  aria-label="Chat options"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="h-3.5 w-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setIsRenaming(true)
-                  }}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={onDelete}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </>
-      )}
-    </div>
+            <div className="absolute top-3 right-2 z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="h-7 w-7 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent flex items-center justify-center border border-border/40"
+                    aria-label="Chat options"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsRenaming(true)
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={onDelete}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
+        )}
+      </div>
+    </TooltipProvider>
   )
 }

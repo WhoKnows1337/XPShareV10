@@ -83,15 +83,19 @@ export default function DiscoverPage() {
 
   // Handle chat selection
   const handleChatSelect = useCallback(async (chatId: string) => {
+    if (chatId === currentChatId) return // Prevent unnecessary reloads
+
     setCurrentChatId(chatId)
     setChatHasTitle(true) // Assume existing chats have titles
-    router.push(`/discover?chat=${chatId}`)
 
     const loadedMessages = await loadMessages(chatId)
     if (loadedMessages) {
       setMessages(loadedMessages)
     }
-  }, [router, loadMessages, setMessages])
+
+    // Update URL without triggering reload
+    router.push(`/discover?chat=${chatId}`, { scroll: false })
+  }, [currentChatId, router, loadMessages, setMessages])
 
   // Handle new chat creation
   const handleNewChat = useCallback(async () => {
@@ -99,19 +103,28 @@ export default function DiscoverPage() {
     if (newChatId) {
       setCurrentChatId(newChatId)
       setChatHasTitle(false)
-      router.push(`/discover?chat=${newChatId}`)
       setMessages([])
       await loadChats() // Refresh sidebar to show new chat immediately
+      router.push(`/discover?chat=${newChatId}`, { scroll: false })
     }
   }, [router, createChat, setMessages, loadChats])
 
-  // Load chat from URL parameter
+  // Load chat from URL parameter on initial mount or URL change
   useEffect(() => {
     const chatId = searchParams.get('chat')
     if (chatId && chatId !== currentChatId) {
-      handleChatSelect(chatId)
+      // Set the currentChatId immediately from URL
+      setCurrentChatId(chatId)
+      setChatHasTitle(true)
+
+      // Load messages
+      loadMessages(chatId).then((loadedMessages) => {
+        if (loadedMessages) {
+          setMessages(loadedMessages)
+        }
+      })
     }
-  }, [searchParams, currentChatId, handleChatSelect])
+  }, [searchParams, currentChatId, loadMessages, setMessages]) // Fix dependencies
 
   // Auto-save messages when they change and generate title for first message
   useEffect(() => {
