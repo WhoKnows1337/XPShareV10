@@ -5,3 +5,4 @@
  */
 
 export { findConnectionsTool } from './find-connections'
+export { detectPatternsTool } from './detect-patterns'

@@ -14,7 +14,13 @@ export {
 } from './search'
 
 // Analytics Tools
-export { rankUsersTool, analyzeCategoryTool, temporalAnalysisTool } from './analytics'
+export {
+  rankUsersTool,
+  analyzeCategoryTool,
+  compareCategoryTool,
+  temporalAnalysisTool,
+  attributeCorrelationTool,
+} from './analytics'
 
 // Relationship Tools
-export { findConnectionsTool } from './relationships'
+export { findConnectionsTool, detectPatternsTool } from './relationships'
