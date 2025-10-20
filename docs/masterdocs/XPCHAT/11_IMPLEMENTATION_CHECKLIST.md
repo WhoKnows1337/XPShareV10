@@ -93,12 +93,12 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Query Agent
 
-- [ ] 📋 Create `/lib/agents/query-agent.ts`
-- [ ] 📋 Integrate advanced_search tool
-- [ ] 📋 Integrate search_by_attributes tool
-- [ ] 📋 Integrate semantic_search tool
-- [ ] 📋 Integrate rank_users tool
-- [ ] 📋 Integrate analyze_category tool
+- [x] ✅ Create `/lib/agents/query-agent.ts`
+- [x] ✅ Integrate advanced_search tool
+- [x] ✅ Integrate search_by_attributes tool
+- [x] ✅ Integrate semantic_search tool
+- [x] ✅ Integrate rank_users tool
+- [x] ✅ Integrate analyze_category tool
 - [ ] 📋 Write unit tests
 - [ ] 📋 Test multi-dimensional queries
 
