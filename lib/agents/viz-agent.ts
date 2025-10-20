@@ -10,6 +10,7 @@
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import type { VizConfig } from '@/types/ai-system'
+import { analyzeDataStructure, getPrimaryViz } from '@/lib/viz/analyzer'
 
 // ============================================================================
 // System Prompt
@@ -65,17 +66,6 @@ For dashboards, return multiple visualizations in layout:
 // Type Definitions
 // ============================================================================
 
-interface DataStructureAnalysis {
-  hasGeo: boolean
-  hasTemporal: boolean
-  hasCategories: boolean
-  hasTags: boolean
-  hasConnections: boolean
-  hasRankings: boolean
-  count: number
-  fields: string[]
-}
-
 interface VisualizationSpec {
   type: 'map' | 'timeline' | 'network' | 'heatmap' | 'dashboard' | 'chart'
   config: {
@@ -100,8 +90,8 @@ export class VizAgent {
    * Execute visualization task
    */
   async execute(task: string, data: any): Promise<VizConfig> {
-    // Step 1: Analyze data structure
-    const analysis = this.analyzeDataStructure(data)
+    // Step 1: Analyze data structure using dedicated analyzer
+    const analysis = analyzeDataStructure(data)
 
     // Step 2: Use LLM to select optimal visualization
     const vizSpec = await this.selectVisualization(task, data, analysis)
@@ -111,56 +101,12 @@ export class VizAgent {
   }
 
   /**
-   * Analyze data structure to determine patterns
-   */
-  private analyzeDataStructure(data: any): DataStructureAnalysis {
-    // Handle various data formats
-    const dataArray = Array.isArray(data)
-      ? data
-      : data?.results || data?.experiences || data?.users || []
-
-    if (dataArray.length === 0) {
-      return {
-        hasGeo: false,
-        hasTemporal: false,
-        hasCategories: false,
-        hasTags: false,
-        hasConnections: false,
-        hasRankings: false,
-        count: 0,
-        fields: [],
-      }
-    }
-
-    const firstItem = dataArray[0]
-    const fields = Object.keys(firstItem)
-
-    return {
-      hasGeo:
-        fields.some((f) => f.includes('lat') || f.includes('latitude')) &&
-        fields.some((f) => f.includes('lng') || f.includes('longitude')),
-      hasTemporal: fields.some((f) =>
-        ['date_occurred', 'created_at', 'time_of_day', 'timestamp', 'period'].includes(f)
-      ),
-      hasCategories: fields.includes('category'),
-      hasTags: fields.includes('tags'),
-      hasConnections:
-        fields.includes('edges') || fields.includes('connections') || fields.includes('nodes'),
-      hasRankings: fields.some((f) =>
-        ['score', 'rank', 'count', 'total', 'experience_count'].includes(f)
-      ),
-      count: dataArray.length,
-      fields,
-    }
-  }
-
-  /**
    * Use LLM to select optimal visualization
    */
   private async selectVisualization(
     task: string,
     data: any,
-    analysis: DataStructureAnalysis
+    analysis: any
   ): Promise<VisualizationSpec> {
     const { text } = await generateText({
       model: openai('gpt-4o-mini'),
