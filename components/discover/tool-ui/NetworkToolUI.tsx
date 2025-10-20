@@ -1,12 +1,12 @@
 'use client'
 
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { NetworkGraph } from '@/components/discover/NetworkGraph'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import { NetworkArgs, NetworkResult } from '@/types/discovery-tools'
 import { NetworkSkeletonLoader } from '@/components/discover/skeleton-loaders'
 import { LazyChart } from '@/components/discover/LazyChart'
+import { XPShareTool, XPShareToolHeader, ToolContent, ToolInput } from '@/components/ai-elements/xpshare-tool'
 
 interface NetworkToolUIProps {
   part: {
@@ -16,41 +16,44 @@ interface NetworkToolUIProps {
     input: NetworkArgs
     output?: NetworkResult
     error?: Error
+    errorText?: string
   }
   onRetry?: () => void
 }
 
 export function NetworkToolUI({ part, onRetry }: NetworkToolUIProps) {
-  if (part.state === 'input-available') {
-    return <NetworkSkeletonLoader />
-  }
+  const renderOutput = () => {
+    if (part.state === 'input-available') {
+      return <NetworkSkeletonLoader />
+    }
 
-  if (part.state === 'output-available' && part.output) {
-    return (
-      <LazyChart fallback={<NetworkSkeletonLoader />}>
-        <div className="space-y-2">
-          <NetworkGraph
-            nodes={part.output.nodes}
-            edges={part.output.edges}
-            title={`Network: ${part.input.query}`}
-          />
-          <p className="text-xs text-muted-foreground">
-            Found {part.output.edges.length} connections between {part.output.total} experiences
-          </p>
-        </div>
-      </LazyChart>
-    )
-  }
+    if (part.state === 'output-available' && part.output) {
+      return (
+        <LazyChart fallback={<NetworkSkeletonLoader />}>
+          <div className="space-y-2">
+            <NetworkGraph
+              nodes={part.output.nodes}
+              edges={part.output.edges}
+              title={`Network: ${part.input.query}`}
+            />
+            <p className="text-xs text-muted-foreground">
+              Found {part.output.edges.length} connections between {part.output.total} experiences
+            </p>
+          </div>
+        </LazyChart>
+      )
+    }
 
-  if (part.state === 'output-error') {
-    return (
-      <Card className="p-4 border-l-4 border-red-500 bg-red-50">
-        <div className="flex items-start justify-between gap-3">
+    if (part.state === 'output-error') {
+      return (
+        <div className="flex items-start justify-between gap-3 p-4 border-l-4 border-destructive bg-destructive/10 rounded-md">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
             <div>
-              <p className="text-red-600 font-medium">Failed to analyze network</p>
-              <p className="text-sm text-red-700">{part.error?.message || 'Unknown error'}</p>
+              <p className="text-destructive font-medium">Failed to analyze network</p>
+              <p className="text-sm text-destructive/80">
+                {part.error?.message || part.errorText || 'Unknown error'}
+              </p>
             </div>
           </div>
           {onRetry && (
@@ -66,9 +69,31 @@ export function NetworkToolUI({ part, onRetry }: NetworkToolUIProps) {
             </Button>
           )}
         </div>
-      </Card>
-    )
+      )
+    }
+
+    return null
   }
 
-  return null
+  return (
+    <XPShareTool
+      defaultOpen={part.state === 'output-available'}
+      category="Synchronicity"
+      showGradient
+    >
+      <XPShareToolHeader
+        title="Network Analysis"
+        type={part.type}
+        state={part.state}
+        category="Synchronicity"
+        showGradient
+      />
+      <ToolContent>
+        <ToolInput input={part.input} />
+        <div className="p-4">
+          {renderOutput()}
+        </div>
+      </ToolContent>
+    </XPShareTool>
+  )
 }

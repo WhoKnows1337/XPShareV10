@@ -1,12 +1,12 @@
 'use client'
 
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TimelineChart } from '@/components/discover/TimelineChart'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import { TimelineArgs, TimelineResult } from '@/types/discovery-tools'
 import { TimelineSkeletonLoader } from '@/components/discover/skeleton-loaders'
 import { LazyChart } from '@/components/discover/LazyChart'
+import { XPShareTool, XPShareToolHeader, ToolContent, ToolInput, ToolOutput } from '@/components/ai-elements/xpshare-tool'
 
 interface TimelineToolUIProps {
   part: {
@@ -16,45 +16,49 @@ interface TimelineToolUIProps {
     input: TimelineArgs
     output?: TimelineResult
     error?: Error
+    errorText?: string
   }
   onRetry?: () => void
 }
 
 export function TimelineToolUI({ part, onRetry }: TimelineToolUIProps) {
-  // State 1: Tool is running - Use Skeleton Loader
-  if (part.state === 'input-available') {
-    return <TimelineSkeletonLoader />
-  }
+  // Custom visualization output
+  const renderOutput = () => {
+    // State 1: Tool is running
+    if (part.state === 'input-available') {
+      return <TimelineSkeletonLoader />
+    }
 
-  // State 2: Tool completed successfully
-  if (part.state === 'output-available' && part.output) {
-    return (
-      <LazyChart fallback={<TimelineSkeletonLoader />}>
-        <Card className="p-4">
-          <TimelineChart
-            data={part.output.data}
-            granularity={part.output.granularity}
-            title={`Timeline: ${part.input.query}`}
-            interactive
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            Found {part.output.total} experiences matching your query
-          </p>
-        </Card>
-      </LazyChart>
-    )
-  }
+    // State 2: Tool completed successfully
+    if (part.state === 'output-available' && part.output) {
+      return (
+        <LazyChart fallback={<TimelineSkeletonLoader />}>
+          <div className="space-y-2">
+            <TimelineChart
+              data={part.output.data}
+              granularity={part.output.granularity}
+              title={`Timeline: ${part.input.query}`}
+              interactive
+            />
+            <p className="text-xs text-muted-foreground">
+              Found {part.output.total} experiences matching your query
+            </p>
+          </div>
+        </LazyChart>
+      )
+    }
 
-  // State 3: Tool failed
-  if (part.state === 'output-error') {
-    return (
-      <Card className="p-4 border-l-4 border-red-500 bg-red-50">
-        <div className="flex items-start justify-between gap-3">
+    // State 3: Tool failed
+    if (part.state === 'output-error') {
+      return (
+        <div className="flex items-start justify-between gap-3 p-4 border-l-4 border-destructive bg-destructive/10 rounded-md">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
             <div>
-              <p className="text-red-600 font-medium">Failed to analyze timeline</p>
-              <p className="text-sm text-red-700">{part.error?.message || 'Unknown error'}</p>
+              <p className="text-destructive font-medium">Failed to analyze timeline</p>
+              <p className="text-sm text-destructive/80">
+                {part.error?.message || part.errorText || 'Unknown error'}
+              </p>
             </div>
           </div>
           {onRetry && (
@@ -70,9 +74,31 @@ export function TimelineToolUI({ part, onRetry }: TimelineToolUIProps) {
             </Button>
           )}
         </div>
-      </Card>
-    )
+      )
+    }
+
+    return null
   }
 
-  return null
+  return (
+    <XPShareTool
+      defaultOpen={part.state === 'output-available'}
+      category="Dreams"
+      showGradient
+    >
+      <XPShareToolHeader
+        title="Timeline Analysis"
+        type={part.type}
+        state={part.state}
+        category="Dreams"
+        showGradient
+      />
+      <ToolContent>
+        <ToolInput input={part.input} />
+        <div className="p-4">
+          {renderOutput()}
+        </div>
+      </ToolContent>
+    </XPShareTool>
+  )
 }

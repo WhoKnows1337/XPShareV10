@@ -1,12 +1,12 @@
 'use client'
 
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ExperienceMapCard } from '@/components/discover/ExperienceMapCard'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import { GeographicArgs, GeographicResult } from '@/types/discovery-tools'
 import { MapSkeletonLoader } from '@/components/discover/skeleton-loaders'
 import { LazyChart } from '@/components/discover/LazyChart'
+import { XPShareTool, XPShareToolHeader, ToolContent, ToolInput } from '@/components/ai-elements/xpshare-tool'
 
 interface MapToolUIProps {
   part: {
@@ -16,40 +16,43 @@ interface MapToolUIProps {
     input: GeographicArgs
     output?: GeographicResult
     error?: Error
+    errorText?: string
   }
   onRetry?: () => void
 }
 
 export function MapToolUI({ part, onRetry }: MapToolUIProps) {
-  if (part.state === 'input-available') {
-    return <MapSkeletonLoader />
-  }
+  const renderOutput = () => {
+    if (part.state === 'input-available') {
+      return <MapSkeletonLoader />
+    }
 
-  if (part.state === 'output-available' && part.output) {
-    return (
-      <LazyChart fallback={<MapSkeletonLoader />}>
-        <div className="space-y-2">
-          <ExperienceMapCard
-            markers={part.output.markers}
-            title={`Map: ${part.input.query}`}
-          />
-          <p className="text-xs text-muted-foreground">
-            Mapped {part.output.total} locations
-          </p>
-        </div>
-      </LazyChart>
-    )
-  }
+    if (part.state === 'output-available' && part.output) {
+      return (
+        <LazyChart fallback={<MapSkeletonLoader />}>
+          <div className="space-y-2">
+            <ExperienceMapCard
+              markers={part.output.markers}
+              title={`Map: ${part.input.query}`}
+            />
+            <p className="text-xs text-muted-foreground">
+              Mapped {part.output.total} locations
+            </p>
+          </div>
+        </LazyChart>
+      )
+    }
 
-  if (part.state === 'output-error') {
-    return (
-      <Card className="p-4 border-l-4 border-red-500 bg-red-50">
-        <div className="flex items-start justify-between gap-3">
+    if (part.state === 'output-error') {
+      return (
+        <div className="flex items-start justify-between gap-3 p-4 border-l-4 border-destructive bg-destructive/10 rounded-md">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
             <div>
-              <p className="text-red-600 font-medium">Failed to load map</p>
-              <p className="text-sm text-red-700">{part.error?.message || 'Unknown error'}</p>
+              <p className="text-destructive font-medium">Failed to load map</p>
+              <p className="text-sm text-destructive/80">
+                {part.error?.message || part.errorText || 'Unknown error'}
+              </p>
             </div>
           </div>
           {onRetry && (
@@ -65,9 +68,31 @@ export function MapToolUI({ part, onRetry }: MapToolUIProps) {
             </Button>
           )}
         </div>
-      </Card>
-    )
+      )
+    }
+
+    return null
   }
 
-  return null
+  return (
+    <XPShareTool
+      defaultOpen={part.state === 'output-available'}
+      category="UFO"
+      showGradient
+    >
+      <XPShareToolHeader
+        title="Geographic Analysis"
+        type={part.type}
+        state={part.state}
+        category="UFO"
+        showGradient
+      />
+      <ToolContent>
+        <ToolInput input={part.input} />
+        <div className="p-4">
+          {renderOutput()}
+        </div>
+      </ToolContent>
+    </XPShareTool>
+  )
 }

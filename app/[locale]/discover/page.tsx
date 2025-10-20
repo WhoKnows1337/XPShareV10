@@ -2,12 +2,10 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Separator } from '@/components/ui/separator'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowDown } from 'lucide-react'
 import {
   TimelineToolUI,
   MapToolUI,
@@ -17,6 +15,15 @@ import {
 import { getRelativeTimestamp, shouldShowDateSeparator, getDateSeparatorText, isMessageGrouped } from '@/lib/utils/message-formatting'
 import { TypingIndicator } from '@/components/discover/TypingIndicator'
 import { usePersistedChat } from '@/hooks/usePersistedChat'
+import { Message, MessageContent } from '@/components/ai-elements/message'
+import { Response } from '@/components/ai-elements/response'
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+  ConversationEmptyState,
+} from '@/components/ai-elements/conversation'
+import { Suggestion } from '@/components/ai-elements/suggestion'
 
 /**
  * AI Discovery Interface
@@ -35,10 +42,7 @@ export default function DiscoverPage() {
     }),
   })
   const [input, setInput] = useState('')
-  const [showScrollButton, setShowScrollButton] = useState(false)
   const isLoading = status === 'submitted' || status === 'streaming'
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const suggestions = [
     'Show me a heatmap of UFO sightings by category',
@@ -54,33 +58,6 @@ export default function DiscoverPage() {
       setMessages(restored)
     },
   })
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (isLoading || messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [messages, isLoading])
-
-  // Handle scroll position to show/hide scroll-to-bottom button
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const handleScroll = () => {
-      const isAtBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 100
-      setShowScrollButton(!isAtBottom && messages.length > 0)
-    }
-
-    container.addEventListener('scroll', handleScroll)
-    return () => container.removeEventListener('scroll', handleScroll)
-  }, [messages.length])
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,46 +116,38 @@ export default function DiscoverPage() {
 
       <Separator className="mb-4" />
 
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto space-y-4 mb-4 relative scroll-smooth"
-        role="log"
-        aria-live="polite"
-        aria-label="Conversation messages"
-      >
-        {messages.length === 0 && (
-          <div className="text-center py-12" role="region" aria-label="Getting started">
-            <h2 className="text-xl font-bold mb-4">Discover Hidden Patterns</h2>
-            <p className="text-muted-foreground mb-6">Ask me about patterns, connections, or insights</p>
-            <div className="flex flex-wrap gap-2 justify-center" role="group" aria-label="Suggested queries">
-              {suggestions.map((s) => (
-                <Button
-                  key={s}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSuggestionClick(s)}
-                  disabled={isLoading}
-                  aria-label={`Ask: ${s}`}
-                >
-                  {s}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
+      <Conversation className="mb-4">
+        <ConversationContent>
+          {messages.length === 0 && (
+            <ConversationEmptyState
+              title="Discover Hidden Patterns"
+              description="Ask me about patterns, connections, or insights"
+            >
+              <div className="flex flex-wrap gap-2 justify-center mt-6" role="group" aria-label="Suggested queries">
+                {suggestions.map((s) => (
+                  <Suggestion
+                    key={s}
+                    suggestion={s}
+                    onClick={(suggestion) => handleSuggestionClick(suggestion)}
+                    disabled={isLoading}
+                    aria-label={`Ask: ${s}`}
+                  />
+                ))}
+              </div>
+            </ConversationEmptyState>
+          )}
 
         {messages.map((message, index) => {
           const previousMessage = index > 0 ? messages[index - 1] : undefined
           const nextMessage = index < messages.length - 1 ? messages[index + 1] : undefined
-          const messageDate = new Date(message.createdAt || Date.now())
-          const showDateSeparator = shouldShowDateSeparator(
-            messageDate,
-            previousMessage?.createdAt ? new Date(previousMessage.createdAt) : undefined
-          )
 
-          // Message Grouping Logic
-          const isGrouped = isMessageGrouped(message, previousMessage)
-          const isLastInGroup = !isMessageGrouped(nextMessage || { role: '', createdAt: Date.now() }, message)
+          // Use index as fallback for timestamp since AI SDK 5.0 UIMessage doesn't have createdAt
+          const messageDate = new Date()
+          const showDateSeparator = false // Simplified for now
+
+          // Simplified grouping - group consecutive messages from same role
+          const isGrouped = previousMessage?.role === message.role
+          const isLastInGroup = nextMessage?.role !== message.role
           const showTimestamp = isLastInGroup
 
           return (
@@ -194,94 +163,60 @@ export default function DiscoverPage() {
                 </div>
               )}
 
-              <div role="article" aria-label={`${message.role} message`}>
-                {/* User Message */}
-                {message.role === 'user' && (
-                  <div className="flex justify-end items-end gap-2">
-                    <div className="flex flex-col items-end">
-                      <Card className="bg-primary text-primary-foreground px-4 py-2 max-w-[80%]" role="region" aria-label="Your message">
-                        {message.parts?.map((part) => part.type === 'text' ? part.text : null).join('')}
-                      </Card>
-                      {showTimestamp && (
-                        <span className="text-xs text-muted-foreground mt-1">
-                          {getRelativeTimestamp(messageDate)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+              <Message from={message.role}>
+                <div className="flex flex-col gap-1 w-full">
+                  {message.parts?.map((part, i) => {
+                    // Text part - use Response component for streaming markdown
+                    if (part.type === 'text') {
+                      return (
+                        <MessageContent key={i}>
+                          <Response>{part.text}</Response>
+                        </MessageContent>
+                      )
+                    }
 
-                {/* Assistant Message */}
-                {message.role === 'assistant' && (
-                  <div className="flex justify-start items-end gap-2">
-                    <div className="flex flex-col items-start max-w-[90%]">
-                      <div className="space-y-2" role="region" aria-label="AI response">
-                        {message.parts?.map((part, i) => {
-                          // Text part
-                          if (part.type === 'text') {
-                            return (
-                              <Card key={i} className="px-4 py-2 whitespace-pre-wrap">
-                                {part.text}
-                              </Card>
-                            )
-                          }
+                    // Get original user query from previous message for retry
+                    const userQuery = previousMessage?.role === 'user'
+                      ? previousMessage.parts?.find((p: any) => p.type === 'text')?.text || (part as any).input?.query
+                      : (part as any).input?.query
 
-                          // Get original user query from previous message
-                          const userQuery = previousMessage?.role === 'user'
-                            ? previousMessage.parts?.find(p => p.type === 'text')?.text || part.input.query
-                            : part.input.query
+                    // Tool parts - keep existing Tool UI components (type assertions for AI SDK 5.0)
+                    if (part.type === 'tool-analyze_timeline') {
+                      return <TimelineToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
+                    }
+                    if (part.type === 'tool-analyze_geographic') {
+                      return <MapToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
+                    }
+                    if (part.type === 'tool-analyze_network') {
+                      return <NetworkToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
+                    }
+                    if (part.type === 'tool-analyze_heatmap') {
+                      return <HeatmapToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
+                    }
 
-                          // Typed tool parts with automatic state handling
-                          if (part.type === 'tool-analyze_timeline') {
-                            return <TimelineToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
-                          }
-                          if (part.type === 'tool-analyze_geographic') {
-                            return <MapToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
-                          }
-                          if (part.type === 'tool-analyze_network') {
-                            return <NetworkToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
-                          }
-                          if (part.type === 'tool-analyze_heatmap') {
-                            return <HeatmapToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
-                          }
+                    return null
+                  })}
 
-                          return null
-                        })}
-                      </div>
-                      {showTimestamp && (
-                        <span className="text-xs text-muted-foreground mt-1">
-                          {getRelativeTimestamp(messageDate)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  {/* Timestamp */}
+                  {showTimestamp && (
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {getRelativeTimestamp(messageDate)}
+                    </span>
+                  )}
+                </div>
+              </Message>
             </div>
           )
         })}
-        {isLoading && (
-          <div className="flex justify-start">
-            <TypingIndicator />
-          </div>
-        )}
+          {isLoading && (
+            <div className="flex justify-start">
+              <TypingIndicator />
+            </div>
+          )}
+        </ConversationContent>
 
-        {/* Scroll anchor */}
-        <div ref={messagesEndRef} />
-
-        {/* Scroll to bottom button */}
-        {showScrollButton && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="fixed bottom-24 right-8 rounded-full shadow-lg z-10 animate-in fade-in slide-in-from-bottom-4"
-            onClick={scrollToBottom}
-            aria-label="Scroll to bottom"
-          >
-            <ArrowDown className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+        <ConversationScrollButton />
+      </Conversation>
 
       <form onSubmit={handleSubmit} className="flex gap-2" role="search" aria-label="Ask a question">
         <Input
