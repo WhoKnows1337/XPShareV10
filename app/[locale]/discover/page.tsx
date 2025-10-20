@@ -96,7 +96,7 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="container mx-auto h-[100dvh] flex flex-col px-4 py-2 max-w-5xl">
+    <div className="h-[100dvh] w-full max-w-5xl mx-auto flex flex-col px-4 py-1">
       {/* Header - Only show Export/Clear when messages exist */}
       {messages.length > 0 && (
         <div className="py-2 flex items-center justify-end flex-shrink-0 mb-2">
@@ -253,7 +253,7 @@ export default function DiscoverPage() {
       </Conversation>
 
       {/* Sticky Input Area */}
-      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-1.5">
+      <div className="flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-1">
         {/* Persistierende Suggestions - ÜBER der Textbox */}
         {messages.length > 0 && (
           <div className="flex gap-1.5 mb-2 flex-wrap justify-center" role="group" aria-label="Quick actions">
@@ -310,7 +310,7 @@ export default function DiscoverPage() {
           Type your question about patterns, connections, or insights in extraordinary experiences
         </p>
 
-        <p className="text-xs text-muted-foreground text-center mt-2">
+        <p className="text-xs text-muted-foreground text-center mt-1">
           Powered by AI • Data from 40+ categories of extraordinary experiences
         </p>
       </div>
