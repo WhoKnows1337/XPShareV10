@@ -2,8 +2,12 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { ChatSidebar } from '@/components/discover/ChatSidebar'
+import { useDiscoveryChats } from '@/hooks/useDiscoveryChats'
+import { generateChatTitle } from '@/lib/utils/generate-title'
 import {
   TimelineToolUI,
   MapToolUI,
@@ -48,6 +52,12 @@ import { Send, Paperclip, Mic } from 'lucide-react'
  */
 
 export default function DiscoverPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null)
+  const [chatHasTitle, setChatHasTitle] = useState(false)
+  const { createChat, loadMessages, saveMessages, updateChatTitle } = useDiscoveryChats()
+
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/discover',
@@ -63,13 +73,67 @@ export default function DiscoverPage() {
     'NDE Connections',
   ]
 
-  // Conversation Persistence
+  // Conversation Persistence (legacy - kept for export)
   const { clearHistory, exportHistory } = usePersistedChat({
     messages,
     onRestore: (restored) => {
       setMessages(restored)
     },
   })
+
+  // Handle chat selection
+  const handleChatSelect = useCallback(async (chatId: string) => {
+    setCurrentChatId(chatId)
+    router.push(`/discover?chat=${chatId}`)
+
+    const loadedMessages = await loadMessages(chatId)
+    if (loadedMessages) {
+      setMessages(loadedMessages)
+    }
+  }, [router, loadMessages, setMessages])
+
+  // Handle new chat creation
+  const handleNewChat = useCallback(async () => {
+    const newChatId = await createChat()
+    if (newChatId) {
+      setCurrentChatId(newChatId)
+      setChatHasTitle(false)
+      router.push(`/discover?chat=${newChatId}`)
+      setMessages([])
+    }
+  }, [router, createChat, setMessages])
+
+  // Load chat from URL parameter
+  useEffect(() => {
+    const chatId = searchParams.get('chat')
+    if (chatId && chatId !== currentChatId) {
+      handleChatSelect(chatId)
+    }
+  }, [searchParams, currentChatId, handleChatSelect])
+
+  // Auto-save messages when they change and generate title for first message
+  useEffect(() => {
+    if (currentChatId && messages.length > 0 && !isLoading) {
+      saveMessages(currentChatId, messages)
+
+      // Generate title from first user message if chat doesn't have one
+      if (!chatHasTitle && messages.length >= 1) {
+        const firstUserMessage = messages.find((m) => m.role === 'user')
+        if (firstUserMessage) {
+          const messageText =
+            firstUserMessage.parts?.find((p: any) => p.type === 'text')?.text ||
+            (firstUserMessage as any).content
+
+          if (messageText) {
+            generateChatTitle(messageText).then((title) => {
+              updateChatTitle(currentChatId, title)
+              setChatHasTitle(true)
+            })
+          }
+        }
+      }
+    }
+  }, [messages, currentChatId, isLoading, chatHasTitle, updateChatTitle, saveMessages])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,9 +160,18 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="h-[calc(100dvh-4rem)] w-full flex flex-col overflow-hidden">
-      {/* Header - Only show Export/Clear when messages exist */}
-      {messages.length > 0 && (
+    <div className="h-[calc(100dvh-4rem)] w-full flex overflow-hidden">
+      {/* Sidebar */}
+      <ChatSidebar
+        currentChatId={currentChatId}
+        onChatSelect={handleChatSelect}
+        onNewChat={handleNewChat}
+      />
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header - Only show Export/Clear when messages exist */}
+        {messages.length > 0 && (
         <div className="py-2 flex-shrink-0">
           <div className="max-w-4xl mx-auto px-4 flex items-center justify-end">
             <div className="flex gap-2">
@@ -317,6 +390,7 @@ export default function DiscoverPage() {
             Powered by AI • Data from 40+ categories of extraordinary experiences
           </p>
         </div>
+      </div>
       </div>
     </div>
   )

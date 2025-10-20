@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai'
-import { streamText, tool, convertToModelMessages } from 'ai'
+import { streamText, tool, convertToModelMessages, smoothStream } from 'ai'
 import { z } from 'zod'
 import { hybridSearch } from '@/lib/search/hybrid'
 import { generateEmbedding } from '@/lib/openai/client'
@@ -98,5 +98,7 @@ export async function POST(req: Request) {
     maxSteps: 5,
   })
 
-  return result.toUIMessageStreamResponse()
+  return result.toUIMessageStreamResponse({
+    transform: smoothStream({ chunking: 'word' }),
+  })
 }
