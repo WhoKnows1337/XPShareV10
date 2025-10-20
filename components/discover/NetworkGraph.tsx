@@ -115,16 +115,13 @@ export function NetworkGraph({
     }
   }
 
-  // Auto-fit view on mount and when nodes change
-  useEffect(() => {
-    if (graphRef.current && nodes.length > 0) {
-      // Wait for initial layout to settle
-      const timer = setTimeout(() => {
-        graphRef.current?.zoomToFit(400)
-      }, 1000)
-      return () => clearTimeout(timer)
+  // Auto-fit view after graph engine is ready
+  const handleEngineStop = () => {
+    // Called when force simulation finishes
+    if (graphRef.current) {
+      graphRef.current.zoomToFit(400, 20)
     }
-  }, [nodes.length])
+  }
 
   return (
     <Card>
@@ -192,6 +189,7 @@ export function NetworkGraph({
               cooldownTicks={100}
               d3AlphaDecay={0.02}
               d3VelocityDecay={0.3}
+              onEngineStop={handleEngineStop}
             />
           </div>
 
