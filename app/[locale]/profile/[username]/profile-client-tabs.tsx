@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Settings,
   MapPin,
@@ -18,15 +19,32 @@ import Link from 'next/link'
 import { UserStats } from '@/components/profile/user-stats'
 import { DownloadReportButton } from '@/components/profile/download-report-button'
 import { ProfileTabs } from '@/components/profile/profile-tabs'
-import { ActivityChart } from '@/components/profile/activity-chart'
-import { StreakWidget } from '@/components/gamification/StreakWidget'
 import { XPTwinsTabContent } from '@/components/profile/xp-twins'
 import { XPDNABadge } from '@/components/profile/xp-dna-badge'
 import { SimilarityScoreBadge } from '@/components/profile/similarity-score-badge'
 import { ConnectionsTab } from '@/components/profile/connections-tab'
-import { ActivityHeatmap } from '@/components/profile/activity-heatmap'
-import { PatternContributionsCard } from '@/components/profile/pattern-contributions-card'
 import { ExperienceMap } from '@/components/profile/experience-map'
+
+// Code Splitting: More heavy Recharts components
+const ActivityChart = dynamic(
+  () => import('@/components/profile/activity-chart').then(mod => ({ default: mod.ActivityChart })),
+  { loading: () => <div className="h-64 flex items-center justify-center">Loading activity...</div> }
+)
+
+const ActivityHeatmap = dynamic(
+  () => import('@/components/profile/activity-heatmap').then(mod => ({ default: mod.ActivityHeatmap })),
+  { loading: () => <div className="h-48 flex items-center justify-center">Loading heatmap...</div> }
+)
+
+const StreakWidget = dynamic(
+  () => import('@/components/gamification/StreakWidget').then(mod => ({ default: mod.StreakWidget })),
+  { loading: () => <div className="h-64 flex items-center justify-center">Loading streaks...</div> }
+)
+
+const PatternContributionsCard = dynamic(
+  () => import('@/components/profile/pattern-contributions-card').then(mod => ({ default: mod.PatternContributionsCard })),
+  { loading: () => <div className="h-64 flex items-center justify-center">Loading patterns...</div> }
+)
 import {
   ExperiencesTab,
   DraftsTab,
@@ -38,12 +56,23 @@ import {
   BadgesTab,
   ImpactTab,
 } from '@/components/profile/tab-content'
+import dynamic from 'next/dynamic'
 import { EnhancedStatsGrid } from '@/components/profile/enhanced-stats-grid'
-import { CategoryRadarChart } from '@/components/profile/category-radar-chart'
 import { XPDNASpectrumBar } from '@/components/profile/xp-dna-spectrum-bar'
 import { MobileActionBar } from '@/components/profile/mobile-action-bar'
 import { ProfileLayoutGrid } from '@/components/profile/profile-layout-grid'
 import { XPTwinsSidebarCard } from '@/components/profile/xp-twins-sidebar-card'
+
+// Code Splitting: Heavy components with Recharts/Framer Motion
+const CategoryRadarChart = dynamic(
+  () => import('@/components/profile/category-radar-chart').then(mod => ({ default: mod.CategoryRadarChart })),
+  { loading: () => <div className="h-80 flex items-center justify-center">Loading chart...</div> }
+)
+
+const XPTwinsHeroSection = dynamic(
+  () => import('@/components/profile/xp-twins-hero-section').then(mod => ({ default: mod.XPTwinsHeroSection })),
+  { loading: () => <div className="h-96 flex items-center justify-center">Loading XP Twins...</div> }
+)
 
 interface ProfileClientTabsProps {
   profileUser: any
@@ -287,6 +316,25 @@ export function ProfileClientTabs({
             }}
           />
         )
+      case 'map':
+        return (
+          <div className="space-y-4">
+            <ExperienceMap
+              userId={profileUser.id}
+              experiences={experiences}
+            />
+          </div>
+        )
+      case 'patterns':
+        return (
+          <div className="space-y-4">
+            <PatternContributionsCard
+              userId={profileUser.id}
+              contributions={patternContributions}
+              totalPatterns={patternContributions.length}
+            />
+          </div>
+        )
       default:
         return (
           <Card>
@@ -438,6 +486,18 @@ export function ProfileClientTabs({
         </CardContent>
       </Card>
 
+      {/* XP Twins Hero Section - PROMINENT banner showing match percentage */}
+      {/* Only displayed on OTHER users' profiles, only if similarity >= 30% */}
+      {!isOwnProfile && currentUserId && (
+        <div className="mb-8">
+          <XPTwinsHeroSection
+            profileUserId={profileUser.id}
+            currentUserId={currentUserId}
+            minSimilarity={0.3}
+          />
+        </div>
+      )}
+
       {/* Enhanced Stats Grid (6-8 cards) - Full Width */}
       <div className="mb-8">
         <EnhancedStatsGrid
@@ -501,10 +561,19 @@ export function ProfileClientTabs({
         isOwnProfile={isOwnProfile}
       />
 
-      {/* Tab Content */}
-      <div className="mt-6">
-        {renderTabContent()}
-      </div>
+      {/* Tab Content with Framer Motion Transitions */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="mt-6"
+        >
+          {renderTabContent()}
+        </motion.div>
+      </AnimatePresence>
 
       {/* Mobile Action Bar */}
       <MobileActionBar isOwnProfile={isOwnProfile} />

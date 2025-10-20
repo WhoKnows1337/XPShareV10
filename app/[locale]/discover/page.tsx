@@ -14,6 +14,9 @@ import {
   NetworkToolUI,
   HeatmapToolUI,
 } from '@/components/discover/tool-ui'
+import { getRelativeTimestamp, shouldShowDateSeparator, getDateSeparatorText, isMessageGrouped } from '@/lib/utils/message-formatting'
+import { TypingIndicator } from '@/components/discover/TypingIndicator'
+import { usePersistedChat } from '@/hooks/usePersistedChat'
 
 /**
  * AI Discovery Interface
@@ -26,7 +29,7 @@ import {
  */
 
 export default function DiscoverPage() {
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/discover',
     }),
@@ -43,6 +46,14 @@ export default function DiscoverPage() {
     'Map global UFO sightings',
     'Find connections between NDEs',
   ]
+
+  // Conversation Persistence
+  const { clearHistory, exportHistory } = usePersistedChat({
+    messages,
+    onRestore: (restored) => {
+      setMessages(restored)
+    },
+  })
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -83,13 +94,47 @@ export default function DiscoverPage() {
     sendMessage({ text: suggestion })
   }
 
+  const handleClearHistory = () => {
+    if (confirm('Are you sure you want to clear the conversation history?')) {
+      clearHistory()
+      setMessages([])
+    }
+  }
+
+  const handleRetry = (query: string) => {
+    if (isLoading) return
+    sendMessage({ text: query })
+  }
+
   return (
     <div className="container mx-auto h-screen flex flex-col p-4 max-w-5xl">
-      <div className="py-4">
-        <h1 className="text-3xl font-bold">AI Discovery</h1>
-        <p className="text-muted-foreground mt-1">
-          Explore patterns, connections, and insights in extraordinary experiences
-        </p>
+      <div className="py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">AI Discovery</h1>
+          <p className="text-muted-foreground mt-1">
+            Explore patterns, connections, and insights in extraordinary experiences
+          </p>
+        </div>
+        {messages.length > 0 && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportHistory}
+              aria-label="Export conversation"
+            >
+              Export
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearHistory}
+              aria-label="Clear conversation history"
+            >
+              Clear
+            </Button>
+          </div>
+        )}
       </div>
 
       <Separator className="mb-4" />
@@ -122,55 +167,102 @@ export default function DiscoverPage() {
           </div>
         )}
 
-        {messages.map((message) => (
-          <div key={message.id} className="space-y-2" role="article" aria-label={`${message.role} message`}>
-            {/* User Message */}
-            {message.role === 'user' && (
-              <div className="flex justify-end">
-                <Card className="bg-primary text-primary-foreground px-4 py-2 max-w-[80%]" role="region" aria-label="Your message">
-                  {message.parts?.map((part) => part.type === 'text' ? part.text : null).join('')}
-                </Card>
-              </div>
-            )}
+        {messages.map((message, index) => {
+          const previousMessage = index > 0 ? messages[index - 1] : undefined
+          const nextMessage = index < messages.length - 1 ? messages[index + 1] : undefined
+          const messageDate = new Date(message.createdAt || Date.now())
+          const showDateSeparator = shouldShowDateSeparator(
+            messageDate,
+            previousMessage?.createdAt ? new Date(previousMessage.createdAt) : undefined
+          )
 
-            {/* Assistant Message */}
-            {message.role === 'assistant' && (
-              <div className="flex justify-start">
-                <div className="max-w-[90%] space-y-2" role="region" aria-label="AI response">
-                  {message.parts?.map((part, i) => {
-                    // Text part
-                    if (part.type === 'text') {
-                      return (
-                        <Card key={i} className="px-4 py-2 whitespace-pre-wrap">
-                          {part.text}
-                        </Card>
-                      )
-                    }
+          // Message Grouping Logic
+          const isGrouped = isMessageGrouped(message, previousMessage)
+          const isLastInGroup = !isMessageGrouped(nextMessage || { role: '', createdAt: Date.now() }, message)
+          const showTimestamp = isLastInGroup
 
-                    // Typed tool parts with automatic state handling
-                    if (part.type === 'tool-analyze_timeline') {
-                      return <TimelineToolUI key={i} part={part} />
-                    }
-                    if (part.type === 'tool-analyze_geographic') {
-                      return <MapToolUI key={i} part={part} />
-                    }
-                    if (part.type === 'tool-analyze_network') {
-                      return <NetworkToolUI key={i} part={part} />
-                    }
-                    if (part.type === 'tool-analyze_heatmap') {
-                      return <HeatmapToolUI key={i} part={part} />
-                    }
-
-                    return null
-                  })}
+          return (
+            <div key={message.id} className={isGrouped ? 'mt-1' : 'mt-4'}>
+              {/* Date Separator */}
+              {showDateSeparator && (
+                <div className="flex items-center gap-4 my-6">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs font-medium text-muted-foreground px-3 py-1 bg-muted rounded-full">
+                    {getDateSeparatorText(messageDate)}
+                  </span>
+                  <div className="flex-1 h-px bg-border" />
                 </div>
+              )}
+
+              <div role="article" aria-label={`${message.role} message`}>
+                {/* User Message */}
+                {message.role === 'user' && (
+                  <div className="flex justify-end items-end gap-2">
+                    <div className="flex flex-col items-end">
+                      <Card className="bg-primary text-primary-foreground px-4 py-2 max-w-[80%]" role="region" aria-label="Your message">
+                        {message.parts?.map((part) => part.type === 'text' ? part.text : null).join('')}
+                      </Card>
+                      {showTimestamp && (
+                        <span className="text-xs text-muted-foreground mt-1">
+                          {getRelativeTimestamp(messageDate)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Assistant Message */}
+                {message.role === 'assistant' && (
+                  <div className="flex justify-start items-end gap-2">
+                    <div className="flex flex-col items-start max-w-[90%]">
+                      <div className="space-y-2" role="region" aria-label="AI response">
+                        {message.parts?.map((part, i) => {
+                          // Text part
+                          if (part.type === 'text') {
+                            return (
+                              <Card key={i} className="px-4 py-2 whitespace-pre-wrap">
+                                {part.text}
+                              </Card>
+                            )
+                          }
+
+                          // Get original user query from previous message
+                          const userQuery = previousMessage?.role === 'user'
+                            ? previousMessage.parts?.find(p => p.type === 'text')?.text || part.input.query
+                            : part.input.query
+
+                          // Typed tool parts with automatic state handling
+                          if (part.type === 'tool-analyze_timeline') {
+                            return <TimelineToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
+                          }
+                          if (part.type === 'tool-analyze_geographic') {
+                            return <MapToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
+                          }
+                          if (part.type === 'tool-analyze_network') {
+                            return <NetworkToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
+                          }
+                          if (part.type === 'tool-analyze_heatmap') {
+                            return <HeatmapToolUI key={i} part={part} onRetry={() => handleRetry(userQuery)} />
+                          }
+
+                          return null
+                        })}
+                      </div>
+                      {showTimestamp && (
+                        <span className="text-xs text-muted-foreground mt-1">
+                          {getRelativeTimestamp(messageDate)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          )
+        })}
         {isLoading && (
-          <div className="flex justify-start" role="status" aria-live="polite" aria-label="Processing">
-            <Card className="px-4 py-2 animate-pulse">Analyzing patterns...</Card>
+          <div className="flex justify-start">
+            <TypingIndicator />
           </div>
         )}
 

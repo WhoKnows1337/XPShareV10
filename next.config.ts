@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   generateEtags: true,
   reactStrictMode: true,
+  // Fix for Next.js 15 RSC Bundler with Mapbox GL in streamUI
+  serverExternalPackages: ['mapbox-gl', 'react-map-gl'],
 };
 
 export default withNextIntl(nextConfig);

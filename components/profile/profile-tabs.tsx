@@ -14,6 +14,8 @@ import {
   Globe2,
   FileEdit,
   Sparkles,
+  MapPin,
+  Network,
 } from 'lucide-react'
 
 interface ProfileTab {
@@ -92,6 +94,18 @@ const profileTabs: ProfileTab[] = [
     label: 'Global Impact',
     icon: <Globe2 className="h-4 w-4" />,
     description: 'Worldwide reach and pattern contributions',
+  },
+  {
+    id: 'map',
+    label: 'Map',
+    icon: <MapPin className="h-4 w-4" />,
+    description: 'Geographic distribution of experiences',
+  },
+  {
+    id: 'patterns',
+    label: 'Patterns',
+    icon: <Network className="h-4 w-4" />,
+    description: 'Pattern discoveries and contributions',
   },
 ]
 

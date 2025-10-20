@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Search, Filter, Calendar, MapPin, Eye } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Search, Filter, Calendar, MapPin, Eye, FileText, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import Link from 'next/link'
@@ -149,22 +150,25 @@ export function ExperiencesTab({ userId, isOwnProfile }: ExperiencesTabProps) {
 
       {/* Experience Grid */}
       {experiences.length === 0 ? (
-        <Card className="border-dashed border-2">
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              {searchQuery || categoryFilter !== 'all'
-                ? 'No experiences match your filters'
-                : isOwnProfile
-                ? 'You haven\'t shared any public experiences yet'
-                : 'This user hasn\'t shared any public experiences yet'}
-            </p>
-            {isOwnProfile && (
-              <Link href="/submit">
-                <Button className="mt-4">Share Your First Experience</Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={searchQuery || categoryFilter !== 'all' ? Search : isOwnProfile ? Sparkles : FileText}
+          title={
+            searchQuery || categoryFilter !== 'all'
+              ? 'No experiences found'
+              : isOwnProfile
+              ? 'Share your first experience'
+              : 'No public experiences yet'
+          }
+          description={
+            searchQuery || categoryFilter !== 'all'
+              ? 'Try adjusting your filters or search query to find experiences.'
+              : isOwnProfile
+              ? 'Start building your XP profile by sharing your first extraordinary experience with the community.'
+              : 'This user hasn\'t shared any public experiences yet. Check back later!'
+          }
+          actionLabel={isOwnProfile && !searchQuery && categoryFilter === 'all' ? 'Share Experience' : undefined}
+          actionHref={isOwnProfile && !searchQuery && categoryFilter === 'all' ? '/submit' : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {experiences.map((exp) => (
