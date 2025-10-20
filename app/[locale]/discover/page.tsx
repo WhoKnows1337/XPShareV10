@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { ChatSidebar } from '@/components/discover/ChatSidebar'
 import { useDiscoveryChats } from '@/hooks/useDiscoveryChats'
 import { generateChatTitle } from '@/lib/utils/generate-title'
+import { useAutoResume } from '@/hooks/useAutoResume'
+import { generateId } from '@/lib/utils'
 import {
   TimelineToolUI,
   MapToolUI,
@@ -56,15 +58,28 @@ export default function DiscoverPage() {
   const searchParams = useSearchParams()
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
   const [chatHasTitle, setChatHasTitle] = useState(false)
+  const [initialMessages, setInitialMessages] = useState<any[]>([])
   const { createChat, loadMessages, saveMessages, updateChatTitle, loadChats } = useDiscoveryChats()
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status, setMessages, resumeStream } = useChat({
+    id: currentChatId || undefined,
+    messages: initialMessages,
+    generateId,
+    experimental_throttle: 100,
     transport: new DefaultChatTransport({
       api: '/api/discover',
     }),
   })
   const [input, setInput] = useState('')
   const isLoading = status === 'submitted' || status === 'streaming'
+
+  // Auto-resume interrupted streams
+  useAutoResume({
+    autoResume: true,
+    initialMessages,
+    resumeStream,
+    setMessages,
+  })
 
   const suggestions = [
     'UFO Heatmap',
@@ -90,6 +105,7 @@ export default function DiscoverPage() {
 
     const loadedMessages = await loadMessages(chatId)
     if (loadedMessages) {
+      setInitialMessages(loadedMessages)
       setMessages(loadedMessages)
     }
 
@@ -103,6 +119,7 @@ export default function DiscoverPage() {
     if (newChatId) {
       setCurrentChatId(newChatId)
       setChatHasTitle(false)
+      setInitialMessages([])
       setMessages([])
       await loadChats() // Refresh sidebar to show new chat immediately
       router.push(`/discover?chat=${newChatId}`, { scroll: false })
@@ -119,6 +136,7 @@ export default function DiscoverPage() {
 
       loadMessages(chatId).then((loadedMessages) => {
         if (loadedMessages) {
+          setInitialMessages(loadedMessages)
           setMessages(loadedMessages)
         }
       })
