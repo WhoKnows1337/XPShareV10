@@ -96,7 +96,7 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="h-[100dvh] w-full max-w-5xl mx-auto flex flex-col px-4 py-1">
+    <div className="h-[100dvh] w-full max-w-5xl mx-auto flex flex-col px-4 py-1 overflow-hidden">
       {/* Header - Only show Export/Clear when messages exist */}
       {messages.length > 0 && (
         <div className="py-2 flex items-center justify-end flex-shrink-0 mb-2">
