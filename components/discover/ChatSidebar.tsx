@@ -3,6 +3,18 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
   ChevronLeft,
@@ -10,6 +22,8 @@ import {
   MessageSquarePlus,
   Trash2,
   Clock,
+  MoreVertical,
+  Pencil,
 } from 'lucide-react'
 import { useDiscoveryChats, DiscoveryChat } from '@/hooks/useDiscoveryChats'
 import { formatDistanceToNow } from 'date-fns'
@@ -26,12 +40,16 @@ export function ChatSidebar({
   onNewChat,
 }: ChatSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const { chats, loading, deleteChat } = useDiscoveryChats()
+  const { chats, loading, deleteChat, updateChatTitle } = useDiscoveryChats()
 
   const handleDelete = async (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     if (!confirm('Are you sure you want to delete this conversation?')) return
     await deleteChat(chatId)
+  }
+
+  const handleRename = async (chatId: string, newTitle: string) => {
+    await updateChatTitle(chatId, newTitle)
   }
 
   if (isCollapsed) {
@@ -108,6 +126,7 @@ export function ChatSidebar({
                 isActive={chat.id === currentChatId}
                 onClick={() => onChatSelect(chat.id)}
                 onDelete={(e) => handleDelete(chat.id, e)}
+                onRename={(newTitle) => handleRename(chat.id, newTitle)}
               />
             ))}
           </div>
@@ -122,49 +141,113 @@ interface ChatItemProps {
   isActive: boolean
   onClick: () => void
   onDelete: (e: React.MouseEvent) => void
+  onRename: (newTitle: string) => void
 }
 
-function ChatItem({ chat, isActive, onClick, onDelete }: ChatItemProps) {
-  const [isHovered, setIsHovered] = useState(false)
+function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps) {
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [newTitle, setNewTitle] = useState(chat.title || '')
+
+  const handleRename = () => {
+    if (newTitle.trim() && newTitle !== chat.title) {
+      onRename(newTitle.trim())
+    }
+    setIsRenaming(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleRename()
+    } else if (e.key === 'Escape') {
+      setNewTitle(chat.title || '')
+      setIsRenaming(false)
+    }
+  }
 
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className={cn(
         'relative rounded-md transition-colors group',
         'hover:bg-muted',
         isActive && 'bg-muted border-l-2 border-primary'
       )}
     >
-      <button
-        onClick={onClick}
-        className="w-full text-left p-3"
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
-              {chat.title || 'Untitled Chat'}
-            </p>
-            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>
-                {formatDistanceToNow(new Date(chat.updated_at), {
-                  addSuffix: true,
-                })}
-              </span>
-            </div>
-          </div>
+      {isRenaming ? (
+        <div className="p-3">
+          <input
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleRename}
+            autoFocus
+            className="w-full px-2 py-1 text-sm bg-background border rounded"
+          />
         </div>
-      </button>
-      {isHovered && (
-        <button
-          onClick={onDelete}
-          className="absolute top-2 right-2 h-6 w-6 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent flex items-center justify-center"
-          aria-label="Delete chat"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
+      ) : (
+        <>
+          <button
+            onClick={onClick}
+            className="w-full text-left p-3 pr-10"
+          >
+            <TooltipProvider delayDuration={500}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {chat.title || 'Untitled Chat'}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {formatDistanceToNow(new Date(chat.updated_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <p>{chat.title || 'Untitled Chat'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </button>
+
+          <div className="absolute top-2 right-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="h-6 w-6 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent flex items-center justify-center"
+                  aria-label="Chat options"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsRenaming(true)
+                  }}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={onDelete}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </>
       )}
     </div>
   )

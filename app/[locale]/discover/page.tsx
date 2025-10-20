@@ -56,7 +56,7 @@ export default function DiscoverPage() {
   const searchParams = useSearchParams()
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
   const [chatHasTitle, setChatHasTitle] = useState(false)
-  const { createChat, loadMessages, saveMessages, updateChatTitle } = useDiscoveryChats()
+  const { createChat, loadMessages, saveMessages, updateChatTitle, loadChats } = useDiscoveryChats()
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
@@ -125,15 +125,16 @@ export default function DiscoverPage() {
             (firstUserMessage as any).content
 
           if (messageText) {
-            generateChatTitle(messageText).then((title) => {
-              updateChatTitle(currentChatId, title)
+            generateChatTitle(messageText).then(async (title) => {
+              await updateChatTitle(currentChatId, title)
+              await loadChats() // Refresh sidebar to show new title
               setChatHasTitle(true)
             })
           }
         }
       }
     }
-  }, [messages, currentChatId, isLoading, chatHasTitle, updateChatTitle, saveMessages])
+  }, [messages, currentChatId, isLoading, chatHasTitle, updateChatTitle, saveMessages, loadChats])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
