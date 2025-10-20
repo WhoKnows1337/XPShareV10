@@ -942,6 +942,302 @@ $$ LANGUAGE plpgsql;
 
 ---
 
+## 💬 UX Enhancement Tables
+
+### Citations Table
+
+```sql
+-- Migration: 015_citations.sql
+
+CREATE TABLE IF NOT EXISTS citations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  message_id UUID NOT NULL,
+  experience_id UUID REFERENCES experiences(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  url TEXT,
+  snippet TEXT,
+  score DECIMAL(3,2) CHECK (score >= 0 AND score <= 1),
+  position INT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS citations_message_id_idx ON citations(message_id);
+CREATE INDEX IF NOT EXISTS citations_experience_id_idx ON citations(experience_id);
+
+-- RLS Policies
+ALTER TABLE citations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Citations are viewable by everyone"
+ON citations FOR SELECT
+TO public
+USING (true);
+```
+
+### Memory System Tables
+
+```sql
+-- Migration: 016_memory.sql
+
+-- User Profile Memory (persistent)
+CREATE TABLE IF NOT EXISTS user_memory (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  scope TEXT NOT NULL CHECK (scope IN ('session', 'profile')),
+  key TEXT NOT NULL,
+  value JSONB NOT NULL,
+  source TEXT CHECK (source IN ('user_stated', 'inferred', 'system')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, scope, key)
+);
+
+CREATE INDEX IF NOT EXISTS user_memory_user_id_idx ON user_memory(user_id, scope);
+CREATE INDEX IF NOT EXISTS user_memory_key_idx ON user_memory(key);
+
+-- Session Memory (ephemeral, 24h expiry)
+CREATE TABLE IF NOT EXISTS session_memory (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  chat_id UUID NOT NULL,
+  key TEXT NOT NULL,
+  value JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '24 hours',
+  UNIQUE(chat_id, key)
+);
+
+CREATE INDEX IF NOT EXISTS session_memory_chat_id_idx ON session_memory(chat_id);
+CREATE INDEX IF NOT EXISTS session_memory_expires_idx ON session_memory(expires_at);
+
+-- Auto-cleanup expired sessions
+CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM session_memory WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- RLS Policies
+ALTER TABLE user_memory ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own memories"
+ON user_memory FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own memories"
+ON user_memory FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own memories"
+ON user_memory FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+```
+
+### Message Feedback Table
+
+```sql
+-- Migration: 017_feedback.sql
+
+CREATE TABLE IF NOT EXISTS message_feedback (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  message_id UUID NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  rating INT CHECK (rating IN (-1, 1)), -- thumbs up/down
+  feedback_text TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(message_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS message_feedback_message_idx ON message_feedback(message_id);
+CREATE INDEX IF NOT EXISTS message_feedback_user_idx ON message_feedback(user_id);
+CREATE INDEX IF NOT EXISTS message_feedback_rating_idx ON message_feedback(rating, created_at DESC);
+
+-- RLS Policies
+ALTER TABLE message_feedback ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert own feedback"
+ON message_feedback FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own feedback"
+ON message_feedback FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+```
+
+### Message Attachments Table
+
+```sql
+-- Migration: 018_attachments.sql
+
+CREATE TABLE IF NOT EXISTS message_attachments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  message_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_type TEXT NOT NULL,
+  file_size BIGINT NOT NULL CHECK (file_size <= 10485760), -- 10MB max
+  storage_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS message_attachments_message_idx ON message_attachments(message_id);
+CREATE INDEX IF NOT EXISTS message_attachments_user_idx ON message_attachments(user_id);
+
+-- RLS Policies
+ALTER TABLE message_attachments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert own attachments"
+ON message_attachments FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own attachments"
+ON message_attachments FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+```
+
+### Extended Chat Tables
+
+```sql
+-- Migration: 019_extended_chats.sql
+
+-- Add columns to existing chats table
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS pinned BOOLEAN DEFAULT false;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT false;
+ALTER TABLE chats ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;
+
+CREATE INDEX IF NOT EXISTS chats_pinned_idx ON chats(pinned) WHERE pinned = true;
+CREATE INDEX IF NOT EXISTS chats_archived_idx ON chats(archived) WHERE archived = false;
+CREATE INDEX IF NOT EXISTS chats_tags_idx ON chats USING GIN(tags);
+```
+
+### Branching & Threading Tables
+
+```sql
+-- Migration: 020_branching.sql
+
+CREATE TABLE IF NOT EXISTS message_branches (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  parent_message_id UUID NOT NULL,
+  child_message_id UUID NOT NULL,
+  branch_index INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(parent_message_id, child_message_id)
+);
+
+CREATE INDEX IF NOT EXISTS message_branches_parent_idx ON message_branches(parent_message_id);
+CREATE INDEX IF NOT EXISTS message_branches_child_idx ON message_branches(child_message_id);
+```
+
+```sql
+-- Migration: 021_threading.sql
+
+CREATE TABLE IF NOT EXISTS message_threads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  parent_message_id UUID NOT NULL,
+  reply_message_id UUID NOT NULL,
+  depth INT NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(parent_message_id, reply_message_id)
+);
+
+CREATE INDEX IF NOT EXISTS message_threads_parent_idx ON message_threads(parent_message_id);
+CREATE INDEX IF NOT EXISTS message_threads_reply_idx ON message_threads(reply_message_id);
+```
+
+### Shared Chats Table
+
+```sql
+-- Migration: 022_sharing.sql
+
+CREATE TABLE IF NOT EXISTS shared_chats (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  chat_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  share_token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ,
+  view_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS shared_chats_token_idx ON shared_chats(share_token);
+CREATE INDEX IF NOT EXISTS shared_chats_chat_idx ON shared_chats(chat_id);
+CREATE INDEX IF NOT EXISTS shared_chats_expires_idx ON shared_chats(expires_at);
+
+-- RLS Policies
+ALTER TABLE shared_chats ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can create shares for own chats"
+ON shared_chats FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Shared chats are viewable by token"
+ON shared_chats FOR SELECT
+TO public
+USING (expires_at IS NULL OR expires_at > NOW());
+```
+
+### Token Tracking
+
+```sql
+-- Migration: 023_token_tracking.sql
+
+-- Add columns to messages table
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS tokens_used INT DEFAULT 0;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS cost_usd DECIMAL(10,6) DEFAULT 0.0;
+
+CREATE INDEX IF NOT EXISTS messages_tokens_idx ON messages(tokens_used);
+CREATE INDEX IF NOT EXISTS messages_cost_idx ON messages(cost_usd);
+```
+
+### Prompt Library Table
+
+```sql
+-- Migration: 024_prompt_library.sql
+
+CREATE TABLE IF NOT EXISTS prompt_templates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  description TEXT,
+  prompt_text TEXT NOT NULL,
+  category_slug TEXT,
+  tags TEXT[] DEFAULT '{}',
+  use_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS prompt_templates_category_idx ON prompt_templates(category_slug);
+CREATE INDEX IF NOT EXISTS prompt_templates_tags_idx ON prompt_templates USING GIN(tags);
+CREATE INDEX IF NOT EXISTS prompt_templates_use_count_idx ON prompt_templates(use_count DESC);
+
+-- RLS Policies
+ALTER TABLE prompt_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Prompt templates are viewable by everyone"
+ON prompt_templates FOR SELECT
+TO public
+USING (true);
+
+-- Seed initial prompts
+INSERT INTO prompt_templates (title, description, prompt_text, category_slug, tags) VALUES
+('UFO Sightings in City', 'Search for UFO sightings in a specific city', 'Show me UFO sightings in [CITY] from the last [TIME_PERIOD]', 'ufo', ARRAY['location', 'recent']),
+('Dream Pattern Analysis', 'Analyze recurring dream symbols', 'Analyze dream patterns featuring [SYMBOL] and identify common themes', 'dreams', ARRAY['analysis', 'symbols']),
+('NDE Comparison', 'Compare near-death experiences', 'Compare near-death experiences from [LOCATION] and identify similarities', 'nde', ARRAY['comparison', 'patterns']),
+('Synchronicity Timeline', 'View synchronicity events over time', 'Show me synchronicity experiences from [DATE_RANGE] visualized on a timeline', 'synchronicity', ARRAY['temporal', 'visualization']),
+('Top Contributors', 'Rank users by category', 'Who are the top contributors in the [CATEGORY] category?', NULL, ARRAY['users', 'rankings'])
+ON CONFLICT DO NOTHING;
+```
+
+---
+
 ## 🚀 Migration Execution Order
 
 Execute migrations in this order:
@@ -976,6 +1272,18 @@ psql -f migrations/013_rls_policies.sql
 
 # 8. Monitoring
 psql -f migrations/014_monitoring.sql
+
+# 9. UX Enhancements (Citations, Memory, Feedback, etc.)
+psql -f migrations/015_citations.sql
+psql -f migrations/016_memory.sql
+psql -f migrations/017_feedback.sql
+psql -f migrations/018_attachments.sql
+psql -f migrations/019_extended_chats.sql
+psql -f migrations/020_branching.sql
+psql -f migrations/021_threading.sql
+psql -f migrations/022_sharing.sql
+psql -f migrations/023_token_tracking.sql
+psql -f migrations/024_prompt_library.sql
 ```
 
 **Or use Supabase MCP:**

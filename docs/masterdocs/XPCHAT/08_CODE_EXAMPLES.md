@@ -356,4 +356,248 @@ describe('QueryAgent', () => {
 
 ---
 
+## 💬 UX Enhancement Examples
+
+### Citation Component
+
+```typescript
+// components/discover/CitationList.tsx
+'use client'
+
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
+
+interface Citation {
+  id: string
+  position: number
+  title: string
+  url: string
+  snippet: string
+  score: number
+}
+
+export function CitationList({ citations }: { citations: Citation[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {citations.map((citation) => (
+        <div key={citation.id} className="relative group">
+          <button
+            onClick={() => setExpandedId(expandedId === citation.id ? null : citation.id)}
+            className={cn(
+              'text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200',
+              'text-blue-700 font-medium transition-colors'
+            )}
+          >
+            [{citation.position}]
+          </button>
+
+          {expandedId === citation.id && (
+            <div className="absolute z-10 mt-2 p-3 bg-white border rounded-lg shadow-lg w-64">
+              <h4 className="font-semibold text-sm mb-1">{citation.title}</h4>
+              <p className="text-xs text-gray-600 mb-2">{citation.snippet}</p>
+              <a
+                href={citation.url}
+                className="text-xs text-blue-600 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View full experience →
+              </a>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+### Memory Hook
+
+```typescript
+// lib/hooks/useMemory.ts
+import { useEffect, useState } from 'use client'
+import { createClient } from '@/lib/supabase/client'
+
+export function useMemory(userId?: string, chatId?: string) {
+  const [preferences, setPreferences] = useState<any>(null)
+  const [sessionContext, setSessionContext] = useState<any[]>([])
+
+  useEffect(() => {
+    if (!userId) return
+
+    // Load user preferences
+    const loadPreferences = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('user_memory')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('scope', 'profile')
+
+      const prefs = {
+        preferredCategories: data?.find((m) => m.key === 'preferred_categories')?.value || [],
+        preferredViz: data?.find((m) => m.key === 'preferred_viz')?.value || 'timeline',
+        language: data?.find((m) => m.key === 'language')?.value || 'de',
+      }
+
+      setPreferences(prefs)
+    }
+
+    loadPreferences()
+  }, [userId])
+
+  useEffect(() => {
+    if (!chatId) return
+
+    // Load session context
+    const loadSession = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('session_memory')
+        .select('*')
+        .eq('chat_id', chatId)
+        .gt('expires_at', new Date().toISOString())
+
+      setSessionContext(data || [])
+    }
+
+    loadSession()
+  }, [chatId])
+
+  const updatePreference = async (key: string, value: any) => {
+    if (!userId) return
+
+    const supabase = createClient()
+    await supabase.from('user_memory').upsert({
+      user_id: userId,
+      scope: 'profile',
+      key,
+      value,
+      source: 'user_stated',
+      updated_at: new Date().toISOString(),
+    })
+
+    setPreferences((prev: any) => ({ ...prev, [key]: value }))
+  }
+
+  return { preferences, sessionContext, updatePreference }
+}
+```
+
+### Message Actions Component
+
+```typescript
+// components/discover/MessageActions.tsx
+'use client'
+
+import { Copy, ThumbsUp, ThumbsDown, Edit, RotateCw, Share2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+
+interface MessageActionsProps {
+  messageId: string
+  content: string
+  role: 'user' | 'assistant'
+  onEdit?: () => void
+  onRegenerate?: () => void
+  onShare?: () => void
+}
+
+export function MessageActions({
+  messageId,
+  content,
+  role,
+  onEdit,
+  onRegenerate,
+  onShare,
+}: MessageActionsProps) {
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content)
+    toast.success('Copied to clipboard')
+  }
+
+  const handleRate = async (rating: number) => {
+    await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messageId,
+        rating,
+      }),
+    })
+
+    toast.success(rating === 1 ? 'Thanks for the feedback!' : 'Feedback noted')
+  }
+
+  return (
+    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={handleCopy}
+        title="Copy"
+      >
+        <Copy className="h-3 w-3" />
+      </Button>
+
+      {role === 'assistant' && (
+        <>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleRate(1)}
+            title="Good response"
+          >
+            <ThumbsUp className="h-3 w-3" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleRate(-1)}
+            title="Bad response"
+          >
+            <ThumbsDown className="h-3 w-3" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onRegenerate}
+            title="Regenerate"
+          >
+            <RotateCw className="h-3 w-3" />
+          </Button>
+        </>
+      )}
+
+      {role === 'user' && onEdit && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onEdit}
+          title="Edit"
+        >
+          <Edit className="h-3 w-3" />
+        </Button>
+      )}
+
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onShare}
+        title="Share"
+      >
+        <Share2 className="h-3 w-3" />
+      </Button>
+    </div>
+  )
+}
+```
+
+---
+
 **Next:** See 09_API_REFERENCE.md for complete API docs.

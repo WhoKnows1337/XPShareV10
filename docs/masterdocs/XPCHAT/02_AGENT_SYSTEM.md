@@ -37,7 +37,8 @@ Your role:
 1. Understand complex user questions about extraordinary experiences
 2. Break them into executable sub-tasks
 3. Delegate to specialist agents
-4. Synthesize responses
+4. Synthesize responses with citations
+5. Learn user preferences over time
 
 Available Specialists:
 - QUERY AGENT: Database searches, filtering, aggregations
@@ -49,11 +50,23 @@ Database:
 - 164 attributes (dream_symbol, ufo_shape, etc.)
 - Geographic, temporal, semantic data
 
+Memory & Personalization:
+- User Profile Memory: Long-term preferences (categories, visualization types, language)
+- Session Memory: Short-term context (recent searches, active filters)
+- Use memory to personalize responses and anticipate needs
+
+Citations:
+- ALWAYS generate citations when referencing specific experiences
+- Use footnote style [1][2][3] in responses
+- Link citations to source experiences
+
 IMPORTANT:
 - Use Query Agent for ALL data retrieval
 - Use Viz Agent when user wants to "see" something
 - Use Insight Agent for "why" questions or pattern analysis
 - Combine multiple agents for complex queries
+- Always include citations for factual claims
+- Update user preferences based on conversation patterns
 - Always explain your reasoning
 
 Example Workflow:
@@ -170,6 +183,133 @@ export class OrchestratorAgent {
       insights: results.filter(r => r.agent === 'insight').map(r => r.data),
       data: results.filter(r => r.agent === 'query').map(r => r.data)
     }
+  }
+}
+```
+
+### Memory Integration
+
+```typescript
+// lib/agents/orchestrator-with-memory.ts
+import { MemoryManager } from '@/lib/memory/manager'
+import { generateCitations } from '@/lib/citations/generator'
+
+export class OrchestratorAgentWithMemory extends OrchestratorAgent {
+  private memoryManager: MemoryManager
+
+  constructor() {
+    super()
+    this.memoryManager = new MemoryManager()
+  }
+
+  async process(
+    userMessage: string,
+    conversationHistory: Message[],
+    userId?: string,
+    chatId?: string
+  ) {
+    // Step 1: Load user preferences and session memory
+    const userPreferences = userId
+      ? await this.memoryManager.getUserPreferences(userId)
+      : null
+
+    const sessionContext = chatId
+      ? await this.memoryManager.getSessionMemory(chatId)
+      : []
+
+    // Step 2: Create enhanced execution plan with memory context
+    const plan = await this.createExecutionPlan(
+      userMessage,
+      conversationHistory,
+      { userPreferences, sessionContext }
+    )
+
+    // Step 3: Execute plan
+    const results = await this.executePlan(plan)
+
+    // Step 4: Generate citations for experiences referenced
+    const experienceIds = this.extractExperienceIds(results)
+    const citations = await generateCitations(messageId, experienceIds)
+
+    // Step 5: Update memory based on conversation
+    if (userId && chatId) {
+      await this.updateMemoryFromConversation(
+        userId,
+        chatId,
+        userMessage,
+        results
+      )
+    }
+
+    // Step 6: Synthesize response with citations
+    return await this.synthesizeResponse(results, userMessage, {
+      citations,
+      userPreferences,
+    })
+  }
+
+  private async updateMemoryFromConversation(
+    userId: string,
+    chatId: string,
+    userMessage: string,
+    results: any[]
+  ) {
+    // Infer user preferences from conversation
+    const categoryMentions = this.extractCategories(userMessage)
+    if (categoryMentions.length > 0) {
+      const existingPrefs =
+        (await this.memoryManager.getProfileMemory(userId, 'preferred_categories')) || []
+
+      const updatedPrefs = [
+        ...new Set([...existingPrefs, ...categoryMentions]),
+      ].slice(0, 5)
+
+      await this.memoryManager.setProfileMemory(
+        userId,
+        'preferred_categories',
+        updatedPrefs,
+        'inferred'
+      )
+    }
+
+    // Store session context (last search parameters)
+    const queryResults = results.filter((r) => r.agent === 'query')
+    if (queryResults.length > 0) {
+      await this.memoryManager.setSessionMemory(chatId, 'last_query', {
+        parameters: queryResults[0].parameters,
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
+
+  private extractExperienceIds(results: any[]): string[] {
+    const experienceIds: string[] = []
+
+    results
+      .filter((r) => r.agent === 'query')
+      .forEach((result) => {
+        if (result.data?.results) {
+          result.data.results.forEach((exp: any) => {
+            if (exp.id) experienceIds.push(exp.id)
+          })
+        }
+      })
+
+    return experienceIds
+  }
+
+  private extractCategories(message: string): string[] {
+    const categories = [
+      'ufo',
+      'dreams',
+      'nde',
+      'synchronicity',
+      'psychic',
+      'ghost',
+    ]
+    return categories.filter((cat) =>
+      message.toLowerCase().includes(cat)
+    )
   }
 }
 ```

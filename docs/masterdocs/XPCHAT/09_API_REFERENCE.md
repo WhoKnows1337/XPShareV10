@@ -453,4 +453,227 @@ fetch('/api/discover', {
 
 ---
 
+## 💬 UX Enhancement Endpoints
+
+### POST /api/memory
+
+**Purpose:** Set or update user memory (preferences, context)
+
+**Request:**
+```typescript
+{
+  scope: 'profile' | 'session'
+  key: string
+  value: any
+  source?: 'user_stated' | 'inferred' | 'system'
+}
+```
+
+**Response:**
+```typescript
+{
+  id: string
+  user_id: string
+  scope: string
+  key: string
+  value: any
+  created_at: string
+  updated_at: string
+}
+```
+
+**Example:**
+```typescript
+await fetch('/api/memory', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    scope: 'profile',
+    key: 'preferred_categories',
+    value: ['ufo', 'dreams', 'nde'],
+    source: 'user_stated'
+  })
+})
+```
+
+---
+
+### GET /api/memory
+
+**Purpose:** Retrieve user memory
+
+**Query Parameters:**
+- `scope` (optional): 'profile' | 'session'
+- `key` (optional): Specific key to retrieve
+
+**Response:**
+```typescript
+{
+  memories: Array<{
+    id: string
+    scope: string
+    key: string
+    value: any
+    source: string
+    updated_at: string
+  }>
+}
+```
+
+**Example:**
+```typescript
+const res = await fetch('/api/memory?scope=profile', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+```
+
+---
+
+### POST /api/feedback
+
+**Purpose:** Submit message feedback (thumbs up/down)
+
+**Request:**
+```typescript
+{
+  messageId: string
+  rating: 1 | -1  // thumbs up = 1, thumbs down = -1
+  feedbackText?: string
+}
+```
+
+**Response:**
+```typescript
+{
+  id: string
+  message_id: string
+  user_id: string
+  rating: number
+  created_at: string
+}
+```
+
+**Example:**
+```typescript
+await fetch('/api/feedback', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    messageId: '123e4567-e89b-12d3-a456-426614174000',
+    rating: 1
+  })
+})
+```
+
+---
+
+### POST /api/upload
+
+**Purpose:** Upload attachments (images, files)
+
+**Request:** `multipart/form-data`
+- `file`: File to upload (max 10MB)
+- `messageId`: UUID of message
+
+**Response:**
+```typescript
+{
+  id: string
+  message_id: string
+  file_name: string
+  file_type: string
+  file_size: number
+  storage_url: string
+  created_at: string
+}
+```
+
+**Example:**
+```typescript
+const formData = new FormData()
+formData.append('file', file)
+formData.append('messageId', messageId)
+
+await fetch('/api/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  },
+  body: formData
+})
+```
+
+---
+
+### POST /api/share
+
+**Purpose:** Create shareable link for chat
+
+**Request:**
+```typescript
+{
+  chatId: string
+  expiresInHours?: number  // default: null (no expiry)
+}
+```
+
+**Response:**
+```typescript
+{
+  id: string
+  chat_id: string
+  share_token: string
+  expires_at: string | null
+  share_url: string  // e.g., "/share/abc123def456"
+}
+```
+
+**Example:**
+```typescript
+await fetch('/api/share', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    chatId: '123e4567-e89b-12d3-a456-426614174000',
+    expiresInHours: 24
+  })
+})
+```
+
+---
+
+### GET /api/share/[token]
+
+**Purpose:** Retrieve shared chat by token
+
+**Response:**
+```typescript
+{
+  chat: {
+    id: string
+    title: string
+    messages: Array<{
+      id: string
+      role: 'user' | 'assistant'
+      content: string
+      created_at: string
+    }>
+  }
+  expires_at: string | null
+}
+```
+
+---
+
 **Next:** See 10_DEPLOYMENT_GUIDE.md for production deployment.

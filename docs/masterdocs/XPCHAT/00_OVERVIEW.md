@@ -233,6 +233,29 @@ The Viz Agent auto-selects based on data structure:
 - Attribute filtering (structured data)
 - Reranking for optimal results
 
+### 6. **Citations & Source Attribution** ⭐ NEW
+- Footnote-style citations [1][2][3] for all factual claims
+- Hover to see snippets, click to view full experience
+- Trust through transparency
+
+### 7. **Memory & Personalization** ⭐ NEW
+- Profile Memory: Long-term preferences (favorite categories, viz types)
+- Session Memory: Short-term context (recent searches, active filters)
+- Learns from conversation patterns, no explicit configuration needed
+
+### 8. **Advanced Message Actions** ⭐ NEW
+- Edit & regenerate responses
+- Thumbs up/down feedback
+- Share conversations
+- Copy code blocks with syntax highlighting
+- Branching conversations for alternative paths
+
+### 9. **Multi-Modal Input** ⭐ NEW
+- Upload images for vision-based analysis
+- Attach documents for context
+- Speech-to-text for voice queries
+- Image OCR for text extraction
+
 ---
 
 ## 📈 Expected Capabilities
@@ -308,6 +331,15 @@ After full implementation, users can:
 - Monitoring
 - User testing
 
+**Phase 7: UX Enhancements** (Week 7-8) ⭐ NEW
+- Citations & source attribution
+- Memory system (session + profile)
+- Message actions (edit, regenerate, share)
+- Multi-modal input (images, files, voice)
+- Advanced session management
+- Accessibility & keyboard shortcuts
+- Offline mode & error recovery
+
 ---
 
 ## 📦 Tech Stack
@@ -333,6 +365,11 @@ After full implementation, users can:
   - Leaflet (maps)
   - react-force-graph-3d (networks)
 - **State**: AI SDK useChat hook
+- **UX Enhancements**: ⭐ NEW
+  - Speech-to-text (Web Speech API)
+  - File upload (Supabase Storage)
+  - Syntax highlighting (Prism.js)
+  - Offline support (LocalStorage + Service Workers)
 
 ### DevOps
 - **Hosting**: Vercel
@@ -346,16 +383,17 @@ After full implementation, users can:
 
 1. **00_OVERVIEW.md** (this file) - Executive summary
 2. **01_ARCHITECTURE.md** - Detailed architecture
-3. **02_AGENT_SYSTEM.md** - Agent implementation
+3. **02_AGENT_SYSTEM.md** - Agent implementation (+ Memory & Citations)
 4. **03_TOOLS_CATALOG.md** - Complete tool catalog
-5. **04_DATABASE_LAYER.md** - SQL functions & schema
+5. **04_DATABASE_LAYER.md** - SQL functions & schema (+ UX tables)
 6. **05_VISUALIZATION_ENGINE.md** - Auto-viz system
 7. **06_ADVANCED_FEATURES.md** - Insights, predictions
 8. **07_IMPLEMENTATION_PHASES.md** - Roadmap
 9. **08_CODE_EXAMPLES.md** - Code snippets
 10. **09_API_REFERENCE.md** - API documentation
 11. **10_DEPLOYMENT_GUIDE.md** - Production guide
-12. **11_IMPLEMENTATION_CHECKLIST.md** - Master checklist
+12. **11_IMPLEMENTATION_CHECKLIST.md** - Master checklist (+ Phase 8)
+13. **12_UX_ENHANCEMENTS.md** - 17 Modern UX Features ⭐ NEW
 
 ---
 

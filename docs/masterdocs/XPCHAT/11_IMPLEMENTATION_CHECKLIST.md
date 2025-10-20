@@ -354,6 +354,269 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ---
 
+## Phase 8: UX Enhancements (Week 7-8)
+
+### Citations & Source Attribution
+
+- [ ] 📋 Create `citations` table
+  - [ ] 📋 Write migration 015
+  - [ ] 📋 Test migration locally
+  - [ ] 📋 Add indexes (message_id, experience_id)
+- [ ] 📋 Create `/lib/citations/generator.ts`
+  - [ ] 📋 Implement `generateCitations()`
+  - [ ] 📋 Add citation extraction from tool results
+  - [ ] 📋 Score citations by relevance
+- [ ] 📋 Create `/components/discover/CitationList.tsx`
+  - [ ] 📋 Footnote-style rendering [1][2][3]
+  - [ ] 📋 Hover popups with snippets
+  - [ ] 📋 Click to expand full source
+- [ ] 📋 Integrate into API route
+  - [ ] 📋 Auto-generate citations after tool calls
+  - [ ] 📋 Include in message metadata
+- [ ] 📋 Unit tests
+
+### Memory System
+
+- [ ] 📋 Create `user_memory` table
+  - [ ] 📋 Write migration 016
+  - [ ] 📋 Add indexes (user_id, scope, key)
+  - [ ] 📋 Enable RLS
+- [ ] 📋 Create `session_memory` table
+  - [ ] 📋 Add to migration 016
+  - [ ] 📋 Auto-expiry after 24h
+- [ ] 📋 Create `/lib/memory/manager.ts`
+  - [ ] 📋 Implement `MemoryManager` class
+  - [ ] 📋 `setProfileMemory()`
+  - [ ] 📋 `getProfileMemory()`
+  - [ ] 📋 `setSessionMemory()`
+  - [ ] 📋 `getUserPreferences()`
+- [ ] 📋 Create `/components/discover/MemoryPanel.tsx`
+  - [ ] 📋 Display user preferences
+  - [ ] 📋 Edit/delete memories
+  - [ ] 📋 Session context viewer
+- [ ] 📋 Integrate into Orchestrator Agent
+  - [ ] 📋 Load user preferences before execution
+  - [ ] 📋 Update preferences from conversation
+  - [ ] 📋 Use preferences for personalization
+- [ ] 📋 Unit tests
+
+### Message Actions
+
+- [ ] 📋 Create `/components/discover/MessageActions.tsx`
+  - [ ] 📋 Copy button
+  - [ ] 📋 Edit button (user messages only)
+  - [ ] 📋 Regenerate button (assistant messages)
+  - [ ] 📋 Share button
+  - [ ] 📋 Thumbs up/down rating
+- [ ] 📋 Create `message_feedback` table
+  - [ ] 📋 Write migration 017
+  - [ ] 📋 Store ratings and feedback
+- [ ] 📋 Create `/app/api/feedback/route.ts`
+  - [ ] 📋 POST endpoint for ratings
+  - [ ] 📋 Store in database
+- [ ] 📋 Implement edit functionality
+  - [ ] 📋 Re-submit with edited prompt
+  - [ ] 📋 Fork conversation branch
+- [ ] 📋 Implement regenerate
+  - [ ] 📋 Re-run last assistant message
+  - [ ] 📋 Keep previous response in history
+- [ ] 📋 Unit tests
+
+### Abort/Stop Streaming
+
+- [ ] 📋 Add AbortController to API route
+  - [ ] 📋 Create controller per request
+  - [ ] 📋 Pass to streamText
+- [ ] 📋 Create `/components/discover/StopButton.tsx`
+  - [ ] 📋 Show only during streaming
+  - [ ] 📋 Call abort() on click
+  - [ ] 📋 Hide within 100ms of abort
+- [ ] 📋 Update useChat integration
+  - [ ] 📋 Expose abort function
+  - [ ] 📋 Handle partial responses
+- [ ] 📋 Test abort latency (< 100ms)
+
+### Attachments & Multi-Modal Input
+
+- [ ] 📋 Create `message_attachments` table
+  - [ ] 📋 Write migration 018
+  - [ ] 📋 Store file metadata (name, size, type, url)
+- [ ] 📋 Create `/components/discover/AttachmentUpload.tsx`
+  - [ ] 📋 File input with drag-and-drop
+  - [ ] 📋 Image preview thumbnails
+  - [ ] 📋 File size validation (10MB max)
+  - [ ] 📋 Type validation (images, PDFs)
+- [ ] 📋 Create `/app/api/upload/route.ts`
+  - [ ] 📋 Upload to Supabase Storage
+  - [ ] 📋 Return public URL
+  - [ ] 📋 Virus scanning (optional)
+- [ ] 📋 Integrate vision API for images
+  - [ ] 📋 Pass images to GPT-4o
+  - [ ] 📋 Extract text from images (OCR)
+- [ ] 📋 Unit tests
+
+### Structured Error States
+
+- [ ] 📋 Create `/lib/errors/types.ts`
+  - [ ] 📋 Define error codes
+  - [ ] 📋 Recovery action types
+- [ ] 📋 Create `/components/discover/ErrorState.tsx`
+  - [ ] 📋 Network error UI
+  - [ ] 📋 Rate limit error UI
+  - [ ] 📋 Timeout error UI
+  - [ ] 📋 Generic error UI
+  - [ ] 📋 Recovery action buttons
+- [ ] 📋 Update API error handling
+  - [ ] 📋 Return typed errors
+  - [ ] 📋 Include retry-after headers
+- [ ] 📋 Unit tests
+
+### Context/Active Tools Banner
+
+- [ ] 📋 Create `/components/discover/ContextBanner.tsx`
+  - [ ] 📋 Show active search filters
+  - [ ] 📋 Show active tools
+  - [ ] 📋 Dismiss button
+  - [ ] 📋 Edit filters inline
+- [ ] 📋 Track active context in state
+  - [ ] 📋 Update on tool execution
+  - [ ] 📋 Clear on new conversation
+- [ ] 📋 Unit tests
+
+### Rich Content Rendering
+
+- [ ] 📋 Create `/components/discover/RichRenderer.tsx`
+  - [ ] 📋 Code block with syntax highlighting
+  - [ ] 📋 Copy button per code block
+  - [ ] 📋 Table rendering
+  - [ ] 📋 List formatting
+  - [ ] 📋 Inline citations
+- [ ] 📋 Install dependencies (highlight.js or Prism)
+- [ ] 📋 Unit tests
+
+### Enhanced Session Management
+
+- [ ] 📋 Update `/components/discover/ChatSidebar.tsx`
+  - [ ] 📋 Pin/unpin chats
+  - [ ] 📋 Archive chats
+  - [ ] 📋 Search chat titles
+  - [ ] 📋 Filter by date/tags
+- [ ] 📋 Add `pinned` column to `chats` table
+- [ ] 📋 Add `archived` column to `chats` table
+- [ ] 📋 Add `tags` JSONB column
+- [ ] 📋 Write migration 019
+- [ ] 📋 Unit tests
+
+### Keyboard Shortcuts
+
+- [ ] 📋 Create `/lib/hooks/useKeyboardShortcuts.ts`
+  - [ ] 📋 Cmd/Ctrl+K - Focus search
+  - [ ] 📋 Cmd/Ctrl+N - New chat
+  - [ ] 📋 Cmd/Ctrl+Enter - Send message
+  - [ ] 📋 Esc - Close modals/cancel
+  - [ ] 📋 Cmd/Ctrl+/ - Show shortcuts help
+- [ ] 📋 Create `/components/discover/ShortcutsModal.tsx`
+  - [ ] 📋 List all shortcuts
+  - [ ] 📋 Platform detection (Mac/Windows)
+- [ ] 📋 Unit tests
+
+### Accessibility (ARIA)
+
+- [ ] 📋 Add ARIA labels to all interactive elements
+- [ ] 📋 Add `role="status"` to message list
+- [ ] 📋 Add `aria-live="polite"` to streaming messages
+- [ ] 📋 Implement keyboard navigation
+  - [ ] 📋 Tab through messages
+  - [ ] 📋 Arrow keys in chat list
+- [ ] 📋 Add skip-to-content link
+- [ ] 📋 Test with screen reader (NVDA/VoiceOver)
+- [ ] 📋 Run Lighthouse accessibility audit
+
+### Branching Conversations
+
+- [ ] 📋 Create `message_branches` table
+  - [ ] 📋 Write migration 020
+  - [ ] 📋 Track parent/child messages
+- [ ] 📋 Create `/components/discover/BranchSelector.tsx`
+  - [ ] 📋 Show branch indicator
+  - [ ] 📋 Navigate between branches
+  - [ ] 📋 Visual branch tree
+- [ ] 📋 Update message rendering
+  - [ ] 📋 Show branch count
+  - [ ] 📋 Switch to branch on click
+- [ ] 📋 Unit tests
+
+### Collaborative Sharing
+
+- [ ] 📋 Create `shared_chats` table
+  - [ ] 📋 Write migration 021
+  - [ ] 📋 Generate share tokens
+  - [ ] 📋 Track expiry
+- [ ] 📋 Create `/app/api/share/route.ts`
+  - [ ] 📋 POST - Create share link
+  - [ ] 📋 GET - Fetch shared chat
+- [ ] 📋 Create `/app/[locale]/share/[token]/page.tsx`
+  - [ ] 📋 Read-only chat view
+  - [ ] 📋 Copy conversation button
+- [ ] 📋 Unit tests
+
+### Cost/Token Tracking
+
+- [ ] 📋 Add `tokens_used` column to `messages` table
+- [ ] 📋 Add `cost_usd` column to `messages` table
+- [ ] 📋 Write migration 022
+- [ ] 📋 Create `/lib/monitoring/token-tracker.ts`
+  - [ ] 📋 Calculate tokens from usage
+  - [ ] 📋 Calculate cost (GPT-4o pricing)
+- [ ] 📋 Create `/components/discover/CostBadge.tsx`
+  - [ ] 📋 Show tokens per message
+  - [ ] 📋 Show total session cost
+- [ ] 📋 Unit tests
+
+### Prompt Library
+
+- [ ] 📋 Create `prompt_templates` table
+  - [ ] 📋 Write migration 023
+  - [ ] 📋 Store pre-built queries
+- [ ] 📋 Seed initial prompts
+  - [ ] 📋 "Show me UFO sightings in..."
+  - [ ] 📋 "Analyze dream patterns..."
+  - [ ] 📋 "Compare NDE experiences..."
+  - [ ] 📋 10+ templates per category
+- [ ] 📋 Create `/components/discover/PromptLibrary.tsx`
+  - [ ] 📋 Grid of prompt cards
+  - [ ] 📋 Click to use template
+  - [ ] 📋 Filter by category
+- [ ] 📋 Unit tests
+
+### Message Threading
+
+- [ ] 📋 Create `message_threads` table
+  - [ ] 📋 Write migration 024
+  - [ ] 📋 Track thread parent/replies
+- [ ] 📋 Create `/components/discover/ThreadView.tsx`
+  - [ ] 📋 Reply button on messages
+  - [ ] 📋 Nested reply UI
+  - [ ] 📋 Collapse/expand threads
+- [ ] 📋 Update API to handle threads
+  - [ ] 📋 Include thread context in prompts
+- [ ] 📋 Unit tests
+
+### Offline Mode
+
+- [ ] 📋 Create `/lib/queue/message-queue.ts`
+  - [ ] 📋 Queue messages in localStorage
+  - [ ] 📋 Auto-sync on reconnect
+- [ ] 📋 Create `/components/discover/OfflineBanner.tsx`
+  - [ ] 📋 Show when disconnected
+  - [ ] 📋 Queue count indicator
+- [ ] 📋 Add network status detection
+  - [ ] 📋 Listen to online/offline events
+  - [ ] 📋 Test with throttled network
+- [ ] 📋 Unit tests
+
+---
+
 ## Post-Launch
 
 ### Week 1
@@ -389,7 +652,7 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ## 📊 Progress Tracking
 
-**Overall Completion:** 0/250+ tasks
+**Overall Completion:** 0/420+ tasks
 
 **Phase 1:** 0/30 tasks
 **Phase 2:** 0/28 tasks
@@ -398,6 +661,7 @@ Update this file as you complete tasks. Mark your progress daily.
 **Phase 5:** 0/18 tasks
 **Phase 6:** 0/15 tasks
 **Phase 7:** 0/25 tasks
+**Phase 8:** 0/170 tasks (UX Enhancements)
 
 ---
 
@@ -420,13 +684,14 @@ If you're starting fresh, begin with these tasks:
 
 **END OF DOCUMENTATION**
 
-All 12 files complete! You now have:
+All 13 files complete! You now have:
 - Complete architecture
 - All agent implementations
 - All tool specifications
 - Database layer with SQL functions
 - Visualization engine
 - Advanced features
+- **17 Modern UX Enhancements (12_UX_ENHANCEMENTS.md)**
 - Roadmap
 - Code examples
 - API reference
