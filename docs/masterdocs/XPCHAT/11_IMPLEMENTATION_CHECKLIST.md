@@ -113,11 +113,11 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Insight Agent
 
-- [ ] 📋 Create `/lib/agents/insight-agent.ts`
-- [ ] 📋 Implement temporal pattern detection
-- [ ] 📋 Implement geographic pattern detection
-- [ ] 📋 Implement semantic pattern detection
-- [ ] 📋 Implement insight card generation
+- [x] ✅ Create `/lib/agents/insight-agent.ts`
+- [x] ✅ Implement temporal pattern detection
+- [x] ✅ Implement geographic pattern detection
+- [x] ✅ Implement semantic pattern detection
+- [x] ✅ Implement insight card generation
 - [ ] 📋 Write unit tests
 
 ### Agent Communication
