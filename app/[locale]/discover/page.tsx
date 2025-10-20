@@ -146,9 +146,16 @@ export default function DiscoverPage() {
   }, [searchParams]) // Only depend on searchParams to avoid race conditions
 
   // Auto-save messages when they change and generate title for first message
+  // Only save when streaming is complete to avoid race conditions
   useEffect(() => {
     if (currentChatId && messages.length > 0 && !isLoading) {
-      saveMessages(currentChatId, messages)
+      // Debounce: only save after streaming is complete
+      const timeoutId = setTimeout(() => {
+        saveMessages(currentChatId, messages).catch((err) => {
+          console.error('Failed to save messages:', err)
+          // Don't retry automatically to avoid error loops
+        })
+      }, 500) // Wait 500ms after last update
 
       // Generate title from first user message if chat doesn't have one
       if (!chatHasTitle && messages.length >= 1) {
@@ -167,6 +174,8 @@ export default function DiscoverPage() {
           }
         }
       }
+
+      return () => clearTimeout(timeoutId)
     }
   }, [messages, currentChatId, isLoading, chatHasTitle, updateChatTitle, saveMessages, loadChats])
 

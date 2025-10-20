@@ -98,11 +98,28 @@ export function useDiscoveryChats() {
   // Save messages for a chat (upsert pattern)
   const saveMessages = async (chatId: string, messages: Message[]): Promise<boolean> => {
     try {
+      // Verify chat belongs to current user before attempting save
+      const { data: chat, error: chatError } = await supabase
+        .from('discovery_chats')
+        .select('id, user_id')
+        .eq('id', chatId)
+        .single()
+
+      if (chatError || !chat) {
+        console.warn('Chat not found or access denied:', chatId)
+        return false
+      }
+
       // First, delete old messages for this chat
-      await supabase
+      const { error: deleteError } = await supabase
         .from('discovery_messages')
         .delete()
         .eq('chat_id', chatId)
+
+      if (deleteError && deleteError.code !== 'PGRST116') {
+        // Ignore "no rows found" error (PGRST116)
+        throw deleteError
+      }
 
       // Insert new messages
       const { error: insertError } = await supabase
@@ -121,8 +138,11 @@ export function useDiscoveryChats() {
         .eq('id', chatId)
 
       return true
-    } catch (err) {
-      console.error('Error saving messages:', err)
+    } catch (err: any) {
+      // Only log error once, not hundreds of times
+      if (err?.code !== 'PGRST116') {
+        console.error('Error saving messages:', err?.message || err)
+      }
       setError(err as Error)
       return false
     }
