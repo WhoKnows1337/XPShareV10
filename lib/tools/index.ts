@@ -24,3 +24,9 @@ export {
 
 // Relationship Tools
 export { findConnectionsTool, detectPatternsTool } from './relationships'
+
+// Insights & Advanced Features Tools
+export { generateInsightsTool } from './insights/generate-insights'
+export { predictTrendsTool } from './insights/predict-trends'
+export { suggestFollowupsTool } from './insights/suggest-followups'
+export { exportResultsTool } from './insights/export-results'
