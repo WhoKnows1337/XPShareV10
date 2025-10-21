@@ -65,6 +65,7 @@ export default function DiscoverPage() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
   const [chatHasTitle, setChatHasTitle] = useState(false)
   const [initialMessages, setInitialMessages] = useState<any[]>([])
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const { createChat, loadMessages, saveMessages, updateChatTitle, loadChats } = useDiscoveryChats()
 
   // Threading and Branching state (must be declared before useChat)
@@ -164,6 +165,18 @@ export default function DiscoverPage() {
     }
   }, [router, createChat, setMessages, loadChats])
 
+  // Send pending message when chat ID is set
+  useEffect(() => {
+    if (currentChatId && pendingMessage) {
+      // Small delay to ensure useChat hook is re-initialized with new ID
+      const timer = setTimeout(() => {
+        sendMessage({ text: pendingMessage })
+        setPendingMessage(null)
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [currentChatId, pendingMessage, sendMessage])
+
   // Load chat from URL parameter on initial mount or URL change
   useEffect(() => {
     const chatId = searchParams.get('chat')
@@ -216,15 +229,21 @@ export default function DiscoverPage() {
     }
   }, [messages, currentChatId, isLoading, chatHasTitle, updateChatTitle, saveMessages, loadChats])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input?.trim() || isLoading) return
-    sendMessage({ text: input })
-    setInput('')
-  }
-
-  const handleSuggestionClick = (suggestion: string) => {
+  const handleSuggestionClick = async (suggestion: string) => {
     if (isLoading) return
+
+    // Create chat if none exists
+    if (!currentChatId) {
+      const newChatId = await createChat()
+      if (newChatId) {
+        setCurrentChatId(newChatId)
+        setChatHasTitle(false)
+        setPendingMessage(suggestion)
+        router.push(`/discover?chat=${newChatId}`, { scroll: false })
+        return
+      }
+    }
+
     sendMessage({ text: suggestion })
   }
 
@@ -458,8 +477,21 @@ export default function DiscoverPage() {
 
         {/* AI Elements PromptInput */}
         <PromptInput
-          onSubmit={(data) => {
+          onSubmit={async (data) => {
             if (!data.text?.trim() || isLoading) return
+
+            // Create chat if none exists and save message for later
+            if (!currentChatId) {
+              const newChatId = await createChat()
+              if (newChatId) {
+                setCurrentChatId(newChatId)
+                setChatHasTitle(false)
+                setPendingMessage(data.text)
+                router.push(`/discover?chat=${newChatId}`, { scroll: false })
+                return
+              }
+            }
+
             sendMessage({ text: data.text })
           }}
         >

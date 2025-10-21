@@ -16,6 +16,8 @@ import { TrendChart } from '@/components/discover/TrendChart'
 import { FollowUpSuggestions } from '@/components/discover/FollowUpSuggestions'
 import { ExportButton } from '@/components/discover/ExportButton'
 import { InsightCard } from '@/components/discover/InsightCard'
+import { ErrorDisplay } from '@/components/discover/ErrorDisplay'
+import { createStructuredError } from '@/lib/errors/error-types'
 
 // ============================================================================
 // Props
@@ -119,29 +121,18 @@ function renderAnalyticsResults(data: any, title?: string) {
 }
 
 /**
- * Render error state
+ * Render error state with structured ErrorDisplay
  */
 function renderError(error: any, onRetry?: () => void) {
+  // Convert error to StructuredError format
+  const structuredError = createStructuredError(error)
+
   return (
-    <Card className="border-red-200 dark:border-red-800">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-red-500" />
-          <CardTitle className="text-red-600 dark:text-red-400">Error</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-          {error?.message || 'An error occurred while processing your request.'}
-        </p>
-        {onRetry && (
-          <Button variant="outline" size="sm" onClick={onRetry}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <ErrorDisplay
+      error={structuredError}
+      onRetry={onRetry}
+      showTechnicalDetails={false}
+    />
   )
 }
 
