@@ -438,27 +438,46 @@ All 17 UX features are now either fully implemented or have their foundations in
 ### Memory System ✅
 
 - [x] ✅ Create `user_memory` table
-  - [ ] 📋 Write migration 016
-  - [ ] 📋 Add indexes (user_id, scope, key)
-  - [ ] 📋 Enable RLS
-- [ ] 📋 Create `session_memory` table
-  - [ ] 📋 Add to migration 016
-  - [ ] 📋 Auto-expiry after 24h
-- [ ] 📋 Create `/lib/memory/manager.ts`
-  - [ ] 📋 Implement `MemoryManager` class
-  - [ ] 📋 `setProfileMemory()`
-  - [ ] 📋 `getProfileMemory()`
-  - [ ] 📋 `setSessionMemory()`
-  - [ ] 📋 `getUserPreferences()`
-- [ ] 📋 Create `/components/discover/MemoryPanel.tsx`
-  - [ ] 📋 Display user preferences
-  - [ ] 📋 Edit/delete memories
-  - [ ] 📋 Session context viewer
-- [ ] 📋 Integrate into Orchestrator Agent
-  - [ ] 📋 Load user preferences before execution
-  - [ ] 📋 Update preferences from conversation
-  - [ ] 📋 Use preferences for personalization
+  - [x] ✅ Migration with user_id, scope, key, value (JSONB)
+  - [x] ✅ Added confidence, source, expires_at columns
+  - [x] ✅ Indexes on user_id, scope, confidence
+  - [x] ✅ RLS policies enabled
+  - [x] ✅ Auto-update trigger for updated_at
+- [x] ✅ Create `/lib/memory/memory-manager.ts`
+  - [x] ✅ `getUserMemories()` - loads all active (non-expired)
+  - [x] ✅ `saveMemory()` - upsert with conflict resolution
+  - [x] ✅ `deleteMemory()` - user can delete own
+  - [x] ✅ `buildSystemPromptWithMemory()` - injects into AI prompt
+  - [x] ✅ `getMemoriesByScope()` - filter by type
+  - [x] ✅ `reinforceMemory()` - boost confidence
+  - [x] ✅ `decayMemoryConfidence()` - reduce over time
+  - [x] ✅ Auto-deletion at confidence < 0.3
+- [x] ✅ Create `/lib/memory/preference-extractor.ts`
+  - [x] ✅ `extractPreferencesFromConversation()` - AI extraction with OpenAI
+  - [x] ✅ `extractPreferencesFromMessage()` - single message
+  - [x] ✅ `quickExtractExplicitPreferences()` - regex patterns
+  - [x] ✅ Zod schema with structured output
+  - [x] ✅ Confidence scoring (0.3-1.0)
+- [x] ✅ Create `/app/[locale]/discover/preferences/page.tsx`
+  - [x] ✅ View all memories grouped by type
+  - [x] ✅ Stats cards (count per type)
+  - [x] ✅ Search & filter by scope
+  - [x] ✅ Delete memories
+  - [x] ✅ Add new memories manually
+  - [x] ✅ Confidence badges
+  - [x] ✅ Source labels
+- [x] ✅ Create `/app/api/memories/route.ts`
+  - [x] ✅ GET - list user memories
+  - [x] ✅ POST - create new memory
+- [x] ✅ Create `/app/api/memories/[id]/route.ts`
+  - [x] ✅ DELETE - remove memory
+- [x] ✅ Integrate into `/app/api/discover/route.ts`
+  - [x] ✅ Load memories before streamText
+  - [x] ✅ Build personalized system prompt
+  - [x] ✅ Quick extraction (pre-chat)
+  - [x] ✅ Full extraction in onFinish (post-chat, background)
 - [ ] 📋 Unit tests
+- [ ] 📋 Fix TypeScript types (user_memory not in database.types.ts)
 
 ### Message Actions ✅
 
@@ -619,30 +638,61 @@ All 17 UX features are now either fully implemented or have their foundations in
   - [ ] 📋 Cmd/Ctrl+/ or ? - Show shortcuts modal
 - [ ] 📋 Unit tests
 
-### Accessibility (ARIA)
+### Accessibility (ARIA) ✅
 
-- [ ] 📋 Add ARIA labels to all interactive elements
-- [ ] 📋 Add `role="status"` to message list
-- [ ] 📋 Add `aria-live="polite"` to streaming messages
-- [ ] 📋 Implement keyboard navigation
-  - [ ] 📋 Tab through messages
-  - [ ] 📋 Arrow keys in chat list
-- [ ] 📋 Add skip-to-content link
-- [ ] 📋 Test with screen reader (NVDA/VoiceOver)
-- [ ] 📋 Run Lighthouse accessibility audit
+- [x] ✅ Add ARIA labels to all interactive elements
+  - [x] ✅ `aria-label` on Export, Clear, Stop buttons
+  - [x] ✅ `aria-describedby` on input field
+  - [x] ✅ `role="group"` and `aria-label` on suggestion groups
+- [x] ✅ Add `role="main"` to chat area
+  - [x] ✅ `aria-label="Discovery Chat Interface"`
+- [x] ✅ Add `role="log"` to message list
+- [x] ✅ Add `aria-live="polite"` to streaming messages
+  - [x] ✅ `aria-atomic="false"` for incremental updates
+- [x] ✅ Implement keyboard navigation
+  - [x] ✅ Create `/lib/hooks/useKeyboardNavigation.ts`
+  - [x] ✅ Arrow keys (↑↓) for list navigation
+  - [x] ✅ Home/End for first/last item
+  - [x] ✅ Enter/Space for selection
+  - [x] ✅ Auto-scroll into view
+  - [x] ✅ `useScreenReaderAnnouncement()` hook
+- [x] ✅ Add skip-to-content link
+  - [x] ✅ Skip to #chat-input
+  - [x] ✅ sr-only + focus:not-sr-only pattern
+  - [x] ✅ Keyboard accessible (Tab to reveal)
+- [x] ✅ WCAG 2.1 AA Foundation
+  - [x] ✅ Perceivable (text alternatives)
+  - [x] ✅ Operable (keyboard accessible)
+  - [x] ✅ Understandable (predictable, hints)
+  - [x] ✅ Robust (valid ARIA)
+- [ ] 📋 Test with screen reader (NVDA/VoiceOver) - pending
+- [ ] 📋 Run Lighthouse accessibility audit - pending
+- [ ] 📋 Focus trap in modals - future work
+- [ ] 📋 Reduced motion preferences - future work
 
-### Branching Conversations
+### Branching Conversations 🔨
 
-- [ ] 📋 Create `message_branches` table
-  - [ ] 📋 Write migration 020
-  - [ ] 📋 Track parent/child messages
-- [ ] 📋 Create `/components/discover/BranchSelector.tsx`
-  - [ ] 📋 Show branch indicator
-  - [ ] 📋 Navigate between branches
-  - [ ] 📋 Visual branch tree
-- [ ] 📋 Update message rendering
-  - [ ] 📋 Show branch count
-  - [ ] 📋 Switch to branch on click
+**Status:** Foundation Complete (DB + Backend Ready, UI Pending)
+
+- [x] ✅ Database Schema
+  - [x] ✅ Create `message_branches` table with chat_id, parent_message_id, branch_name
+  - [x] ✅ Add `branch_id` column to `discovery_messages`
+  - [x] ✅ Migration applied successfully
+- [x] ✅ Backend Logic
+  - [x] ✅ Create `/lib/branches/branch-manager.ts`
+  - [x] ✅ `createBranch(chatId, parentMessageId, branchName)` - creates new conversation branch
+  - [x] ✅ `getBranchesForChat(chatId)` - lists all branches for chat
+  - [x] ✅ Branch name auto-generation (timestamp-based fallback)
+- [ ] 📋 UI Components - **PENDING**
+  - [ ] 📋 Create `/components/discover/BranchSelector.tsx`
+  - [ ] 📋 Branch creation button in message header (hover state)
+  - [ ] 📋 Branch tree visualization (React Flow or custom SVG)
+  - [ ] 📋 Branch switcher dropdown in ChatSidebar
+- [ ] 📋 Integration - **PENDING**
+  - [ ] 📋 Integrate with `useChat` for branch switching
+  - [ ] 📋 Load messages filtered by `branch_id`
+  - [ ] 📋 Update message rendering to show branch indicator
+  - [ ] 📋 Show branch count badge on branchable messages
 - [ ] 📋 Unit tests
 
 ### Collaborative Sharing ✅
@@ -727,30 +777,61 @@ All 17 UX features are now either fully implemented or have their foundations in
 - [ ] 📋 Unit tests
 - [ ] 📋 Fix TypeScript types (prompt_templates not in database.types.ts)
 
-### Message Threading
+### Message Threading 🔨
 
-- [ ] 📋 Create `message_threads` table
-  - [ ] 📋 Write migration 024
-  - [ ] 📋 Track thread parent/replies
-- [ ] 📋 Create `/components/discover/ThreadView.tsx`
-  - [ ] 📋 Reply button on messages
-  - [ ] 📋 Nested reply UI
-  - [ ] 📋 Collapse/expand threads
-- [ ] 📋 Update API to handle threads
-  - [ ] 📋 Include thread context in prompts
+**Status:** Foundation Complete (DB + Tree Logic Ready, UI Pending)
+
+- [x] ✅ Database Schema
+  - [x] ✅ Add `reply_to_id` column to `discovery_messages` (references parent message)
+  - [x] ✅ Add `thread_id` column to `discovery_messages` (groups all replies in a thread)
+  - [x] ✅ Migration applied successfully
+- [x] ✅ Backend Logic
+  - [x] ✅ Create `/lib/threads/thread-builder.ts`
+  - [x] ✅ `buildThreadTree(messages)` - converts flat messages to tree structure
+  - [x] ✅ ThreadedMessage interface with `replies[]` array
+  - [x] ✅ Two-pass algorithm (map creation + tree building)
+  - [x] ✅ Handles orphaned messages (missing parents)
+- [ ] 📋 UI Components - **PENDING**
+  - [ ] 📋 Create `/components/discover/ThreadView.tsx`
+  - [ ] 📋 Reply button on messages (hover state)
+  - [ ] 📋 Nested reply UI (indentation or connecting lines)
+  - [ ] 📋 Collapse/expand threads button
+  - [ ] 📋 Thread indicator badge (reply count)
+- [ ] 📋 Integration - **PENDING**
+  - [ ] 📋 Update API to handle threads (include reply_to_id in message creation)
+  - [ ] 📋 Include thread context in prompts (parent message + all replies)
+  - [ ] 📋 Update message rendering to show thread structure
 - [ ] 📋 Unit tests
 
-### Offline Mode
+### Offline Mode 🔨
 
-- [ ] 📋 Create `/lib/queue/message-queue.ts`
-  - [ ] 📋 Queue messages in localStorage
-  - [ ] 📋 Auto-sync on reconnect
-- [ ] 📋 Create `/components/discover/OfflineBanner.tsx`
-  - [ ] 📋 Show when disconnected
-  - [ ] 📋 Queue count indicator
-- [ ] 📋 Add network status detection
-  - [ ] 📋 Listen to online/offline events
-  - [ ] 📋 Test with throttled network
+**Status:** Foundation Complete (Service Worker + Detection Ready, Sync Pending)
+
+- [x] ✅ Service Worker
+  - [x] ✅ Create `/public/sw.js` (cache-first strategy)
+  - [x] ✅ Install event - pre-cache core pages (/, /discover, /offline)
+  - [x] ✅ Fetch event - cache responses, fallback to network
+  - [x] ✅ Activate event - clean old caches
+  - [x] ✅ Cache name versioning (xpshare-v1)
+- [x] ✅ PWA Helper
+  - [x] ✅ Create `/lib/pwa/install.ts`
+  - [x] ✅ `registerServiceWorker()` - registers /sw.js on window load
+  - [x] ✅ `useOnlineStatus()` hook - listens to online/offline events
+  - [x] ✅ React hooks for online/offline detection
+- [ ] 📋 Message Queue - **PENDING**
+  - [ ] 📋 Create `/lib/queue/message-queue.ts`
+  - [ ] 📋 Queue messages in localStorage when offline
+  - [ ] 📋 Auto-sync on reconnect (online event listener)
+  - [ ] 📋 Retry failed requests with exponential backoff
+- [ ] 📋 UI Components - **PENDING**
+  - [ ] 📋 Create `/components/discover/OfflineBanner.tsx`
+  - [ ] 📋 Show banner when disconnected
+  - [ ] 📋 Queue count indicator (X messages pending)
+  - [ ] 📋 Manual sync button
+- [ ] 📋 Integration - **PENDING**
+  - [ ] 📋 Call `registerServiceWorker()` in root layout
+  - [ ] 📋 Integrate `useOnlineStatus()` in Discover page
+  - [ ] 📋 Test with throttled network (Chrome DevTools)
 - [ ] 📋 Unit tests
 
 ---
