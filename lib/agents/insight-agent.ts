@@ -114,7 +114,7 @@ export class InsightAgent {
     return {
       detect_pattern: tool({
         description: 'Detect patterns in experience data',
-        parameters: z.object({
+        inputSchema: z.object({
           patternType: z
             .enum(['temporal', 'geographic', 'semantic', 'correlation'])
             .describe('Type of pattern to detect'),
@@ -127,7 +127,7 @@ export class InsightAgent {
 
       generate_insight_card: tool({
         description: 'Generate insight card with findings',
-        parameters: z.object({
+        inputSchema: z.object({
           title: z.string().describe('Insight title'),
           summary: z.string().describe('1-2 sentence summary'),
           confidence: z
@@ -158,7 +158,7 @@ export class InsightAgent {
 
       calculate_statistics: tool({
         description: 'Calculate statistical measures for data',
-        parameters: z.object({
+        inputSchema: z.object({
           data: z.array(z.number()).describe('Numerical data array'),
           measures: z
             .array(z.enum(['mean', 'median', 'stddev', 'percentile']))
@@ -171,7 +171,7 @@ export class InsightAgent {
 
       find_correlations: tool({
         description: 'Find correlations between attributes',
-        parameters: z.object({
+        inputSchema: z.object({
           dataA: z.array(z.number()).describe('First data series'),
           dataB: z.array(z.number()).describe('Second data series'),
           labelA: z.string().describe('Label for first series'),

@@ -146,7 +146,7 @@ export class OrchestratorAgent {
       tools: {
         delegate_to_query_agent: tool({
           description: 'Delegate data retrieval task to Query Agent',
-          parameters: z.object({
+          inputSchema: z.object({
             task: z.string().describe('Description of the query task'),
             parameters: z
               .any()
@@ -155,14 +155,14 @@ export class OrchestratorAgent {
         }),
         delegate_to_viz_agent: tool({
           description: 'Delegate visualization task to Viz Agent',
-          parameters: z.object({
+          inputSchema: z.object({
             task: z.string().describe('Description of the visualization task'),
             data: z.any().describe('Data to be visualized'),
           }),
         }),
         delegate_to_insight_agent: tool({
           description: 'Delegate analysis task to Insight Agent',
-          parameters: z.object({
+          inputSchema: z.object({
             task: z.string().describe('Description of the analysis task'),
             context: z.any().describe('Context and data for analysis'),
           }),
