@@ -7,8 +7,8 @@
 
 'use client'
 
-import { useState } from 'react'
-import { Citation, formatCitation } from '@/lib/citations/generator'
+import { useState, useEffect } from 'react'
+import { getCitationsForMessage } from '@/lib/citations/citation-tracker'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -20,8 +20,19 @@ import {
 import { ExternalLink, Star } from 'lucide-react'
 import Link from 'next/link'
 
+export interface Citation {
+  experienceId: string
+  citationNumber: number
+  relevanceScore: number
+  snippetText?: string
+  contextBefore?: string
+  contextAfter?: string
+  experience?: any
+}
+
 export interface CitationListProps {
-  citations: Citation[]
+  messageId?: string
+  citations?: Citation[]
   variant?: 'inline' | 'footer'
   showRelevanceScore?: boolean
 }
@@ -100,10 +111,36 @@ export function InlineCitation({
  * Footer-style citation list
  */
 export function CitationList({
-  citations,
+  messageId,
+  citations: propCitations,
   variant = 'footer',
   showRelevanceScore = false,
 }: CitationListProps) {
+  const [citations, setCitations] = useState<Citation[]>(propCitations || [])
+  const [loading, setLoading] = useState(false)
+
+  // Load citations from DB if messageId provided
+  useEffect(() => {
+    if (messageId && !propCitations) {
+      loadCitations()
+    } else if (propCitations) {
+      setCitations(propCitations)
+    }
+  }, [messageId, propCitations])
+
+  async function loadCitations() {
+    try {
+      setLoading(true)
+      const data = await getCitationsForMessage(messageId!)
+      setCitations(data)
+    } catch (error) {
+      console.error('[CitationList] Failed to load citations:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) return null
   if (citations.length === 0) return null
 
   if (variant === 'inline') {

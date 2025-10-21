@@ -38,6 +38,7 @@ import {
 } from '@/components/ai-elements/prompt-input'
 import { Send, Paperclip, Mic } from 'lucide-react'
 import { FloatingStopButton } from '@/components/discover/StopButton'
+import { CitationList } from '@/components/discover/CitationList'
 
 /**
  * AI Discovery Interface
@@ -361,6 +362,15 @@ export default function DiscoverPage() {
                     <span className="text-xs text-muted-foreground mt-1">
                       {getRelativeTimestamp(messageDate)}
                     </span>
+                  )}
+
+                  {/* Citations - only for assistant messages */}
+                  {message.role === 'assistant' && message.id && (
+                    <CitationList
+                      messageId={message.id}
+                      variant="footer"
+                      showRelevanceScore={true}
+                    />
                   )}
                 </div>
               </Message>

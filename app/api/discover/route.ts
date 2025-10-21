@@ -5,6 +5,11 @@ import { rateLimitDiscovery, getRateLimitHeaders } from '@/lib/rate-limit'
 import { sanitizeMessages } from '@/lib/security/sanitize'
 import { logQueryPerformance } from '@/lib/monitoring/query-logger'
 import { getCorsHeaders, handleCorsPreflightRequest } from '@/lib/security/cors'
+import {
+  extractCitationsFromToolResult,
+  assignCitationIndices,
+  saveCitations,
+} from '@/lib/citations/citation-tracker'
 
 // Import all tools
 import {
@@ -139,6 +144,9 @@ export async function POST(req: Request) {
       )
     }
 
+    // Track citations across all tool calls
+    const allCitations: any[] = []
+
     // Stream text with all tools (use sanitized messages)
     const result = streamText({
       model: openai('gpt-4o-mini'),
@@ -172,6 +180,34 @@ export async function POST(req: Request) {
       maxSteps: 10, // Allow multiple tool calls
       temperature: 0.7,
       maxTokens: 4000,
+
+      // Track citations from tool results
+      onFinish: async ({ response }) => {
+        try {
+          // Extract citations from all tool calls
+          const toolResults = response.toolCalls || []
+
+          for (const toolCall of toolResults) {
+            if (toolCall.result) {
+              const citations = extractCitationsFromToolResult({
+                toolName: toolCall.toolName,
+                result: toolCall.result,
+              })
+              allCitations.push(...citations)
+            }
+          }
+
+          // If we have citations, save them
+          if (allCitations.length > 0 && body.messageId) {
+            const indexedCitations = assignCitationIndices(allCitations)
+            await saveCitations(body.messageId, indexedCitations)
+            console.log(`[Citations] Saved ${indexedCitations.length} citations for message ${body.messageId}`)
+          }
+        } catch (error) {
+          console.error('[Citations] Failed to save citations:', error)
+          // Don't throw - citations are non-critical feature
+        }
+      },
 
       // Error handling
       onError: (error) => {
