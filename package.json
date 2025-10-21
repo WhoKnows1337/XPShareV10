@@ -163,6 +163,7 @@
     "prettier-plugin-tailwindcss": "^0.6.10",
     "shadcn": "^3.4.0",
     "sharp-cli": "^5.2.0",
+    "supabase": "^2.51.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.20.6",
