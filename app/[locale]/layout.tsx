@@ -13,6 +13,8 @@ import { locales } from '@/i18n';
 import { Starfield } from '@/components/layout/Starfield';
 import { FeedbackProvider } from '@/components/feedback/FeedbackProvider';
 import { ConversationProvider } from '@/components/search/conversation-context';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -88,6 +90,8 @@ export default async function RootLayout({
             </AuthProvider>
           </QueryProvider>
         </NextIntlClientProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

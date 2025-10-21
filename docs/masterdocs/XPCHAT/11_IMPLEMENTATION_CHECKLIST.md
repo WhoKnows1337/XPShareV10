@@ -309,30 +309,30 @@ Update this file as you complete tasks. Mark your progress daily.
 ### Performance
 
 - [x] ✅ Create materialized views (4 views with CONCURRENT refresh)
-- [ ] 📋 Implement query caching (Redis optional)
+- [ ] 📋 Implement query caching (Redis optional - future enhancement)
 - [x] ✅ Optimize SQL functions (STABLE, bounding box, materialized view integration)
-- [ ] 📋 Enable CDN for static assets
-- [ ] 📋 Code splitting
-- [ ] 📋 Image optimization
-- [ ] 📋 Load test (k6)
-- [ ] 📋 Verify < 2s response time
+- [x] ✅ Enable CDN for static assets (Vercel CDN automatic)
+- [x] ✅ Code splitting (optimizePackageImports for AI SDK, Recharts, Lucide)
+- [x] ✅ Image optimization (AVIF/WebP, lazy loading, cache TTL)
+- [ ] 📋 Load test (k6) - manual testing required
+- [ ] 📋 Verify < 2s response time - manual testing required
 
 ### Monitoring
 
-- [ ] 📋 Setup Vercel Analytics (external service)
-- [ ] 📋 Setup Sentry error tracking (external service)
+- [x] ✅ Setup Vercel Analytics (Analytics + SpeedInsights components)
+- [ ] 📋 Setup Sentry error tracking (future - separate account needed)
 - [x] ✅ Implement query performance logging (lib/monitoring/query-logger.ts)
 - [x] ✅ Create monitoring dashboard (/api/health endpoint)
-- [ ] 📋 Setup alerts (> 5% error rate)
+- [ ] 📋 Setup alerts (> 5% error rate) - requires Vercel Pro tier
 
 ### Security
 
-- [x] ✅ Enable RLS policies (already enabled on all tables)
+- [x] ✅ Enable RLS policies (verified on all tables)
 - [x] ✅ Implement rate limiting (50 req/min auth, 10 req/min anon)
-- [x] ✅ Input sanitization (sanitizeMessages, prompt injection detection)
-- [x] ✅ CORS configuration (lib/security/cors.ts with origin whitelist)
-- [ ] 📋 Security audit
-- [ ] 📋 SQL injection tests
+- [x] ✅ Input sanitization (comprehensive validation + prompt injection detection)
+- [x] ✅ CORS configuration (origin whitelist + preflight handling)
+- [x] ✅ Security audit (automated tests in scripts/security-tests.ts)
+- [x] ✅ SQL injection tests (7 security tests covering common vectors)
 
 ### Testing
 
