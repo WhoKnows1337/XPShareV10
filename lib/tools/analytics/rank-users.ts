@@ -33,7 +33,7 @@ const rankUsersSchema = z.object({
 export const rankUsersTool = tool({
   description:
     'Get top users ranked by contribution metrics (experience count, category diversity). Use this to find most active contributors or category experts.',
-  parameters: rankUsersSchema,
+  inputSchema: rankUsersSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

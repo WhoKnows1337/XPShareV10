@@ -32,7 +32,7 @@ const compareCategoriesSchema = z.object({
 export const compareCategoryTool = tool({
   description:
     'Compare two categories side-by-side. Analyzes differences in experience volume, geographic distribution, temporal patterns, and common attributes. Use this to understand category differences and similarities.',
-  parameters: compareCategoriesSchema,
+  inputSchema: compareCategoriesSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

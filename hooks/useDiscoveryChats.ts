@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { UIMessage } from '@ai-sdk/react'
+import type { Database } from '@/lib/supabase/database.types'
+
+type DiscoveryChatRow = Database['public']['Tables']['discovery_chats']['Row']
+type DiscoveryMessageRow = Database['public']['Tables']['discovery_messages']['Row']
 
 export interface DiscoveryChat {
   id: string

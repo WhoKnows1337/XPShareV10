@@ -38,7 +38,7 @@ const fullTextSearchSchema = z.object({
 export const fullTextSearchTool = tool({
   description:
     'Multi-language full-text search with ranking. Searches through titles and story text using PostgreSQL FTS. Supports German, English, French, Spanish.',
-  parameters: fullTextSearchSchema,
+  inputSchema: fullTextSearchSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

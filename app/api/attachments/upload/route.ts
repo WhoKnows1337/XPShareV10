@@ -8,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { validateFile } from '@/lib/attachments/upload'
 import { processImageAttachment } from '@/lib/attachments/vision'
+import type { Database } from '@/lib/supabase/database.types'
+
+type MessageAttachment = Database['public']['Tables']['message_attachments']['Row']
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // 60 seconds for vision analysis
@@ -90,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save attachment metadata
-    const { data: attachmentData, error: dbError } = await supabase
+    const { data: attachmentData, error: dbError } = (await supabase
       .from('message_attachments')
       .insert({
         message_id: messageId,
@@ -103,7 +106,7 @@ export async function POST(req: NextRequest) {
         extracted_text: extractedText,
       })
       .select()
-      .single()
+      .single()) as { data: MessageAttachment | null; error: any }
 
     if (dbError) {
       console.error('[Upload API] Database error:', dbError)

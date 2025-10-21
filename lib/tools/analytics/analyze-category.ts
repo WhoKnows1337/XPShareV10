@@ -35,7 +35,7 @@ const analyzeCategorySchema = z.object({
 export const analyzeCategoryTool = tool({
   description:
     'Deep-dive analysis of a specific category. Returns total experiences, date distribution, top locations, and common attributes. Use this to understand category characteristics.',
-  parameters: analyzeCategorySchema,
+  inputSchema: analyzeCategorySchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -243,7 +243,7 @@ Generate ${maxSuggestions} relevant follow-up suggestions.`
       system: systemPrompt,
       prompt: userPrompt,
       temperature: 0.7,
-      maxTokens: 1000,
+      maxCompletionTokens: 1000,
     })
 
     // Parse GPT response
@@ -299,7 +299,7 @@ export const suggestFollowupsTool = tool({
   - Conversation history awareness
 
   Returns array of actionable follow-up queries with descriptions and icons.`,
-  parameters: suggestFollowupsSchema,
+  inputSchema: suggestFollowupsSchema,
   execute: async ({ query, results, context, conversationHistory, maxSuggestions }) => {
     // Generate template-based suggestions as baseline
     const templateSuggestions = generateTemplateSuggestions(query, results, context)

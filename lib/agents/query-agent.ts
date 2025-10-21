@@ -68,7 +68,7 @@ export class QueryAgent {
         },
       ],
       tools: this.getTools(),
-      maxSteps: 3,
+      maxToolRoundtrips: 3,
       temperature: 0.2,
     })
 

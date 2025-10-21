@@ -39,7 +39,7 @@ const attributeCorrelationSchema = z.object({
 export const attributeCorrelationTool = tool({
   description:
     'Find correlations between attributes within a category. Analyzes which attributes frequently appear together and their co-occurrence strength. Use this to discover attribute patterns and relationships.',
-  parameters: attributeCorrelationSchema,
+  inputSchema: attributeCorrelationSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

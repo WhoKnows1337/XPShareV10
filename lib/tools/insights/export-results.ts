@@ -223,7 +223,7 @@ export const exportResultsTool = tool({
   - Data normalization (handles arrays, objects, wrappers)
 
   Returns export content as string with metadata.`,
-  parameters: exportResultsSchema,
+  inputSchema: exportResultsSchema,
   execute: async ({ data, format, filename, includeMetadata, fields }) => {
     try {
       const exportResult = exportData(data, format, filename, includeMetadata, fields)

@@ -75,7 +75,7 @@ const advancedSearchSchema = z.object({
 export const advancedSearchTool = tool({
   description:
     'Search experiences with multi-dimensional filters. Supports categories, locations, time ranges, date ranges, attributes, tags, and emotions. Use this for complex queries combining multiple criteria.',
-  parameters: advancedSearchSchema,
+  inputSchema: advancedSearchSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

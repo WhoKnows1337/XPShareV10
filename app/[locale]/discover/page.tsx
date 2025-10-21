@@ -72,7 +72,7 @@ export default function DiscoverPage() {
     messages: initialMessages,
     generateId,
     experimental_throttle: 100,
-    experimental_attachments: true, // Enable file attachments
+    attachments: true, // Enable file attachments
     transport: new DefaultChatTransport({
       api: '/api/discover',
     }),

@@ -40,7 +40,7 @@ const geoSearchSchema = z.object({
 export const geoSearchTool = tool({
   description:
     'Geographic search using PostGIS. Supports radius search (find experiences within X km of a point) and bounding box search (find experiences within a rectangle). Use this for location-based queries.',
-  parameters: geoSearchSchema,
+  inputSchema: geoSearchSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -27,7 +27,7 @@ const detectPatternsSchema = z.object({
 export const detectPatternsTool = tool({
   description:
     'Detect patterns in experience data. Analyzes temporal trends, geographic clusters, semantic themes, and attribute correlations. Use this to discover hidden patterns and insights.',
-  parameters: detectPatternsSchema,
+  inputSchema: detectPatternsSchema,
   execute: async (params) => {
     const data = Array.isArray(params.data) ? params.data : params.data?.results || []
 

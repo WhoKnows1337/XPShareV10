@@ -37,7 +37,7 @@ export async function analyzeImage(imageUrl: string): Promise<VisionAnalysisResu
           ],
         },
       ],
-      maxTokens: 500,
+      maxCompletionTokens: 500,
       temperature: 0.3, // Low temperature for factual descriptions
     })
 
@@ -75,7 +75,7 @@ export async function extractTextFromImage(imageUrl: string): Promise<string> {
           ],
         },
       ],
-      maxTokens: 1000,
+      maxCompletionTokens: 1000,
       temperature: 0.0, // Zero temperature for accurate OCR
     })
 

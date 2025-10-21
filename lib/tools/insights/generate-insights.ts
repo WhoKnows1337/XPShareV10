@@ -341,7 +341,7 @@ export const generateInsightsTool = tool({
   - Data anomalies
 
   Each insight includes confidence score, evidence, and actionable recommendations.`,
-  parameters: generateInsightsSchema,
+  inputSchema: generateInsightsSchema,
   execute: async ({ data, analysisType, minConfidence, maxInsights }) => {
     const allInsights: Insight[] = []
 

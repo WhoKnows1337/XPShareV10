@@ -168,7 +168,7 @@ export class OrchestratorAgent {
           }),
         }),
       },
-      maxSteps: 5,
+      maxToolRoundtrips: 5,
       temperature: 0.3,
     })
 

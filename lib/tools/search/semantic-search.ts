@@ -39,7 +39,7 @@ const semanticSearchSchema = z.object({
 export const semanticSearchTool = tool({
   description:
     'Vector similarity search using AI embeddings. Finds experiences with similar meaning to your query, even if they use different words. Use this for semantic/conceptual searches.',
-  parameters: semanticSearchSchema,
+  inputSchema: semanticSearchSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

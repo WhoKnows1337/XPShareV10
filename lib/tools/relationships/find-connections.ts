@@ -52,7 +52,7 @@ const findConnectionsSchema = z.object({
 export const findConnectionsTool = tool({
   description:
     'Find related experiences using multi-dimensional similarity. Combines semantic (meaning), geographic (location), temporal (time), and attribute (characteristics) similarity. Use this to discover connections and patterns.',
-  parameters: findConnectionsSchema,
+  inputSchema: findConnectionsSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

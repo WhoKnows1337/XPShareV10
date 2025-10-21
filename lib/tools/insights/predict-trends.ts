@@ -356,7 +356,7 @@ export const predictTrendsTool = tool({
   - Trend significance classification
 
   Returns historical data, trend analysis, and forecast predictions.`,
-  parameters: predictTrendsSchema,
+  inputSchema: predictTrendsSchema,
   execute: async ({ data, forecastPeriods, granularity, minDataPoints, confidenceLevel }) => {
     // Filter data with temporal information
     const temporalData = data.filter(

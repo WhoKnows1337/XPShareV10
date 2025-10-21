@@ -97,7 +97,7 @@ export class InsightAgent {
         },
       ],
       tools: this.getTools(),
-      maxSteps: 5,
+      maxToolRoundtrips: 5,
       temperature: 0.4,
     })
 

@@ -41,7 +41,7 @@ const temporalAnalysisSchema = z.object({
 export const temporalAnalysisTool = tool({
   description:
     'Analyze temporal patterns and trends. Aggregates experiences by time periods (hour/day/week/month/year) with optional category and location grouping. Use this to discover time-based patterns.',
-  parameters: temporalAnalysisSchema,
+  inputSchema: temporalAnalysisSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

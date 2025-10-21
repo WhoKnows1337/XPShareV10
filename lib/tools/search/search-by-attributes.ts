@@ -46,7 +46,7 @@ const searchByAttributesSchema = z.object({
 export const searchByAttributesTool = tool({
   description:
     'Find experiences with specific attributes using precise matching. Supports equals, contains, and exists operators with AND/OR logic. Use this when searching for specific attribute values within a category.',
-  parameters: searchByAttributesSchema,
+  inputSchema: searchByAttributesSchema,
   execute: async (params) => {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
