@@ -12,6 +12,7 @@ export interface Branch {
   parentMessageId?: string
   branchName: string
   createdAt: Date
+  messageCount?: number
 }
 
 export async function createBranch(
@@ -53,11 +54,49 @@ export async function getBranchesForChat(chatId: string): Promise<Branch[]> {
 
   if (error) throw error
 
-  return (data || []).map((b) => ({
-    id: b.id,
-    chatId: b.chat_id,
-    parentMessageId: b.parent_message_id,
-    branchName: b.branch_name,
-    createdAt: new Date(b.created_at),
-  }))
+  // Get message counts for each branch
+  const branches = await Promise.all(
+    (data || []).map(async (b) => {
+      const { count } = await supabase
+        .from('discovery_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('branch_id', b.id)
+
+      return {
+        id: b.id,
+        chatId: b.chat_id,
+        parentMessageId: b.parent_message_id,
+        branchName: b.branch_name,
+        createdAt: new Date(b.created_at),
+        messageCount: count || 0,
+      }
+    })
+  )
+
+  return branches
+}
+
+export async function getMessagesForBranch(
+  chatId: string,
+  branchId?: string
+): Promise<any[]> {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('discovery_messages')
+    .select('*')
+    .eq('chat_id', chatId)
+    .order('created_at', { ascending: true })
+
+  if (branchId) {
+    query = query.eq('branch_id', branchId)
+  } else {
+    query = query.is('branch_id', null)
+  }
+
+  const { data, error } = await query
+
+  if (error) throw error
+
+  return data || []
 }

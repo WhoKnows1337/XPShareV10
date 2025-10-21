@@ -15,6 +15,7 @@ import { FeedbackProvider } from '@/components/feedback/FeedbackProvider';
 import { ConversationProvider } from '@/components/search/conversation-context';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { ServiceWorkerProvider } from '@/components/providers/ServiceWorkerProvider';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -85,6 +86,7 @@ export default async function RootLayout({
                   {children}
                   <Toaster position="top-right" richColors />
                   <FeedbackProvider />
+                  <ServiceWorkerProvider />
                 </RootLayoutClient>
               </ConversationProvider>
             </AuthProvider>
