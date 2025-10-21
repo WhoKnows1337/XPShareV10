@@ -38,6 +38,9 @@ import {
 import { useDiscoveryChats, DiscoveryChat } from '@/hooks/useDiscoveryChats'
 import { formatDistanceToNow } from 'date-fns'
 import { ShareDialog } from '@/components/discover/ShareDialog'
+import { BranchSelector } from '@/components/discover/BranchSelector'
+import { getBranchesForChat, createBranch } from '@/lib/branches/branch-manager'
+import { useEffect } from 'react'
 
 interface ChatSidebarProps {
   currentChatId: string | null
@@ -52,6 +55,19 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { chats, loading, deleteChat, updateChatTitle } = useDiscoveryChats()
+  const [branches, setBranches] = useState<any[]>([])
+  const [currentBranchId, setCurrentBranchId] = useState<string | undefined>()
+
+  // Load branches for current chat
+  useEffect(() => {
+    if (currentChatId) {
+      getBranchesForChat(currentChatId)
+        .then(setBranches)
+        .catch((err) => console.error('[ChatSidebar] Failed to load branches:', err))
+    } else {
+      setBranches([])
+    }
+  }, [currentChatId])
 
   const handleDelete = async (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -101,7 +117,7 @@ export function ChatSidebar({
       </div>
 
       {/* New Chat Button */}
-      <div className="p-3">
+      <div className="p-3 space-y-2">
         <Button
           onClick={onNewChat}
           className="w-full justify-start gap-2"
@@ -110,6 +126,27 @@ export function ChatSidebar({
           <MessageSquarePlus className="h-4 w-4" />
           New Chat
         </Button>
+
+        {/* Branch Selector */}
+        {currentChatId && branches.length > 0 && (
+          <BranchSelector
+            branches={branches}
+            currentBranchId={currentBranchId}
+            onBranchSwitch={(branchId) => {
+              setCurrentBranchId(branchId)
+              // Reload chat with branch filter
+              // This would require passing branch filter to parent
+            }}
+            onBranchCreate={async (branchName) => {
+              if (currentChatId) {
+                await createBranch(currentChatId, '', branchName)
+                const updated = await getBranchesForChat(currentChatId)
+                setBranches(updated)
+              }
+            }}
+            className="w-full"
+          />
+        )}
       </div>
 
       {/* Chat List */}
