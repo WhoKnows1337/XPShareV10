@@ -11,15 +11,19 @@ import { ChevronDown, ChevronRight, CornerDownRight, Reply } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ThreadedMessage } from '@/lib/threads/thread-builder'
+import { BranchButton } from './BranchButton'
+import { Response } from '@/components/ai-elements/response'
 
 interface ThreadViewProps {
   message: ThreadedMessage
   depth?: number
   onReply?: (messageId: string) => void
+  onBranch?: (messageId: string) => void
+  renderCustomContent?: (message: ThreadedMessage) => React.ReactNode
   className?: string
 }
 
-export function ThreadView({ message, depth = 0, onReply, className }: ThreadViewProps) {
+export function ThreadView({ message, depth = 0, onReply, onBranch, renderCustomContent, className }: ThreadViewProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false)
   const hasReplies = message.replies && message.replies.length > 0
   const isNested = depth > 0
@@ -46,17 +50,29 @@ export function ThreadView({ message, depth = 0, onReply, className }: ThreadVie
                 {message.role === 'user' ? 'You' : 'Assistant'}
               </span>
               <span className="text-xs text-muted-foreground">
-                {new Date(message.createdAt).toLocaleTimeString()}
+                {new Date(message.timestamp).toLocaleTimeString()}
               </span>
               {hasReplies && (
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {message.replies.length} {message.replies.length === 1 ? 'reply' : 'replies'}
                 </span>
               )}
+              {message.branchId && (
+                <span className="text-xs text-muted-foreground bg-primary/10 px-2 py-0.5 rounded-full">
+                  Branch
+                </span>
+              )}
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {onBranch && (
+                <BranchButton
+                  messageId={message.id}
+                  onBranch={onBranch}
+                  className="h-7 w-7 p-0"
+                />
+              )}
               {onReply && (
                 <Button
                   variant="ghost"
@@ -87,9 +103,12 @@ export function ThreadView({ message, depth = 0, onReply, className }: ThreadVie
           </div>
 
           {/* Message Content */}
-          <div className="text-sm whitespace-pre-wrap break-words">
-            {message.content}
+          <div className="text-sm">
+            <Response>{message.content}</Response>
           </div>
+
+          {/* Custom Content (Tool Results, Citations, etc.) */}
+          {renderCustomContent && renderCustomContent(message)}
 
           {/* Reply Indicator (for nested messages) */}
           {isNested && (
@@ -108,6 +127,8 @@ export function ThreadView({ message, depth = 0, onReply, className }: ThreadVie
                 message={reply}
                 depth={depth + 1}
                 onReply={onReply}
+                onBranch={onBranch}
+                renderCustomContent={renderCustomContent}
               />
             ))}
           </div>
@@ -123,14 +144,22 @@ export function ThreadView({ message, depth = 0, onReply, className }: ThreadVie
 interface ThreadListProps {
   threads: ThreadedMessage[]
   onReply?: (messageId: string) => void
+  onBranch?: (messageId: string) => void
+  renderCustomContent?: (message: ThreadedMessage) => React.ReactNode
   className?: string
 }
 
-export function ThreadList({ threads, onReply, className }: ThreadListProps) {
+export function ThreadList({ threads, onReply, onBranch, renderCustomContent, className }: ThreadListProps) {
   return (
     <div className={cn('space-y-4', className)}>
       {threads.map((thread) => (
-        <ThreadView key={thread.id} message={thread} onReply={onReply} />
+        <ThreadView
+          key={thread.id}
+          message={thread}
+          onReply={onReply}
+          onBranch={onBranch}
+          renderCustomContent={renderCustomContent}
+        />
       ))}
     </div>
   )

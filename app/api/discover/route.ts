@@ -97,7 +97,7 @@ export async function POST(req: Request) {
   try {
     // Parse request
     const body = await req.json()
-    const { messages } = body
+    const { messages, chatId, replyToId, threadId, branchId } = body
 
     if (!messages || !Array.isArray(messages)) {
       return new Response('Invalid request: messages array required', { status: 400 })
@@ -272,9 +272,16 @@ export async function POST(req: Request) {
       userId: user?.id,
     })
 
-    // Return stream response with smooth streaming and rate limit headers
+    // Return stream response with smooth streaming, metadata, and rate limit headers
     const response = result.toUIMessageStreamResponse({
       transform: smoothStream({ chunking: 'word' }),
+      // Add threading metadata to response messages
+      experimental_metadata: {
+        replyToId,
+        threadId: threadId || replyToId, // If replying, inherit thread or start new thread
+        branchId,
+        chatId,
+      },
     })
 
     // Add rate limit headers to streaming response

@@ -45,6 +45,9 @@ import { useMessageQueue } from '@/lib/queue/message-queue'
 import { useKeyboardShortcuts } from '@/lib/hooks/useKeyboardShortcuts'
 import { ShortcutsModal } from '@/components/discover/ShortcutsModal'
 import { useRef } from 'react'
+import { ThreadList } from '@/components/discover/ThreadView'
+import { buildThreadTree } from '@/lib/threads/thread-builder'
+import { convertToThreadedMessages } from '@/lib/threads/message-adapter'
 
 /**
  * AI Discovery Interface
@@ -73,6 +76,11 @@ export default function DiscoverPage() {
     transport: new DefaultChatTransport({
       api: '/api/discover',
     }),
+    body: {
+      chatId: currentChatId,
+      replyToId,
+      branchId: currentBranchId,
+    },
   })
   const [input, setInput] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
@@ -82,6 +90,10 @@ export default function DiscoverPage() {
   // Offline support
   const isOnline = useOnlineStatus()
   const { queueCount, syncQueue: syncQueueFn } = useMessageQueue()
+
+  // Threading and Branching state
+  const [replyToId, setReplyToId] = useState<string | undefined>(undefined)
+  const [currentBranchId, setCurrentBranchId] = useState<string | undefined>(undefined)
 
   // Keyboard shortcuts
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
@@ -351,84 +363,71 @@ export default function DiscoverPage() {
             </div>
           )}
 
-        {messages.map((message, index) => {
-          const previousMessage = index > 0 ? messages[index - 1] : undefined
-          const nextMessage = index < messages.length - 1 ? messages[index + 1] : undefined
+        {(() => {
+          // Convert AI SDK messages to ThreadedMessage format
+          const threadedMessages = convertToThreadedMessages(messages)
 
-          // Use index as fallback for timestamp since AI SDK 5.0 UIMessage doesn't have createdAt
-          const messageDate = new Date()
-          const showDateSeparator = false // Simplified for now
+          // Filter by branch if branch is selected
+          const filteredMessages = currentBranchId
+            ? threadedMessages.filter((m) => m.branchId === currentBranchId || !m.branchId)
+            : threadedMessages
 
-          // Simplified grouping - group consecutive messages from same role
-          const isGrouped = previousMessage?.role === message.role
-          const isLastInGroup = nextMessage?.role !== message.role
-          const showTimestamp = isLastInGroup
+          // Build thread tree
+          const threads = buildThreadTree(filteredMessages)
 
           return (
-            <div key={message.id} className={isGrouped ? 'mt-1' : 'mt-4'}>
-              {/* Date Separator */}
-              {showDateSeparator && (
-                <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs font-medium text-muted-foreground px-3 py-1 bg-muted rounded-full">
-                    {getDateSeparatorText(messageDate)}
-                  </span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-              )}
+            <ThreadList
+              threads={threads}
+              onReply={(messageId) => {
+                setReplyToId(messageId)
+                inputRef.current?.focus()
+              }}
+              onBranch={(messageId) => {
+                // Create new branch from this message
+                setReplyToId(messageId)
+                // Branch creation will be handled by BranchButton in ThreadView
+              }}
+              renderCustomContent={(message) => {
+                // Render tool calls and citations using existing components
+                if (!message.originalMessage) return null
 
-              <Message from={message.role}>
-                <div className="flex flex-col gap-1 w-full">
-                  {message.parts?.map((part, i) => {
-                    // Text part - use Response component for streaming markdown
-                    if (part.type === 'text') {
-                      return (
-                        <MessageContent key={i} variant="flat">
-                          <Response>{part.text}</Response>
-                        </MessageContent>
-                      )
-                    }
+                const originalMsg = message.originalMessage
 
-                    // Tool parts - use universal ToolRenderer for all 16 tools
-                    if (part.type?.startsWith('tool-')) {
-                      // Get original user query from previous message for retry
-                      const userQuery = previousMessage?.role === 'user'
-                        ? previousMessage.parts?.find((p: any) => p.type === 'text')?.text || (part as any).input?.query
-                        : (part as any).input?.query
+                return (
+                  <div className="flex flex-col gap-1 w-full">
+                    {originalMsg.parts?.map((part: any, i: number) => {
+                      // Tool parts
+                      if (part.type?.startsWith('tool-')) {
+                        return (
+                          <ToolRenderer
+                            key={i}
+                            part={part}
+                            onRetry={() => {
+                              // Find user query from context
+                              const userQuery = part.input?.query || ''
+                              handleRetry(userQuery)
+                            }}
+                            onSuggestionClick={handleSuggestionClick}
+                          />
+                        )
+                      }
+                      return null
+                    })}
 
-                      return (
-                        <ToolRenderer
-                          key={i}
-                          part={part as any}
-                          onRetry={() => handleRetry(userQuery)}
-                          onSuggestionClick={handleSuggestionClick}
-                        />
-                      )
-                    }
-
-                    return null
-                  })}
-
-                  {/* Timestamp */}
-                  {showTimestamp && (
-                    <span className="text-xs text-muted-foreground mt-1">
-                      {getRelativeTimestamp(messageDate)}
-                    </span>
-                  )}
-
-                  {/* Citations - only for assistant messages */}
-                  {message.role === 'assistant' && message.id && (
-                    <CitationList
-                      messageId={message.id}
-                      variant="footer"
-                      showRelevanceScore={true}
-                    />
-                  )}
-                </div>
-              </Message>
-            </div>
+                    {/* Citations - only for assistant messages */}
+                    {originalMsg.role === 'assistant' && originalMsg.id && (
+                      <CitationList
+                        messageId={originalMsg.id}
+                        variant="footer"
+                        showRelevanceScore={true}
+                      />
+                    )}
+                  </div>
+                )
+              }}
+            />
           )
-        })}
+        })()}
           {isLoading && (
             <div className="flex justify-start">
               <TypingIndicator />

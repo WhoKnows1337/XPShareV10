@@ -4,14 +4,18 @@
  * Basic threading support for nested conversations.
  */
 
+import { Message as UIMessage } from 'ai'
+
 export interface ThreadedMessage {
   id: string
   content: string
   role: string
+  timestamp: string
   replyToId?: string
   threadId?: string
+  branchId?: string
   replies?: ThreadedMessage[]
-  createdAt: Date
+  originalMessage?: UIMessage // Preserve original AI SDK message for tool rendering
 }
 
 export function buildThreadTree(messages: ThreadedMessage[]): ThreadedMessage[] {
