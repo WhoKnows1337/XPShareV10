@@ -319,18 +319,18 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Monitoring
 
-- [ ] 📋 Setup Vercel Analytics
-- [ ] 📋 Setup Sentry error tracking
-- [ ] 📋 Implement query performance logging
-- [ ] 📋 Create monitoring dashboard
+- [ ] 📋 Setup Vercel Analytics (external service)
+- [ ] 📋 Setup Sentry error tracking (external service)
+- [x] ✅ Implement query performance logging (lib/monitoring/query-logger.ts)
+- [x] ✅ Create monitoring dashboard (/api/health endpoint)
 - [ ] 📋 Setup alerts (> 5% error rate)
 
 ### Security
 
 - [x] ✅ Enable RLS policies (already enabled on all tables)
 - [x] ✅ Implement rate limiting (50 req/min auth, 10 req/min anon)
-- [ ] 📋 Input sanitization
-- [ ] 📋 CORS configuration
+- [x] ✅ Input sanitization (sanitizeMessages, prompt injection detection)
+- [x] ✅ CORS configuration (lib/security/cors.ts with origin whitelist)
 - [ ] 📋 Security audit
 - [ ] 📋 SQL injection tests
 

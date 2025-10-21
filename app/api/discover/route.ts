@@ -2,6 +2,9 @@ import { openai } from '@ai-sdk/openai'
 import { streamText, convertToModelMessages, smoothStream } from 'ai'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitDiscovery, getRateLimitHeaders } from '@/lib/rate-limit'
+import { sanitizeMessages } from '@/lib/security/sanitize'
+import { logQueryPerformance } from '@/lib/monitoring/query-logger'
+import { getCorsHeaders, handleCorsPreflightRequest } from '@/lib/security/cors'
 
 // Import all tools
 import {
@@ -29,6 +32,11 @@ import {
 
 export const maxDuration = 120 // 2 minute timeout
 export const runtime = 'edge' // Use edge runtime for better performance
+
+// Handle CORS preflight requests
+export async function OPTIONS(req: Request) {
+  return handleCorsPreflightRequest(req)
+}
 
 const DISCOVERY_SYSTEM_PROMPT = `You are XPShare Discovery Assistant, an AI specialized in analyzing anomalous experiences.
 
@@ -71,12 +79,33 @@ XPShare focuses on 7 main categories of experiences:
 Remember: You're here to help users discover insights in anomalous experiences data!`
 
 export async function POST(req: Request) {
+  const startTime = performance.now()
+
   try {
     // Parse request
-    const { messages } = await req.json()
+    const body = await req.json()
+    const { messages } = body
 
     if (!messages || !Array.isArray(messages)) {
       return new Response('Invalid request: messages array required', { status: 400 })
+    }
+
+    // Input sanitization
+    let sanitizedMessages
+    try {
+      sanitizedMessages = sanitizeMessages(messages)
+    } catch (error) {
+      console.error('[Discovery API] Sanitization failed:', error)
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid input',
+          message: error instanceof Error ? error.message : 'Input validation failed',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
     }
 
     // Get Supabase client (for RLS context in tools)
@@ -110,10 +139,10 @@ export async function POST(req: Request) {
       )
     }
 
-    // Stream text with all tools
+    // Stream text with all tools (use sanitized messages)
     const result = streamText({
       model: openai('gpt-4o-mini'),
-      messages: convertToModelMessages(messages),
+      messages: convertToModelMessages(sanitizedMessages),
       system: DISCOVERY_SYSTEM_PROMPT,
       tools: {
         // Search Tools
@@ -154,10 +183,32 @@ export async function POST(req: Request) {
       abortSignal: AbortSignal.timeout(120000),
     })
 
-    // Return stream response with smooth streaming
-    return result.toUIMessageStreamResponse({
+    // Log query performance
+    const duration = performance.now() - startTime
+    logQueryPerformance({
+      query: 'discover_chat',
+      duration,
+      success: true,
+      userId: user?.id,
+    })
+
+    // Return stream response with smooth streaming and rate limit headers
+    const response = result.toUIMessageStreamResponse({
       transform: smoothStream({ chunking: 'word' }),
     })
+
+    // Add rate limit headers to streaming response
+    Object.entries(getRateLimitHeaders(rateLimitResult)).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    // Add CORS headers
+    const origin = req.headers.get('Origin')
+    Object.entries(getCorsHeaders(origin)).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
   } catch (error) {
     console.error('[Discovery API] Request failed:', error)
 
