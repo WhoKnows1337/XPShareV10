@@ -10,6 +10,10 @@ export interface DiscoveryChat {
   title: string | null
   created_at: string
   updated_at: string
+  pinned?: boolean
+  archived?: boolean
+  archived_at?: string | null
+  tags?: string[]
 }
 
 export interface DiscoveryChatWithMessages extends DiscoveryChat {
@@ -186,6 +190,51 @@ export function useDiscoveryChats() {
     }
   }
 
+  // Pin/Unpin chat
+  const pinChat = async (chatId: string): Promise<boolean> => {
+    try {
+      const chat = chats.find((c) => c.id === chatId)
+      const { error: updateError } = await supabase
+        .from('discovery_chats')
+        .update({ pinned: !chat?.pinned })
+        .eq('id', chatId)
+
+      if (updateError) throw updateError
+
+      await loadChats()
+      return true
+    } catch (err) {
+      console.error('Error pinning/unpinning chat:', err)
+      setError(err as Error)
+      return false
+    }
+  }
+
+  // Archive/Unarchive chat
+  const archiveChat = async (chatId: string): Promise<boolean> => {
+    try {
+      const chat = chats.find((c) => c.id === chatId)
+      const isArchiving = !chat?.archived
+
+      const { error: updateError } = await supabase
+        .from('discovery_chats')
+        .update({
+          archived: isArchiving,
+          archived_at: isArchiving ? new Date().toISOString() : null,
+        })
+        .eq('id', chatId)
+
+      if (updateError) throw updateError
+
+      await loadChats()
+      return true
+    } catch (err) {
+      console.error('Error archiving/unarchiving chat:', err)
+      setError(err as Error)
+      return false
+    }
+  }
+
   // Load chats on mount
   useEffect(() => {
     loadChats()
@@ -201,5 +250,7 @@ export function useDiscoveryChats() {
     saveMessages,
     updateChatTitle,
     deleteChat,
+    pinChat,
+    archiveChat,
   }
 }

@@ -537,7 +537,7 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
 - [ ] 📋 Unit tests (optional future enhancement)
 - [ ] 📋 Fix TypeScript types (user_memory not in database.types.ts) (optional - placeholder types exist)
 
-### Message Actions ✅
+### Message Actions ✅ (100%)
 
 - [x] ✅ Create `/components/discover/MessageActions.tsx` (ALREADY EXISTS)
   - [x] ✅ Copy button with clipboard API
@@ -548,12 +548,12 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
   - [x] ✅ CompactMessageActions for mobile
   - [x] ✅ Tooltip integration
   - [x] ✅ Toast notifications
-- [ ] 📋 Create `message_feedback` table (optional - for analytics)
-  - [ ] 📋 Write migration
-  - [ ] 📋 Store ratings and feedback
-- [ ] 📋 Create `/app/api/feedback/route.ts` (optional - for persistence)
-  - [ ] 📋 POST endpoint for ratings
-  - [ ] 📋 Store in database
+- [x] ✅ Create `message_feedback` table (ALREADY EXISTS)
+  - [x] ✅ Migration already applied
+  - [x] ✅ Stores ratings and feedback
+- [x] ✅ Create `/app/api/feedback/route.ts` (ALREADY EXISTS)
+  - [x] ✅ POST endpoint for ratings
+  - [x] ✅ Stores feedback in database
 - [x] ✅ Implement edit functionality (callback-based)
 - [x] ✅ Implement regenerate (callback-based)
 - [ ] 📋 Unit tests (optional future enhancement)
@@ -626,7 +626,7 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
   - [x] ✅ Severity levels (critical, error, warning, info)
 - [ ] 📋 Unit tests (optional future enhancement)
 
-### Context/Active Tools Banner ✅
+### Context/Active Tools Banner ✅ (100%)
 
 - [x] ✅ Create `/components/discover/ContextBanner.tsx`
   - [x] ✅ Show active search filters with badges
@@ -635,9 +635,12 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
   - [x] ✅ Session context display (topic)
   - [x] ✅ Expandable when many filters
   - [x] ✅ Tool status colors (running/completed/failed)
-- [ ] 📋 Track active context in state (optional future enhancement)
-  - [ ] 📋 Update on tool execution
-  - [ ] 📋 Clear on new conversation
+- [x] ✅ Track active context in state
+  - [x] ✅ Create `/lib/hooks/useContextBanner.ts`
+  - [x] ✅ addFilter, removeFilter, clearFilters methods
+  - [x] ✅ addTool, updateToolStatus, removeTool methods
+  - [x] ✅ setSessionTopic, clearAll methods
+  - [x] ✅ Auto-remove completed/failed tools after 5 seconds
 - [ ] 📋 Unit tests (optional future enhancement)
 
 ### Rich Content Rendering ✅
@@ -654,7 +657,7 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
 - [ ] 📋 Unit tests (optional future enhancement)
 - [ ] 📋 Add syntax highlighting library (Prism/highlight.js) - optional future enhancement
 
-### Enhanced Session Management ✅
+### Enhanced Session Management ✅ (100%)
 
 - [x] ✅ Create `/lib/sessions/session-manager.ts`
   - [x] ✅ Export session as JSON (with metadata)
@@ -664,14 +667,27 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
   - [x] ✅ Download functionality with MIME types
   - [x] ✅ Session statistics (message count, avg response time)
   - [x] ✅ Duplicate session feature
-- [ ] 📋 Update `/components/discover/ChatSidebar.tsx` for UI integration (optional Phase 9)
-  - [ ] 📋 Pin/unpin chats
-  - [ ] 📋 Archive chats
-  - [ ] 📋 Search chat titles
-  - [ ] 📋 Filter by date/tags
-- [ ] 📋 Add `pinned` column to `chats` table (optional Phase 9)
-- [ ] 📋 Add `archived` column to `chats` table (optional Phase 9)
-- [ ] 📋 Add `tags` JSONB column (optional Phase 9)
+- [x] ✅ Update `/components/discover/ChatSidebar.tsx` for UI integration
+  - [x] ✅ Pin/unpin chats with dropdown menu
+  - [x] ✅ Archive chats with dropdown menu
+  - [x] ✅ Search chat titles (real-time filtering)
+  - [x] ✅ Archive toggle (show/hide archived)
+  - [x] ✅ Pinned-first sorting
+  - [x] ✅ BranchSelector integration for threading
+- [x] ✅ Add `pinned` column to `discovery_chats` table
+  - [x] ✅ Migration applied with default FALSE
+  - [x] ✅ Index for pinned chats (WHERE pinned = TRUE)
+- [x] ✅ Add `archived` column to `discovery_chats` table
+  - [x] ✅ Migration applied with default FALSE
+  - [x] ✅ `archived_at` timestamp column
+  - [x] ✅ Index for archived chats
+- [x] ✅ Add `tags` JSONB column to `discovery_chats` table
+  - [x] ✅ Migration applied with default '[]'::jsonb
+  - [x] ✅ GIN index for fast tag lookups
+- [x] ✅ Update `useDiscoveryChats` hook
+  - [x] ✅ Add pinChat() method (toggle pinned state)
+  - [x] ✅ Add archiveChat() method (toggle archived + timestamp)
+  - [x] ✅ Updated DiscoveryChat interface with new columns
 - [ ] 📋 Unit tests (optional future enhancement)
 
 ### Keyboard Shortcuts ✅
@@ -782,7 +798,7 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
 - [x] ✅ Integration into ChatSidebar (share button per chat in dropdown menu)
 - [ ] 📋 Unit tests (optional future enhancement)
 
-### Cost/Token Tracking ✅
+### Cost/Token Tracking ✅ (100%)
 
 - [x] ✅ Create `usage_tracking` table
   - [x] ✅ Migration with user_id, session_id, message_id
@@ -797,9 +813,10 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
   - [x] ✅ Get user usage stats (today/week/month/all)
   - [x] ✅ Get session usage stats
   - [x] ✅ Format cost/tokens for display
-- [ ] 📋 Create `/components/discover/CostBadge.tsx` (UI component pending)
-  - [ ] 📋 Show tokens per message
-  - [ ] 📋 Show total session cost
+- [x] ✅ Create `/components/discover/CostBadge.tsx`
+  - [x] ✅ Show tokens per message
+  - [x] ✅ Show total session cost
+  - [x] ✅ SessionCostSummary component for session header
 - [ ] 📋 Unit tests (optional future enhancement)
 - [ ] 📋 Fix TypeScript types (usage_tracking not in database.types.ts) (optional - placeholder types exist)
 

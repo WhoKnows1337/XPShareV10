@@ -34,7 +34,12 @@ import {
   MoreVertical,
   Pencil,
   Share2,
+  Pin,
+  Archive,
+  Search,
+  X,
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { useDiscoveryChats, DiscoveryChat } from '@/hooks/useDiscoveryChats'
 import { formatDistanceToNow } from 'date-fns'
 import { ShareDialog } from '@/components/discover/ShareDialog'
@@ -54,9 +59,11 @@ export function ChatSidebar({
   onNewChat,
 }: ChatSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const { chats, loading, deleteChat, updateChatTitle } = useDiscoveryChats()
+  const { chats, loading, deleteChat, updateChatTitle, pinChat, archiveChat } = useDiscoveryChats()
   const [branches, setBranches] = useState<any[]>([])
   const [currentBranchId, setCurrentBranchId] = useState<string | undefined>()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
 
   // Load branches for current chat
   useEffect(() => {
@@ -77,6 +84,37 @@ export function ChatSidebar({
   const handleRename = async (chatId: string, newTitle: string) => {
     await updateChatTitle(chatId, newTitle)
   }
+
+  const handlePin = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (pinChat) await pinChat(chatId)
+  }
+
+  const handleArchive = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (archiveChat) await archiveChat(chatId)
+  }
+
+  // Filter chats
+  const filteredChats = chats.filter((chat) => {
+    // Filter by archived status
+    if (!showArchived && chat.archived) return false
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      return chat.title?.toLowerCase().includes(query)
+    }
+
+    return true
+  })
+
+  // Sort chats: pinned first, then by updated_at
+  const sortedChats = [...filteredChats].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  })
 
   if (isCollapsed) {
     return (
@@ -116,7 +154,7 @@ export function ChatSidebar({
         </Button>
       </div>
 
-      {/* New Chat Button */}
+      {/* New Chat Button & Search */}
       <div className="p-3 space-y-2">
         <Button
           onClick={onNewChat}
@@ -125,6 +163,38 @@ export function ChatSidebar({
         >
           <MessageSquarePlus className="h-4 w-4" />
           New Chat
+        </Button>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search chats..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 pr-8 h-9"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Archive Toggle */}
+        <Button
+          onClick={() => setShowArchived(!showArchived)}
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2 text-xs"
+        >
+          <Archive className="h-3 w-3" />
+          {showArchived ? 'Hide Archived' : 'Show Archived'}
         </Button>
 
         {/* Branch Selector */}
@@ -160,13 +230,13 @@ export function ChatSidebar({
               />
             ))}
           </div>
-        ) : chats.length === 0 ? (
+        ) : sortedChats.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground">
-            No conversations yet
+            {searchQuery ? 'No chats found' : 'No conversations yet'}
           </div>
         ) : (
           <div className="space-y-1 py-2">
-            {chats.map((chat) => (
+            {sortedChats.map((chat) => (
               <ChatItem
                 key={chat.id}
                 chat={chat}
@@ -174,6 +244,8 @@ export function ChatSidebar({
                 onClick={() => onChatSelect(chat.id)}
                 onDelete={(e) => handleDelete(chat.id, e)}
                 onRename={(newTitle) => handleRename(chat.id, newTitle)}
+                onPin={(e) => handlePin(chat.id, e)}
+                onArchive={(e) => handleArchive(chat.id, e)}
               />
             ))}
           </div>
@@ -189,9 +261,11 @@ interface ChatItemProps {
   onClick: () => void
   onDelete: (e: React.MouseEvent) => void
   onRename: (newTitle: string) => void
+  onPin: (e: React.MouseEvent) => void
+  onArchive: (e: React.MouseEvent) => void
 }
 
-function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps) {
+function ChatItem({ chat, isActive, onClick, onDelete, onRename, onPin, onArchive }: ChatItemProps) {
   const [isRenaming, setIsRenaming] = useState(false)
   const [newTitle, setNewTitle] = useState(chat.title || '')
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -280,6 +354,24 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onPin(e)
+                      }}
+                    >
+                      <Pin className="h-4 w-4 mr-2" />
+                      {chat.pinned ? 'Unpin' : 'Pin'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onArchive(e)
+                      }}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      {chat.archived ? 'Unarchive' : 'Archive'}
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation()
