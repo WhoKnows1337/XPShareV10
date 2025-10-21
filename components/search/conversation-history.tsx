@@ -326,7 +326,7 @@ function TurnCard({ turn, index, totalTurns, onSelect }: TurnCardProps) {
 
           {isExpanded && (
             <div className="space-y-1 pl-5">
-              {turn.response.patterns?.slice(0, 3).map((pattern, i) => (
+              {turn.response.patterns?.slice(0, 3).map((pattern: any, i: number) => (
                 <div key={i} className="text-xs">
                   <Badge variant="outline" className="text-xs mr-2">
                     {pattern.type}

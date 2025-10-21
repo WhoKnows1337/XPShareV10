@@ -121,7 +121,7 @@ export class InsightAgent {
             .describe('Type of pattern to detect'),
           data: z.any().describe('Data to analyze for patterns'),
         }),
-        execute: async (params) => {
+        execute: async (params: any) => {
           return await this.detectPattern(params.patternType, params.data)
         },
       }),
@@ -149,7 +149,7 @@ export class InsightAgent {
             .optional()
             .describe('Suggested visualization type'),
         }),
-        execute: async (params) => {
+        execute: async (params: any) => {
           return {
             type: 'insight_card',
             ...params,
@@ -165,7 +165,7 @@ export class InsightAgent {
             .array(z.enum(['mean', 'median', 'stddev', 'percentile']))
             .describe('Statistical measures to calculate'),
         }),
-        execute: async (params) => {
+        execute: async (params: any) => {
           return this.calculateStatistics(params.data, params.measures)
         },
       }),
@@ -178,7 +178,7 @@ export class InsightAgent {
           labelA: z.string().describe('Label for first series'),
           labelB: z.string().describe('Label for second series'),
         }),
-        execute: async (params) => {
+        execute: async (params: any) => {
           return this.findCorrelation(
             params.dataA,
             params.dataB,

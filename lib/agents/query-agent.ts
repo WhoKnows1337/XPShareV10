@@ -137,7 +137,7 @@ export class QueryAgent {
         emotions: z.array(z.string()).optional(),
         limit: z.number().min(1).max(100).default(50),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         let query = this.supabase.from('experiences').select(
           `
           id,
@@ -224,7 +224,7 @@ export class QueryAgent {
         minConfidence: z.number().min(0).max(1).default(0),
         limit: z.number().min(1).max(100).default(50),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         const { data, error } = await this.supabase.rpc('search_by_attributes', {
           p_category: params.category,
           p_attribute_filters: params.attributeFilters,
@@ -257,7 +257,7 @@ export class QueryAgent {
         minSimilarity: z.number().min(0).max(1).default(0.7),
         maxResults: z.number().min(1).max(100).default(20),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         // TODO: Implement with OpenAI embeddings
         // For now, return placeholder
         return {
@@ -292,7 +292,7 @@ export class QueryAgent {
         category: z.string().optional(),
         limit: z.number().min(1).max(100).default(50),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         const { data, error } = await this.supabase.rpc('geo_search', {
           p_search_type: params.searchType,
           p_lat: params.lat,
@@ -327,7 +327,7 @@ export class QueryAgent {
         category: z.string().optional(),
         topN: z.number().min(1).max(100).default(10),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         const { data, error } = await this.supabase.rpc('aggregate_users_by_category', {
           p_category: params.category,
         })
@@ -363,7 +363,7 @@ export class QueryAgent {
           })
           .optional(),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         // Get category experiences
         let query = this.supabase
           .from('experiences')
@@ -406,7 +406,7 @@ export class QueryAgent {
           })
           .optional(),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         const { data, error } = await this.supabase.rpc('temporal_aggregation', {
           p_granularity: params.granularity,
           p_category: params.category,
@@ -442,7 +442,7 @@ export class QueryAgent {
         maxResults: z.number().min(1).max(100).default(10),
         minScore: z.number().min(0).max(1).default(0.5),
       }),
-      execute: async (params) => {
+      execute: async (params: any) => {
         const { data, error } = await this.supabase.rpc('find_related_experiences', {
           p_experience_id: params.experienceId,
           p_use_semantic: params.useSemantic,

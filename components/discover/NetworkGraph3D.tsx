@@ -147,8 +147,8 @@ export function NetworkGraph3D({
       .nodeResolution(16) // Lower resolution for better performance
       .linkColor('color')
       .linkOpacity(0.3)
-      .linkWidth((link) => link.value * 2)
-      .linkDirectionalParticles((link) => {
+      .linkWidth((link: any) => link.value * 2)
+      .linkDirectionalParticles((link: any) => {
         // Animated particles for stronger connections
         if (link.value > 0.9) return 2
         if (link.value > 0.8) return 2
@@ -156,8 +156,8 @@ export function NetworkGraph3D({
         if (link.value > 0.6) return 1
         return 0
       })
-      .linkDirectionalParticleSpeed((link) => link.value * 0.0015) // Slow particles
-      .linkDirectionalParticleWidth((link) => link.value * 1.5) // Smaller particles
+      .linkDirectionalParticleSpeed((link: any) => link.value * 0.0015) // Slow particles
+      .linkDirectionalParticleWidth((link: any) => link.value * 1.5) // Smaller particles
       .linkDirectionalParticleColor(() => '#9B59B6')
       .linkDirectionalParticleResolution(16) // High resolution for round particles
       .numDimensions(is2D ? 2 : 3)
