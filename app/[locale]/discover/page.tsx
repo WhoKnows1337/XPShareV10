@@ -10,12 +10,7 @@ import { useDiscoveryChats } from '@/hooks/useDiscoveryChats'
 import { generateChatTitle } from '@/lib/utils/generate-title'
 import { useAutoResume } from '@/hooks/useAutoResume'
 import { generateId } from '@/lib/utils'
-import {
-  TimelineToolUI,
-  MapToolUI,
-  NetworkToolUI,
-  HeatmapToolUI,
-} from '@/components/discover/tool-ui'
+import { ToolRenderer } from '@/components/discover/ToolRenderer'
 import { getRelativeTimestamp, shouldShowDateSeparator, getDateSeparatorText, isMessageGrouped } from '@/lib/utils/message-formatting'
 import { TypingIndicator } from '@/components/discover/TypingIndicator'
 import { usePersistedChat } from '@/hooks/usePersistedChat'
@@ -82,10 +77,12 @@ export default function DiscoverPage() {
   })
 
   const suggestions = [
-    'UFO Heatmap', // Heatmap Tool
-    'Dream Timeline', // Timeline Tool
-    'UFO Locations Map', // Geographic Map Tool
-    'Category Connections', // Network Tool
+    'Show UFO sightings in California', // geoSearch
+    'Analyze dream patterns over time', // temporalAnalysis
+    'Find top contributors', // rankUsers
+    'Detect patterns in psychic experiences', // detectPatterns + generateInsights
+    'Predict NDE trends', // predictTrends
+    'Compare UFO and dream categories', // compareCategory
   ]
 
   // Conversation Persistence (legacy - kept for export)
@@ -258,16 +255,19 @@ export default function DiscoverPage() {
 
                 <div className="flex flex-wrap gap-2 justify-center text-xs">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary">
-                    <span>⚡</span> 4 Analysis Tools
+                    <span>⚡</span> 16 AI Tools
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500">
-                    <span>🗺️</span> Geographic Maps
+                    <span>🔍</span> Smart Search
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-500">
-                    <span>📊</span> Timeline Analysis
+                    <span>📊</span> Analytics
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-500">
-                    <span>🔗</span> Network Graphs
+                    <span>🧠</span> Insights & Predictions
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 text-orange-500">
+                    <span>🗺️</span> Visualizations
                   </span>
                 </div>
 
@@ -328,23 +328,21 @@ export default function DiscoverPage() {
                       )
                     }
 
-                    // Get original user query from previous message for retry
-                    const userQuery = previousMessage?.role === 'user'
-                      ? previousMessage.parts?.find((p: any) => p.type === 'text')?.text || (part as any).input?.query
-                      : (part as any).input?.query
+                    // Tool parts - use universal ToolRenderer for all 16 tools
+                    if (part.type?.startsWith('tool-')) {
+                      // Get original user query from previous message for retry
+                      const userQuery = previousMessage?.role === 'user'
+                        ? previousMessage.parts?.find((p: any) => p.type === 'text')?.text || (part as any).input?.query
+                        : (part as any).input?.query
 
-                    // Tool parts - keep existing Tool UI components (type assertions for AI SDK 5.0)
-                    if (part.type === 'tool-analyze_timeline') {
-                      return <TimelineToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
-                    }
-                    if (part.type === 'tool-analyze_geographic') {
-                      return <MapToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
-                    }
-                    if (part.type === 'tool-analyze_network') {
-                      return <NetworkToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
-                    }
-                    if (part.type === 'tool-analyze_heatmap') {
-                      return <HeatmapToolUI key={i} part={part as any} onRetry={() => handleRetry(userQuery)} />
+                      return (
+                        <ToolRenderer
+                          key={i}
+                          part={part as any}
+                          onRetry={() => handleRetry(userQuery)}
+                          onSuggestionClick={handleSuggestionClick}
+                        />
+                      )
                     }
 
                     return null
