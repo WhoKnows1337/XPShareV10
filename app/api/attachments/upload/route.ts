@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single()) as { data: MessageAttachment | null; error: any }
 
-    if (dbError) {
+    if (dbError || !attachmentData) {
       console.error('[Upload API] Database error:', dbError)
       // Clean up uploaded file
       await supabase.storage.from('discovery-attachments').remove([storagePath])

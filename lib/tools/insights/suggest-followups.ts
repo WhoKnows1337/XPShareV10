@@ -243,7 +243,6 @@ Generate ${maxSuggestions} relevant follow-up suggestions.`
       system: systemPrompt,
       prompt: userPrompt,
       temperature: 0.7,
-      maxCompletionTokens: 1000,
     })
 
     // Parse GPT response

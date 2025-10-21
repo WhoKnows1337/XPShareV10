@@ -72,7 +72,6 @@ export default function DiscoverPage() {
     messages: initialMessages,
     generateId,
     experimental_throttle: 100,
-    attachments: true, // Enable file attachments
     transport: new DefaultChatTransport({
       api: '/api/discover',
     }),
@@ -100,7 +99,7 @@ export default function DiscoverPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useKeyboardShortcuts({
-    'Cmd+K': () => inputRef.current?.focus(),
+    ctrlK: () => inputRef.current?.focus(),
     'Ctrl+K': () => inputRef.current?.focus(),
     'Cmd+N': () => handleNewChat(),
     'Ctrl+N': () => handleNewChat(),

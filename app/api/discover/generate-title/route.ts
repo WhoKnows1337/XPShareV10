@@ -13,7 +13,6 @@ export async function POST(req: Request) {
     const { text } = await generateText({
       model: openai('gpt-4o-mini'),
       prompt: `Generate a very short, concise title (max 60 characters) for a conversation that starts with this user message: "${message}"\n\nOnly return the title, nothing else. Make it descriptive and relevant.`,
-      maxCompletionTokens: 20,
       temperature: 0.7,
     })
 

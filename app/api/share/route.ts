@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
       chat: share.discovery_chats,
       messages: messages || [],
       expiresAt: share.expires_at,
-      viewCount: share.view_count + 1,
+      viewCount: (share.view_count || 0) + 1,
     })
   } catch (error) {
     console.error('[Share API] Error:', error)

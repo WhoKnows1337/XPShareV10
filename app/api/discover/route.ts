@@ -274,7 +274,6 @@ export async function POST(req: Request) {
 
     // Return stream response with smooth streaming, metadata, and rate limit headers
     const response = result.toUIMessageStreamResponse({
-      transform: smoothStream({ chunking: 'word' }),
       // Add threading metadata to response messages
       experimental_metadata: {
         replyToId,

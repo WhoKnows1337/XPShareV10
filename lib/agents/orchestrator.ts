@@ -168,7 +168,6 @@ export class OrchestratorAgent {
           }),
         }),
       },
-      maxToolRoundtrips: 5,
       temperature: 0.3,
     })
 
