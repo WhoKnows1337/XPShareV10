@@ -39,6 +39,9 @@ import {
 import { Send, Paperclip, Mic } from 'lucide-react'
 import { FloatingStopButton } from '@/components/discover/StopButton'
 import { CitationList } from '@/components/discover/CitationList'
+import { OfflineBanner } from '@/components/discover/OfflineBanner'
+import { useOnlineStatus } from '@/lib/pwa/install'
+import { useMessageQueue } from '@/lib/queue/message-queue'
 
 /**
  * AI Discovery Interface
@@ -72,6 +75,10 @@ export default function DiscoverPage() {
   const [attachments, setAttachments] = useState<File[]>([])
   const isLoading = status === 'submitted' || status === 'streaming'
   const isStreaming = status === 'streaming'
+
+  // Offline support
+  const isOnline = useOnlineStatus()
+  const { queueCount, syncQueue: syncQueueFn } = useMessageQueue()
 
   // Auto-resume interrupted streams
   useAutoResume({
@@ -232,6 +239,16 @@ export default function DiscoverPage() {
         role="main"
         aria-label="Discovery Chat Interface"
       >
+        {/* Offline Banner */}
+        <OfflineBanner
+          isOnline={isOnline}
+          queueCount={queueCount}
+          onSync={async () => {
+            await syncQueueFn(async (msg) => {
+              await sendMessage({ text: msg.content })
+            })
+          }}
+        />
         {/* Header - Only show Export/Clear when messages exist */}
         {messages.length > 0 && (
         <div className="py-2 flex-shrink-0">

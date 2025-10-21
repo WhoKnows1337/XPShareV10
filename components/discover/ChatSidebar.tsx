@@ -33,9 +33,11 @@ import {
   Clock,
   MoreVertical,
   Pencil,
+  Share2,
 } from 'lucide-react'
 import { useDiscoveryChats, DiscoveryChat } from '@/hooks/useDiscoveryChats'
 import { formatDistanceToNow } from 'date-fns'
+import { ShareDialog } from '@/components/discover/ShareDialog'
 
 interface ChatSidebarProps {
   currentChatId: string | null
@@ -156,6 +158,7 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
   const [isRenaming, setIsRenaming] = useState(false)
   const [newTitle, setNewTitle] = useState(chat.title || '')
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showShareDialog, setShowShareDialog] = useState(false)
 
   const handleRename = () => {
     if (newTitle.trim() && newTitle !== chat.title) {
@@ -243,6 +246,15 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation()
+                        setShowShareDialog(true)
+                      }}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setIsRenaming(true)
                       }}
                     >
@@ -290,6 +302,13 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename }: ChatItemProps
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Share Dialog */}
+      <ShareDialog
+        chatId={chat.id}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
     </TooltipProvider>
   )
 }
