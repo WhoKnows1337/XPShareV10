@@ -947,8 +947,36 @@ This represents a massive leap in chat UX capabilities - 100% production-ready!
 
 ## Optional Enhancements (Future)
 
-- [ ] 📋 Voice interface
-- [ ] 📋 Multi-language support (EN, FR, ES)
+- [x] ✅ Voice interface (Whisper API with automatic language detection) **100% COMPLETE** ✅
+  - [x] ✅ Created `/app/api/transcribe/route.ts` with Whisper integration
+    - [x] ✅ Removed hardcoded language parameter for auto-detection
+    - [x] ✅ Verbose JSON response format (language + duration metadata)
+    - [x] ✅ File validation (25MB max, type checking)
+    - [x] ✅ Comprehensive error handling (rate limits, auth, generic)
+  - [x] ✅ Created `/lib/hooks/useAudioRecorder.ts` for MediaRecorder API
+    - [x] ✅ Browser audio recording with MediaRecorder
+    - [x] ✅ Audio quality settings (echoCancellation, noiseSuppression, 44100Hz)
+    - [x] ✅ Automatic transcription via `/api/transcribe`
+    - [x] ✅ State management (isRecording, isTranscribing, error, detectedLanguage)
+    - [x] ✅ Cleanup on unmount
+  - [x] ✅ Updated `PromptInputSpeechButton` in `/components/ai-elements/prompt-input.tsx`
+    - [x] ✅ Replaced 70+ lines of Web Speech API code with Whisper hook
+    - [x] ✅ Maintained textarea integration (onTranscriptionChange callback)
+    - [x] ✅ Loading spinner during transcription
+    - [x] ✅ Preserved pulse animation and visual feedback
+  - [x] ✅ Automatic language detection (99+ languages)
+  - [x] ✅ Loading states (recording/transcribing)
+  - [x] ✅ Error handling & validation
+  - [x] ✅ Cost-effective: $0.006/minute (~$0.36/hour of audio)
+  - [x] ✅ Edge runtime for faster API responses (60s max duration)
+- [x] ✅ Multi-language support (EN, DE) - FR/ES partially done
+  - [x] ✅ next-intl setup with `/[locale]/` routes
+  - [x] ✅ LanguageSwitcher component in navbar
+  - [x] ✅ `en.json` translation file (1751 lines - 100%)
+  - [x] ✅ `de.json` translation file (1788 lines - 100%)
+  - [ ] 📋 `fr.json` translation file (297 lines - 17% done)
+  - [ ] 📋 `es.json` translation file (297 lines - 17% done)
+  - [ ] 📋 AI response localization (system prompts)
 - [ ] 📋 Mobile app
 - [ ] 📋 Collaborative analysis
 - [ ] 📋 Custom dashboards

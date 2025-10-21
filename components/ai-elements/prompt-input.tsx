@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useAudioRecorder } from "@/lib/hooks/useAudioRecorder";
 import type { ChatStatus, FileUIPart } from "ai";
 import {
   ImageIcon,
@@ -1086,96 +1087,61 @@ export const PromptInputSpeechButton = ({
   onTranscriptionChange,
   ...props
 }: PromptInputSpeechButtonProps) => {
-  const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(
-    null
-  );
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-    ) {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-      const speechRecognition = new SpeechRecognition();
-
-      speechRecognition.continuous = true;
-      speechRecognition.interimResults = true;
-      speechRecognition.lang = "en-US";
-
-      speechRecognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      speechRecognition.onend = () => {
-        setIsListening(false);
-      };
-
-      speechRecognition.onresult = (event) => {
-        let finalTranscript = "";
-
-        const results = Array.from(event.results);
-
-        for (const result of results) {
-          if (result.isFinal) {
-            finalTranscript += result[0].transcript;
-          }
-        }
-
-        if (finalTranscript && textareaRef?.current) {
+  // Use Whisper API for automatic language detection
+  const { isRecording, isTranscribing, startRecording, stopRecording, error } =
+    useAudioRecorder({
+      onTranscriptionComplete: (text) => {
+        if (textareaRef?.current) {
           const textarea = textareaRef.current;
           const currentValue = textarea.value;
           const newValue =
-            currentValue + (currentValue ? " " : "") + finalTranscript;
+            currentValue + (currentValue ? " " : "") + text;
 
           textarea.value = newValue;
           textarea.dispatchEvent(new Event("input", { bubbles: true }));
           onTranscriptionChange?.(newValue);
         }
-      };
+      },
+      onError: (err) => {
+        console.error("[Speech] Error:", err.message);
+      },
+    });
 
-      speechRecognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        setIsListening(false);
-      };
-
-      recognitionRef.current = speechRecognition;
-      setRecognition(speechRecognition);
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, [textareaRef, onTranscriptionChange]);
-
-  const toggleListening = useCallback(() => {
-    if (!recognition) {
-      return;
-    }
-
-    if (isListening) {
-      recognition.stop();
+  const handleClick = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
     } else {
-      recognition.start();
+      startRecording();
     }
-  }, [recognition, isListening]);
+  }, [isRecording, startRecording, stopRecording]);
+
+  const isActive = isRecording || isTranscribing;
 
   return (
     <PromptInputButton
       className={cn(
         "relative transition-all duration-200",
-        isListening && "animate-pulse bg-accent text-accent-foreground",
+        isActive && "animate-pulse bg-accent text-accent-foreground",
         className
       )}
-      disabled={!recognition}
-      onClick={toggleListening}
+      disabled={isTranscribing}
+      onClick={handleClick}
+      title={
+        isRecording
+          ? "Stop recording"
+          : isTranscribing
+          ? "Transcribing..."
+          : error
+          ? error
+          : "Start voice recording"
+      }
       {...props}
     >
-      <MicIcon className="size-4" />
+      {isTranscribing ? (
+        <Loader2Icon className="size-4 animate-spin" />
+      ) : (
+        <MicIcon className="size-4" />
+      )}
     </PromptInputButton>
   );
 };
