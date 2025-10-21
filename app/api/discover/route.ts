@@ -1,6 +1,7 @@
 import { openai } from '@ai-sdk/openai'
 import { streamText, convertToModelMessages, smoothStream } from 'ai'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitDiscovery, getRateLimitHeaders } from '@/lib/rate-limit'
 
 // Import all tools
 import {
@@ -81,10 +82,33 @@ export async function POST(req: Request) {
     // Get Supabase client (for RLS context in tools)
     const supabase = await createClient()
 
-    // Check authentication (optional - depends on whether discovery is public)
+    // Check authentication
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
+    // Rate limiting: Use user ID for authenticated, IP for anonymous
+    const identifier = user?.id || req.headers.get('x-forwarded-for') || 'anonymous'
+    const rateLimitResult = rateLimitDiscovery(identifier, !!user)
+
+    if (!rateLimitResult.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          message: 'Too many requests. Please try again later.',
+          limit: rateLimitResult.limit,
+          remaining: rateLimitResult.remaining,
+          reset: new Date(rateLimitResult.reset).toISOString(),
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            ...getRateLimitHeaders(rateLimitResult),
+          },
+        }
+      )
+    }
 
     // Stream text with all tools
     const result = streamText({

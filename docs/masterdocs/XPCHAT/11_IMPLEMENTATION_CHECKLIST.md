@@ -308,9 +308,9 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Performance
 
-- [ ] 📋 Create materialized views
+- [x] ✅ Create materialized views (4 views with CONCURRENT refresh)
 - [ ] 📋 Implement query caching (Redis optional)
-- [ ] 📋 Optimize SQL functions
+- [x] ✅ Optimize SQL functions (STABLE, bounding box, materialized view integration)
 - [ ] 📋 Enable CDN for static assets
 - [ ] 📋 Code splitting
 - [ ] 📋 Image optimization
@@ -327,8 +327,8 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ### Security
 
-- [ ] 📋 Enable RLS policies
-- [ ] 📋 Implement rate limiting
+- [x] ✅ Enable RLS policies (already enabled on all tables)
+- [x] ✅ Implement rate limiting (50 req/min auth, 10 req/min anon)
 - [ ] 📋 Input sanitization
 - [ ] 📋 CORS configuration
 - [ ] 📋 Security audit
