@@ -37,6 +37,7 @@ import {
   PromptInputSubmit,
 } from '@/components/ai-elements/prompt-input'
 import { Send, Paperclip, Mic } from 'lucide-react'
+import { FloatingStopButton } from '@/components/discover/StopButton'
 
 /**
  * AI Discovery Interface
@@ -56,17 +57,20 @@ export default function DiscoverPage() {
   const [initialMessages, setInitialMessages] = useState<any[]>([])
   const { createChat, loadMessages, saveMessages, updateChatTitle, loadChats } = useDiscoveryChats()
 
-  const { messages, sendMessage, status, setMessages, resumeStream } = useChat({
+  const { messages, sendMessage, status, setMessages, resumeStream, stop } = useChat({
     id: currentChatId || undefined,
     messages: initialMessages,
     generateId,
     experimental_throttle: 100,
+    experimental_attachments: true, // Enable file attachments
     transport: new DefaultChatTransport({
       api: '/api/discover',
     }),
   })
   const [input, setInput] = useState('')
+  const [attachments, setAttachments] = useState<File[]>([])
   const isLoading = status === 'submitted' || status === 'streaming'
+  const isStreaming = status === 'streaming'
 
   // Auto-resume interrupted streams
   useAutoResume({
@@ -198,6 +202,10 @@ export default function DiscoverPage() {
   const handleRetry = (query: string) => {
     if (isLoading) return
     sendMessage({ text: query })
+  }
+
+  const handleStop = () => {
+    stop()
   }
 
   return (
@@ -433,6 +441,9 @@ export default function DiscoverPage() {
           </p>
         </div>
       </div>
+
+      {/* Floating Stop Button */}
+      <FloatingStopButton onStop={handleStop} isStreaming={isStreaming} />
       </div>
     </div>
   )
