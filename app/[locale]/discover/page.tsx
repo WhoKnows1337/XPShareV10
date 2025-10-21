@@ -42,6 +42,9 @@ import { CitationList } from '@/components/discover/CitationList'
 import { OfflineBanner } from '@/components/discover/OfflineBanner'
 import { useOnlineStatus } from '@/lib/pwa/install'
 import { useMessageQueue } from '@/lib/queue/message-queue'
+import { useKeyboardShortcuts } from '@/lib/hooks/useKeyboardShortcuts'
+import { ShortcutsModal } from '@/components/discover/ShortcutsModal'
+import { useRef } from 'react'
 
 /**
  * AI Discovery Interface
@@ -79,6 +82,20 @@ export default function DiscoverPage() {
   // Offline support
   const isOnline = useOnlineStatus()
   const { queueCount, syncQueue: syncQueueFn } = useMessageQueue()
+
+  // Keyboard shortcuts
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useKeyboardShortcuts({
+    'Cmd+K': () => inputRef.current?.focus(),
+    'Ctrl+K': () => inputRef.current?.focus(),
+    'Cmd+N': () => handleNewChat(),
+    'Ctrl+N': () => handleNewChat(),
+    'Cmd+/': () => setShowShortcutsModal(true),
+    'Ctrl+/': () => setShowShortcutsModal(true),
+    '?': () => setShowShortcutsModal(true),
+  })
 
   // Auto-resume interrupted streams
   useAutoResume({
@@ -450,6 +467,7 @@ export default function DiscoverPage() {
         >
           <PromptInputBody>
             <PromptInputTextarea
+              ref={inputRef}
               id="chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -494,6 +512,12 @@ export default function DiscoverPage() {
 
       {/* Floating Stop Button */}
       <FloatingStopButton onStop={handleStop} isStreaming={isStreaming} />
+
+      {/* Keyboard Shortcuts Modal */}
+      <ShortcutsModal
+        open={showShortcutsModal}
+        onOpenChange={setShowShortcutsModal}
+      />
       </div>
     </div>
   )
