@@ -15,7 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 
 const generateInsightsSchema = z.object({
   data: z
-    .array(z.any())
+    .array(z.object({}).passthrough())
     .describe('Array of data to analyze for insights (experiences, temporal data, etc.)'),
   analysisType: z
     .enum(['temporal', 'geographic', 'category', 'correlation', 'all'])

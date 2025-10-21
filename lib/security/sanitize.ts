@@ -205,14 +205,30 @@ export function sanitizeMessages(messages: unknown): SanitizedMessage[] {
       throw new Error(`Message at index ${index} must be an object`)
     }
 
-    const { role, content } = msg as any
+    const { role, content, parts } = msg as any
 
     if (!role || !['user', 'assistant', 'system'].includes(role)) {
       throw new Error(`Invalid role at index ${index}`)
     }
 
+    // Handle AI SDK multi-part content (with parts array)
+    if (parts && Array.isArray(parts)) {
+      // Extract text from parts array
+      const textParts = parts
+        .filter((p: any) => p.type === 'text' && typeof p.text === 'string')
+        .map((p: any) => p.text)
+
+      const combinedText = textParts.join('\n')
+
+      return {
+        role: role as 'user' | 'assistant' | 'system',
+        content: sanitizeMessage(combinedText || ''),
+      }
+    }
+
+    // Handle simple string content (legacy format)
     if (typeof content !== 'string') {
-      throw new Error(`Message content at index ${index} must be a string`)
+      throw new Error(`Message content at index ${index} must be a string or parts array`)
     }
 
     return {

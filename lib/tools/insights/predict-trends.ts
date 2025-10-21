@@ -14,7 +14,7 @@ import { z } from 'zod'
 
 const predictTrendsSchema = z.object({
   data: z
-    .array(z.any())
+    .array(z.object({}).passthrough())
     .describe('Array of temporal data to analyze for trends (experiences with dates)'),
   forecastPeriods: z
     .number()
