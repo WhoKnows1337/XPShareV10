@@ -17,7 +17,7 @@ const API_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 /**
  * Test helper
  */
-async function test(name: string, fn: () => Promise<boolean>, expectedMessage: string) {
+async function runSecurityTest(name: string, fn: () => Promise<boolean>, expectedMessage: string) {
   try {
     const passed = await fn()
     results.push({
@@ -208,13 +208,13 @@ async function runTests() {
   console.log('🔒 Running Security Tests...\n')
   console.log(`API URL: ${API_URL}\n`)
 
-  await test('Rate Limiting', testRateLimiting, 'Should block after 10 requests/min')
-  await test('SQL Injection Protection', testSQLInjection, 'Should sanitize SQL injection attempts')
-  await test('Prompt Injection Detection', testPromptInjection, 'Should log but not block prompt injection')
-  await test('XSS Protection', testXSSProtection, 'Should sanitize XSS payloads')
-  await test('CORS Protection', testCORS, 'Should block unauthorized origins in production')
-  await test('Message Validation', testMessageValidation, 'Should reject invalid message formats')
-  await test('Health Check Endpoint', testHealthCheck, 'Should return health status')
+  await runSecurityTest('Rate Limiting', testRateLimiting, 'Should block after 10 requests/min')
+  await runSecurityTest('SQL Injection Protection', testSQLInjection, 'Should sanitize SQL injection attempts')
+  await runSecurityTest('Prompt Injection Detection', testPromptInjection, 'Should log but not block prompt injection')
+  await runSecurityTest('XSS Protection', testXSSProtection, 'Should sanitize XSS payloads')
+  await runSecurityTest('CORS Protection', testCORS, 'Should block unauthorized origins in production')
+  await runSecurityTest('Message Validation', testMessageValidation, 'Should reject invalid message formats')
+  await runSecurityTest('Health Check Endpoint', testHealthCheck, 'Should return health status')
 
   // Print results
   console.log('\n📊 Test Results:\n')

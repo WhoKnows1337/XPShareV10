@@ -122,7 +122,7 @@ export function TrendChart({
     const lastHistorical = historicalData[historicalData.length - 1]
     const firstPrediction = predictions[0]
 
-    // Insert connection point
+    // Insert connection point (needs both actual and predicted for smooth transition)
     chartData.splice(historicalData.length, 0, {
       period: firstPrediction.period,
       actual: lastHistorical.count,
@@ -130,7 +130,7 @@ export function TrendChart({
       lowerBound: showConfidenceInterval ? firstPrediction.lowerBound : null,
       upperBound: showConfidenceInterval ? firstPrediction.upperBound : null,
       type: 'connection',
-    })
+    } as any)
   }
 
   const trendColor = getTrendColor(trend)

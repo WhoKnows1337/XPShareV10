@@ -58,7 +58,7 @@ export class QueryAgent {
    * Execute query task
    */
   async execute(task: string, parameters: any) {
-    const { text, toolCalls } = await generateText({
+    const { text, steps } = await generateText({
       model: openai('gpt-4o-mini'),
       messages: [
         { role: 'system', content: QUERY_AGENT_SYSTEM_PROMPT },
@@ -71,10 +71,11 @@ export class QueryAgent {
       temperature: 0.2,
     })
 
-    // Return tool results
-    if (toolCalls && toolCalls.length > 0) {
+    // Return tool results (AI SDK 5.0: steps contain toolResults)
+    const toolResults = steps.flatMap((step) => step.toolResults || [])
+    if (toolResults.length > 0) {
       return {
-        results: toolCalls.map((call) => call.result),
+        results: toolResults.map((result) => result.output),
         reasoning: text,
       }
     }
@@ -112,7 +113,7 @@ export class QueryAgent {
     return tool({
       description:
         'Search experiences with multi-dimensional filters. Supports categories, locations, time ranges, attributes, tags, emotions.',
-      parameters: z.object({
+      inputSchema: z.object({
         categories: z.array(z.string()).optional(),
         location: z
           .object({
@@ -210,7 +211,7 @@ export class QueryAgent {
     return tool({
       description:
         'Find experiences with specific attributes using AND/OR logic. Uses SQL function for precise matching.',
-      parameters: z.object({
+      inputSchema: z.object({
         category: z.string(),
         attributeFilters: z.array(
           z.object({
@@ -250,7 +251,7 @@ export class QueryAgent {
     return tool({
       description:
         'Vector similarity search using embeddings. Finds semantically related experiences.',
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().describe('Natural language query to search for'),
         categories: z.array(z.string()).optional(),
         minSimilarity: z.number().min(0).max(1).default(0.7),
@@ -275,7 +276,7 @@ export class QueryAgent {
     return tool({
       description:
         'Search experiences by geographic location using radius or bounding box.',
-      parameters: z.object({
+      inputSchema: z.object({
         searchType: z.enum(['radius', 'bbox']),
         lat: z.number().optional(),
         lng: z.number().optional(),
@@ -322,7 +323,7 @@ export class QueryAgent {
   private createRankUsersTool() {
     return tool({
       description: 'Get top users by contribution metrics',
-      parameters: z.object({
+      inputSchema: z.object({
         category: z.string().optional(),
         topN: z.number().min(1).max(100).default(10),
       }),
@@ -353,7 +354,7 @@ export class QueryAgent {
   private createAnalyzeCategoryTool() {
     return tool({
       description: 'Deep-dive analysis of a specific category',
-      parameters: z.object({
+      inputSchema: z.object({
         category: z.string(),
         dateRange: z
           .object({
@@ -394,7 +395,7 @@ export class QueryAgent {
   private createTemporalAnalysisTool() {
     return tool({
       description: 'Analyze temporal patterns and aggregations',
-      parameters: z.object({
+      inputSchema: z.object({
         granularity: z.enum(['hour', 'day', 'week', 'month', 'year']),
         category: z.string().optional(),
         location: z.string().optional(),
@@ -432,7 +433,7 @@ export class QueryAgent {
     return tool({
       description:
         'Find related experiences using multi-dimensional similarity (semantic, geographic, temporal, attributes)',
-      parameters: z.object({
+      inputSchema: z.object({
         experienceId: z.string(),
         useSemantic: z.boolean().default(true),
         useGeographic: z.boolean().default(true),

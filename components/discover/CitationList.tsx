@@ -8,7 +8,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getCitationsForMessage } from '@/lib/citations/citation-tracker'
+import { getCitationsForMessage, Citation as CitationTrackerCitation } from '@/lib/citations/citation-tracker'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -20,14 +20,11 @@ import {
 import { ExternalLink, Star } from 'lucide-react'
 import Link from 'next/link'
 
-export interface Citation {
-  experienceId: string
-  citationNumber: number
-  relevanceScore: number
-  snippetText?: string
-  contextBefore?: string
-  contextAfter?: string
-  experience?: any
+// Extended citation with UI-specific fields
+export interface Citation extends Omit<CitationTrackerCitation, 'citationIndex' | 'snippet'> {
+  citationNumber: number  // UI display number (mapped from citationIndex)
+  snippetText?: string    // UI display text (mapped from snippet)
+  experience?: any        // Optional hydrated experience data
 }
 
 export interface CitationListProps {
@@ -132,7 +129,17 @@ export function CitationList({
     try {
       setLoading(true)
       const data = await getCitationsForMessage(messageId!)
-      setCitations(data)
+      // Map citation-tracker format to UI format
+      const mappedCitations: Citation[] = data.map((c) => ({
+        experienceId: c.experienceId,
+        toolName: c.toolName,
+        citationNumber: c.citationIndex,  // Map index to number for UI
+        snippetText: c.snippet,           // Map snippet to snippetText
+        relevanceScore: c.relevanceScore,
+        contextBefore: c.contextBefore,
+        contextAfter: c.contextAfter,
+      }))
+      setCitations(mappedCitations)
     } catch (error) {
       console.error('[CitationList] Failed to load citations:', error)
     } finally {

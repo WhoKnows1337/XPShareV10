@@ -79,9 +79,12 @@ export const XPShareMessageContent = ({
   const gradientStyle = gradient ? { backgroundImage: gradient } : undefined
   const borderStyle = borderColor ? { borderLeftColor: borderColor } : undefined
 
+  // Map variant to MessageContent's expected types
+  const messageContentVariant = variant === 'default' ? 'flat' : variant === 'user' ? 'contained' : 'flat'
+
   return (
     <MessageContent
-      variant={variant}
+      variant={messageContentVariant as 'flat' | 'contained'}
       className={cn(
         // Add gradient styling for user messages
         variant === 'user' && gradient && 'bg-gradient-to-br',

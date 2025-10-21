@@ -43,7 +43,7 @@ export function useDiscoveryChats() {
 
       if (fetchError) throw fetchError
 
-      setChats(data || [])
+      setChats((data || []) as any)
     } catch (err) {
       console.error('Error loading chats:', err)
       setError(err as Error)
@@ -95,7 +95,7 @@ export function useDiscoveryChats() {
         throw fetchError
       }
 
-      return data?.messages as UIMessage[] || []
+      return (data?.messages as any) as UIMessage[] || []
     } catch (err) {
       console.error('Error loading messages:', err)
       setError(err as Error)

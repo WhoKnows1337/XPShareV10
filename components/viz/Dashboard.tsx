@@ -233,12 +233,12 @@ export function Dashboard({
   }
 
   // Tab configuration
-  const tabs: { id: TabType; label: string; enabled: boolean }[] = [
-    { id: 'overview', label: 'Overview', enabled: true },
-    { id: 'map', label: 'Map', enabled: enabledViz.map ?? true },
-    { id: 'timeline', label: 'Timeline', enabled: enabledViz.timeline ?? true },
-    { id: 'network', label: 'Network', enabled: enabledViz.network ?? true },
-    { id: 'heatmap', label: 'Heatmap', enabled: enabledViz.heatmap ?? true },
+  const tabs = [
+    { id: 'overview' as TabType, label: 'Overview', enabled: true },
+    { id: 'map' as TabType, label: 'Map', enabled: enabledViz.map ?? true },
+    { id: 'timeline' as TabType, label: 'Timeline', enabled: enabledViz.timeline ?? true },
+    { id: 'network' as TabType, label: 'Network', enabled: enabledViz.network ?? true },
+    { id: 'heatmap' as TabType, label: 'Heatmap', enabled: enabledViz.heatmap ?? true },
   ].filter((tab) => tab.enabled)
 
   return (

@@ -4,7 +4,7 @@
  * Basic threading support for nested conversations.
  */
 
-import { Message as UIMessage } from 'ai'
+import type { UIMessage } from 'ai'
 
 export interface ThreadedMessage {
   id: string

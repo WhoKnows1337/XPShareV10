@@ -45,6 +45,9 @@ export interface ExperienceMapProps {
 
   /** Center point [lat, lng] (default auto-calculated) */
   center?: [number, number]
+
+  /** Optional map title */
+  title?: string
 }
 
 // ============================================================================
@@ -215,9 +218,10 @@ export function ExperienceMap({
 
         <AutoCenter bounds={bounds} />
 
-        {enableClustering ? (
-          <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
-            {validData.map((experience) => (
+        {/* TODO: Install react-leaflet-cluster for clustering support */}
+        {/* {enableClustering ? (...) : (...)} */}
+        <>
+          {validData.map((experience) => (
               <Marker
                 key={experience.id}
                 position={[experience.location_lat!, experience.location_lng!]}
@@ -270,64 +274,7 @@ export function ExperienceMap({
                 </Popup>
               </Marker>
             ))}
-          </MarkerClusterGroup>
-        ) : (
-          <>
-            {validData.map((experience) => (
-              <Marker
-                key={experience.id}
-                position={[experience.location_lat!, experience.location_lng!]}
-                icon={createCategoryIcon(experience.category)}
-              >
-                <Popup maxWidth={300} minWidth={200}>
-                  <div className="p-2">
-                    <h3 className="font-semibold text-base mb-2 line-clamp-2">
-                      {experience.title}
-                    </h3>
-
-                    <div className="space-y-1 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="inline-block w-3 h-3 rounded-full"
-                          style={{
-                            backgroundColor:
-                              CATEGORY_COLORS[experience.category] || CATEGORY_COLORS.default,
-                          }}
-                        />
-                        <span className="capitalize text-gray-700">{experience.category}</span>
-                      </div>
-
-                      {experience.location_text && (
-                        <p className="text-gray-600">📍 {experience.location_text}</p>
-                      )}
-
-                      {experience.date_occurred && (
-                        <p className="text-gray-600">
-                          📅 {new Date(experience.date_occurred).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-
-                    {experience.description && (
-                      <p className="mt-2 text-sm text-gray-700 line-clamp-3">
-                        {experience.description}
-                      </p>
-                    )}
-
-                    <a
-                      href={`/experiences/${experience.id}`}
-                      className="mt-3 inline-block text-sm font-medium text-blue-600 hover:text-blue-800"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View Details →
-                    </a>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </>
-        )}
+        </>
       </MapContainer>
 
       <div className="mt-2 text-sm text-gray-500">

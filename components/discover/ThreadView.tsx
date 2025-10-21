@@ -52,7 +52,7 @@ export function ThreadView({ message, depth = 0, onReply, onBranch, renderCustom
               <span className="text-xs text-muted-foreground">
                 {new Date(message.timestamp).toLocaleTimeString()}
               </span>
-              {hasReplies && (
+              {hasReplies && message.replies && (
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {message.replies.length} {message.replies.length === 1 ? 'reply' : 'replies'}
                 </span>
@@ -69,7 +69,9 @@ export function ThreadView({ message, depth = 0, onReply, onBranch, renderCustom
               {onBranch && (
                 <BranchButton
                   messageId={message.id}
-                  onBranch={onBranch}
+                  onBranchCreate={async (messageId, branchName) => {
+                    onBranch(messageId)
+                  }}
                   className="h-7 w-7 p-0"
                 />
               )}
@@ -119,7 +121,7 @@ export function ThreadView({ message, depth = 0, onReply, onBranch, renderCustom
         </div>
 
         {/* Nested Replies */}
-        {hasReplies && !isCollapsed && (
+        {hasReplies && !isCollapsed && message.replies && (
           <div className="mt-2 space-y-2">
             {message.replies.map((reply) => (
               <ThreadView

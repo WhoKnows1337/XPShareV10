@@ -161,16 +161,16 @@ export function ToolRenderer({ part, onRetry, onSuggestionClick }: ToolRendererP
 
   // Visualization Tools (from Phase 4)
   if (toolName === 'analyze_timeline' || part.type === 'tool-analyze_timeline') {
-    return <TimelineToolUI part={part} onRetry={onRetry} />
+    return <TimelineToolUI toolResult={part} />
   }
   if (toolName === 'analyze_geographic' || part.type === 'tool-analyze_geographic') {
-    return <MapToolUI part={part} onRetry={onRetry} />
+    return <MapToolUI toolResult={part} />
   }
   if (toolName === 'analyze_network' || part.type === 'tool-analyze_network') {
-    return <NetworkToolUI part={part} onRetry={onRetry} />
+    return <NetworkToolUI toolResult={part} />
   }
   if (toolName === 'analyze_heatmap' || part.type === 'tool-analyze_heatmap') {
-    return <HeatmapToolUI part={part} onRetry={onRetry} />
+    return <HeatmapToolUI toolResult={part} />
   }
 
   // Search Tools

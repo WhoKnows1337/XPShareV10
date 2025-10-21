@@ -99,7 +99,10 @@ export async function hybridSearch(
       throw new Error(`Failed to fetch embedding for experience ${similarTo}`)
     }
 
-    queryEmbedding = sourceExp.embedding as number[]
+    // Parse embedding from JSON string to number array
+    queryEmbedding = typeof sourceExp.embedding === 'string'
+      ? JSON.parse(sourceExp.embedding)
+      : (sourceExp.embedding as unknown as number[])
   }
 
   // Step 2: If query provided but no embedding, generate it
@@ -351,7 +354,7 @@ export async function getAllExperiences(): Promise<HybridSearchResult[]> {
     fts_score: 0,
     user_id: r.user_id || '',
     created_at: r.created_at,
-  }))
+  })) as HybridSearchResult[]
 }
 
 /**
@@ -411,7 +414,7 @@ export async function getExperiences(
     fts_score: 0,
     user_id: r.user_id || '',
     created_at: r.created_at,
-  }))
+  })) as HybridSearchResult[]
 }
 
 /**

@@ -137,7 +137,7 @@ export function NetworkGraph3D({
     if (!containerRef.current) return
 
     // Create graph instance
-    const Graph = ForceGraph3D()(containerRef.current)
+    const Graph = (ForceGraph3D as any)()(containerRef.current)
       .graphData(graphData) // Initial data
       .backgroundColor('rgba(0, 0, 0, 0)') // Transparent background
       .nodeLabel('title') // Simple tooltip

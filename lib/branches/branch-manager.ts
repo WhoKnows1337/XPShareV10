@@ -37,9 +37,9 @@ export async function createBranch(
   return {
     id: data.id,
     chatId: data.chat_id,
-    parentMessageId: data.parent_message_id,
+    parentMessageId: data.parent_message_id || undefined,
     branchName: data.branch_name,
-    createdAt: new Date(data.created_at),
+    createdAt: new Date(data.created_at as string),
   }
 }
 
@@ -65,9 +65,9 @@ export async function getBranchesForChat(chatId: string): Promise<Branch[]> {
       return {
         id: b.id,
         chatId: b.chat_id,
-        parentMessageId: b.parent_message_id,
+        parentMessageId: b.parent_message_id || undefined,
         branchName: b.branch_name,
-        createdAt: new Date(b.created_at),
+        createdAt: new Date(b.created_at as string),
         messageCount: count || 0,
       }
     })

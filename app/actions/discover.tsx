@@ -77,7 +77,7 @@ Remember: You are a discovery assistant. Your goal is to help users find meaning
 
 export async function streamDiscovery(
   message: string,
-  conversationHistory: Array<{ role: string; content: string }> = []
+  conversationHistory: Array<{ role: 'user' | 'assistant' | 'system' | 'tool'; content: string }> = []
 ) {
   // Validation
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -88,8 +88,11 @@ export async function streamDiscovery(
     model: gpt4o,
     messages: [
       { role: 'system', content: DISCOVERY_SYSTEM_PROMPT },
-      ...conversationHistory,
-      { role: 'user', content: message },
+      ...conversationHistory.map(msg => ({
+        role: msg.role as 'user' | 'assistant' | 'system',
+        content: msg.content
+      })),
+      { role: 'user' as const, content: message },
     ],
     text: ({ content }) => (
       <Card className="border-l-4 border-l-primary">
@@ -375,7 +378,7 @@ export async function streamDiscovery(
       },
     },
     temperature: 0.3,
-    maxSteps: 5,
+    // Note: maxSteps removed in AI SDK 5.0 - use maxToolRoundtrips instead if needed
   })
 
   return result.value

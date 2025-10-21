@@ -8,9 +8,14 @@
  */
 
 import { Source } from './ai-answer'
+import { ConversationTurnSchema } from '@/lib/validation/search5-schemas'
+import { z } from 'zod'
 
 // Re-export Source for convenience
 export type { Source }
+
+// ConversationTurn type from Zod schema
+export type ConversationTurn = z.infer<typeof ConversationTurnSchema>
 
 // ============================================================================
 // CORE RESPONSE TYPES
@@ -45,6 +50,9 @@ export interface Search5Response {
   /** Structured patterns (main content) */
   patterns: Pattern[]
 
+  /** LLM-generated summary of the findings */
+  summary?: string
+
   /** LLM-generated follow-up questions based on discovered patterns */
   followUpSuggestions?: FollowUpSuggestion[]
 
@@ -72,7 +80,7 @@ export interface Pattern {
   sourceIds: string[]         // Which experience IDs support this pattern
   citationIds?: number[]      // Inline citation IDs (e.g., [1, 3, 7])
   confidence: number          // Pattern strength 0-100
-  visualizationType: 'bar' | 'timeline' | 'map' | 'tag-cloud'
+  visualizationType?: 'bar' | 'timeline' | 'map' | 'tag-cloud'  // Optional - default set client-side
 }
 
 /**

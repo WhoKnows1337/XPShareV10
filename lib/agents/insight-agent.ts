@@ -87,7 +87,7 @@ export class InsightAgent {
    * Execute insight analysis task
    */
   async execute(task: string, context: any) {
-    const { text, toolCalls } = await generateText({
+    const { text, steps } = await generateText({
       model: openai('gpt-4o'),
       messages: [
         { role: 'system', content: INSIGHT_AGENT_SYSTEM_PROMPT },
@@ -100,9 +100,10 @@ export class InsightAgent {
       temperature: 0.4,
     })
 
-    // Return insights with tool results
+    // Return insights with tool results (AI SDK 5.0: steps contain toolResults)
+    const toolResults = steps.flatMap((step) => step.toolResults || [])
     return {
-      insights: toolCalls?.map((call) => call.result) || [],
+      insights: toolResults.map((result) => result.output) || [],
       explanation: text,
     }
   }

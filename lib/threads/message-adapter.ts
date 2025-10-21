@@ -6,7 +6,7 @@
  * 2. Convert UIMessage to ThreadedMessage for rendering
  */
 
-import { Message as UIMessage } from 'ai'
+import type { UIMessage } from 'ai'
 import { ThreadedMessage } from './thread-builder'
 
 export interface ThreadMetadata {
@@ -20,13 +20,17 @@ export interface ThreadMetadata {
  */
 export function convertToThreadedMessages(messages: UIMessage[]): ThreadedMessage[] {
   return messages.map((msg) => {
-    const metadata = (msg.experimental_metadata || {}) as ThreadMetadata
+    // AI SDK 5.0: UIMessage has different structure
+    const content = (msg as any).content ||
+      (msg.parts ? msg.parts.map((p: any) => p.type === 'text' ? p.text : '').join('') : '')
+    const metadata = (msg as any).experimental_metadata || {} as ThreadMetadata
+    const createdAt = (msg as any).createdAt
 
     return {
       id: msg.id,
       role: msg.role,
-      content: msg.content,
-      timestamp: msg.createdAt?.toISOString() || new Date().toISOString(),
+      content,
+      timestamp: createdAt?.toISOString() || new Date().toISOString(),
       replyToId: metadata.replyToId,
       threadId: metadata.threadId,
       branchId: metadata.branchId,
@@ -54,7 +58,7 @@ export function addThreadMetadata(
  * Extract threading metadata from a message
  */
 export function getThreadMetadata(message: UIMessage): ThreadMetadata {
-  return (message.experimental_metadata || {}) as ThreadMetadata
+  return ((message as any).experimental_metadata || {}) as ThreadMetadata
 }
 
 /**

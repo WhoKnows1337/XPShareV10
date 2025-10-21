@@ -23,7 +23,7 @@ import { XPTwinsTabContent } from '@/components/profile/xp-twins'
 import { XPDNABadge } from '@/components/profile/xp-dna-badge'
 import { SimilarityScoreBadge } from '@/components/profile/similarity-score-badge'
 import { ConnectionsTab } from '@/components/profile/connections-tab'
-import { ExperienceMap } from '@/components/profile/experience-map'
+import { ExperienceMap, type ExperienceMapProps } from '@/components/viz/ExperienceMap'
 
 // Code Splitting: More heavy Recharts components
 const ActivityChart = dynamic(
@@ -320,8 +320,15 @@ export function ProfileClientTabs({
         return (
           <div className="space-y-4">
             <ExperienceMap
-              userId={profileUser.id}
-              experiences={experiences}
+              data={experiences.map((exp: any) => ({
+                id: exp.id as string,
+                title: exp.title as string,
+                category: exp.category as string,
+                location_lat: exp.location_lat,
+                location_lng: exp.location_lng,
+                location_text: exp.location_text,
+                date_occurred: exp.date_occurred,
+              })) as ExperienceMapProps['data']}
             />
           </div>
         )
@@ -329,7 +336,6 @@ export function ProfileClientTabs({
         return (
           <div className="space-y-4">
             <PatternContributionsCard
-              userId={profileUser.id}
               contributions={patternContributions}
               totalPatterns={patternContributions.length}
             />

@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Pattern, Source, SerendipityConnection } from '@/types/search5'
+import { Pattern, Source, SerendipityConnection, Search5Response } from '@/types/search5'
 import { cn } from '@/lib/utils'
 
 // ============================================================================
@@ -71,19 +71,8 @@ interface FollowUpSuggestion {
   reason: string
 }
 
-interface PatternDiscoveryResponse {
-  patterns: Pattern[]
-  followUpSuggestions?: FollowUpSuggestion[]
-  serendipity?: SerendipityConnection
-  sources: Source[]
-  metadata: {
-    confidence: number
-    sourceCount: number
-    patternsFound: number
-    executionTime: number
-    warnings: string[]
-  }
-}
+// Use Search5Response from types/search5.ts (includes all metadata fields)
+type PatternDiscoveryResponse = Search5Response
 
 // ============================================================================
 // COMPONENT

@@ -36,6 +36,7 @@ interface SimilarityScoreBadgeProps {
 interface SimilarityData {
   user1_id: string
   user2_id: string
+  similar_user_id: string // The other user in the similarity comparison
   similarity_score: number
   shared_categories: string[]
   shared_category_count: number

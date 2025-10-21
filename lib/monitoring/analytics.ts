@@ -20,7 +20,7 @@ export function trackDiscoveryQuery(eventData: {
     tools_count: eventData.toolsUsed?.length || 0,
     tools: eventData.toolsUsed?.join(',') || '',
     has_user: !!eventData.userId,
-    duration: eventData.duration,
+    duration: eventData.duration || 0,
   })
 }
 

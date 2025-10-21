@@ -201,8 +201,8 @@ function filterByAttributes(
   experiences: any[],
   attributeFilters: Array<{
     key: string
-    value: any
     operator: 'equals' | 'contains' | 'gt' | 'lt' | 'gte' | 'lte'
+    value?: any
   }>,
   minConfidence?: number
 ): any[] {

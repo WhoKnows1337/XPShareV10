@@ -182,7 +182,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         const { data: forYouData, error: rpcError } = await supabase.rpc('get_for_you_feed', {
           p_user_id: user.id,
           p_liked_categories: likedCategories.length > 0 ? likedCategories : ['ufo', 'paranormal'],
-          p_user_location: userProfile?.location_city || null,
+          p_user_location: userProfile?.location_city ?? undefined,
           p_limit: 20,
           p_offset: 0
         })

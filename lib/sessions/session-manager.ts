@@ -49,15 +49,22 @@ export async function exportSession(
   }
 
   // Get messages
-  const { data: messages } = await supabase
+  const { data: dbMessages } = await supabase
     .from('discovery_messages')
     .select('*')
     .eq('chat_id', sessionId)
     .order('created_at', { ascending: true })
 
-  if (!messages) {
+  if (!dbMessages) {
     throw new Error('Failed to load messages')
   }
+
+  // Parse messages from Json field
+  const messages = dbMessages.map((msg) => ({
+    ...(msg.messages as any),
+    created_at: msg.created_at,
+    id: msg.id,
+  }))
 
   switch (format) {
     case 'json':
@@ -185,13 +192,13 @@ export async function getSessionStats(sessionId: string): Promise<{
 }> {
   const supabase = createClient()
 
-  const { data: messages } = await supabase
+  const { data: dbMessages } = await supabase
     .from('discovery_messages')
     .select('*')
     .eq('chat_id', sessionId)
     .order('created_at', { ascending: true })
 
-  if (!messages || messages.length === 0) {
+  if (!dbMessages || dbMessages.length === 0) {
     return {
       messageCount: 0,
       userMessages: 0,
@@ -200,6 +207,13 @@ export async function getSessionStats(sessionId: string): Promise<{
       categories: [],
     }
   }
+
+  // Parse messages from Json field and add metadata
+  type MessageWithRole = { role: string; content: string; created_at: string }
+  const messages: MessageWithRole[] = dbMessages.map((msg) => ({
+    ...(msg.messages as any),
+    created_at: msg.created_at,
+  }))
 
   const userMessages = messages.filter((m) => m.role === 'user').length
   const assistantMessages = messages.filter((m) => m.role === 'assistant').length
@@ -271,8 +285,7 @@ export async function duplicateSession(sessionId: string): Promise<string | null
   if (originalMessages && originalMessages.length > 0) {
     const newMessages = originalMessages.map((msg) => ({
       chat_id: newChat.id,
-      role: msg.role,
-      content: msg.content,
+      messages: msg.messages, // Copy the entire messages Json object
     }))
 
     await supabase.from('discovery_messages').insert(newMessages)

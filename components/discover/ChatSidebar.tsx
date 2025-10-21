@@ -269,7 +269,6 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename, onPin, onArchiv
   const [isRenaming, setIsRenaming] = useState(false)
   const [newTitle, setNewTitle] = useState(chat.title || '')
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showShareDialog, setShowShareDialog] = useState(false)
 
   const handleRename = () => {
     if (newTitle.trim() && newTitle !== chat.title) {
@@ -372,15 +371,15 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename, onPin, onArchiv
                       <Archive className="h-4 w-4 mr-2" />
                       {chat.archived ? 'Unarchive' : 'Archive'}
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowShareDialog(true)
-                      }}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </DropdownMenuItem>
+                    <ShareDialog
+                      chatId={chat.id}
+                      trigger={
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share
+                        </DropdownMenuItem>
+                      }
+                    />
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation()
@@ -432,12 +431,6 @@ function ChatItem({ chat, isActive, onClick, onDelete, onRename, onPin, onArchiv
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Share Dialog */}
-      <ShareDialog
-        chatId={chat.id}
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-      />
     </TooltipProvider>
   )
 }

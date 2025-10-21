@@ -171,7 +171,7 @@ export async function deleteTemplate(id: string): Promise<boolean> {
 export async function incrementTemplateUse(id: string): Promise<void> {
   const supabase = createClient()
 
-  await supabase.rpc('increment_template_use', { template_id: id })
+  await (supabase as any).rpc('increment_template_use', { template_id: id })
 }
 
 /**

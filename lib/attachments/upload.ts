@@ -142,8 +142,8 @@ export async function uploadFile(
         fileSize: attachmentData.file_size,
         storagePath: attachmentData.storage_path,
         storageUrl: attachmentData.storage_url,
-        extractedText: attachmentData.extracted_text,
-        visionDescription: attachmentData.vision_description,
+        extractedText: attachmentData.extracted_text ?? undefined,
+        visionDescription: attachmentData.vision_description ?? undefined,
       },
     }
   } catch (error) {
@@ -207,7 +207,7 @@ export async function getMessageAttachments(messageId: string): Promise<Uploaded
     storageUrl: row.storage_url,
     extractedText: row.extracted_text,
     visionDescription: row.vision_description,
-  }))
+  })) as any
 }
 
 /**

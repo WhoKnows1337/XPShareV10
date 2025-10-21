@@ -51,8 +51,8 @@ function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut): bool
 
   // On Mac, use cmd (meta), on Windows/Linux use ctrl
   const modifierPressed = mac
-    ? (shortcut.meta && metaPressed) || (shortcut.ctrl && ctrlPressed)
-    : (shortcut.ctrl && ctrlPressed)
+    ? !!(shortcut.meta && metaPressed) || !!(shortcut.ctrl && ctrlPressed)
+    : !!(shortcut.ctrl && ctrlPressed)
 
   const shiftMatches = !shortcut.shift || shiftPressed
   const altMatches = !shortcut.alt || altPressed

@@ -140,8 +140,8 @@ export function ConversationProvider({ children }: ConversationProviderProps) {
       id: crypto.randomUUID(),
       timestamp: new Date(),
       query,
-      response,
-      refinements
+      response: response as any,  // Zod schema compatibility (Search5ResponseSchema)
+      refinements: refinements as any  // Zod schema compatibility (QueryRefinementsSchema)
     }
 
     setHistory(prev => {

@@ -37,8 +37,10 @@ export async function GET(
     const activityMap: Record<string, number> = {}
     
     experiences?.forEach((exp) => {
-      const date = new Date(exp.created_at).toISOString().split('T')[0]
-      activityMap[date] = (activityMap[date] || 0) + 1
+      if (exp.created_at) {
+        const date = new Date(exp.created_at).toISOString().split('T')[0]
+        activityMap[date] = (activityMap[date] || 0) + 1
+      }
     })
 
     // Convert to array format expected by heatmap

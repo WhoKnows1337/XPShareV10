@@ -164,7 +164,7 @@ export async function GET(
           is_top_for_both: (yourStat?.is_top_category && theirStat?.is_top_category) || false
         }
       })
-      .filter(cat => cat.your_percentage > 0 && cat.their_percentage > 0)
+      .filter((cat: any) => cat.your_percentage > 0 && cat.their_percentage > 0)
 
     // 3. Get shared experiences (experiences both users have witnessed or contributed to)
     // For MVP, we'll fetch experiences in shared categories

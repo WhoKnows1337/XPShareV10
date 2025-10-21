@@ -205,14 +205,7 @@ export function NetworkGraph({
             linkDirectionalParticleSpeed={0.005}
             // Labels
             nodeThreeObjectExtend={showLabels}
-            nodeThreeObject={
-              showLabels
-                ? undefined
-                : (node: any) => {
-                    // Custom THREE.js object if needed
-                    return undefined
-                  }
-            }
+            nodeThreeObject={showLabels ? undefined : (() => undefined) as any}
             // Interactions
             onNodeClick={handleNodeClick}
             onNodeHover={(node) => {

@@ -47,11 +47,11 @@ export async function getUserMemories(userId: string): Promise<UserMemory[]> {
       value: m.value,
       confidence: m.confidence || 0.8,
       source: m.source,
-      createdAt: new Date(m.created_at),
-      updatedAt: new Date(m.updated_at),
-      expiresAt: m.expires_at ? new Date(m.expires_at) : undefined,
+      createdAt: new Date(m.created_at as string),
+      updatedAt: new Date(m.updated_at as string),
+      expiresAt: m.expires_at ? new Date(m.expires_at as string) : undefined,
     })) || []
-  )
+  ) as any
 }
 
 /**

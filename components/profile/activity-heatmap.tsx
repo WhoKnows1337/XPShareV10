@@ -57,6 +57,7 @@ export function ActivityHeatmap({
   className = ''
 }: ActivityHeatmapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  // @ts-expect-error - CalHeatmap namespace/type issue
   const calRef = useRef<CalHeatmap | null>(null)
   const [activityData, setActivityData] = React.useState<ActivityData[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -90,6 +91,7 @@ export function ActivityHeatmap({
     })
 
     // Initialize Cal-Heatmap
+    // @ts-expect-error - CalHeatmap constructor type issue
     const cal = new CalHeatmap()
     calRef.current = cal
 

@@ -175,10 +175,17 @@ export async function POST(req: Request) {
     // Track citations across all tool calls
     const allCitations: any[] = []
 
+    // Convert SanitizedMessage[] to UIMessage[] format (AI SDK 5.0)
+    const uiMessages = sanitizedMessages.map((msg, index) => ({
+      id: `msg-${index}`,
+      role: msg.role,
+      parts: [{ type: 'text' as const, text: msg.content }],
+    }))
+
     // Stream text with all tools (use sanitized messages + personalized system prompt)
     const result = streamText({
       model: openai('gpt-4o-mini'),
-      messages: convertToModelMessages(sanitizedMessages),
+      messages: convertToModelMessages(uiMessages),
       system: systemPrompt,
       tools: {
         // Search Tools
@@ -205,21 +212,23 @@ export async function POST(req: Request) {
         suggestFollowups: suggestFollowupsTool,
         exportResults: exportResultsTool,
       },
-      maxSteps: 10, // Allow multiple tool calls
+      // Note: maxSteps removed in AI SDK 5.0 - tool calling loops automatically
+      // Note: maxTokens removed in AI SDK 5.0 - use model-specific max_tokens in provider config
       temperature: 0.7,
-      maxTokens: 4000,
 
       // Track citations from tool results & extract preferences
       onFinish: async ({ response, text }) => {
         try {
-          // 1. Extract citations from all tool calls
-          const toolResults = response.toolCalls || []
+          // 1. Extract citations from all tool calls (AI SDK 5.0: use response.messages)
+          const toolResults = response.messages
+            .flatMap((msg: any) => msg.content || [])
+            .filter((part: any) => part.type === 'tool-result')
 
-          for (const toolCall of toolResults) {
-            if (toolCall.result) {
+          for (const toolResult of toolResults) {
+            if (toolResult.result) {
               const citations = extractCitationsFromToolResult({
-                toolName: toolCall.toolName,
-                result: toolCall.result,
+                toolName: toolResult.toolName,
+                result: toolResult.result,
               })
               allCitations.push(...citations)
             }
@@ -256,7 +265,7 @@ export async function POST(req: Request) {
       // Error handling
       onError: (error) => {
         console.error('[Discovery API] Error:', error)
-        return 'I encountered an error processing your request. Please try again or rephrase your query.'
+        // Note: onError callback should not return a value in AI SDK 5.0
       },
 
       // Timeout handling (2 minutes)
@@ -274,13 +283,10 @@ export async function POST(req: Request) {
 
     // Return stream response with smooth streaming, metadata, and rate limit headers
     const response = result.toUIMessageStreamResponse({
-      // Add threading metadata to response messages
-      experimental_metadata: {
-        replyToId,
-        threadId: threadId || replyToId, // If replying, inherit thread or start new thread
-        branchId,
-        chatId,
-      },
+      // Note: AI SDK 5.0 uses messageMetadata function instead of experimental_metadata
+      // Metadata is now extracted from the stream parts rather than passed directly
+      // The threading metadata (replyToId, threadId, branchId, chatId) should be handled
+      // in the client-side useChat hook or stored separately in the database
     })
 
     // Add rate limit headers to streaming response

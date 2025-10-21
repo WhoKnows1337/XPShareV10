@@ -31,6 +31,63 @@ import { extractKeywords, keywordsToTags } from '@/lib/search/keyword-extraction
 import { Source } from '@/types/ai-answer'
 import { Pattern } from '@/types/search5'
 
+// ============================================================================
+// TODO: Move these to @/lib/ai/prompts when created
+// ============================================================================
+
+/** Sanitize user question (remove harmful content, normalize) */
+function sanitizeQuestion(question: string): string {
+  if (!question) return ''
+  // Basic sanitization: trim, normalize whitespace
+  return question.trim().replace(/\s+/g, ' ')
+}
+
+/** Build conversational prompt with context */
+function buildConversationalPrompt(question: string, sources: Source[], context: any[], previousPatterns?: any[]): string {
+  const sourcesText = sources.map(s => `[${s.id}] ${s.title}: ${s.excerpt}`).join('\n\n')
+  const contextText = context.map((c: any) => `Q: ${c.question}\nA: ${c.answer}`).join('\n\n')
+
+  return `Based on the following sources and conversation history, answer the user's question.
+
+SOURCES:
+${sourcesText}
+
+PREVIOUS CONTEXT:
+${contextText}
+
+QUESTION: ${question}
+
+Provide a detailed answer with citations [ID].`
+}
+
+/** Build pattern discovery prompt */
+function buildPatternDiscoveryPrompt(question: string, sources: Source[]): string {
+  const sourcesText = sources.map(s => `[${s.id}] ${s.title} (${s.category}): ${s.excerpt}`).join('\n\n')
+
+  return `Analyze the following experiences and discover patterns, correlations, and insights.
+
+SOURCES:
+${sourcesText}
+
+QUESTION: ${question}
+
+Identify temporal patterns, geographic clusters, category relationships, and cross-category connections.`
+}
+
+/** System prompt for pattern discovery */
+const PATTERN_DISCOVERY_SYSTEM_PROMPT = `You are an expert pattern analyst for extraordinary experiences.
+
+Your role:
+- Identify temporal patterns (time of day, seasonal, yearly trends)
+- Discover geographic clusters and hotspots
+- Find cross-category correlations and connections
+- Detect serendipitous patterns (unexpected relationships)
+- Provide statistical insights with confidence scores
+
+Always cite sources with [ID] and explain your reasoning.`
+
+// ============================================================================
+
 /**
  * Extract question from AI SDK messages array
  */

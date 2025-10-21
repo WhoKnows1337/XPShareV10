@@ -67,6 +67,10 @@ export default function DiscoverPage() {
   const [initialMessages, setInitialMessages] = useState<any[]>([])
   const { createChat, loadMessages, saveMessages, updateChatTitle, loadChats } = useDiscoveryChats()
 
+  // Threading and Branching state (must be declared before useChat)
+  const [replyToId, setReplyToId] = useState<string | undefined>(undefined)
+  const [currentBranchId, setCurrentBranchId] = useState<string | undefined>(undefined)
+
   const { messages, sendMessage, status, setMessages, resumeStream, stop } = useChat({
     id: currentChatId || undefined,
     messages: initialMessages,
@@ -74,12 +78,12 @@ export default function DiscoverPage() {
     experimental_throttle: 100,
     transport: new DefaultChatTransport({
       api: '/api/discover',
+      body: {
+        chatId: currentChatId,
+        replyToId,
+        branchId: currentBranchId,
+      },
     }),
-    body: {
-      chatId: currentChatId,
-      replyToId,
-      branchId: currentBranchId,
-    },
   })
   const [input, setInput] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
@@ -90,22 +94,17 @@ export default function DiscoverPage() {
   const isOnline = useOnlineStatus()
   const { queueCount, syncQueue: syncQueueFn } = useMessageQueue()
 
-  // Threading and Branching state
-  const [replyToId, setReplyToId] = useState<string | undefined>(undefined)
-  const [currentBranchId, setCurrentBranchId] = useState<string | undefined>(undefined)
-
   // Keyboard shortcuts
   const [showShortcutsModal, setShowShortcutsModal] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useKeyboardShortcuts({
-    ctrlK: () => inputRef.current?.focus(),
-    'Ctrl+K': () => inputRef.current?.focus(),
-    'Cmd+N': () => handleNewChat(),
-    'Ctrl+N': () => handleNewChat(),
-    'Cmd+/': () => setShowShortcutsModal(true),
-    'Ctrl+/': () => setShowShortcutsModal(true),
-    '?': () => setShowShortcutsModal(true),
+    shortcuts: [
+      { key: 'k', ctrl: true, description: 'Focus input', action: () => inputRef.current?.focus() },
+      { key: 'n', ctrl: true, description: 'New chat', action: () => handleNewChat() },
+      { key: '/', ctrl: true, description: 'Show shortcuts', action: () => setShowShortcutsModal(true) },
+      { key: '?', description: 'Show shortcuts', action: () => setShowShortcutsModal(true) },
+    ],
   })
 
   // Auto-resume interrupted streams
@@ -198,8 +197,9 @@ export default function DiscoverPage() {
       if (!chatHasTitle && messages.length >= 1) {
         const firstUserMessage = messages.find((m) => m.role === 'user')
         if (firstUserMessage) {
+          const textPart = firstUserMessage.parts?.find((p: any) => p.type === 'text')
           const messageText =
-            firstUserMessage.parts?.find((p: any) => p.type === 'text')?.text ||
+            (textPart && 'text' in textPart ? textPart.text : undefined) ||
             (firstUserMessage as any).content
 
           if (messageText) {
@@ -515,6 +515,13 @@ export default function DiscoverPage() {
       <ShortcutsModal
         open={showShortcutsModal}
         onOpenChange={setShowShortcutsModal}
+        shortcuts={[
+          { key: 'k', ctrl: true, description: 'Focus input', action: () => {} },
+          { key: 'n', ctrl: true, description: 'New chat', action: () => {} },
+          { key: '/', ctrl: true, description: 'Show shortcuts', action: () => {} },
+          { key: 'Enter', description: 'Send message', action: () => {} },
+          { key: 'Escape', description: 'Close modal', action: () => {} },
+        ]}
       />
       </div>
     </div>

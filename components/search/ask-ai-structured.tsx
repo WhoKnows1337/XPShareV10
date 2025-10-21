@@ -377,7 +377,7 @@ export function AskAIStructured({
           />
 
           <ConversationHistory
-            onSelectTurn={(turn) => setResponse(turn.response)}
+            onSelectTurn={(turn) => setResponse(turn.response as Search5Response | null)}
           />
         </div>
       </div>
