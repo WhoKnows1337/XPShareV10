@@ -76,7 +76,7 @@ async function generateMigrations(): Promise<void> {
   try {
     // Use supabase db diff to generate migration
     const { stdout, stderr } = await execAsync(
-      `supabase db diff --project-id ${SUPABASE_PROJECT_ID} --file ${migrationFile}`,
+      `supabase db diff --linked --file ${migrationFile}`,
       {
         cwd: process.cwd(),
         env: {
