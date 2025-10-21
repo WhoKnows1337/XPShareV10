@@ -211,6 +211,14 @@ export default function DiscoverPage() {
 
   return (
     <div className="h-[calc(100dvh-4rem)] w-full flex overflow-hidden">
+      {/* Skip to content link for screen readers */}
+      <a
+        href="#chat-input"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md"
+      >
+        Skip to chat input
+      </a>
+
       {/* Sidebar */}
       <ChatSidebar
         currentChatId={currentChatId}
@@ -219,7 +227,11 @@ export default function DiscoverPage() {
       />
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div
+        className="flex-1 flex flex-col overflow-hidden"
+        role="main"
+        aria-label="Discovery Chat Interface"
+      >
         {/* Header - Only show Export/Clear when messages exist */}
         {messages.length > 0 && (
         <div className="py-2 flex-shrink-0">
@@ -247,7 +259,13 @@ export default function DiscoverPage() {
       )}
 
       {/* Scrollable Conversation Area */}
-      <Conversation className="flex-1 min-h-0 overflow-y-auto">
+      <Conversation
+        className="flex-1 min-h-0 overflow-y-auto"
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="Chat messages"
+      >
         <ConversationContent className="max-w-4xl mx-auto px-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
@@ -415,13 +433,18 @@ export default function DiscoverPage() {
         >
           <PromptInputBody>
             <PromptInputTextarea
+              id="chat-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about patterns, connections, or insights..."
               disabled={isLoading}
               aria-label="Message input"
               aria-describedby="input-description"
+              autoFocus
             />
+            <span id="input-description" className="sr-only">
+              Type your message and press Enter to send, or use Ctrl+Enter for quick submit
+            </span>
           </PromptInputBody>
           <PromptInputFooter>
             <PromptInputTools>
