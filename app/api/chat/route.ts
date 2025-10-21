@@ -16,12 +16,13 @@ import { generateObject } from 'ai'
 import { createClient } from '@/lib/supabase/server'
 import { generateEmbedding } from '@/lib/openai/client'
 import { openai, gpt4o } from '@/lib/openai/ai-sdk-client'
-import {
-  PATTERN_DISCOVERY_SYSTEM_PROMPT,
-  buildPatternDiscoveryPrompt,
-  buildConversationalPrompt,
-  sanitizeQuestion
-} from '@/lib/ai/prompts'
+// TODO: Re-enable when @/lib/ai/prompts is created
+// import {
+//   PATTERN_DISCOVERY_SYSTEM_PROMPT,
+//   buildPatternDiscoveryPrompt,
+//   buildConversationalPrompt,
+//   sanitizeQuestion
+// } from '@/lib/ai/prompts'
 import { detectSerendipity } from '@/lib/patterns/serendipity'
 import { PatternDiscoveryOutputSchema } from '@/lib/validation/search5-schemas'
 import { patternDiscoveryCircuitBreaker } from '@/lib/patterns/error-recovery'
