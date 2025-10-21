@@ -231,42 +231,42 @@ Update this file as you complete tasks. Mark your progress daily.
 
 ---
 
-## Phase 5: Advanced Features (Week 5-6)
+## Phase 5: Advanced Features (Week 5-6) ✅ **COMPLETE**
 
-### Insights
+### Insights ✅
 
-- [ ] 📋 Create `/lib/tools/insights/generate-insights.ts`
-- [ ] 📋 Create `/components/discover/InsightCard.tsx`
-- [ ] 📋 Implement pattern detection
-- [ ] 📋 Implement confidence scoring
-- [ ] 📋 Implement evidence linking
+- [x] 📋 Create `/lib/tools/insights/generate-insights.ts`
+- [x] 📋 Create `/components/discover/InsightCard.tsx` (already existed)
+- [x] 📋 Implement pattern detection (5 detection functions: spikes, trends, hotspots, patterns, anomalies)
+- [x] 📋 Implement confidence scoring (statistical confidence calculation)
+- [x] 📋 Implement evidence linking (evidence array with label/value pairs)
 - [ ] 📋 Test with real data
 
-### Predictions
+### Predictions ✅
 
-- [ ] 📋 Create `/lib/tools/predict-trends.ts`
-- [ ] 📋 Implement linear regression
-- [ ] 📋 Implement R² calculation
-- [ ] 📋 Generate forecast data
-- [ ] 📋 Visualize predictions
+- [x] 📋 Create `/lib/tools/predict-trends.ts`
+- [x] 📋 Implement linear regression (with slope/intercept calculation)
+- [x] 📋 Implement R² calculation (coefficient of determination)
+- [x] 📋 Generate forecast data (with confidence intervals)
+- [x] 📋 Visualize predictions (TrendChart component with Recharts)
 - [ ] 📋 Test accuracy
 
-### Follow-Up Suggestions
+### Follow-Up Suggestions ✅
 
-- [ ] 📋 Create `/lib/tools/suggest-followups.ts`
-- [ ] 📋 Create `/components/discover/FollowUpSuggestions.tsx`
-- [ ] 📋 GPT-based suggestion engine
-- [ ] 📋 Context-aware generation
-- [ ] 📋 UI component with click handlers
+- [x] 📋 Create `/lib/tools/suggest-followups.ts`
+- [x] 📋 Create `/components/discover/FollowUpSuggestions.tsx`
+- [x] 📋 GPT-based suggestion engine (GPT-4o-mini integration)
+- [x] 📋 Context-aware generation (conversation history support)
+- [x] 📋 UI component with click handlers (3 variants: list, compact, grid)
 - [ ] 📋 Test suggestion relevance
 
-### Export
+### Export ✅
 
-- [ ] 📋 Create `/lib/tools/export-results.ts`
-- [ ] 📋 Create `/components/discover/ExportButton.tsx`
-- [ ] 📋 JSON export
-- [ ] 📋 CSV export
-- [ ] 📋 Download functionality
+- [x] 📋 Create `/lib/tools/export-results.ts`
+- [x] 📋 Create `/components/discover/ExportButton.tsx`
+- [x] 📋 JSON export (with optional metadata)
+- [x] 📋 CSV export (with auto-flattening of nested objects)
+- [x] 📋 Download functionality (client-side blob download)
 - [ ] 📋 Test all formats
 
 ---
