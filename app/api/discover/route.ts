@@ -10,6 +10,14 @@ import {
   assignCitationIndices,
   saveCitations,
 } from '@/lib/citations/citation-tracker'
+import {
+  getUserMemories,
+  buildSystemPromptWithMemory,
+} from '@/lib/memory/memory-manager'
+import {
+  extractPreferencesFromMessage,
+  quickExtractExplicitPreferences,
+} from '@/lib/memory/preference-extractor'
 
 // Import all tools
 import {
@@ -144,14 +152,34 @@ export async function POST(req: Request) {
       )
     }
 
+    // Load user memories for personalization
+    let systemPrompt = DISCOVERY_SYSTEM_PROMPT
+    if (user) {
+      const memories = await getUserMemories(user.id)
+      if (memories.length > 0) {
+        systemPrompt = buildSystemPromptWithMemory(DISCOVERY_SYSTEM_PROMPT, memories)
+        console.log(`[Memory] Loaded ${memories.length} memories for user ${user.id}`)
+      }
+
+      // Quick extract explicit preferences from latest user message
+      const latestUserMessage = sanitizedMessages
+        .filter((m: any) => m.role === 'user')
+        .pop()
+      if (latestUserMessage && typeof latestUserMessage.content === 'string') {
+        await quickExtractExplicitPreferences(latestUserMessage.content, user.id).catch((err) =>
+          console.error('[Memory] Quick extraction failed:', err)
+        )
+      }
+    }
+
     // Track citations across all tool calls
     const allCitations: any[] = []
 
-    // Stream text with all tools (use sanitized messages)
+    // Stream text with all tools (use sanitized messages + personalized system prompt)
     const result = streamText({
       model: openai('gpt-4o-mini'),
       messages: convertToModelMessages(sanitizedMessages),
-      system: DISCOVERY_SYSTEM_PROMPT,
+      system: systemPrompt,
       tools: {
         // Search Tools
         advancedSearch: advancedSearchTool,
@@ -181,10 +209,10 @@ export async function POST(req: Request) {
       temperature: 0.7,
       maxTokens: 4000,
 
-      // Track citations from tool results
-      onFinish: async ({ response }) => {
+      // Track citations from tool results & extract preferences
+      onFinish: async ({ response, text }) => {
         try {
-          // Extract citations from all tool calls
+          // 1. Extract citations from all tool calls
           const toolResults = response.toolCalls || []
 
           for (const toolCall of toolResults) {
@@ -203,9 +231,25 @@ export async function POST(req: Request) {
             await saveCitations(body.messageId, indexedCitations)
             console.log(`[Citations] Saved ${indexedCitations.length} citations for message ${body.messageId}`)
           }
+
+          // 2. Extract preferences from conversation (if user is authenticated)
+          if (user) {
+            const latestUserMessage = sanitizedMessages
+              .filter((m: any) => m.role === 'user')
+              .pop()
+
+            if (latestUserMessage && typeof latestUserMessage.content === 'string') {
+              // Run preference extraction in background (don't await)
+              extractPreferencesFromMessage(
+                latestUserMessage.content,
+                text || '',
+                user.id
+              ).catch((err) => console.error('[Memory] Preference extraction failed:', err))
+            }
+          }
         } catch (error) {
-          console.error('[Citations] Failed to save citations:', error)
-          // Don't throw - citations are non-critical feature
+          console.error('[Citations/Memory] Failed to save citations or extract preferences:', error)
+          // Don't throw - these are non-critical features
         }
       },
 
