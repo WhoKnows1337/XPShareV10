@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect } from 'react'
-import type { Message } from 'ai'
+import type { UIMessage } from '@ai-sdk/react'
 
 export interface UseAutoResumeParams {
   autoResume: boolean
-  initialMessages: Message[]
+  initialMessages: UIMessage[]
   resumeStream: () => void
-  setMessages: (messages: Message[]) => void
+  setMessages: (messages: UIMessage[]) => void
 }
 
 /**

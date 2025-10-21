@@ -42,3 +42,7 @@ next-env.d.ts
 
 # MCP configuration with API keys
 .mcp.json
+
+# Supabase
+supabase/.temp/
+*.old.bak

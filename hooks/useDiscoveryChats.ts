@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Message } from 'ai'
+import type { UIMessage } from '@ai-sdk/react'
 
 export interface DiscoveryChat {
   id: string
@@ -17,7 +17,7 @@ export interface DiscoveryChat {
 }
 
 export interface DiscoveryChatWithMessages extends DiscoveryChat {
-  messages: Message[]
+  messages: UIMessage[]
 }
 
 export function useDiscoveryChats() {
@@ -75,7 +75,7 @@ export function useDiscoveryChats() {
   }
 
   // Load messages for a specific chat
-  const loadMessages = async (chatId: string): Promise<Message[] | null> => {
+  const loadMessages = async (chatId: string): Promise<UIMessage[] | null> => {
     try {
       const { data, error: fetchError } = await supabase
         .from('discovery_messages')
@@ -91,7 +91,7 @@ export function useDiscoveryChats() {
         throw fetchError
       }
 
-      return data?.messages as Message[] || []
+      return data?.messages as UIMessage[] || []
     } catch (err) {
       console.error('Error loading messages:', err)
       setError(err as Error)
@@ -100,7 +100,7 @@ export function useDiscoveryChats() {
   }
 
   // Save messages for a chat (upsert pattern)
-  const saveMessages = async (chatId: string, messages: Message[]): Promise<boolean> => {
+  const saveMessages = async (chatId: string, messages: UIMessage[]): Promise<boolean> => {
     try {
       // Verify chat belongs to current user before attempting save
       const { data: chat, error: chatError } = await supabase

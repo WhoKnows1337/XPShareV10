@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Message } from '@ai-sdk/react'
+import { UIMessage } from '@ai-sdk/react'
 
 /**
  * Conversation Persistence Hook
@@ -12,8 +12,8 @@ import { Message } from '@ai-sdk/react'
 const STORAGE_KEY = 'discovery-chat-history'
 
 interface PersistedChatOptions {
-  messages: Message[]
-  onRestore?: (messages: Message[]) => void
+  messages: UIMessage[]
+  onRestore?: (messages: UIMessage[]) => void
 }
 
 export function usePersistedChat({ messages, onRestore }: PersistedChatOptions) {
@@ -26,7 +26,7 @@ export function usePersistedChat({ messages, onRestore }: PersistedChatOptions) 
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored && onRestore) {
       try {
-        const parsed = JSON.parse(stored) as Message[]
+        const parsed = JSON.parse(stored) as UIMessage[]
         onRestore(parsed)
         hasRestoredRef.current = true
       } catch (error) {
