@@ -16,8 +16,8 @@ const detectPatternsSchema = z.object({
   patternType: z
     .enum(['temporal', 'geographic', 'semantic', 'correlation', 'all'])
     .describe('Type of pattern to detect: temporal, geographic, semantic, correlation, or all'),
-  data: z.any().describe('Data to analyze for patterns (experiences array or aggregated data)'),
-  category: z.string().optional().describe('Optional category context for pattern detection'),
+  category: z.string().optional().describe('Category to analyze for patterns (e.g., "psychic", "ufo-uap", "dreams"). If not provided, analyzes all categories.'),
+  data: z.any().optional().describe('Optional: Pre-fetched data to analyze. If not provided, will fetch from database using category filter.'),
 })
 
 // ============================================================================
@@ -26,16 +26,58 @@ const detectPatternsSchema = z.object({
 
 export const detectPatternsTool = tool({
   description:
-    'PATTERN DETECTION: Statistical analysis to detect anomalies, trends, clusters, and correlations in experience datasets. Analyzes temporal spikes/trends, geographic hotspots/clusters, semantic themes, and attribute correlations using statistical methods (standard deviation, clustering). Returns confidence-scored patterns with evidence. DO NOT use for simple listing - use this only when user asks to "detect patterns", "find anomalies", "discover trends", "identify clusters", or "analyze statistical patterns".',
+    'PATTERN DETECTION: Statistical analysis to detect anomalies, trends, clusters, and correlations in experience datasets. Analyzes temporal spikes/trends, geographic hotspots/clusters, semantic themes, and attribute correlations using statistical methods (standard deviation, clustering). Returns confidence-scored patterns with evidence. Can fetch data automatically from database by category, or analyze pre-fetched data. Use when user asks to "detect patterns", "find anomalies", "discover trends", "identify clusters", or "analyze statistical patterns".',
   inputSchema: detectPatternsSchema,
   execute: async (params) => {
-    const data = Array.isArray(params.data) ? params.data : params.data?.results || []
+    let data = Array.isArray(params.data) ? params.data : params.data?.results || []
+
+    // If no data provided, fetch from database
+    if (data.length === 0) {
+      try {
+        const { createClient } = await import('@/lib/supabase/server')
+        const supabase = await createClient()
+
+        let query = supabase
+          .from('experiences')
+          .select('id, category, location_text, date_occurred, created_at, title, story_text')
+          .eq('is_test_data', false)
+          .order('created_at', { ascending: false })
+          .limit(1000)
+
+        // Filter by category if provided
+        if (params.category) {
+          query = query.eq('category', params.category)
+        }
+
+        const { data: experiences, error } = await query
+
+        if (error) {
+          console.error('[detectPatterns] Database error:', error)
+          return {
+            patternType: params.patternType,
+            patterns: [],
+            summary: `Error fetching data: ${error.message}`,
+          }
+        }
+
+        data = experiences || []
+      } catch (error) {
+        console.error('[detectPatterns] Fetch error:', error)
+        return {
+          patternType: params.patternType,
+          patterns: [],
+          summary: 'Error fetching data from database',
+        }
+      }
+    }
 
     if (data.length === 0) {
       return {
         patternType: params.patternType,
         patterns: [],
-        summary: 'No data provided for pattern detection',
+        summary: params.category
+          ? `No experiences found for category "${params.category}"`
+          : 'No experiences found in database',
       }
     }
 

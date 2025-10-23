@@ -128,19 +128,29 @@ export const findConnectionsTool = createTool<XPShareContext>({
  * Statistical pattern detection for anomalies, trends, clusters, and correlations.
  * Analyzes temporal spikes, geographic hotspots, semantic themes.
  *
- * Note: This tool does NOT use RLS (no Supabase access) - operates on provided data.
+ * Note: Has OPTIONAL RLS - can fetch data by category or analyze provided data.
  */
 export const detectPatternsTool = createTool<XPShareContext>({
   id: 'detectPatterns',
   description:
-    'PATTERN DETECTION: Statistical analysis to detect anomalies, trends, clusters, and correlations in experience datasets. Analyzes temporal spikes/trends, geographic hotspots/clusters, semantic themes, and attribute correlations using statistical methods (standard deviation, clustering). Returns confidence-scored patterns with evidence. DO NOT use for simple listing - use this only when user asks to "detect patterns", "find anomalies", "discover trends", "identify clusters", or "analyze statistical patterns".',
+    'PATTERN DETECTION: Statistical analysis to detect anomalies, trends, clusters, and correlations in experience datasets. Analyzes temporal spikes/trends, geographic hotspots/clusters, semantic themes, and attribute correlations using statistical methods (standard deviation, clustering). Can fetch data automatically by category OR analyze pre-fetched data. Returns confidence-scored patterns with evidence. Use this when user asks to "detect patterns", "find anomalies", "discover trends", "identify clusters", or "analyze statistical patterns".',
 
   inputSchema: z.object({
     patternType: z
       .enum(['temporal', 'geographic', 'semantic', 'correlation', 'all'])
       .describe('Type of pattern to detect: temporal, geographic, semantic, correlation, or all'),
-    data: z.any().describe('Data to analyze for patterns (experiences array or aggregated data)'),
-    category: z.string().optional().describe('Optional category context for pattern detection'),
+    category: z
+      .string()
+      .optional()
+      .describe(
+        'Category to analyze for patterns (e.g., "psychic", "ufo-uap", "dreams"). If provided, will fetch data from database automatically.'
+      ),
+    data: z
+      .any()
+      .optional()
+      .describe(
+        'Optional: Pre-fetched data to analyze. If not provided and category is specified, will fetch from database.'
+      ),
   }),
 
   outputSchema: z.object({
@@ -151,9 +161,44 @@ export const detectPatternsTool = createTool<XPShareContext>({
     summary: z.string(),
   }),
 
-  execute: async ({ context: params }) => {
-    // Note: No runtimeContext.get('supabase') - this tool doesn't access database
-    const data = Array.isArray(params.data) ? params.data : params.data?.results || []
+  execute: async ({ runtimeContext, context: params }) => {
+    // Fetch data if category provided and no data given
+    let data = Array.isArray(params.data) ? params.data : params.data?.results || []
+
+    if (data.length === 0 && params.category) {
+      try {
+        const supabase = runtimeContext.get('supabase')
+        const { data: fetchedData, error } = await supabase
+          .from('experiences')
+          .select('id, category, location_text, date_occurred, created_at, title, story_text')
+          .eq('category', params.category)
+          .eq('is_test_data', false)
+          .order('created_at', { ascending: false })
+          .limit(1000)
+
+        if (error) {
+          console.error('[detectPatterns] Database error:', error)
+          return {
+            patternType: params.patternType,
+            category: params.category,
+            dataPoints: 0,
+            patterns: [],
+            summary: `Error fetching data: ${error.message}`,
+          }
+        }
+
+        data = fetchedData || []
+      } catch (error) {
+        console.error('[detectPatterns] Fetch error:', error)
+        return {
+          patternType: params.patternType,
+          category: params.category,
+          dataPoints: 0,
+          patterns: [],
+          summary: 'Error fetching data from database',
+        }
+      }
+    }
 
     if (data.length === 0) {
       return {
@@ -161,7 +206,9 @@ export const detectPatternsTool = createTool<XPShareContext>({
         category: params.category,
         dataPoints: 0,
         patterns: [],
-        summary: 'No data provided for pattern detection',
+        summary: params.category
+          ? `No experiences found for category "${params.category}"`
+          : 'No data provided for pattern detection',
       }
     }
 

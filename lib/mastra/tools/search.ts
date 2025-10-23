@@ -464,15 +464,15 @@ export const fullTextSearchTool = createTool<XPShareContext>({
 export const geoSearchTool = createTool<XPShareContext>({
   id: 'geoSearch',
   description:
-    'Geographic search using PostGIS. Supports radius search (find experiences within X km of a point) and bounding box search (find experiences within a rectangle). Use this for location-based queries.',
+    'Geographic search using PostGIS. Supports radius search (find experiences within X km of a point) and bounding box search (find experiences within a rectangle). Use this for location-based queries like "UFO sightings in California", "dreams in Europe", "experiences near New York within 50km".',
 
   inputSchema: z.object({
     searchType: z
       .enum(['radius', 'bbox'])
-      .describe('Search type: radius (circle) or bbox (bounding box)'),
-    lat: z.number().optional().describe('Latitude for radius search center'),
-    lng: z.number().optional().describe('Longitude for radius search center'),
-    radiusKm: z.number().optional().describe('Radius in kilometers for radius search'),
+      .describe('Type of geographic search: radius (circular area) or bbox (rectangular area)'),
+    lat: z.number().optional().describe('Center latitude for radius search'),
+    lng: z.number().optional().describe('Center longitude for radius search'),
+    radiusKm: z.number().optional().describe('Search radius in kilometers'),
     bbox: z
       .object({
         minLat: z.number().describe('Minimum latitude (south)'),
@@ -513,19 +513,33 @@ export const geoSearchTool = createTool<XPShareContext>({
       }
     }
 
-    // Call SQL function from Phase 1
-    const { data, error } = await supabase.rpc('geo_search', {
-      p_search_type: params.searchType,
-      p_lat: params.lat,
-      p_lng: params.lng,
-      p_radius_km: params.radiusKm,
-      p_min_lat: params.bbox?.minLat,
-      p_min_lng: params.bbox?.minLng,
-      p_max_lat: params.bbox?.maxLat,
-      p_max_lng: params.bbox?.maxLng,
-      p_category: params.category,
+    // Build parameters matching actual database function signature
+    const rpcParams: any = {
       p_limit: params.limit,
-    })
+    }
+
+    // Add category as array if provided
+    if (params.category) {
+      rpcParams.p_categories = [params.category]
+    }
+
+    // Add radius or bounding box params
+    if (params.searchType === 'radius') {
+      rpcParams.p_center_lat = params.lat
+      rpcParams.p_center_lng = params.lng
+      rpcParams.p_radius_km = params.radiusKm
+    } else if (params.searchType === 'bbox' && params.bbox) {
+      // Database expects bounding_box as JSONB
+      rpcParams.p_bounding_box = {
+        minLat: params.bbox.minLat,
+        minLng: params.bbox.minLng,
+        maxLat: params.bbox.maxLat,
+        maxLng: params.bbox.maxLng,
+      }
+    }
+
+    // Call SQL function with correct parameter names
+    const { data, error } = await supabase.rpc('geo_search', rpcParams)
 
     if (error) {
       throw new Error(`Geographic search failed: ${error.message}`)
