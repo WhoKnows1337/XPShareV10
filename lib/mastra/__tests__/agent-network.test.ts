@@ -54,9 +54,9 @@ describe('Agent Network', () => {
     expect(relationship.name).toBe('relationship')
   })
 
-  test('Query agent has all 5 search tools', () => {
+  test('Query agent has all 5 search tools', async () => {
     const query = mastra.getAgent('query')
-    const tools = query.getTools()
+    const tools = await query.getTools()
 
     expect(tools).toBeDefined()
     expect(tools.advancedSearch).toBeDefined()
@@ -66,17 +66,17 @@ describe('Agent Network', () => {
     expect(tools.geoSearch).toBeDefined()
   })
 
-  test('Viz agent has temporal analysis tool', () => {
+  test('Viz agent has temporal analysis tool', async () => {
     const viz = mastra.getAgent('viz')
-    const tools = viz.getTools()
+    const tools = await viz.getTools()
 
     expect(tools).toBeDefined()
     expect(tools.temporalAnalysis).toBeDefined()
   })
 
-  test('Insight agent has all 5 insights tools', () => {
+  test('Insight agent has all 5 insights tools', async () => {
     const insight = mastra.getAgent('insight')
-    const tools = insight.getTools()
+    const tools = await insight.getTools()
 
     expect(tools).toBeDefined()
     expect(tools.generateInsights).toBeDefined()
@@ -86,9 +86,9 @@ describe('Agent Network', () => {
     expect(tools.exportResults).toBeDefined()
   })
 
-  test('Relationship agent has all 6 tools', () => {
+  test('Relationship agent has all 6 tools', async () => {
     const relationship = mastra.getAgent('relationship')
-    const tools = relationship.getTools()
+    const tools = await relationship.getTools()
 
     expect(tools).toBeDefined()
     expect(tools.findConnections).toBeDefined()
@@ -99,9 +99,9 @@ describe('Agent Network', () => {
     expect(tools.detectPatterns).toBeDefined()
   })
 
-  test('Orchestrator has no tools (delegates only)', () => {
+  test('Orchestrator has no tools (delegates only)', async () => {
     const orchestrator = mastra.getAgent('orchestrator')
-    const tools = orchestrator.getTools()
+    const tools = await orchestrator.getTools()
 
     // Orchestrator should have no tools or empty tools object
     expect(!tools || Object.keys(tools).length === 0).toBe(true)

@@ -1,14 +1,19 @@
 /**
  * XPShare Mastra - Orchestrator Agent
  *
- * Master router agent that delegates to specialized agents
+ * Master router agent that delegates to specialized agents via Agent Network
  */
 
 import { Agent } from '@mastra/core/agent'
 import { openai } from '@ai-sdk/openai'
+import { queryAgent } from './query-agent'
+import { vizAgent } from './viz-agent'
+import { insightAgent } from './insight-agent'
+import { relationshipAgent } from './relationship-agent'
 
 export const orchestratorAgent = new Agent({
   name: 'orchestrator',
+  description: 'Master routing agent that coordinates specialized agents for XPShare discovery',
 
   instructions: `
 You are the master orchestrator for XPShare AI, a platform for sharing and analyzing anomalous experiences (UFOs, dreams, NDEs, paranormal, psychedelics, etc.).
@@ -75,5 +80,14 @@ Be conversational and helpful, but stay focused on the data.
     toolChoice: 'auto',
   },
 
-  // Orchestrator has NO tools - only delegates to agents via Agent Network
+  // Register sub-agents for Agent Network
+  // These agents will be called automatically based on the routing logic
+  agents: {
+    query: queryAgent,
+    viz: vizAgent,
+    insight: insightAgent,
+    relationship: relationshipAgent,
+  },
+
+  // Orchestrator has NO tools - only delegates to agents
 })

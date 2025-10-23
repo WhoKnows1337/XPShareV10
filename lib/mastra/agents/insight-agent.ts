@@ -16,6 +16,7 @@ import { detectPatternsTool } from '../tools/relationships'
 
 export const insightAgent = new Agent({
   name: 'insight',
+  description: 'Analysis specialist for generating insights, detecting patterns, predicting trends, and exporting data',
 
   instructions: `
 You are an analytical insights specialist for XPShare experiences.

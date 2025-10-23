@@ -16,6 +16,7 @@ import {
 
 export const relationshipAgent = new Agent({
   name: 'relationship',
+  description: 'Connections and comparisons specialist for finding relationships between experiences, categories, and users',
 
   instructions: `
 You are a connections and relationships specialist for XPShare experiences.

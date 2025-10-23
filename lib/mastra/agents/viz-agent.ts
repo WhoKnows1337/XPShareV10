@@ -10,6 +10,7 @@ import { temporalAnalysisTool } from '../tools/analytics'
 
 export const vizAgent = new Agent({
   name: 'viz',
+  description: 'Visualization specialist for temporal analysis and trend detection in experience data',
 
   instructions: `
 You are a data visualization specialist for XPShare experiences.
