@@ -79,7 +79,7 @@ describe('Agent Network', () => {
     expect(tools.temporalAnalysis).toBeDefined()
   })
 
-  test('Insight agent has all 5 insights tools', async () => {
+  test('Insight agent has all 4 insights tools', async () => {
     const insight = mastra.getAgent('insight')
     const tools = await insight.getTools()
 
@@ -88,10 +88,10 @@ describe('Agent Network', () => {
     expect(tools.predictTrends).toBeDefined()
     expect(tools.detectPatterns).toBeDefined()
     expect(tools.suggestFollowups).toBeDefined()
-    expect(tools.exportResults).toBeDefined()
+    // NOTE: exportResults removed per MASTRAMIGRATION.md spec (4 tools only)
   })
 
-  test('Relationship agent has all 6 tools', async () => {
+  test('Relationship agent has all 4 relationship tools', async () => {
     const relationship = mastra.getAgent('relationship')
     const tools = await relationship.getTools()
 
@@ -100,8 +100,7 @@ describe('Agent Network', () => {
     expect(tools.analyzeCategory).toBeDefined()
     expect(tools.compareCategories).toBeDefined()
     expect(tools.attributeCorrelation).toBeDefined()
-    expect(tools.rankUsers).toBeDefined()
-    expect(tools.detectPatterns).toBeDefined()
+    // NOTE: rankUsers and detectPatterns removed per MASTRAMIGRATION.md spec (4 tools only)
   })
 
   test('Orchestrator has no tools (delegates only)', async () => {

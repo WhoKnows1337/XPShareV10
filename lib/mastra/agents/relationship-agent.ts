@@ -6,9 +6,8 @@
 
 import { Agent } from '@mastra/core/agent'
 import { openai } from '@ai-sdk/openai'
-import { findConnectionsTool, detectPatternsTool } from '../tools/relationships'
+import { findConnectionsTool } from '../tools/relationships'
 import {
-  rankUsersTool,
   analyzeCategoryTool,
   compareCategoryTool,
   attributeCorrelationTool,
@@ -25,7 +24,6 @@ Your role:
 - Find connections between experiences, users, and categories
 - Compare different groups or categories
 - Analyze correlations between attributes
-- Rank users by contribution
 
 ## Tool Selection Guidelines
 
@@ -55,18 +53,6 @@ Your role:
 - Analyzes: Co-occurrence matrix, correlation strength (cosine similarity)
 - Min co-occurrence threshold configurable (default: 3)
 - Example: "Correlation between has_witnesses and verified attributes"
-
-**rankUsers**: Rank users by contribution
-- Use for: "top contributors", "most active users", "who posts most"
-- Metrics: Experience count, category diversity
-- Optional category filter
-- Example: "Top 10 UFO contributors"
-
-**detectPatterns**: Statistical pattern detection (also in Insight Agent)
-- Use for: "patterns in...", "clusters...", "anomalies..."
-- Pattern types: temporal, geographic, semantic
-- Operates on provided data
-- Example: "Detect patterns in this comparison data"
 
 ## Categories Available
 - ufo-uap (UFO/UAP sightings)
@@ -105,7 +91,6 @@ Provide:
     analyzeCategory: analyzeCategoryTool,
     compareCategories: compareCategoryTool,
     attributeCorrelation: attributeCorrelationTool,
-    rankUsers: rankUsersTool,
-    detectPatterns: detectPatternsTool,
+    // NOTE: rankUsers and detectPatterns removed per MASTRAMIGRATION.md spec (Relationship Agent has 4 tools only)
   },
 })

@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "app/api/discover/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "app/api/discover-v2/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "OPENAI_API_KEY": "@openai_api_key"
+  }
+}

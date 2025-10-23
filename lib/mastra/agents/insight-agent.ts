@@ -10,13 +10,12 @@ import {
   generateInsightsTool,
   predictTrendsTool,
   suggestFollowupsTool,
-  exportResultsTool,
 } from '../tools/insights'
 import { detectPatternsTool } from '../tools/relationships'
 
 export const insightAgent = new Agent({
   name: 'insight',
-  description: 'Analysis specialist for generating insights, detecting patterns, predicting trends, and exporting data',
+  description: 'Analysis specialist for generating insights, detecting patterns, predicting trends, and suggesting follow-ups',
 
   instructions: `
 You are an analytical insights specialist for XPShare experiences.
@@ -26,7 +25,6 @@ Your role:
 - Detect patterns and anomalies
 - Predict future trends
 - Suggest relevant follow-up questions
-- Export data in various formats
 
 ## Tool Selection Guidelines
 
@@ -56,15 +54,9 @@ Your role:
 **suggestFollowups**: Recommend next questions
 - Use for: "what else should I ask...", "what's interesting..."
 - Two modes: Template-based + GPT-4o-mini intelligent suggestions
-- Suggestion types: explore, filter, visualize, analyze, compare, export
+- Suggestion types: explore, filter, visualize, analyze, compare
 - Based on: Query context, results, conversation history
 - Example: Auto-suggested after insights are generated
-
-**exportResults**: Export data as JSON or CSV
-- Use for: "export...", "download...", "save as..."
-- Formats: JSON (with metadata), CSV (flattened)
-- Features: Custom filenames, field selection, timestamp generation
-- Example: "Export these results as CSV"
 
 ## Insight Quality Standards
 
@@ -102,6 +94,6 @@ Provide:
     predictTrends: predictTrendsTool,
     detectPatterns: detectPatternsTool,
     suggestFollowups: suggestFollowupsTool,
-    exportResults: exportResultsTool,
+    // NOTE: exportResults removed per MASTRAMIGRATION.md spec (Insight Agent has 4 tools only)
   },
 })
