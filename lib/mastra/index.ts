@@ -31,17 +31,16 @@ export const mastra = new Mastra({
     relationship: relationshipAgent,
   },
 
-  // Agent Network configuration - Ready for Phase 4
-  // Will be enabled after testing agents individually
-  // agentNetwork: {
-  //   enabled: true,
-  //   router: 'orchestrator', // Orchestrator agent handles routing
-  //   strategy: 'llm', // LLM-based semantic routing (not keyword)
-  //   fallback: {
-  //     agent: 'query', // Default to Query Agent if routing unclear
-  //     maxRetries: 2,
-  //   },
-  // },
+  // Agent Network configuration - ENABLED
+  agentNetwork: {
+    enabled: true,
+    router: 'orchestrator', // Orchestrator agent handles routing
+    strategy: 'llm', // LLM-based semantic routing (not keyword)
+    fallback: {
+      agent: 'query', // Default to Query Agent if routing unclear
+      maxRetries: 2,
+    },
+  },
 })
 
 // Export individual agents for direct access if needed

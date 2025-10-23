@@ -9,10 +9,10 @@ import { openai } from '@ai-sdk/openai'
 import {
   generateInsightsTool,
   predictTrendsTool,
-  detectPatternsTool,
   suggestFollowupsTool,
   exportResultsTool,
 } from '../tools/insights'
+import { detectPatternsTool } from '../tools/relationships'
 
 export const insightAgent = new Agent({
   name: 'insight',
