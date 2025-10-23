@@ -5,6 +5,7 @@
  */
 
 import { Mastra } from '@mastra/core'
+import { PostgresStore } from '@mastra/pg'
 
 // Import all agents
 import { orchestratorAgent } from './agents/orchestrator'
@@ -41,6 +42,12 @@ export const mastra = new Mastra({
       maxRetries: 2,
     },
   },
+
+  // Storage backend for memory/threads (PostgreSQL via Supabase)
+  // Fallback to test DB for unit tests
+  storage: new PostgresStore({
+    connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/test',
+  }),
 })
 
 // Export individual agents for direct access if needed

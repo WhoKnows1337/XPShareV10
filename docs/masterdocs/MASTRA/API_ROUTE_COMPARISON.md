@@ -109,6 +109,40 @@ const runtimeContext = createXPShareContext(supabase, userId, locale)
 // Tools access via: runtimeContext.get('supabase')
 ```
 
+### 4.1. Memory & Storage Backend
+
+| Aspect | AI SDK 5.0 | Mastra Agent Network |
+|--------|------------|---------------------|
+| **Memory System** | Custom (lib/memory/loader.ts) | Mastra Memory (built-in) |
+| **Storage Backend** | None (stateless) | PostgreSQL (Supabase) |
+| **Thread Tracking** | Manual via metadata | Automatic via memory.thread |
+| **Persistence** | None | ✅ Persisted in Supabase DB |
+| **Tables Created** | N/A | `mastra_threads`, `mastra_messages`, `mastra_memory` |
+
+```typescript
+// Mastra Memory Configuration
+import { Memory } from '@mastra/memory'
+import { PostgresStore } from '@mastra/pg'
+
+// Orchestrator Agent
+memory: new Memory({
+  storage: new PostgresStore({
+    connectionString: process.env.DATABASE_URL, // Supabase connection
+  }),
+})
+
+// Mastra Instance
+storage: new PostgresStore({
+  connectionString: process.env.DATABASE_URL,
+})
+```
+
+**Environment Variables Required:**
+```env
+DATABASE_URL=postgresql://postgres.[PROJECT]:[PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
+OPENAI_API_KEY=sk-...
+```
+
 ### 5. Memory & Threading
 
 | Aspect | AI SDK 5.0 | Mastra Agent Network |
@@ -204,16 +238,19 @@ if (query.includes('generate insight')) {
 - ✅ Agent registration (7/7 passing)
 - ✅ Tool assignments (all tools verified)
 - ✅ RuntimeContext isolation (5/5 passing)
+- ✅ Memory configuration (orchestrator + mastra instance)
 
 ### Integration Tests
 - ✅ RuntimeContext → Tools pipeline (6/6 passing)
 - ✅ RLS isolation (5/5 passing)
-- ⏳ Full network execution (requires OpenAI key)
+- ✅ PostgreSQL storage backend (with test fallback)
+- ⏳ Full network execution (requires OpenAI key + real DB)
 
 ### E2E Tests
 - ⏳ API route with real requests
 - ⏳ Frontend integration
 - ⏳ Performance benchmarks
+- ⏳ Memory persistence verification
 
 ## Deployment Plan
 

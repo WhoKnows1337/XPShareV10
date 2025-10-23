@@ -15,7 +15,6 @@
     "db:seed:questions": "tsx scripts/seed-question-templates.ts"
   },
   "dependencies": {
-    "3d-force-graph": "^1.79.0",
     "@ai-sdk/openai": "^2.0.52",
     "@ai-sdk/react": "^2.0.76",
     "@ai-sdk/rsc": "^1.0.76",
@@ -29,6 +28,8 @@
     "@hookform/resolvers": "^3.10.0",
     "@mastra/ai-sdk": "^0.2.3",
     "@mastra/core": "^0.22.2",
+    "@mastra/memory": "^0.15.8",
+    "@mastra/pg": "^0.17.5",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -76,6 +77,7 @@
     "@vercel/analytics": "^1.4.1",
     "@vercel/speed-insights": "^1.2.0",
     "@xyflow/react": "^12.9.0",
+    "3d-force-graph": "^1.79.0",
     "ai": "^5.0.77",
     "cal-heatmap": "^4.2.4",
     "canvas-confetti": "^1.9.3",

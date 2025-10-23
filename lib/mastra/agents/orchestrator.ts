@@ -5,6 +5,8 @@
  */
 
 import { Agent } from '@mastra/core/agent'
+import { Memory } from '@mastra/memory'
+import { PostgresStore } from '@mastra/pg'
 import { openai } from '@ai-sdk/openai'
 import { queryAgent } from './query-agent'
 import { vizAgent } from './viz-agent'
@@ -88,6 +90,15 @@ Be conversational and helpful, but stay focused on the data.
     insight: insightAgent,
     relationship: relationshipAgent,
   },
+
+  // Memory configuration (REQUIRED for .network())
+  // Uses PostgreSQL (Supabase) for persistent storage
+  // Fallback to in-memory for tests (not suitable for production)
+  memory: new Memory({
+    storage: new PostgresStore({
+      connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/test',
+    }),
+  }),
 
   // Orchestrator has NO tools - only delegates to agents
 })

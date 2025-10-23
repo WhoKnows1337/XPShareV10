@@ -4,7 +4,7 @@
  * Tests the complete pipeline from RuntimeContext → Orchestrator → Specialist Agents → Tools
  */
 
-import { describe, test, expect, beforeEach, vi } from 'vitest'
+import { describe, test, expect, beforeEach, beforeAll, vi } from 'vitest'
 import { mastra } from '../index'
 import { createXPShareContext } from '../context'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -12,6 +12,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 describe('Agent Network Integration', () => {
   let mockSupabase: any
   let runtimeContext: any
+
+  // Mock DATABASE_URL for tests
+  beforeAll(() => {
+    process.env.DATABASE_URL = 'postgresql://localhost:5432/test'
+  })
 
   beforeEach(() => {
     // Mock Supabase client for testing

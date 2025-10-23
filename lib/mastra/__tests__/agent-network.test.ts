@@ -4,13 +4,18 @@
  * Verifies Agent Network routing and multi-agent orchestration
  */
 
-import { describe, test, expect, beforeEach } from 'vitest'
+import { describe, test, expect, beforeEach, beforeAll } from 'vitest'
 import { mastra } from '../index'
 import { createXPShareContext } from '../context'
 
 describe('Agent Network', () => {
   let mockSupabase: any
   let context: any
+
+  // Mock DATABASE_URL for tests
+  beforeAll(() => {
+    process.env.DATABASE_URL = 'postgresql://localhost:5432/test'
+  })
 
   beforeEach(() => {
     // Mock Supabase client for testing
