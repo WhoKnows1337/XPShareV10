@@ -30,37 +30,41 @@ const rankUsersSchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const rankUsersTool = tool({
-  description:
-    'Get top users ranked by contribution metrics (experience count, category diversity). Use this to find most active contributors or category experts.',
-  inputSchema: rankUsersSchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+export const createRankUsersTool = (supabase: any) =>
+  tool({
+    description:
+      'Get top users ranked by contribution metrics (experience count, category diversity). Use this to find most active contributors or category experts.',
+    inputSchema: rankUsersSchema,
+    execute: async (params) => {
+      // Call SQL function from Phase 1 (using request-scoped Supabase client)
+      const { data, error } = await supabase.rpc('aggregate_users_by_category', {
+        p_category: params.category,
+      })
 
-    // Call SQL function from Phase 1
-    const { data, error } = await supabase.rpc('aggregate_users_by_category', {
-      p_category: params.category,
-    })
+      if (error) {
+        throw new Error(`User ranking failed: ${error.message}`)
+      }
 
-    if (error) {
-      throw new Error(`User ranking failed: ${error.message}`)
-    }
+      // Sort by experience count and limit
+      const sorted = (data || [])
+        .sort((a: any, b: any) => b.experience_count - a.experience_count)
+        .slice(0, params.topN)
 
-    // Sort by experience count and limit
-    const sorted = (data || [])
-      .sort((a: any, b: any) => b.experience_count - a.experience_count)
-      .slice(0, params.topN)
+      return {
+        users: sorted,
+        count: sorted.length,
+        category: params.category,
+        summary: params.category
+          ? `Top ${sorted.length} contributors in ${params.category}`
+          : `Top ${sorted.length} contributors overall`,
+      }
+    },
+  })
 
-    return {
-      users: sorted,
-      count: sorted.length,
-      category: params.category,
-      summary: params.category
-        ? `Top ${sorted.length} contributors in ${params.category}`
-        : `Top ${sorted.length} contributors overall`,
-    }
-  },
-})
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const rankUsersTool = createRankUsersTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)

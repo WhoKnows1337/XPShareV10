@@ -29,98 +29,102 @@ const compareCategoriesSchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const compareCategoryTool = tool({
-  description:
-    'Compare two categories side-by-side. Analyzes differences in experience volume, geographic distribution, temporal patterns, and common attributes. Use this to understand category differences and similarities.',
-  inputSchema: compareCategoriesSchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+export const createCompareCategoryTool = (supabase: any) =>
+  tool({
+    description:
+      'Compare two categories side-by-side. Analyzes differences in experience volume, geographic distribution, temporal patterns, and common attributes. Use this to understand category differences and similarities.',
+    inputSchema: compareCategoriesSchema,
+    execute: async (params) => {
+      // Fetch data for both categories (using request-scoped Supabase client)
+      const [dataA, dataB] = await Promise.all([
+        fetchCategoryData(supabase, params.categoryA, params.dateRange),
+        fetchCategoryData(supabase, params.categoryB, params.dateRange),
+      ])
 
-    // Fetch data for both categories
-    const [dataA, dataB] = await Promise.all([
-      fetchCategoryData(supabase, params.categoryA, params.dateRange),
-      fetchCategoryData(supabase, params.categoryB, params.dateRange),
-    ])
+      // Compare volumes
+      const volumeComparison = {
+        categoryA: { name: params.categoryA, count: dataA.length },
+        categoryB: { name: params.categoryB, count: dataB.length },
+        difference: dataA.length - dataB.length,
+        ratio:
+          dataB.length > 0
+            ? Math.round((dataA.length / dataB.length) * 100) / 100
+            : dataA.length > 0
+              ? Infinity
+              : 0,
+      }
 
-    // Compare volumes
-    const volumeComparison = {
-      categoryA: { name: params.categoryA, count: dataA.length },
-      categoryB: { name: params.categoryB, count: dataB.length },
-      difference: dataA.length - dataB.length,
-      ratio:
-        dataB.length > 0
-          ? Math.round((dataA.length / dataB.length) * 100) / 100
-          : dataA.length > 0
-            ? Infinity
-            : 0,
-    }
+      // Compare geographic distribution
+      const geoA = analyzeGeography(dataA)
+      const geoB = analyzeGeography(dataB)
 
-    // Compare geographic distribution
-    const geoA = analyzeGeography(dataA)
-    const geoB = analyzeGeography(dataB)
+      const geoComparison = {
+        categoryA: { topLocations: geoA.slice(0, 5) },
+        categoryB: { topLocations: geoB.slice(0, 5) },
+        overlap: findOverlap(
+          geoA.map((g) => g.location),
+          geoB.map((g) => g.location)
+        ),
+      }
 
-    const geoComparison = {
-      categoryA: { topLocations: geoA.slice(0, 5) },
-      categoryB: { topLocations: geoB.slice(0, 5) },
-      overlap: findOverlap(
-        geoA.map((g) => g.location),
-        geoB.map((g) => g.location)
-      ),
-    }
+      // Compare temporal distribution (monthly)
+      const temporalA = analyzeTemporalDistribution(dataA)
+      const temporalB = analyzeTemporalDistribution(dataB)
 
-    // Compare temporal distribution (monthly)
-    const temporalA = analyzeTemporalDistribution(dataA)
-    const temporalB = analyzeTemporalDistribution(dataB)
+      const temporalComparison = {
+        categoryA: { peakMonth: findPeak(temporalA), distribution: temporalA.slice(0, 12) },
+        categoryB: { peakMonth: findPeak(temporalB), distribution: temporalB.slice(0, 12) },
+        correlation: calculateCorrelation(temporalA, temporalB),
+      }
 
-    const temporalComparison = {
-      categoryA: { peakMonth: findPeak(temporalA), distribution: temporalA.slice(0, 12) },
-      categoryB: { peakMonth: findPeak(temporalB), distribution: temporalB.slice(0, 12) },
-      correlation: calculateCorrelation(temporalA, temporalB),
-    }
+      // Compare attributes
+      const attrsA = analyzeAttributes(dataA)
+      const attrsB = analyzeAttributes(dataB)
 
-    // Compare attributes
-    const attrsA = analyzeAttributes(dataA)
-    const attrsB = analyzeAttributes(dataB)
+      const attributeComparison = {
+        categoryA: { topAttributes: attrsA.slice(0, 5) },
+        categoryB: { topAttributes: attrsB.slice(0, 5) },
+        uniqueToA: attrsA
+          .filter((a) => !attrsB.some((b) => b.key === a.key))
+          .slice(0, 5)
+          .map((a) => a.key),
+        uniqueToB: attrsB
+          .filter((b) => !attrsA.some((a) => a.key === b.key))
+          .slice(0, 5)
+          .map((b) => b.key),
+        shared: attrsA
+          .filter((a) => attrsB.some((b) => b.key === a.key))
+          .slice(0, 5)
+          .map((a) => a.key),
+      }
 
-    const attributeComparison = {
-      categoryA: { topAttributes: attrsA.slice(0, 5) },
-      categoryB: { topAttributes: attrsB.slice(0, 5) },
-      uniqueToA: attrsA
-        .filter((a) => !attrsB.some((b) => b.key === a.key))
-        .slice(0, 5)
-        .map((a) => a.key),
-      uniqueToB: attrsB
-        .filter((b) => !attrsA.some((a) => a.key === b.key))
-        .slice(0, 5)
-        .map((b) => b.key),
-      shared: attrsA
-        .filter((a) => attrsB.some((b) => b.key === a.key))
-        .slice(0, 5)
-        .map((a) => a.key),
-    }
+      return {
+        categoryA: params.categoryA,
+        categoryB: params.categoryB,
+        dateRange: params.dateRange,
+        volumeComparison,
+        geoComparison,
+        temporalComparison,
+        attributeComparison,
+        summary: {
+          volumeDifference: volumeComparison.difference,
+          volumeRatio: volumeComparison.ratio,
+          geoOverlap: geoComparison.overlap.length,
+          temporalCorrelation: temporalComparison.correlation,
+          sharedAttributes: attributeComparison.shared.length,
+        },
+        summaryText: `Compared ${params.categoryA} (${dataA.length} exp) vs ${params.categoryB} (${dataB.length} exp): ${volumeComparison.difference > 0 ? `${params.categoryA} has ${volumeComparison.difference} more` : `${params.categoryB} has ${Math.abs(volumeComparison.difference)} more`}`,
+      }
+    },
+  })
 
-    return {
-      categoryA: params.categoryA,
-      categoryB: params.categoryB,
-      dateRange: params.dateRange,
-      volumeComparison,
-      geoComparison,
-      temporalComparison,
-      attributeComparison,
-      summary: {
-        volumeDifference: volumeComparison.difference,
-        volumeRatio: volumeComparison.ratio,
-        geoOverlap: geoComparison.overlap.length,
-        temporalCorrelation: temporalComparison.correlation,
-        sharedAttributes: attributeComparison.shared.length,
-      },
-      summaryText: `Compared ${params.categoryA} (${dataA.length} exp) vs ${params.categoryB} (${dataB.length} exp): ${volumeComparison.difference > 0 ? `${params.categoryA} has ${volumeComparison.difference} more` : `${params.categoryB} has ${Math.abs(volumeComparison.difference)} more`}`,
-    }
-  },
-})
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const compareCategoryTool = createCompareCategoryTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)
 
 // ============================================================================
 // Helper Functions

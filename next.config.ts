@@ -30,7 +30,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // Performance optimizations
-  swcMinify: true, // Use SWC for faster minification
   modularizeImports: {
     'lucide-react': {
       transform: 'lucide-react/dist/esm/icons/{{member}}',

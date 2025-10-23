@@ -35,13 +35,16 @@ export interface HeatmapToolUIProps {
  * Transform tool result to Heatmap data format
  */
 function transformToolResult(toolResult: any): HeatmapProps['data'] {
+  // AI SDK v5: Extract output from tool part if available
+  const actualResult = toolResult?.output || toolResult?.result || toolResult
+
   // Handle different result formats
   const data =
-    toolResult?.results ||
-    toolResult?.heatmap ||
-    toolResult?.matrix ||
-    toolResult?.data ||
-    (Array.isArray(toolResult) ? toolResult : [])
+    actualResult?.results ||
+    actualResult?.heatmap ||
+    actualResult?.matrix ||
+    actualResult?.data ||
+    (Array.isArray(actualResult) ? actualResult : [])
 
   // Check if data is already in heatmap format (category + period + count)
   if (

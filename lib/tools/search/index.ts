@@ -1,11 +1,11 @@
 /**
  * XPShare AI - Search Tools Index
  *
- * Exports all search tools for easy importing.
+ * Exports factory functions that require request-scoped Supabase client.
  */
 
-export { advancedSearchTool } from './advanced-search'
-export { searchByAttributesTool } from './search-by-attributes'
-export { semanticSearchTool } from './semantic-search'
-export { fullTextSearchTool } from './full-text-search'
-export { geoSearchTool } from './geo-search'
+export { createAdvancedSearchTool } from './advanced-search'
+export { createSearchByAttributesTool } from './search-by-attributes'
+export { createSemanticSearchTool } from './semantic-search'
+export { createFullTextSearchTool } from './full-text-search'
+export { createGeoSearchTool } from './geo-search'

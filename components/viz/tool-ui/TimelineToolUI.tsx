@@ -35,14 +35,17 @@ export interface TimelineToolUIProps {
  * Transform tool result to TimelineChart data format
  */
 function transformToolResult(toolResult: any): TimelineChartProps['data'] {
+  // AI SDK v5: Extract output from tool part if available
+  const actualResult = toolResult?.output || toolResult?.result || toolResult
+
   // Handle different result formats
   const data =
-    toolResult?.results ||
-    toolResult?.experiences ||
-    toolResult?.periods ||
-    toolResult?.timeline ||
-    toolResult?.data ||
-    (Array.isArray(toolResult) ? toolResult : [])
+    actualResult?.results ||
+    actualResult?.experiences ||
+    actualResult?.periods ||
+    actualResult?.timeline ||
+    actualResult?.data ||
+    (Array.isArray(actualResult) ? actualResult : [])
 
   // Check if data is already in timeline format (period + count)
   if (data.length > 0 && data[0].period !== undefined && data[0].count !== undefined) {
@@ -109,12 +112,15 @@ function extractMetadata(toolResult: any): {
   hasCategories: boolean
   dateRange: { start: string; end: string } | null
 } {
+  // AI SDK v5: Extract output from tool part if available
+  const actualResult = toolResult?.output || toolResult?.result || toolResult
+
   const data =
-    toolResult?.results ||
-    toolResult?.experiences ||
-    toolResult?.periods ||
-    toolResult?.data ||
-    (Array.isArray(toolResult) ? toolResult : [])
+    actualResult?.results ||
+    actualResult?.experiences ||
+    actualResult?.periods ||
+    actualResult?.data ||
+    (Array.isArray(actualResult) ? actualResult : [])
 
   const totalEvents = data.reduce((sum: number, item: any) => sum + (item.count || 1), 0)
 
@@ -162,11 +168,13 @@ export function TimelineToolUI({
   const metadata = extractMetadata(toolResult)
 
   // Generate title
+  // AI SDK v5: Extract output from tool part if available
+  const actualResult = toolResult?.output || toolResult?.result || toolResult
   const timelineTitle =
     title ||
     config.title ||
-    (toolResult?.summary
-      ? `${toolResult.summary} - Timeline`
+    (actualResult?.summary || actualResult?.summaryText
+      ? `${actualResult.summary || actualResult.summaryText} - Timeline`
       : `Timeline (${metadata.periodCount} periods)`)
 
   // Determine if we should group by category

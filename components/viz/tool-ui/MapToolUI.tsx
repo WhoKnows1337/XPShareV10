@@ -7,7 +7,18 @@
 
 'use client'
 
-import { ExperienceMap, type ExperienceMapProps } from '../ExperienceMap'
+import dynamic from 'next/dynamic'
+import type { ExperienceMapProps } from '../ExperienceMap'
+
+// Dynamically import ExperienceMap to avoid SSR issues with Leaflet
+const ExperienceMap = dynamic(() => import('../ExperienceMap').then(mod => mod.ExperienceMap), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg" style={{ height: 600 }}>
+      <p className="text-gray-500">Loading map...</p>
+    </div>
+  ),
+})
 
 // ============================================================================
 // Type Definitions
@@ -35,12 +46,15 @@ export interface MapToolUIProps {
  * Transform tool result to ExperienceMap data format
  */
 function transformToolResult(toolResult: any): ExperienceMapProps['data'] {
+  // AI SDK v5: Extract output from tool part if available
+  const actualResult = toolResult?.output || toolResult?.result || toolResult
+
   // Handle different result formats
   const data =
-    toolResult?.results ||
-    toolResult?.experiences ||
-    toolResult?.data ||
-    (Array.isArray(toolResult) ? toolResult : [])
+    actualResult?.results ||
+    actualResult?.experiences ||
+    actualResult?.data ||
+    (Array.isArray(actualResult) ? actualResult : [])
 
   // Filter and transform to map data format
   return data
@@ -72,11 +86,14 @@ function extractMetadata(toolResult: any): {
   geoCount: number
   missingGeoCount: number
 } {
+  // AI SDK v5: Extract output from tool part if available
+  const actualResult = toolResult?.output || toolResult?.result || toolResult
+
   const data =
-    toolResult?.results ||
-    toolResult?.experiences ||
-    toolResult?.data ||
-    (Array.isArray(toolResult) ? toolResult : [])
+    actualResult?.results ||
+    actualResult?.experiences ||
+    actualResult?.data ||
+    (Array.isArray(actualResult) ? actualResult : [])
 
   const totalCount = data.length
   const geoCount = data.filter(

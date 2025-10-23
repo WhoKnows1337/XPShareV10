@@ -17,7 +17,7 @@ const advancedSearchSchema = z.object({
   categories: z
     .array(z.string())
     .optional()
-    .describe('Category slugs to filter by (e.g., ["ufo", "dreams"])'),
+    .describe('Category slugs to filter by (e.g., ["ufo-uap", "dreams", "nde-obe", "paranormal-anomalies", "synchronicity", "psychedelics"])'),
   location: z
     .object({
       city: z.string().optional().describe('City name (case-insensitive partial match)'),
@@ -27,12 +27,10 @@ const advancedSearchSchema = z.object({
       lng: z.number().optional().describe('Longitude for radius search'),
     })
     .optional(),
-  timeRange: z
-    .object({
-      from: z.string().describe('Start time in HH:MM format (e.g., "14:00")'),
-      to: z.string().describe('End time in HH:MM format (e.g., "18:00")'),
-    })
-    .optional(),
+  timeOfDay: z
+    .enum(['morning', 'afternoon', 'evening', 'night'])
+    .optional()
+    .describe('Time of day category: "morning" (sunrise-noon), "afternoon" (noon-sunset), "evening" (sunset-midnight), "night" (midnight-sunrise)'),
   dateRange: z
     .object({
       from: z.string().describe('Start date in ISO format (YYYY-MM-DD)'),
@@ -72,19 +70,15 @@ const advancedSearchSchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const advancedSearchTool = tool({
-  description:
-    'Search experiences with multi-dimensional filters. Supports categories, locations, time ranges, date ranges, attributes, tags, and emotions. Use this for complex queries combining multiple criteria.',
-  inputSchema: advancedSearchSchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Build base query
-    let query = supabase.from('experiences').select(
-      `
+export const createAdvancedSearchTool = (supabase: any) =>
+  tool({
+    description:
+      'Search experiences with multi-dimensional filters. Supports categories, locations (city/country/radius), time of day (morning/afternoon/evening/night), date ranges, tags, and emotions. Use this for complex queries combining multiple criteria (e.g., "UFOs in California at night", "Dreams in 2024 with fear emotion"). NOTE: For queries about SPECIFIC ATTRIBUTE VALUES like "triangle-shaped", "orb-shaped", "lucid dreams" - use searchByAttributes tool instead.',
+    inputSchema: advancedSearchSchema,
+    execute: async (params) => {
+      // Build base query (using request-scoped Supabase client)
+      let query = supabase.from('experiences').select(
+        `
         id,
         title,
         story_text,
@@ -104,91 +98,99 @@ export const advancedSearchTool = tool({
           confidence
         )
       `
-    )
-
-    // Apply filters
-    // 1. Category filter
-    if (params.categories && params.categories.length > 0) {
-      query = query.in('category', params.categories)
-    }
-
-    // 2. Location text filter (city or country)
-    if (params.location?.city) {
-      query = query.ilike('location_text', `%${params.location.city}%`)
-    }
-
-    if (params.location?.country) {
-      query = query.ilike('location_text', `%${params.location.country}%`)
-    }
-
-    // 3. Time range filter
-    if (params.timeRange) {
-      query = query.gte('time_of_day', params.timeRange.from).lte('time_of_day', params.timeRange.to)
-    }
-
-    // 4. Date range filter
-    if (params.dateRange) {
-      query = query
-        .gte('date_occurred', params.dateRange.from)
-        .lte('date_occurred', params.dateRange.to)
-    }
-
-    // 5. Tags filter (overlaps = contains ANY of the tags)
-    if (params.tags && params.tags.length > 0) {
-      query = query.overlaps('tags', params.tags)
-    }
-
-    // 6. Emotions filter
-    if (params.emotions && params.emotions.length > 0) {
-      query = query.overlaps('emotions', params.emotions)
-    }
-
-    // 7. Pagination
-    query = query.range(params.offset, params.offset + params.limit - 1)
-
-    // Execute query
-    const { data, error } = await query
-
-    if (error) {
-      throw new Error(`Advanced search failed: ${error.message}`)
-    }
-
-    // Post-filter by attributes if specified
-    let results = data || []
-
-    if (params.attributes && params.attributes.length > 0) {
-      results = filterByAttributes(results, params.attributes, params.minConfidence)
-    }
-
-    // Post-filter by geographic radius if specified
-    if (
-      params.location?.radius &&
-      params.location?.lat !== undefined &&
-      params.location?.lng !== undefined
-    ) {
-      results = filterByRadius(
-        results,
-        params.location.lat,
-        params.location.lng,
-        params.location.radius
       )
-    }
 
-    return {
-      results,
-      count: results.length,
-      summary: `Found ${results.length} experiences matching criteria`,
-      filters: {
-        categories: params.categories,
-        location: params.location,
-        timeRange: params.timeRange,
-        dateRange: params.dateRange,
-        tags: params.tags,
-        emotions: params.emotions,
-      },
-    }
-  },
-})
+      // Apply filters
+      // 1. Category filter
+      if (params.categories && params.categories.length > 0) {
+        query = query.in('category', params.categories)
+      }
+
+      // 2. Location text filter (city or country)
+      if (params.location?.city) {
+        query = query.ilike('location_text', `%${params.location.city}%`)
+      }
+
+      if (params.location?.country) {
+        query = query.ilike('location_text', `%${params.location.country}%`)
+      }
+
+      // 3. Time of day filter (categorical: morning, afternoon, evening, night)
+      if (params.timeOfDay) {
+        query = query.eq('time_of_day', params.timeOfDay)
+      }
+
+      // 4. Date range filter
+      if (params.dateRange) {
+        query = query
+          .gte('date_occurred', params.dateRange.from)
+          .lte('date_occurred', params.dateRange.to)
+      }
+
+      // 5. Tags filter (overlaps = contains ANY of the tags)
+      if (params.tags && params.tags.length > 0) {
+        query = query.overlaps('tags', params.tags)
+      }
+
+      // 6. Emotions filter
+      if (params.emotions && params.emotions.length > 0) {
+        query = query.overlaps('emotions', params.emotions)
+      }
+
+      // 7. Pagination
+      query = query.range(params.offset, params.offset + params.limit - 1)
+
+      // Execute query
+      const { data, error } = await query
+
+      if (error) {
+        throw new Error(`Advanced search failed: ${error.message}`)
+      }
+
+      // Post-filter by attributes if specified
+      let results = data || []
+
+      if (params.attributes && params.attributes.length > 0) {
+        results = filterByAttributes(results, params.attributes, params.minConfidence)
+      }
+
+      // Post-filter by geographic radius if specified
+      if (
+        params.location?.radius &&
+        params.location?.lat !== undefined &&
+        params.location?.lng !== undefined
+      ) {
+        results = filterByRadius(
+          results,
+          params.location.lat,
+          params.location.lng,
+          params.location.radius
+        )
+      }
+
+      return {
+        results,
+        count: results.length,
+        summary: `Found ${results.length} experiences matching criteria`,
+        filters: {
+          categories: params.categories,
+          location: params.location,
+          timeOfDay: params.timeOfDay,
+          dateRange: params.dateRange,
+          tags: params.tags,
+          emotions: params.emotions,
+        },
+      }
+    },
+  })
+
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const advancedSearchTool = createAdvancedSearchTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)
 
 // ============================================================================
 // Helper Functions

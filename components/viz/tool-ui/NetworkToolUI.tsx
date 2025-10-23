@@ -35,11 +35,14 @@ export interface NetworkToolUIProps {
  * Transform tool result to NetworkGraph data format
  */
 function transformToolResult(toolResult: any): { nodes: NetworkNode[]; links: NetworkLink[] } {
+  // AI SDK v5: Extract output from tool part if available
+  const actualResult = toolResult?.output || toolResult?.result || toolResult
+
   // Handle different result formats
 
   // Format 1: Already has nodes and edges/links
-  if (toolResult?.nodes && (toolResult?.edges || toolResult?.links)) {
-    const nodes: NetworkNode[] = toolResult.nodes.map((node: any) => ({
+  if (actualResult?.nodes && (actualResult?.edges || actualResult?.links)) {
+    const nodes: NetworkNode[] = actualResult.nodes.map((node: any) => ({
       id: node.id || node.experience_id || String(Math.random()),
       name: node.name || node.title || node.label || node.id,
       category: node.category || 'default',
@@ -47,7 +50,7 @@ function transformToolResult(toolResult: any): { nodes: NetworkNode[]; links: Ne
       ...node,
     }))
 
-    const links: NetworkLink[] = (toolResult.edges || toolResult.links).map((link: any) => ({
+    const links: NetworkLink[] = (actualResult.edges || actualResult.links).map((link: any) => ({
       source: String(link.source || link.from),
       target: String(link.target || link.to),
       value: link.value || link.weight || link.similarity_score || 1,
@@ -60,10 +63,10 @@ function transformToolResult(toolResult: any): { nodes: NetworkNode[]; links: Ne
 
   // Format 2: Results/experiences with connections array
   const data =
-    toolResult?.results ||
-    toolResult?.experiences ||
-    toolResult?.data ||
-    (Array.isArray(toolResult) ? toolResult : [])
+    actualResult?.results ||
+    actualResult?.experiences ||
+    actualResult?.data ||
+    (Array.isArray(actualResult) ? actualResult : [])
 
   const nodes: NetworkNode[] = []
   const links: NetworkLink[] = []

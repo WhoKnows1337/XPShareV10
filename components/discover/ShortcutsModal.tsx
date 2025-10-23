@@ -23,7 +23,7 @@ export interface ShortcutsModalProps {
   shortcuts: KeyboardShortcut[]
 }
 
-export function ShortcutsModal({ open, onOpenChange, shortcuts }: ShortcutsModalProps) {
+export function ShortcutsModal({ open, onOpenChange, shortcuts = [] }: ShortcutsModalProps) {
   // Group shortcuts by category
   const categories = {
     'General': shortcuts.filter(s => ['k', 'n', '/'].includes(s.key)),

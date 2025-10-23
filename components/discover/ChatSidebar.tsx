@@ -44,7 +44,7 @@ import { useDiscoveryChats, DiscoveryChat } from '@/hooks/useDiscoveryChats'
 import { formatDistanceToNow } from 'date-fns'
 import { ShareDialog } from '@/components/discover/ShareDialog'
 import { BranchSelector } from '@/components/discover/BranchSelector'
-import { getBranchesForChat, createBranch } from '@/lib/branches/branch-manager'
+import type { Branch } from '@/lib/branches/types'
 import { useEffect } from 'react'
 
 interface ChatSidebarProps {
@@ -60,7 +60,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { chats, loading, deleteChat, updateChatTitle, pinChat, archiveChat } = useDiscoveryChats()
-  const [branches, setBranches] = useState<any[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
   const [currentBranchId, setCurrentBranchId] = useState<string | undefined>()
   const [searchQuery, setSearchQuery] = useState('')
   const [showArchived, setShowArchived] = useState(false)
@@ -68,8 +68,9 @@ export function ChatSidebar({
   // Load branches for current chat
   useEffect(() => {
     if (currentChatId) {
-      getBranchesForChat(currentChatId)
-        .then(setBranches)
+      fetch(`/api/branches/${currentChatId}`)
+        .then((res) => res.json())
+        .then((data) => setBranches(data.branches || []))
         .catch((err) => console.error('[ChatSidebar] Failed to load branches:', err))
     } else {
       setBranches([])
@@ -209,9 +210,17 @@ export function ChatSidebar({
             }}
             onBranchCreate={async (branchName) => {
               if (currentChatId) {
-                await createBranch(currentChatId, '', branchName)
-                const updated = await getBranchesForChat(currentChatId)
-                setBranches(updated)
+                // Create branch via API
+                await fetch(`/api/branches/${currentChatId}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ branchName, parentMessageId: '' }),
+                })
+
+                // Reload branches
+                const res = await fetch(`/api/branches/${currentChatId}`)
+                const data = await res.json()
+                setBranches(data.branches || [])
               }
             }}
             className="w-full"

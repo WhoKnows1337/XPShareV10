@@ -19,25 +19,29 @@ import {
   quickExtractExplicitPreferences,
 } from '@/lib/memory/preference-extractor'
 
-// Import all tools
+// Import tool factories (for request-scoped Supabase client)
 import {
-  // Search Tools
-  advancedSearchTool,
-  searchByAttributesTool,
-  semanticSearchTool,
-  fullTextSearchTool,
-  geoSearchTool,
-  // Analytics Tools
-  rankUsersTool,
-  analyzeCategoryTool,
-  compareCategoryTool,
-  temporalAnalysisTool,
-  attributeCorrelationTool,
-  // Relationship Tools
-  findConnectionsTool,
+  // Search Tool Factories
+  createAdvancedSearchTool,
+  createSearchByAttributesTool,
+  createSemanticSearchTool,
+  createFullTextSearchTool,
+  createGeoSearchTool,
+  // Analytics Tool Factories
+  createRankUsersTool,
+  createAnalyzeCategoryTool,
+  createCompareCategoryTool,
+  createTemporalAnalysisTool,
+  createAttributeCorrelationTool,
+  // Relationship Tool Factories
+  createFindConnectionsTool,
+  // Insights Tool Factories
+  createGenerateInsightsTool,
+} from '@/lib/tools'
+
+// Import tools that don't need Supabase (work with pre-fetched data)
+import {
   detectPatternsTool,
-  // Insights & Advanced Features Tools
-  generateInsightsTool,
   predictTrendsTool,
   suggestFollowupsTool,
   exportResultsTool,
@@ -58,8 +62,8 @@ const DISCOVERY_SYSTEM_PROMPT = `You are XPShare Discovery Assistant, an AI spec
 You have access to powerful tools for:
 - **Search**: Advanced filtering, semantic search, full-text search, geo search, attribute search
 - **Analytics**: User rankings, category analysis, temporal patterns, correlations
-- **Relationships**: Connection discovery, pattern detection
-- **Insights**: Pattern detection with statistical analysis, trend predictions, follow-up suggestions
+- **Relationships**: Network analysis with multi-dimensional similarity, statistical pattern detection
+- **Insights**: AI-powered insight generation with confidence scores, trend predictions, follow-up suggestions
 - **Export**: JSON and CSV downloads
 
 ## Categories
@@ -77,6 +81,10 @@ XPShare focuses on 7 main categories of experiences:
 
 1. **Be Conversational**: Respond naturally and help users explore the data
 2. **Use Tools Intelligently**: Select the most appropriate tool(s) for each query
+   - Use **generateInsights** when user asks to "generate insights", "discover insights", "find insights"
+   - Use **findConnections** when user asks about "connections", "relationships", "network", "similar experiences"
+   - Use **detectPatterns** when user asks to "detect patterns", "find anomalies", "discover trends"
+   - Use **analyzeCategory** for simple category summaries (counts, locations, dates)
 3. **Provide Context**: Always mention result counts and key findings
 4. **Suggest Next Steps**: After showing results, offer to detect patterns, predict trends, or visualize data
 5. **Handle Errors Gracefully**: If a tool fails, explain clearly and suggest alternatives
@@ -182,39 +190,135 @@ export async function POST(req: Request) {
       parts: [{ type: 'text' as const, text: msg.content }],
     }))
 
+    // Create tools with request-scoped Supabase client (RLS fix)
+    // This ensures all tool queries run with the authenticated user's context
+    const tools = {
+      // Search Tools
+      advancedSearch: createAdvancedSearchTool(supabase),
+      searchByAttributes: createSearchByAttributesTool(supabase),
+      semanticSearch: createSemanticSearchTool(supabase),
+      fullTextSearch: createFullTextSearchTool(supabase),
+      geoSearch: createGeoSearchTool(supabase),
+
+      // Analytics Tools
+      rankUsers: createRankUsersTool(supabase),
+      analyzeCategory: createAnalyzeCategoryTool(supabase),
+      compareCategory: createCompareCategoryTool(supabase),
+      temporalAnalysis: createTemporalAnalysisTool(supabase),
+      attributeCorrelation: createAttributeCorrelationTool(supabase),
+
+      // Relationship Tools
+      findConnections: createFindConnectionsTool(supabase),
+      detectPatterns: detectPatternsTool,
+
+      // Insights & Advanced Features Tools
+      generateInsights: createGenerateInsightsTool(supabase),
+      predictTrends: predictTrendsTool,
+      suggestFollowups: suggestFollowupsTool,
+      exportResults: exportResultsTool,
+    }
+
     // Stream text with all tools (use sanitized messages + personalized system prompt)
     const result = streamText({
-      model: openai('gpt-4o-mini'),
+      model: openai('gpt-4o'),
       messages: convertToModelMessages(uiMessages),
       system: systemPrompt,
-      tools: {
-        // Search Tools
-        advancedSearch: advancedSearchTool,
-        searchByAttributes: searchByAttributesTool,
-        semanticSearch: semanticSearchTool,
-        fullTextSearch: fullTextSearchTool,
-        geoSearch: geoSearchTool,
-
-        // Analytics Tools
-        rankUsers: rankUsersTool,
-        analyzeCategory: analyzeCategoryTool,
-        compareCategory: compareCategoryTool,
-        temporalAnalysis: temporalAnalysisTool,
-        attributeCorrelation: attributeCorrelationTool,
-
-        // Relationship Tools
-        findConnections: findConnectionsTool,
-        detectPatterns: detectPatternsTool,
-
-        // Insights & Advanced Features Tools
-        generateInsights: generateInsightsTool,
-        predictTrends: predictTrendsTool,
-        suggestFollowups: suggestFollowupsTool,
-        exportResults: exportResultsTool,
-      },
+      tools,
+      toolChoice: 'auto', // Let model decide when to use tools
       // Note: maxSteps removed in AI SDK 5.0 - tool calling loops automatically
       // Note: maxTokens removed in AI SDK 5.0 - use model-specific max_tokens in provider config
       temperature: 0.7,
+      abortSignal: req.signal, // Handle client disconnections properly
+
+      // Dynamic tool filtering based on user query (solves AI tool selection issue)
+      prepareStep: ({ steps }) => {
+        const lastMessage = sanitizedMessages[sanitizedMessages.length - 1]?.content || ''
+        const query = typeof lastMessage === 'string' ? lastMessage.toLowerCase() : ''
+
+        console.log(`[prepareStep] Step ${steps.length}: Query="${query}"`)
+
+        // Pattern: "generate insights", "discover insights", "find insights"
+        if (query.includes('generate insight') || query.includes('discover insight') || query.includes('find insight')) {
+          console.log('[prepareStep] Matched "insights" pattern')
+          return {
+            toolChoice: 'required',
+            system: systemPrompt + '\n\nIMPORTANT: User asked for insights. Use generateInsights tool with category parameter (e.g., category="dreams"). The tool will fetch data automatically and perform advanced pattern detection with confidence scores.',
+          }
+        }
+
+        // Pattern: "find connections", "relationships", "network", "similar to"
+        if (query.includes('connection') || query.includes('relationship') || query.includes('network') || (query.includes('similar') && query.includes('experience'))) {
+          console.log('[prepareStep] Matched "connections" pattern')
+          return {
+            toolChoice: 'required',
+            system: systemPrompt + '\n\nIMPORTANT: Use findConnections for network analysis.',
+          }
+        }
+
+        // Pattern: "detect patterns", "find anomalies", "discover trends", "identify clusters"
+        if (query.includes('detect pattern') || query.includes('find anomal') || query.includes('discover trend') || query.includes('identify cluster')) {
+          console.log('[prepareStep] Matched "detect patterns" pattern')
+          return {
+            toolChoice: 'required',
+            system: systemPrompt + '\n\nIMPORTANT: Use detectPatterns for statistical pattern detection.',
+          }
+        }
+
+        // Pattern: Search + Visualization (timeline, map, etc.) - MULTILINGUAL
+        if ((query.includes('show') || query.includes('zeig') || query.includes('find') || query.includes('finde') || query.includes('search') || query.includes('suche')) &&
+            (query.includes('timeline') || query.includes('zeitverlauf') || query.includes('zeitstrahl') ||
+             query.includes('visualization') || query.includes('visualize') || query.includes('visualisier') ||
+             query.includes('map') || query.includes('karte') ||
+             query.includes('over time') || query.includes('über die zeit') || query.includes('im laufe der zeit') || query.includes('zeitlich') ||
+             query.includes('by location') || query.includes('nach ort') || query.includes('nach standort') || query.includes('geografisch') ||
+             query.includes('geographic'))) {
+          console.log('[prepareStep] Matched "search + visualization" pattern')
+          return {
+            activeTools: ['temporalAnalysis', 'geoSearch'],
+            system: systemPrompt + '\n\nIMPORTANT: User wants temporal/geographic visualization. Use temporalAnalysis for "over time" queries (aggregates by period automatically) or geoSearch for location-based queries. DO NOT use advancedSearch - these tools fetch and visualize data in one step.',
+          }
+        }
+
+        // Pattern: Attribute-based search (shaped, type of, color, etc.) - MULTILINGUAL
+        if (query.includes('shaped') || query.includes('-shaped') || query.includes('förmig') || query.includes('-förmig') ||
+            query.includes('type of') || query.includes('art von') ||
+            query.includes(' color') || query.includes('farbe') || query.includes('lucid') || query.includes('luzid') || query.includes('orb')) {
+          console.log('[prepareStep] Matched "attribute search" pattern')
+          return {
+            activeTools: ['searchByAttributes', 'advancedSearch'],
+            system: systemPrompt + '\n\nIMPORTANT: User is asking about SPECIFIC ATTRIBUTE VALUES. You MUST use searchByAttributes tool. Extract the attribute key and value from the query. Examples: "triangle-shaped UFO" → key="shape", value="triangle", category="ufo-uap". "orb light" → key="shape", value="orb". "lucid dream" → key="dream_type", value="lucid", category="dreams".',
+          }
+        }
+
+        // Pattern: Simple search (show, find, search without visualization keywords) - MULTILINGUAL
+        if (query.includes('show') || query.includes('zeig') || query.includes('find') || query.includes('finde') || query.includes('search') || query.includes('suche')) {
+          console.log('[prepareStep] Matched "simple search" pattern, enabling Search tools')
+          return {
+            activeTools: ['advancedSearch', 'searchByAttributes', 'geoSearch'],
+            system: `YOU ARE A SEARCH AGENT. YOU MUST USE TOOLS TO SEARCH THE DATABASE.
+
+CRITICAL INSTRUCTIONS:
+1. You MUST call the advancedSearch tool to search for experiences in the database
+2. DO NOT respond with text - ONLY use tools
+3. The user query is: "${query}"
+4. Call advancedSearch with appropriate filters based on the query
+5. After getting results, present them to the user
+
+NEVER say "No results found" without calling the search tool first!
+
+Available tools:
+- advancedSearch: Multi-dimensional search with category, time_of_day, location, date filters
+- searchByAttributes: Search by specific attributes
+- geoSearch: Geographic search
+
+START BY CALLING advancedSearch NOW!`,
+          }
+        }
+
+        // Default: All tools available
+        console.log('[prepareStep] No pattern matched, all 16 tools available')
+        return {}
+      },
 
       // Track citations from tool results & extract preferences
       onFinish: async ({ response, text }) => {
@@ -234,12 +338,19 @@ export async function POST(req: Request) {
             }
           }
 
-          // If we have citations, save them
+          // TEMPORARILY DISABLED: Citations feature (Bug #8 - schema migration issue)
+          // TODO: Re-enable after fixing PostgreSQL function
+          /*
           if (allCitations.length > 0 && body.messageId) {
-            const indexedCitations = assignCitationIndices(allCitations)
-            await saveCitations(body.messageId, indexedCitations)
-            console.log(`[Citations] Saved ${indexedCitations.length} citations for message ${body.messageId}`)
+            try {
+              const indexedCitations = assignCitationIndices(allCitations)
+              await saveCitations(body.messageId, indexedCitations)
+              console.log(`[Citations] Saved ${indexedCitations.length} citations for message ${body.messageId}`)
+            } catch (citationError) {
+              console.error('[Citations] Failed to save citations (non-critical):', citationError)
+            }
           }
+          */
 
           // 2. Extract preferences from conversation (if user is authenticated)
           if (user) {
@@ -281,8 +392,24 @@ export async function POST(req: Request) {
       userId: user?.id,
     })
 
+    // Error message handler for AI SDK 5.0 (prevents masking errors)
+    function getErrorMessage(error: unknown): string {
+      if (error == null) {
+        return 'Unknown error occurred'
+      }
+      if (typeof error === 'string') {
+        return error
+      }
+      if (error instanceof Error) {
+        return error.message
+      }
+      return JSON.stringify(error)
+    }
+
     // Return stream response with smooth streaming, metadata, and rate limit headers
     const response = result.toUIMessageStreamResponse({
+      // Forward error details to client for debugging (AI SDK 5.0 masks errors by default)
+      getErrorMessage,
       // Note: AI SDK 5.0 uses messageMetadata function instead of experimental_metadata
       // Metadata is now extracted from the stream parts rather than passed directly
       // The threading metadata (replyToId, threadId, branchId, chatId) should be handled

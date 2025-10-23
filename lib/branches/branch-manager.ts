@@ -5,15 +5,10 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Branch } from './types'
 
-export interface Branch {
-  id: string
-  chatId: string
-  parentMessageId?: string
-  branchName: string
-  createdAt: Date
-  messageCount?: number
-}
+// Re-export types for backward compatibility
+export type { Branch }
 
 export async function createBranch(
   chatId: string,

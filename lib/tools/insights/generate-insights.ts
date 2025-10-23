@@ -14,19 +14,29 @@ import { createClient } from '@/lib/supabase/client'
 // ============================================================================
 
 const generateInsightsSchema = z.object({
+  // NEW: Allow fetching data by category instead of requiring pre-fetched data
+  category: z
+    .string()
+    .optional()
+    .describe('Category slug to fetch and analyze (e.g., "ufo-uap", "dreams", "nde-obe", "paranormal-anomalies", "synchronicity", "psychedelics", "altered-states"). If provided, tool will fetch data automatically.'),
   data: z
     .array(z.object({}).passthrough())
-    .describe('Array of data to analyze for insights (experiences, temporal data, etc.)'),
+    .optional()
+    .describe('Pre-fetched data to analyze. If category is provided, this is ignored.'),
   analysisType: z
     .enum(['temporal', 'geographic', 'category', 'correlation', 'all'])
     .default('all')
     .describe('Type of analysis to perform'),
+  complexity: z
+    .enum(['basic', 'insights'])
+    .default('insights')
+    .describe('basic = simple summary stats, insights = advanced pattern detection with confidence scores'),
   minConfidence: z
     .number()
     .min(0)
     .max(1)
     .default(0.7)
-    .describe('Minimum confidence score for insights (0-1)'),
+    .describe('Minimum confidence score for insights (0-1). Only used when complexity=insights.'),
   maxInsights: z.number().min(1).max(20).default(10).describe('Maximum number of insights to return'),
 })
 
@@ -331,48 +341,94 @@ function detectAnomalies(data: any[]): Insight[] {
 // Main Tool
 // ============================================================================
 
-export const generateInsightsTool = tool({
-  description: `Generate actionable insights from data using pattern detection and statistical analysis.
+export const createGenerateInsightsTool = (supabase: any) =>
+  tool({
+    description: `UNIFIED ANALYSIS TOOL: Analyze experiences by category with two modes: 1) complexity='basic' for simple summaries (counts, locations, dates), 2) complexity='insights' for advanced statistical analysis with confidence scores, pattern detection, and recommendations. Can fetch data automatically by category OR analyze pre-fetched data. Use this when user asks to analyze, generate insights, or understand patterns in experience data.`,
+    inputSchema: generateInsightsSchema,
+    execute: async ({ category, data, analysisType, complexity, minConfidence, maxInsights }) => {
+      // Fetch data if category is provided (using request-scoped Supabase client)
+      let analysisData = data || []
+      if (category && !data) {
+        const { data: fetchedData, error } = await supabase
+          .from('experiences')
+          .select('*')
+          .eq('category', category)
+          .order('created_at', { ascending: false })
+          .limit(100)
 
-  Detects:
-  - Temporal spikes and trends
-  - Geographic hotspots
-  - Category patterns and correlations
-  - Data anomalies
+        if (error) {
+          return {
+            error: `Failed to fetch ${category} experiences: ${error.message}`,
+            count: 0,
+          }
+        }
 
-  Each insight includes confidence score, evidence, and actionable recommendations.`,
-  inputSchema: generateInsightsSchema,
-  execute: async ({ data, analysisType, minConfidence, maxInsights }) => {
-    const allInsights: Insight[] = []
+        analysisData = fetchedData || []
+      }
 
-    // Run analysis based on type
-    if (analysisType === 'temporal' || analysisType === 'all') {
-      allInsights.push(...detectTemporalSpikes(data))
-      allInsights.push(...detectTemporalTrends(data))
-    }
+      if (analysisData.length === 0) {
+        return {
+          error: 'No data provided or fetched for analysis',
+          count: 0,
+        }
+      }
 
-    if (analysisType === 'geographic' || analysisType === 'all') {
-      allInsights.push(...detectGeographicHotspots(data))
-    }
+      // BASIC MODE: Simple summary stats (like old analyzeCategory)
+      if (complexity === 'basic') {
+        const locations = analysisData
+          .map((exp: any) => exp.location)
+          .filter(Boolean)
+        const dates = analysisData
+          .map((exp: any) => exp.date_occurred || exp.created_at)
+          .filter(Boolean)
 
-    if (analysisType === 'category' || analysisType === 'all') {
-      allInsights.push(...detectCategoryPatterns(data))
-    }
+        return {
+          summary: `Found ${analysisData.length} ${category || 'experiences'}`,
+          count: analysisData.length,
+          locations: Array.from(new Set(locations)).slice(0, 10),
+          dateRange: dates.length > 0 ? {
+            earliest: dates.sort()[0],
+            latest: dates.sort()[dates.length - 1],
+          } : null,
+        }
+      }
 
-    if (analysisType === 'all') {
-      allInsights.push(...detectAnomalies(data))
-    }
+      // INSIGHTS MODE: Advanced pattern detection
+      const allInsights: Insight[] = []
 
-    // Filter by confidence and limit
-    const filteredInsights = allInsights
-      .filter((insight) => insight.confidence >= minConfidence)
-      .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, maxInsights)
+      // Run analysis based on type
+      if (analysisType === 'temporal' || analysisType === 'all') {
+        allInsights.push(...detectTemporalSpikes(analysisData))
+        allInsights.push(...detectTemporalTrends(analysisData))
+      }
 
-    return {
-      insights: filteredInsights,
-      count: filteredInsights.length,
-      summary: `Generated ${filteredInsights.length} insights from ${data.length} data points`,
-    }
-  },
-})
+      if (analysisType === 'geographic' || analysisType === 'all') {
+        allInsights.push(...detectGeographicHotspots(analysisData))
+      }
+
+      if (analysisType === 'category' || analysisType === 'all') {
+        allInsights.push(...detectCategoryPatterns(analysisData))
+      }
+
+      if (analysisType === 'all') {
+        allInsights.push(...detectAnomalies(analysisData))
+      }
+
+      // Filter by confidence and limit
+      const filteredInsights = allInsights
+        .filter((insight) => insight.confidence >= minConfidence)
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, maxInsights)
+
+      return {
+        insights: filteredInsights,
+        count: filteredInsights.length,
+        summary: `Generated ${filteredInsights.length} insights from ${analysisData.length} data points`,
+      }
+    },
+  })
+
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const generateInsightsTool = createGenerateInsightsTool(
+  createClient()
+)

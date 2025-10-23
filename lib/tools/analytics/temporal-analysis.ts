@@ -20,7 +20,7 @@ const temporalAnalysisSchema = z.object({
   category: z
     .string()
     .optional()
-    .describe('Optional category filter'),
+    .describe('Optional category filter (use slug format: "ufo-uap", "dreams", "nde-obe", "paranormal-anomalies", "synchronicity", "psychedelics", "altered-states", etc.)'),
   location: z
     .string()
     .optional()
@@ -38,53 +38,57 @@ const temporalAnalysisSchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const temporalAnalysisTool = tool({
-  description:
-    'Analyze temporal patterns and trends. Aggregates experiences by time periods (hour/day/week/month/year) with optional category and location grouping. Use this to discover time-based patterns.',
-  inputSchema: temporalAnalysisSchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+export const createTemporalAnalysisTool = (supabase: any) =>
+  tool({
+    description:
+      'Analyze temporal patterns and trends. Aggregates experiences by time periods (hour/day/week/month/year) with optional category and location grouping. Use this to discover time-based patterns.',
+    inputSchema: temporalAnalysisSchema,
+    execute: async (params) => {
+      // Call SQL function from Phase 1 (using request-scoped Supabase client)
+      const { data, error } = await supabase.rpc('temporal_aggregation', {
+        p_categories: params.category ? [params.category] : null,
+        p_granularity: params.granularity,
+        p_date_from: params.dateRange?.from || null,
+        p_date_to: params.dateRange?.to || null,
+        p_group_by: null,
+      })
 
-    // Call SQL function from Phase 1
-    const { data, error } = await supabase.rpc('temporal_aggregation', {
-      p_granularity: params.granularity,
-      p_category: params.category,
-      p_location: params.location,
-      p_start_date: params.dateRange?.from,
-      p_end_date: params.dateRange?.to,
-    })
+      if (error) {
+        throw new Error(`Temporal analysis failed: ${error.message}`)
+      }
 
-    if (error) {
-      throw new Error(`Temporal analysis failed: ${error.message}`)
-    }
+      const periods = data || []
 
-    const periods = data || []
+      // Calculate summary statistics
+      const totalCount = periods.reduce((sum: number, p: any) => sum + (p.count || 0), 0)
+      const avgCount = totalCount / (periods.length || 1)
 
-    // Calculate summary statistics
-    const totalCount = periods.reduce((sum: number, p: any) => sum + (p.count || 0), 0)
-    const avgCount = totalCount / (periods.length || 1)
+      const peakPeriod = periods.reduce(
+        (max: any, p: any) => (p.count > (max?.count || 0) ? p : max),
+        null
+      )
 
-    const peakPeriod = periods.reduce(
-      (max: any, p: any) => (p.count > (max?.count || 0) ? p : max),
-      null
-    )
+      return {
+        periods,
+        granularity: params.granularity,
+        category: params.category,
+        location: params.location,
+        summary: {
+          totalPeriods: periods.length,
+          totalExperiences: totalCount,
+          averagePerPeriod: Math.round(avgCount * 10) / 10,
+          peakPeriod: peakPeriod?.period,
+          peakCount: peakPeriod?.count,
+        },
+        summaryText: `Analyzed ${periods.length} ${params.granularity} periods with ${totalCount} total experiences`,
+      }
+    },
+  })
 
-    return {
-      periods,
-      granularity: params.granularity,
-      category: params.category,
-      location: params.location,
-      summary: {
-        totalPeriods: periods.length,
-        totalExperiences: totalCount,
-        averagePerPeriod: Math.round(avgCount * 10) / 10,
-        peakPeriod: peakPeriod?.period,
-        peakCount: peakPeriod?.count,
-      },
-      summaryText: `Analyzed ${periods.length} ${params.granularity} periods with ${totalCount} total experiences`,
-    }
-  },
-})
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const temporalAnalysisTool = createTemporalAnalysisTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)

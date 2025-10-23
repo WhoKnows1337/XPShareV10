@@ -6,21 +6,10 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import type { Citation, ToolResultWithExperiences } from './types'
 
-export interface Citation {
-  experienceId: string
-  toolName: string
-  citationIndex: number
-  relevanceScore: number
-  snippet?: string
-  contextBefore?: string
-  contextAfter?: string
-}
-
-export interface ToolResultWithExperiences {
-  toolName: string
-  result: unknown
-}
+// Re-export types for backward compatibility
+export type { Citation, ToolResultWithExperiences }
 
 /**
  * Extract experience IDs from tool results
@@ -166,32 +155,10 @@ export async function getCitationsForMessage(
 ): Promise<Citation[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('citations')
-    .select(
-      `
-      experience_id,
-      tool_name,
-      citation_number,
-      relevance_score,
-      snippet_text,
-      context_before,
-      context_after,
-      experiences (
-        id,
-        title,
-        category,
-        created_at,
-        user_id,
-        profiles (
-          username,
-          avatar_url
-        )
-      )
-    `
-    )
-    .eq('message_id', messageId)
-    .order('citation_number', { ascending: true })
+  // Use raw SQL to avoid PostgREST schema cache issues
+  const { data, error } = await supabase.rpc('get_citations_for_message', {
+    p_message_id: messageId
+  })
 
   if (error) {
     console.error('[Citations] Failed to load citations:', error)
@@ -207,7 +174,14 @@ export async function getCitationsForMessage(
       snippet: c.snippet_text,
       contextBefore: c.context_before,
       contextAfter: c.context_after,
-      experience: c.experiences,
+      experience: c.experience ? {
+        id: c.experience.id,
+        title: c.experience.title,
+        category: c.experience.category,
+        created_at: c.experience.created_at,
+        user_id: c.experience.user_id,
+        user_profiles: c.experience.user_profiles
+      } : undefined,
     })) || []
   )
 }

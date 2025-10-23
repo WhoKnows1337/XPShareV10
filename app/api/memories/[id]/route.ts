@@ -9,7 +9,7 @@ import { deleteMemory } from '@/lib/memory/memory-manager'
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -21,7 +21,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await deleteMemory(user.id, params.id)
+    const { id } = await params
+    await deleteMemory(user.id, id)
 
     return NextResponse.json({
       success: true,

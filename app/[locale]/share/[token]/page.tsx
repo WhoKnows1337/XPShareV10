@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Copy, Check, Eye, Clock } from 'lucide-react'
@@ -203,9 +204,9 @@ export default function SharedChatPage() {
       <footer className="border-t mt-12 py-6 text-center text-xs text-muted-foreground">
         <p>
           This is a read-only shared view from{' '}
-          <a href="/" className="text-primary hover:underline">
+          <Link href="/" className="text-primary hover:underline">
             XPShare Discovery
-          </a>
+          </Link>
         </p>
       </footer>
     </div>

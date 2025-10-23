@@ -1,7 +1,7 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
+import { CustomChatTransport } from '@/lib/transport/custom-chat-transport'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -72,19 +72,24 @@ export default function DiscoverPage() {
   const [replyToId, setReplyToId] = useState<string | undefined>(undefined)
   const [currentBranchId, setCurrentBranchId] = useState<string | undefined>(undefined)
 
-  const { messages, sendMessage, status, setMessages, resumeStream, stop } = useChat({
+  const { messages, sendMessage, status, setMessages, resumeStream, stop, error, clearError } = useChat({
     id: currentChatId || undefined,
     messages: initialMessages,
     generateId,
-    experimental_throttle: 100,
-    transport: new DefaultChatTransport({
+    experimental_throttle: 500, // Increased from 100ms to reduce stream parsing race conditions
+    transport: new CustomChatTransport({
       api: '/api/discover',
       body: {
         chatId: currentChatId,
         replyToId,
         branchId: currentBranchId,
       },
+      timeout: 150000, // 150s timeout (vs 120s backend maxDuration)
     }),
+    onError: (error) => {
+      console.error('[Discovery Chat] Error:', error)
+      // Error state is automatically set by useChat - no need to throw
+    },
   })
   const [input, setInput] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
@@ -256,6 +261,7 @@ export default function DiscoverPage() {
 
   const handleRetry = (query: string) => {
     if (isLoading) return
+    clearError() // Clear previous error
     sendMessage({ text: query })
   }
 
@@ -446,6 +452,40 @@ export default function DiscoverPage() {
             />
           )
         })()}
+
+          {/* Error Display */}
+          {error && (
+            <div className="flex justify-start mb-4">
+              <div className="max-w-2xl bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-destructive text-lg">⚠️</div>
+                  <div className="flex-1 space-y-2">
+                    <p className="text-sm font-medium text-destructive">Error occurred</p>
+                    <p className="text-xs text-muted-foreground">{error.message}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        clearError()
+                        // Retry last user message
+                        const lastUserMessage = messages.filter(m => m.role === 'user').pop()
+                        if (lastUserMessage) {
+                          const textPart = lastUserMessage.parts?.find((p: any) => p.type === 'text')
+                          const messageText = (textPart && 'text' in textPart ? textPart.text : undefined) || (lastUserMessage as any).content
+                          if (messageText) {
+                            handleRetry(messageText)
+                          }
+                        }
+                      }}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {isLoading && (
             <div className="flex justify-start">
               <TypingIndicator />
@@ -480,6 +520,9 @@ export default function DiscoverPage() {
           onSubmit={async (data) => {
             if (!data.text?.trim() || isLoading) return
 
+            // Clear previous error
+            clearError()
+
             // Create chat if none exists and save message for later
             if (!currentChatId) {
               const newChatId = await createChat()
@@ -492,67 +535,75 @@ export default function DiscoverPage() {
               }
             }
 
+            // Send message
             sendMessage({ text: data.text })
           }}
+          className="mb-2"
+          id="chat-input"
+          aria-label="Message input"
         >
           <PromptInputBody>
             <PromptInputTextarea
               ref={inputRef}
-              id="chat-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about patterns, connections, or insights..."
-              disabled={isLoading}
-              aria-label="Message input"
-              aria-describedby="input-description"
-              autoFocus
+              placeholder="Ask about patterns, connections, or explore experiences..."
+              rows={2}
+              className="resize-none"
+              aria-label="Type your message"
             />
-            <span id="input-description" className="sr-only">
-              Type your message and press Enter to send, or use Ctrl+Enter for quick submit
-            </span>
           </PromptInputBody>
-          <PromptInputFooter>
+
+          <PromptInputFooter className="flex items-center justify-between pt-1.5">
             <PromptInputTools>
               <PromptInputActionMenu>
-                <PromptInputActionMenuTrigger>
-                  <Paperclip className="size-4" />
+                <PromptInputActionMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
                 </PromptInputActionMenuTrigger>
                 <PromptInputActionMenuContent>
-                  <PromptInputActionAddAttachments />
+                  <PromptInputActionAddAttachments
+                    accept="image/*,application/pdf,.txt,.md"
+                    multiple
+                    aria-label="Add attachments"
+                  />
                 </PromptInputActionMenuContent>
               </PromptInputActionMenu>
-              <PromptInputSpeechButton>
-                <Mic className="size-4" />
+
+              <PromptInputSpeechButton asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Voice input">
+                  <Mic className="h-4 w-4" />
+                </Button>
               </PromptInputSpeechButton>
             </PromptInputTools>
-            <PromptInputSubmit disabled={isLoading || !input?.trim()}>
-              <Send className="size-4" />
+
+            <PromptInputSubmit asChild>
+              <Button
+                size="sm"
+                className="h-8"
+                disabled={isLoading}
+                aria-label="Send message"
+              >
+                <Send className="h-4 w-4 mr-1.5" />
+                Send
+              </Button>
             </PromptInputSubmit>
           </PromptInputFooter>
         </PromptInput>
-          <p id="input-description" className="sr-only">
-            Type your question about patterns, connections, or insights in extraordinary experiences
-          </p>
 
-          <p className="text-xs text-muted-foreground text-center mt-1 pb-2">
-            Powered by AI • Data from 40+ categories of extraordinary experiences
-          </p>
+        {/* Floating Stop Button - shown during streaming */}
+        <FloatingStopButton isStreaming={isStreaming} onStop={handleStop} />
         </div>
       </div>
-
-      {/* Floating Stop Button */}
-      <FloatingStopButton onStop={handleStop} isStreaming={isStreaming} />
 
       {/* Keyboard Shortcuts Modal */}
       <ShortcutsModal
         open={showShortcutsModal}
         onOpenChange={setShowShortcutsModal}
         shortcuts={[
-          { key: 'k', ctrl: true, description: 'Focus input', action: () => {} },
-          { key: 'n', ctrl: true, description: 'New chat', action: () => {} },
-          { key: '/', ctrl: true, description: 'Show shortcuts', action: () => {} },
-          { key: 'Enter', description: 'Send message', action: () => {} },
-          { key: 'Escape', description: 'Close modal', action: () => {} },
+          { key: 'Ctrl+K', description: 'Focus input' },
+          { key: 'Ctrl+N', description: 'New chat' },
+          { key: 'Ctrl+/', description: 'Show shortcuts' },
+          { key: '?', description: 'Show shortcuts' },
         ]}
       />
       </div>

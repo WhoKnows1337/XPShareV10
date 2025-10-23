@@ -32,21 +32,17 @@ const analyzeCategorySchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const analyzeCategoryTool = tool({
-  description:
-    'Deep-dive analysis of a specific category. Returns total experiences, date distribution, top locations, and common attributes. Use this to understand category characteristics.',
-  inputSchema: analyzeCategorySchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Build query for category experiences
-    let query = supabase
-      .from('experiences')
-      .select(
-        `
+export const createAnalyzeCategoryTool = (supabase: any) =>
+  tool({
+    description:
+      'BASIC CATEGORY SUMMARY: Simple data summary for a category (counts, locations, dates). Returns raw JSON with total experiences, date distribution, top locations, and common attributes. DO NOT use for insights, patterns, or statistical analysis - use generateInsights or detectPatterns instead. Use this ONLY for basic "how many", "where", "when" questions.',
+    inputSchema: analyzeCategorySchema,
+    execute: async (params) => {
+      // Build query for category experiences (using request-scoped Supabase client)
+      let query = supabase
+        .from('experiences')
+        .select(
+          `
         id,
         title,
         category,
@@ -59,87 +55,95 @@ export const analyzeCategoryTool = tool({
           confidence
         )
       `
-      )
-      .eq('category', params.category)
+        )
+        .eq('category', params.category)
 
-    // Apply date range if specified
-    if (params.dateRange) {
-      query = query
-        .gte('date_occurred', params.dateRange.from)
-        .lte('date_occurred', params.dateRange.to)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      throw new Error(`Category analysis failed: ${error.message}`)
-    }
-
-    const experiences = data || []
-
-    // Analyze locations
-    const locationCounts: Record<string, number> = {}
-    experiences.forEach((exp) => {
-      if (exp.location_text) {
-        locationCounts[exp.location_text] = (locationCounts[exp.location_text] || 0) + 1
+      // Apply date range if specified
+      if (params.dateRange) {
+        query = query
+          .gte('date_occurred', params.dateRange.from)
+          .lte('date_occurred', params.dateRange.to)
       }
-    })
 
-    const topLocations = Object.entries(locationCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([location, count]) => ({ location, count }))
+      const { data, error } = await query
 
-    // Analyze dates (monthly distribution)
-    const monthCounts: Record<string, number> = {}
-    experiences.forEach((exp) => {
-      if (exp.date_occurred) {
-        const month = exp.date_occurred.slice(0, 7) // YYYY-MM
-        monthCounts[month] = (monthCounts[month] || 0) + 1
+      if (error) {
+        throw new Error(`Category analysis failed: ${error.message}`)
       }
-    })
 
-    const dateDistribution = Object.entries(monthCounts)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([month, count]) => ({ month, count }))
+      const experiences = data || []
 
-    // Analyze attributes if requested
-    let topAttributes: Array<{ key: string; values: Record<string, number>; totalCount: number }> =
-      []
-
-    if (params.includeAttributes) {
-      const attributeCounts: Record<string, Record<string, number>> = {}
-
+      // Analyze locations
+      const locationCounts: Record<string, number> = {}
       experiences.forEach((exp) => {
-        const attrs = exp.experience_attributes || []
-        attrs.forEach((attr: any) => {
-          if (!attributeCounts[attr.attribute_key]) {
-            attributeCounts[attr.attribute_key] = {}
-          }
-          const value = String(attr.attribute_value)
-          attributeCounts[attr.attribute_key][value] =
-            (attributeCounts[attr.attribute_key][value] || 0) + 1
-        })
+        if (exp.location_text) {
+          locationCounts[exp.location_text] = (locationCounts[exp.location_text] || 0) + 1
+        }
       })
 
-      topAttributes = Object.entries(attributeCounts)
-        .map(([key, values]) => ({
-          key,
-          values,
-          totalCount: Object.values(values).reduce((sum, count) => sum + count, 0),
-        }))
-        .sort((a, b) => b.totalCount - a.totalCount)
+      const topLocations = Object.entries(locationCounts)
+        .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
-    }
+        .map(([location, count]) => ({ location, count }))
 
-    return {
-      category: params.category,
-      totalExperiences: experiences.length,
-      dateRange: params.dateRange,
-      topLocations,
-      dateDistribution,
-      topAttributes,
-      summary: `Analyzed ${experiences.length} ${params.category} experiences${params.dateRange ? ` from ${params.dateRange.from} to ${params.dateRange.to}` : ''}`,
-    }
-  },
-})
+      // Analyze dates (monthly distribution)
+      const monthCounts: Record<string, number> = {}
+      experiences.forEach((exp) => {
+        if (exp.date_occurred) {
+          const month = exp.date_occurred.slice(0, 7) // YYYY-MM
+          monthCounts[month] = (monthCounts[month] || 0) + 1
+        }
+      })
+
+      const dateDistribution = Object.entries(monthCounts)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([month, count]) => ({ month, count }))
+
+      // Analyze attributes if requested
+      let topAttributes: Array<{ key: string; values: Record<string, number>; totalCount: number }> =
+        []
+
+      if (params.includeAttributes) {
+        const attributeCounts: Record<string, Record<string, number>> = {}
+
+        experiences.forEach((exp) => {
+          const attrs = exp.experience_attributes || []
+          attrs.forEach((attr: any) => {
+            if (!attributeCounts[attr.attribute_key]) {
+              attributeCounts[attr.attribute_key] = {}
+            }
+            const value = String(attr.attribute_value)
+            attributeCounts[attr.attribute_key][value] =
+              (attributeCounts[attr.attribute_key][value] || 0) + 1
+          })
+        })
+
+        topAttributes = Object.entries(attributeCounts)
+          .map(([key, values]) => ({
+            key,
+            values,
+            totalCount: Object.values(values).reduce((sum, count) => sum + count, 0),
+          }))
+          .sort((a, b) => b.totalCount - a.totalCount)
+          .slice(0, 10)
+      }
+
+      return {
+        category: params.category,
+        totalExperiences: experiences.length,
+        dateRange: params.dateRange,
+        topLocations,
+        dateDistribution,
+        topAttributes,
+        summary: `Analyzed ${experiences.length} ${params.category} experiences${params.dateRange ? ` from ${params.dateRange.from} to ${params.dateRange.to}` : ''}`,
+      }
+    },
+  })
+
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const analyzeCategoryTool = createAnalyzeCategoryTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)

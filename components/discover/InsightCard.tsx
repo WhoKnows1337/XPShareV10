@@ -10,7 +10,7 @@ import { Lightbulb, TrendingUp, MapPin, Clock, Heart, Tags } from 'lucide-react'
  */
 
 export interface InsightCardProps {
-  type: 'temporal' | 'geographic' | 'semantic' | 'emotional' | 'crossCategory'
+  type: 'temporal' | 'geographic' | 'semantic' | 'emotional' | 'crossCategory' | 'trend' | 'spike' | 'anomaly' | 'hotspot' | 'pattern'
   pattern: string
   confidence: number
   dataPoints: any[]
@@ -24,6 +24,11 @@ const PATTERN_ICONS = {
   semantic: Tags,
   emotional: Heart,
   crossCategory: TrendingUp,
+  trend: TrendingUp,
+  spike: TrendingUp,
+  anomaly: TrendingUp,
+  hotspot: MapPin,
+  pattern: Lightbulb,
 }
 
 const PATTERN_LABELS = {
@@ -32,6 +37,11 @@ const PATTERN_LABELS = {
   semantic: 'Semantic Pattern',
   emotional: 'Emotional Pattern',
   crossCategory: 'Cross-Category Pattern',
+  trend: 'Trend Pattern',
+  spike: 'Activity Spike',
+  anomaly: 'Anomaly Detected',
+  hotspot: 'Geographic Hotspot',
+  pattern: 'Pattern Detected',
 }
 
 export function InsightCard({

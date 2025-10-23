@@ -37,61 +37,65 @@ const geoSearchSchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const geoSearchTool = tool({
-  description:
-    'Geographic search using PostGIS. Supports radius search (find experiences within X km of a point) and bounding box search (find experiences within a rectangle). Use this for location-based queries.',
-  inputSchema: geoSearchSchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Validate required params based on search type
-    if (params.searchType === 'radius') {
-      if (
-        params.lat === undefined ||
-        params.lng === undefined ||
-        params.radiusKm === undefined
-      ) {
-        throw new Error('Radius search requires lat, lng, and radiusKm parameters')
+export const createGeoSearchTool = (supabase: any) =>
+  tool({
+    description:
+      'Geographic search using PostGIS. Supports radius search (find experiences within X km of a point) and bounding box search (find experiences within a rectangle). Use this for location-based queries.',
+    inputSchema: geoSearchSchema,
+    execute: async (params) => {
+      // Validate required params based on search type
+      if (params.searchType === 'radius') {
+        if (
+          params.lat === undefined ||
+          params.lng === undefined ||
+          params.radiusKm === undefined
+        ) {
+          throw new Error('Radius search requires lat, lng, and radiusKm parameters')
+        }
       }
-    }
 
-    if (params.searchType === 'bbox') {
-      if (!params.bbox) {
-        throw new Error('Bounding box search requires bbox parameter')
+      if (params.searchType === 'bbox') {
+        if (!params.bbox) {
+          throw new Error('Bounding box search requires bbox parameter')
+        }
       }
-    }
 
-    // Call SQL function from Phase 1
-    const { data, error } = await supabase.rpc('geo_search', {
-      p_search_type: params.searchType,
-      p_lat: params.lat,
-      p_lng: params.lng,
-      p_radius_km: params.radiusKm,
-      p_min_lat: params.bbox?.minLat,
-      p_min_lng: params.bbox?.minLng,
-      p_max_lat: params.bbox?.maxLat,
-      p_max_lng: params.bbox?.maxLng,
-      p_category: params.category,
-      p_limit: params.limit,
-    })
+      // Call SQL function from Phase 1 (using request-scoped Supabase client)
+      const { data, error } = await supabase.rpc('geo_search', {
+        p_search_type: params.searchType,
+        p_lat: params.lat,
+        p_lng: params.lng,
+        p_radius_km: params.radiusKm,
+        p_min_lat: params.bbox?.minLat,
+        p_min_lng: params.bbox?.minLng,
+        p_max_lat: params.bbox?.maxLat,
+        p_max_lng: params.bbox?.maxLng,
+        p_category: params.category,
+        p_limit: params.limit,
+      })
 
-    if (error) {
-      throw new Error(`Geographic search failed: ${error.message}`)
-    }
+      if (error) {
+        throw new Error(`Geographic search failed: ${error.message}`)
+      }
 
-    const summary =
-      params.searchType === 'radius'
-        ? `Found ${data?.length || 0} experiences within ${params.radiusKm}km of (${params.lat}, ${params.lng})`
-        : `Found ${data?.length || 0} experiences in bounding box`
+      const summary =
+        params.searchType === 'radius'
+          ? `Found ${data?.length || 0} experiences within ${params.radiusKm}km of (${params.lat}, ${params.lng})`
+          : `Found ${data?.length || 0} experiences in bounding box`
 
-    return {
-      results: data || [],
-      count: data?.length || 0,
-      searchType: params.searchType,
-      summary,
-    }
-  },
-})
+      return {
+        results: data || [],
+        count: data?.length || 0,
+        searchType: params.searchType,
+        summary,
+      }
+    },
+  })
+
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const geoSearchTool = createGeoSearchTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)

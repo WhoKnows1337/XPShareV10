@@ -171,21 +171,18 @@ export function setupAutoSync(sendMessageFn: (message: QueuedMessage) => Promise
  * Hook for using message queue in React components
  */
 export function useMessageQueue() {
-  if (typeof window === 'undefined') {
-    return {
-      queue: [],
-      queueCount: 0,
-      addToQueue: () => {},
-      removeFromQueue: () => {},
-      clearQueue: () => {},
-      syncQueue: async () => ({ success: 0, failed: 0 }),
-    }
-  }
+  const isClient = typeof window !== 'undefined'
 
-  const [queue, setQueue] = React.useState<QueuedMessage[]>(getQueue())
-  const [queueCount, setQueueCount] = React.useState(getQueue().length)
+  const [queue, setQueue] = React.useState<QueuedMessage[]>(() =>
+    isClient ? getQueue() : []
+  )
+  const [queueCount, setQueueCount] = React.useState(() =>
+    isClient ? getQueue().length : 0
+  )
 
   React.useEffect(() => {
+    if (!isClient) return
+
     // Update state when localStorage changes
     const handleStorageChange = () => {
       const updated = getQueue()
@@ -198,34 +195,38 @@ export function useMessageQueue() {
     return () => {
       window.removeEventListener('storage', handleStorageChange)
     }
-  }, [])
+  }, [isClient])
 
   const addToQueue = React.useCallback((message: Omit<QueuedMessage, 'timestamp' | 'retries'>) => {
+    if (!isClient) return
     queueMessage(message)
     setQueue(getQueue())
     setQueueCount(getQueue().length)
-  }, [])
+  }, [isClient])
 
   const removeFromQueue = React.useCallback((messageId: string) => {
+    if (!isClient) return
     dequeueMessage(messageId)
     setQueue(getQueue())
     setQueueCount(getQueue().length)
-  }, [])
+  }, [isClient])
 
   const clearQueueCallback = React.useCallback(() => {
+    if (!isClient) return
     clearQueue()
     setQueue([])
     setQueueCount(0)
-  }, [])
+  }, [isClient])
 
   const syncQueueCallback = React.useCallback(
     async (sendMessageFn: (message: QueuedMessage) => Promise<void>) => {
+      if (!isClient) return { success: 0, failed: 0 }
       const result = await syncQueue(sendMessageFn)
       setQueue(getQueue())
       setQueueCount(getQueue().length)
       return result
     },
-    []
+    [isClient]
   )
 
   return {

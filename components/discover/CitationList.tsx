@@ -8,7 +8,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getCitationsForMessage, Citation as CitationTrackerCitation } from '@/lib/citations/citation-tracker'
+import type { Citation as CitationTrackerCitation } from '@/lib/citations/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -128,9 +128,15 @@ export function CitationList({
   async function loadCitations() {
     try {
       setLoading(true)
-      const data = await getCitationsForMessage(messageId!)
+      // Fetch from API route instead of direct server import
+      const response = await fetch(`/api/citations/${messageId}`)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+      const { citations: data } = await response.json()
+
       // Map citation-tracker format to UI format
-      const mappedCitations: Citation[] = data.map((c) => ({
+      const mappedCitations: Citation[] = data.map((c: CitationTrackerCitation) => ({
         experienceId: c.experienceId,
         toolName: c.toolName,
         citationNumber: c.citationIndex,  // Map index to number for UI

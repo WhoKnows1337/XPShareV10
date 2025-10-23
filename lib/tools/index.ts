@@ -2,31 +2,35 @@
  * XPShare AI - Tools Index
  *
  * Central export point for all AI SDK tools.
+ * Factory functions require request-scoped Supabase client for RLS.
  */
 
-// Search Tools
+// Search Tool Factories (require Supabase client)
 export {
-  advancedSearchTool,
-  searchByAttributesTool,
-  semanticSearchTool,
-  fullTextSearchTool,
-  geoSearchTool,
+  createAdvancedSearchTool,
+  createSearchByAttributesTool,
+  createSemanticSearchTool,
+  createFullTextSearchTool,
+  createGeoSearchTool,
 } from './search'
 
-// Analytics Tools
+// Analytics Tool Factories (require Supabase client)
 export {
-  rankUsersTool,
-  analyzeCategoryTool,
-  compareCategoryTool,
-  temporalAnalysisTool,
-  attributeCorrelationTool,
+  createRankUsersTool,
+  createAnalyzeCategoryTool,
+  createCompareCategoryTool,
+  createTemporalAnalysisTool,
+  createAttributeCorrelationTool,
 } from './analytics'
 
-// Relationship Tools
-export { findConnectionsTool, detectPatternsTool } from './relationships'
+// Relationship Tool Factories (require Supabase client)
+export { createFindConnectionsTool } from './relationships/find-connections'
 
-// Insights & Advanced Features Tools
-export { generateInsightsTool } from './insights/generate-insights'
+// Insights Tool Factories (require Supabase client)
+export { createGenerateInsightsTool } from './insights/generate-insights'
+
+// Tools that don't need Supabase (work with pre-fetched data)
+export { detectPatternsTool } from './relationships/detect-patterns'
 export { predictTrendsTool } from './insights/predict-trends'
 export { suggestFollowupsTool } from './insights/suggest-followups'
 export { exportResultsTool } from './insights/export-results'

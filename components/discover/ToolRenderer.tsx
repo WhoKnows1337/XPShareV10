@@ -7,7 +7,7 @@
 
 'use client'
 
-import { TimelineToolUI, MapToolUI, NetworkToolUI, HeatmapToolUI } from '@/components/viz/tool-ui'
+import { TimelineToolUI, MapToolUI, NetworkToolUI, HeatmapToolUI, ComparisonToolUI } from '@/components/viz/tool-ui'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -142,7 +142,26 @@ function renderError(error: any, onRetry?: () => void) {
 
 export function ToolRenderer({ part, onRetry, onSuggestionClick }: ToolRendererProps) {
   const toolName = part.type.replace('tool-', '')
-  const result = part.result
+
+  // AI SDK v5: Check part.state and use part.output when available
+  let result = part.result // Fallback for older format
+
+  if (part.state === 'output-available' && part.output) {
+    result = part.output
+  } else if (part.state === 'output-error') {
+    return renderError(part.errorText || 'Tool execution failed', onRetry)
+  } else if (part.state === 'input-streaming' || part.state === 'input-available') {
+    // Tool is still executing or waiting for output
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{toolName}</CardTitle>
+          <CardDescription>Executing tool...</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
   const isError = part.isError || result?.error || result?.success === false
 
   // Handle errors
@@ -185,9 +204,13 @@ export function ToolRenderer({ part, onRetry, onSuggestionClick }: ToolRendererP
     toolName === 'temporalAnalysis' ||
     toolName === 'attributeCorrelation'
   ) {
-    // Check if temporal analysis has timeline data
-    if (toolName === 'temporalAnalysis' && result?.data) {
-      return <TimelineToolUI toolResult={result} title="Temporal Analysis" />
+    // Check if temporal analysis has timeline data (AI SDK v5: pass entire part object)
+    if (toolName === 'temporalAnalysis') {
+      return <TimelineToolUI toolResult={part} title="Temporal Analysis" />
+    }
+    // Comparison tool gets its own visualization
+    if (toolName === 'compareCategory') {
+      return <ComparisonToolUI toolResult={part} />
     }
     return renderAnalyticsResults(result, toolName.replace(/([A-Z])/g, ' $1').trim())
   }
@@ -211,7 +234,7 @@ export function ToolRenderer({ part, onRetry, onSuggestionClick }: ToolRendererP
             type={insight.type}
             pattern={insight.title}
             confidence={insight.confidence}
-            dataPoints={insight.evidence?.length || 0}
+            dataPoints={insight.evidence || []}
             details={insight.description}
           />
         ))}

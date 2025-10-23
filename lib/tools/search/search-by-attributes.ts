@@ -43,35 +43,39 @@ const searchByAttributesSchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const searchByAttributesTool = tool({
-  description:
-    'Find experiences with specific attributes using precise matching. Supports equals, contains, and exists operators with AND/OR logic. Use this when searching for specific attribute values within a category.',
-  inputSchema: searchByAttributesSchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+export const createSearchByAttributesTool = (supabase: any) =>
+  tool({
+    description:
+      'Search for experiences by SPECIFIC ATTRIBUTE VALUES. Use this tool when the user mentions concrete attribute characteristics like "triangle-shaped UFO" (shape=triangle), "orb-shaped craft" (shape=orb), "lucid dream" (dream_type=lucid), "red light" (light_color=red), etc. This tool searches in the experience_attributes table, NOT in story text. Examples: "Find triangle-shaped UFOs", "Show me experiences with orb lights", "Search for lucid dreams".',
+    inputSchema: searchByAttributesSchema,
+    execute: async (params) => {
+      // Call SQL function from Phase 1 (using request-scoped Supabase client)
+      const { data, error } = await supabase.rpc('search_by_attributes', {
+        p_category: params.category,
+        p_attribute_filters: params.attributeFilters,
+        p_logic: params.logic,
+        p_min_confidence: params.minConfidence,
+        p_limit: params.limit,
+      })
 
-    // Call SQL function from Phase 1
-    const { data, error } = await supabase.rpc('search_by_attributes', {
-      p_category: params.category,
-      p_attribute_filters: params.attributeFilters,
-      p_logic: params.logic,
-      p_min_confidence: params.minConfidence,
-      p_limit: params.limit,
-    })
+      if (error) {
+        throw new Error(`Attribute search failed: ${error.message}`)
+      }
 
-    if (error) {
-      throw new Error(`Attribute search failed: ${error.message}`)
-    }
+      return {
+        results: data || [],
+        count: data?.length || 0,
+        category: params.category,
+        logic: params.logic,
+        summary: `Found ${data?.length || 0} ${params.category} experiences matching ${params.logic} criteria`,
+      }
+    },
+  })
 
-    return {
-      results: data || [],
-      count: data?.length || 0,
-      category: params.category,
-      logic: params.logic,
-      summary: `Found ${data?.length || 0} ${params.category} experiences matching ${params.logic} criteria`,
-    }
-  },
-})
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const searchByAttributesTool = createSearchByAttributesTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)

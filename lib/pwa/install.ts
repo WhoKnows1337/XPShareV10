@@ -2,6 +2,8 @@
  * PWA Install Helper (Simplified)
  */
 
+import * as React from 'react'
+
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -18,11 +20,13 @@ export function registerServiceWorker() {
 }
 
 export function useOnlineStatus() {
-  if (typeof window === 'undefined') return true
-
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine)
+  const [isOnline, setIsOnline] = React.useState(
+    typeof window !== 'undefined' ? navigator.onLine : true
+  )
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
 
@@ -37,6 +41,3 @@ export function useOnlineStatus() {
 
   return isOnline
 }
-
-// Fix: Import React
-import * as React from 'react'

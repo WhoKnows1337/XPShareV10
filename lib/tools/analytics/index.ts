@@ -1,11 +1,11 @@
 /**
  * XPShare AI - Analytics Tools Index
  *
- * Exports all analytics tools for easy importing.
+ * Exports factory functions that require request-scoped Supabase client.
  */
 
-export { rankUsersTool } from './rank-users'
-export { analyzeCategoryTool } from './analyze-category'
-export { compareCategoryTool } from './compare-categories'
-export { temporalAnalysisTool } from './temporal-analysis'
-export { attributeCorrelationTool } from './attribute-correlation'
+export { createRankUsersTool } from './rank-users'
+export { createAnalyzeCategoryTool } from './analyze-category'
+export { createCompareCategoryTool } from './compare-categories'
+export { createTemporalAnalysisTool } from './temporal-analysis'
+export { createAttributeCorrelationTool } from './attribute-correlation'

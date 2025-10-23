@@ -49,58 +49,62 @@ const findConnectionsSchema = z.object({
 // Tool Implementation
 // ============================================================================
 
-export const findConnectionsTool = tool({
-  description:
-    'Find related experiences using multi-dimensional similarity. Combines semantic (meaning), geographic (location), temporal (time), and attribute (characteristics) similarity. Use this to discover connections and patterns.',
-  inputSchema: findConnectionsSchema,
-  execute: async (params) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+export const createFindConnectionsTool = (supabase: any) =>
+  tool({
+    description:
+      'NETWORK ANALYSIS: Build relationship networks between experiences using multi-dimensional similarity scores. Requires an experienceId to analyze connections. Combines semantic vectors (0.4), geographic distance (0.3), temporal proximity (0.2), and attribute overlap (0.1) into weighted similarity scores. Returns ranked list of connected experiences with scores. DO NOT use for simple search - use this only when user asks for "connections", "relationships", "network", "similar to specific experience", or "related to [experience ID]".',
+    inputSchema: findConnectionsSchema,
+    execute: async (params) => {
+      // Call SQL function from Phase 1 (using request-scoped Supabase client)
+      const { data, error } = await supabase.rpc('find_related_experiences', {
+        p_experience_id: params.experienceId,
+        p_use_semantic: params.useSemantic,
+        p_use_geographic: params.useGeographic,
+        p_use_temporal: params.useTemporal,
+        p_use_attributes: params.useAttributes,
+        p_max_results: params.maxResults,
+        p_min_score: params.minScore,
+      })
 
-    // Call SQL function from Phase 1
-    const { data, error } = await supabase.rpc('find_related_experiences', {
-      p_experience_id: params.experienceId,
-      p_use_semantic: params.useSemantic,
-      p_use_geographic: params.useGeographic,
-      p_use_temporal: params.useTemporal,
-      p_use_attributes: params.useAttributes,
-      p_max_results: params.maxResults,
-      p_min_score: params.minScore,
-    })
+      if (error) {
+        throw new Error(`Find connections failed: ${error.message}`)
+      }
 
-    if (error) {
-      throw new Error(`Find connections failed: ${error.message}`)
-    }
+      const connections = data || []
 
-    const connections = data || []
+      // Calculate summary statistics
+      const dimensions = []
+      if (params.useSemantic) dimensions.push('semantic')
+      if (params.useGeographic) dimensions.push('geographic')
+      if (params.useTemporal) dimensions.push('temporal')
+      if (params.useAttributes) dimensions.push('attributes')
 
-    // Calculate summary statistics
-    const dimensions = []
-    if (params.useSemantic) dimensions.push('semantic')
-    if (params.useGeographic) dimensions.push('geographic')
-    if (params.useTemporal) dimensions.push('temporal')
-    if (params.useAttributes) dimensions.push('attributes')
+      const avgScore =
+        connections.length > 0
+          ? connections.reduce((sum: number, c: any) => sum + (c.similarity_score || 0), 0) /
+            connections.length
+          : 0
 
-    const avgScore =
-      connections.length > 0
-        ? connections.reduce((sum: number, c: any) => sum + (c.similarity_score || 0), 0) /
-          connections.length
-        : 0
+      return {
+        connections,
+        count: connections.length,
+        sourceExperienceId: params.experienceId,
+        dimensionsUsed: dimensions,
+        summary: {
+          totalConnections: connections.length,
+          averageScore: Math.round(avgScore * 1000) / 1000,
+          minScore: params.minScore,
+          dimensions: dimensions.join(', '),
+        },
+        summaryText: `Found ${connections.length} related experiences using ${dimensions.join(', ')} similarity`,
+      }
+    },
+  })
 
-    return {
-      connections,
-      count: connections.length,
-      sourceExperienceId: params.experienceId,
-      dimensionsUsed: dimensions,
-      summary: {
-        totalConnections: connections.length,
-        averageScore: Math.round(avgScore * 1000) / 1000,
-        minScore: params.minScore,
-        dimensions: dimensions.join(', '),
-      },
-      summaryText: `Found ${connections.length} related experiences using ${dimensions.join(', ')} similarity`,
-    }
-  },
-})
+// Backward compatibility: Default export using env vars (will be deprecated)
+export const findConnectionsTool = createFindConnectionsTool(
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+)
