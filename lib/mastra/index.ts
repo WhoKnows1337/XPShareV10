@@ -6,33 +6,33 @@
 
 import { Mastra } from '@mastra/core'
 
-// Agents will be imported here as we create them
-// import { orchestratorAgent } from './agents/orchestrator'
-// import { queryAgent } from './agents/query-agent'
-// import { vizAgent } from './agents/viz-agent'
-// import { insightAgent } from './agents/insight-agent'
-// import { relationshipAgent } from './agents/relationship-agent'
+// Import all agents
+import { orchestratorAgent } from './agents/orchestrator'
+import { queryAgent } from './agents/query-agent'
+import { vizAgent } from './agents/viz-agent'
+import { insightAgent } from './agents/insight-agent'
+import { relationshipAgent } from './agents/relationship-agent'
 
 /**
  * Main Mastra instance for XPShare AI
  *
  * Configuration:
+ * - 5 Specialized Agents: Orchestrator, Query, Viz, Insight, Relationship
  * - Agent Network: Enabled with Orchestrator as router
- * - Memory: Enabled (in-memory for now, can upgrade to Redis)
- * - Telemetry: Enabled in development only
+ * - LLM-based semantic routing (GPT-4o for orchestrator)
  */
 export const mastra = new Mastra({
-  // Agents will be registered here
+  // Register all agents
   agents: {
-    // orchestrator: orchestratorAgent,
-    // query: queryAgent,
-    // viz: vizAgent,
-    // insight: insightAgent,
-    // relationship: relationshipAgent,
+    orchestrator: orchestratorAgent,
+    query: queryAgent,
+    viz: vizAgent,
+    insight: insightAgent,
+    relationship: relationshipAgent,
   },
 
-  // Agent Network configuration
-  // Uncomment after creating agents
+  // Agent Network configuration - Ready for Phase 4
+  // Will be enabled after testing agents individually
   // agentNetwork: {
   //   enabled: true,
   //   router: 'orchestrator', // Orchestrator agent handles routing
@@ -42,29 +42,10 @@ export const mastra = new Mastra({
   //     maxRetries: 2,
   //   },
   // },
-
-  // Memory configuration (optional - XPShare has custom memory)
-  // memory: {
-  //   enabled: true,
-  //   provider: 'in-memory', // Upgrade to 'upstash-redis' for production
-  //   ttl: 3600, // 1 hour
-  // },
-
-  // Telemetry for debugging (disable in production)
-  // telemetry: {
-  //   enabled: process.env.NODE_ENV === 'development',
-  //   events: ['agent.start', 'agent.complete', 'tool.execute', 'agent.error'],
-  // },
 })
 
 // Export individual agents for direct access if needed
-// export {
-//   orchestratorAgent,
-//   queryAgent,
-//   vizAgent,
-//   insightAgent,
-//   relationshipAgent,
-// }
+export { orchestratorAgent, queryAgent, vizAgent, insightAgent, relationshipAgent }
 
 /**
  * Helper to get agent by name
