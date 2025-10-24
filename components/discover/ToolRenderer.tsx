@@ -7,7 +7,7 @@
 
 'use client'
 
-import { TimelineToolUI, MapToolUI, NetworkToolUI, HeatmapToolUI, ComparisonToolUI } from '@/components/viz/tool-ui'
+import { TimelineToolUI, MapToolUI, NetworkToolUI, HeatmapToolUI, ComparisonToolUI, RankUsersToolUI } from '@/components/viz/tool-ui'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -211,6 +211,10 @@ export function ToolRenderer({ part, onRetry, onSuggestionClick }: ToolRendererP
     // Comparison tool gets its own visualization
     if (toolName === 'compareCategory') {
       return <ComparisonToolUI toolResult={part} />
+    }
+    // Rank users gets its own visualization with profile links
+    if (toolName === 'rankUsers') {
+      return <RankUsersToolUI toolResult={part} />
     }
     return renderAnalyticsResults(result, toolName.replace(/([A-Z])/g, ' $1').trim())
   }

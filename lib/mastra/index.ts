@@ -1,57 +1,53 @@
 /**
  * XPShare Mastra - Main Instance
  *
- * Central Mastra instance with Agent Network configuration
+ * Unified orchestrator agents with storage configuration
+ * - orchestrator: Original agent using .generate()
+ * - networkOrchestrator: New Agent Network with .network()
  */
 
 import { Mastra } from '@mastra/core'
 import { PostgresStore } from '@mastra/pg'
+import { LibSQLStore } from '@mastra/libsql'
 
-// Import all agents
+// Import orchestrator agents
 import { orchestratorAgent } from './agents/orchestrator'
-import { queryAgent } from './agents/query-agent'
-import { vizAgent } from './agents/viz-agent'
-import { insightAgent } from './agents/insight-agent'
-import { relationshipAgent } from './agents/relationship-agent'
+import { networkOrchestratorAgent } from './agents/orchestrator-network'
 
 /**
  * Main Mastra instance for XPShare AI
  *
  * Configuration:
- * - 5 Specialized Agents: Orchestrator, Query, Viz, Insight, Relationship
- * - Agent Network: Enabled with Orchestrator as router
- * - LLM-based semantic routing (GPT-4o for orchestrator)
+ * - Two agents: orchestrator (generate) + networkOrchestrator (network)
+ * - Storage: Conditional (LibSQLStore :memory: local, PostgresStore production)
  */
+// Debug logging
+const storageProvider = process.env.NODE_ENV === 'production'
+  ? new PostgresStore({
+      connectionString: process.env.DIRECT_DATABASE_URL!,
+    })
+  : new LibSQLStore({
+      url: ':memory:',
+    })
+
+console.log('[Mastra Init] NODE_ENV:', process.env.NODE_ENV)
+console.log('[Mastra Init] Storage Provider:', storageProvider.constructor.name)
+
 export const mastra = new Mastra({
-  // Register all agents
+  // Register both agents
   agents: {
     orchestrator: orchestratorAgent,
-    query: queryAgent,
-    viz: vizAgent,
-    insight: insightAgent,
-    relationship: relationshipAgent,
+    networkOrchestrator: networkOrchestratorAgent,
   },
 
-  // Agent Network configuration - ENABLED
-  agentNetwork: {
-    enabled: true,
-    router: 'orchestrator', // Orchestrator agent handles routing
-    strategy: 'llm', // LLM-based semantic routing (not keyword)
-    fallback: {
-      agent: 'query', // Default to Query Agent if routing unclear
-      maxRetries: 2,
-    },
-  },
-
-  // Storage backend for memory/threads (PostgreSQL via Supabase)
-  // Fallback to test DB for unit tests
-  storage: new PostgresStore({
-    connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/test',
-  }),
+  // Storage configuration for memory (required by Agent Network)
+  // Development: LibSQLStore with :memory: URL (in-memory, fast, ephemeral)
+  // Production: PostgresStore with Supabase Direct Connection (persistent)
+  storage: storageProvider,
 })
 
-// Export individual agents for direct access if needed
-export { orchestratorAgent, queryAgent, vizAgent, insightAgent, relationshipAgent }
+// Export agents for direct access if needed
+export { orchestratorAgent, networkOrchestratorAgent }
 
 /**
  * Helper to get agent by name

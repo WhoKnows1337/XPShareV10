@@ -21,7 +21,7 @@ import type { XPShareContext } from '../types'
 export const rankUsersTool = createTool<XPShareContext>({
   id: 'rankUsers',
   description:
-    'Get top users ranked by contribution metrics (experience count, category diversity). Use this to find most active contributors or category experts.',
+    'USER LEADERBOARD & RANKINGS: Get top contributors ranked by experience count and category diversity. Returns user rankings with usernames, contribution counts, and category expertise. Use this when user asks for "top contributors", "leaderboard", "most active users", "who contributes most", "user rankings", or "find contributors".',
 
   inputSchema: z.object({
     category: z

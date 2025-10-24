@@ -82,14 +82,15 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     // Rate limiting
-    const rateLimitResult = await rateLimitDiscovery(user.id)
+    const rateLimitResult = rateLimitDiscovery(user.id, true) // authenticated user
 
-    if (!rateLimitResult.allowed) {
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
       return new Response(
         JSON.stringify({
           error: 'Rate limit exceeded',
-          message: `Too many requests. Try again in ${Math.ceil(rateLimitResult.retryAfter / 1000)} seconds.`,
-          retryAfter: rateLimitResult.retryAfter,
+          message: `Too many requests. Try again in ${retryAfter} seconds.`,
+          retryAfter,
         }),
         {
           status: 429,
@@ -111,84 +112,60 @@ export async function POST(req: NextRequest): Promise<Response> {
     )
 
     // Sanitize messages (convert UIMessage[] to Mastra format)
-    const sanitizedMessages = messages.map((msg: UIMessage) => ({
-      role: msg.role,
-      content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
-    }))
+    console.log('[DEBUG] Raw messages received:', JSON.stringify(messages, null, 2))
 
-    // Generate thread ID if not provided (for Agent Network memory)
-    const chatThreadId = threadId || `chat-${user.id}-${Date.now()}`
+    const sanitizedMessages = messages
+      .map((msg: UIMessage) => {
+        // Extract content from either .content or .parts array (AI SDK format)
+        let content: string = ''
 
-    // Execute Mastra Agent Network
-    // Orchestrator automatically routes to appropriate specialist agents
-    // NO manual prepareStep logic needed - LLM handles routing semantically
-    const networkStream = await mastra.getAgent('orchestrator').network(sanitizedMessages, {
+        if (typeof msg.content === 'string') {
+          content = msg.content
+        } else if (Array.isArray(msg.parts)) {
+          // AI SDK uses .parts array with {type, text} objects
+          content = msg.parts
+            .filter((part: any) => part.type === 'text')
+            .map((part: any) => part.text)
+            .join('\n')
+        } else if (msg.content) {
+          content = JSON.stringify(msg.content)
+        }
+
+        return {
+          role: msg.role,
+          content,
+        }
+      })
+      .filter((msg) => msg.content && msg.content.trim() !== '') // Filter out empty messages AFTER extraction
+
+    console.log('[DEBUG] Sanitized messages:', JSON.stringify(sanitizedMessages, null, 2))
+    console.log('[DEBUG] Sanitized messages count:', sanitizedMessages.length)
+
+    // Execute Mastra Orchestrator with .stream() - NO format parameter needed!
+    const agentStream = await mastra.getAgent('orchestrator').stream(sanitizedMessages, {
       runtimeContext, // ✅ RuntimeContext with Supabase RLS
-      maxSteps: 10, // Prevent infinite loops
       modelSettings: {
         temperature: 0.7,
       },
-      // Memory configuration for Agent Network (REQUIRED)
-      memory: {
-        thread: {
-          id: chatThreadId,
-          metadata: {
-            userId: user.id,
-            locale,
-            ...threadMetadata,
-          },
-        },
-        resource: user.id, // User identifier for memory isolation
-      },
+      // ❌ REMOVED: format: 'aisdk' - deprecated, use @mastra/ai-sdk instead
     })
 
-    // Stream network execution events
-    // Network streams emit events like: routing-agent-start, agent-execution-start, etc.
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of networkStream) {
-            // Forward chunk to client as Server-Sent Events
-            const data = JSON.stringify(chunk)
-            controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`))
+    // ✅ FIX: Use AI SDK's createUIMessageStream + toAISdkFormat from @mastra/ai-sdk
+    const { createUIMessageStream, createUIMessageStreamResponse } = await import('ai')
+    const { toAISdkFormat } = await import('@mastra/ai-sdk')
 
-            // Log important events
-            if (chunk.type === 'network-execution-event-step-finish') {
-              console.log('[Mastra Network] Step finished:', {
-                userId: user.id,
-                result: chunk.payload?.result,
-              })
-            }
-          }
-
-          // Stream final status and usage
-          const [status, result, usage] = await Promise.all([
-            networkStream.status,
-            networkStream.result,
-            networkStream.usage,
-          ])
-
-          console.log('[Mastra Network] Execution complete:', {
-            userId: user.id,
-            status,
-            usage,
-          })
-
-          controller.close()
-        } catch (error) {
-          console.error('[Mastra Network] Stream error:', error)
-          controller.error(error)
+    const uiMessageStream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        for await (const part of toAISdkFormat(agentStream, { from: 'agent' })!) {
+          writer.write(part)
         }
       },
     })
 
-    // Create response with headers
-    const response = new Response(stream, {
+    // Create AI SDK compatible streaming response
+    const response = createUIMessageStreamResponse({
+      stream: uiMessageStream,
       headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no', // Disable nginx buffering
         ...getRateLimitHeaders(rateLimitResult),
         ...getCorsHeaders(req.headers.get('Origin')),
       },
@@ -200,7 +177,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       userId: user.id,
       messageCount: messages.length,
       locale,
-      threadId: chatThreadId,
+      threadId,
     })
 
     return response

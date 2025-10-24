@@ -16,6 +16,8 @@ import { TypingIndicator } from '@/components/discover/TypingIndicator'
 import { usePersistedChat } from '@/hooks/usePersistedChat'
 import { Message, MessageContent } from '@/components/ai-elements/message'
 import { Response } from '@/components/ai-elements/response'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Brain, Search, Map, TrendingUp, Network, BarChart3, Lightbulb, FileText, Download, ChevronDown, ChevronUp } from 'lucide-react'
 import {
   Conversation,
   ConversationContent,
@@ -50,6 +52,288 @@ import { buildThreadTree } from '@/lib/threads/thread-builder'
 import { convertToThreadedMessages } from '@/lib/threads/message-adapter'
 
 /**
+ * Helper: Get tool icon
+ */
+function getToolIcon(toolType: string) {
+  const name = toolType.replace('tool-', '')
+  if (name.includes('search') || name.includes('Search')) return <Search className="h-4 w-4" />
+  if (name.includes('map') || name.includes('geographic') || name.includes('geo')) return <Map className="h-4 w-4" />
+  if (name.includes('timeline') || name.includes('temporal')) return <TrendingUp className="h-4 w-4" />
+  if (name.includes('network') || name.includes('connection')) return <Network className="h-4 w-4" />
+  if (name.includes('heatmap') || name.includes('correlation')) return <BarChart3 className="h-4 w-4" />
+  if (name.includes('insight') || name.includes('pattern')) return <Lightbulb className="h-4 w-4" />
+  return <FileText className="h-4 w-4" />
+}
+
+/**
+ * Helper: Get tool title
+ */
+function getToolTitle(part: any) {
+  const toolName = part.type?.replace('tool-', '') || 'Tool'
+  const resultCount = part.result?.count || part.result?.results?.length || part.result?.data?.length
+
+  // Format title with count if available
+  const title = toolName
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .split(' ')
+    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+
+  if (resultCount !== undefined) {
+    return `${title} (${resultCount}${resultCount === 1 ? ' result' : ' results'})`
+  }
+
+  return title
+}
+
+/**
+ * Helper: Get tool-specific summary for Accordion header
+ */
+function getToolSummary(part: any): string | null {
+  const toolName = part.type?.replace('tool-', '') || ''
+
+  // AI SDK v5: Check part.state and use part.output when available (same logic as ToolRenderer)
+  let result = part.result || {} // Fallback for older format
+  if (part.state === 'output-available' && part.output) {
+    result = part.output
+  }
+
+  // Timeline/Temporal Analysis
+  if (toolName.includes('timeline') || toolName.includes('temporal')) {
+    // AI SDK v5: temporalAnalysis provides summaryText - use it directly!
+    if (result.summaryText) {
+      return result.summaryText
+    }
+
+    // Fallback: extract from periods array
+    const timeline = result.periods || result.timeline || result.data
+    if (timeline && Array.isArray(timeline)) {
+      const values = timeline.map((t: any) => t.count || t.value || 0)
+      const max = Math.max(...values)
+      const avg = (values.reduce((a: number, b: number) => a + b, 0) / values.length).toFixed(1)
+      const dates = timeline.map((t: any) => t.period || t.date).filter(Boolean)
+      const range = dates.length > 0 ? `${dates[0]} to ${dates[dates.length - 1]}` : ''
+      return `Peak: ${max}, Avg: ${avg}/period${range ? ` • ${range}` : ''}`
+    }
+  }
+
+  // Geographic/Map Analysis
+  if (toolName.includes('geographic') || toolName.includes('geo') || toolName.includes('map')) {
+    const locations = result.locations || result.data || []
+    if (Array.isArray(locations) && locations.length > 0) {
+      const countries = [...new Set(locations.map((l: any) => l.country).filter(Boolean))]
+      return `${locations.length} locations${countries.length > 0 ? ` • ${countries.length} ${countries.length === 1 ? 'country' : 'countries'}` : ''}`
+    }
+  }
+
+  // Network/Connection Analysis
+  if (toolName.includes('network') || toolName.includes('connection')) {
+    const nodes = result.nodes || []
+    const edges = result.edges || []
+    const clusters = result.clusters || []
+    return `${nodes.length} nodes, ${edges.length} connections${clusters.length > 0 ? ` • ${clusters.length} clusters` : ''}`
+  }
+
+  // Heatmap/Correlation
+  if (toolName.includes('heatmap') || toolName.includes('correlation')) {
+    const data = result.data || result.correlations || []
+    const strongCorrelations = Array.isArray(data) ? data.filter((d: any) => Math.abs(d.correlation || d.value || 0) > 0.7).length : 0
+    return strongCorrelations > 0 ? `${strongCorrelations} strong correlations found` : 'Correlation analysis complete'
+  }
+
+  // Search Results
+  if (toolName.includes('search') || toolName.includes('Search')) {
+    const results = result.results || result.data || []
+    const count = result.count || results.length
+    if (count > 0 && results[0]?.date_occurred) {
+      const dates = results.map((r: any) => r.date_occurred).filter(Boolean).sort()
+      if (dates.length > 0) {
+        const year1 = dates[0].substring(0, 4)
+        const year2 = dates[dates.length - 1].substring(0, 4)
+        return year1 === year2 ? `From ${year1}` : `From ${year1} to ${year2}`
+      }
+    }
+  }
+
+  // Insights/Patterns
+  if (toolName.includes('insight') || toolName.includes('pattern')) {
+    // detectPatterns often includes a summary field - use it if available
+    if (result.summary && typeof result.summary === 'string') {
+      return result.summary
+    }
+    const insights = result.insights || result.patterns || []
+    const highConfidence = Array.isArray(insights) ? insights.filter((i: any) => (i.confidence || 0) > 0.7).length : 0
+    return highConfidence > 0 ? `${highConfidence} high-confidence insights` : null
+  }
+
+  // Rank/Compare
+  if (toolName.includes('rank') || toolName.includes('compare')) {
+    const items = result.rankings || result.comparison || result.data || []
+    if (Array.isArray(items) && items.length > 0) {
+      const topItem = items[0]
+      if (topItem?.name || topItem?.username) {
+        return `Top: ${topItem.name || topItem.username}`
+      }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Helper: Export tool data
+ */
+function handleExportTool(part: any, format: 'json' | 'csv' = 'json') {
+  const toolName = part.type?.replace('tool-', '') || 'data'
+  const result = part.result || part.output || {}
+  const data = result.results || result.data || result
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19)
+  const filename = `${toolName}-${timestamp}.${format}`
+
+  let content: string
+  let mimeType: string
+
+  if (format === 'csv') {
+    // Convert to CSV (simple implementation for arrays of objects)
+    if (Array.isArray(data) && data.length > 0) {
+      const headers = Object.keys(data[0])
+      const rows = data.map((item: any) =>
+        headers.map((h) => JSON.stringify(item[h] || '')).join(',')
+      )
+      content = [headers.join(','), ...rows].join('\n')
+      mimeType = 'text/csv'
+    } else {
+      content = JSON.stringify(data, null, 2)
+      mimeType = 'application/json'
+    }
+  } else {
+    content = JSON.stringify(data, null, 2)
+    mimeType = 'application/json'
+  }
+
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * ToolAccordionList Component
+ * Handles the accordion state and rendering for tool visualizations
+ */
+interface ToolAccordionListProps {
+  toolParts: any[]
+  handleRetry: (query: string) => void
+  handleSuggestionClick: (query: string) => void
+}
+
+function ToolAccordionList({ toolParts, handleRetry, handleSuggestionClick }: ToolAccordionListProps) {
+  const [openItems, setOpenItems] = useState<string[]>([`tool-0`])
+
+  const toggleAll = () => {
+    if (openItems.length === toolParts.length) {
+      // All open -> collapse all
+      setOpenItems([])
+    } else {
+      // Some/none open -> expand all
+      setOpenItems(toolParts.map((_: any, i: number) => `tool-${i}`))
+    }
+  }
+
+  const allExpanded = openItems.length === toolParts.length
+
+  return (
+    <div className="space-y-2">
+      {/* Collapse/Expand All Button */}
+      {toolParts.length > 1 && (
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleAll}
+            className="h-7 text-xs gap-1.5"
+          >
+            {allExpanded ? (
+              <>
+                <ChevronUp className="h-3.5 w-3.5" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3.5 w-3.5" />
+                Expand All
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      <Accordion
+        type="multiple"
+        value={openItems}
+        onValueChange={setOpenItems}
+        className="tool-visualizations space-y-2"
+      >
+        {toolParts.map((part: any, i: number) => {
+          const summary = getToolSummary(part)
+
+          return (
+            <AccordionItem
+              key={`tool-${i}`}
+              value={`tool-${i}`}
+              className="border rounded-lg"
+            >
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center justify-between w-full gap-4 pr-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    {getToolIcon(part.type)}
+                    <span>{getToolTitle(part)}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {summary && (
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {summary}
+                      </span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleExportTool(part, 'json')
+                      }}
+                      className="h-7 w-7 p-0 shrink-0"
+                      title="Export data as JSON"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <ToolRenderer
+                  part={part}
+                  onRetry={() => {
+                    const userQuery = part.input?.query || ''
+                    handleRetry(userQuery)
+                  }}
+                  onSuggestionClick={handleSuggestionClick}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          )
+        })}
+      </Accordion>
+    </div>
+  )
+}
+
+/**
  * AI Discovery Interface
  * Using AI SDK UI (useChat) - Recommended approach for streaming with visualizations
  *
@@ -78,7 +362,7 @@ export default function DiscoverPage() {
     generateId,
     experimental_throttle: 500, // Increased from 100ms to reduce stream parsing race conditions
     transport: new CustomChatTransport({
-      api: '/api/discover',
+      api: '/api/discover-v2',
       body: {
         chatId: currentChatId,
         replyToId,
@@ -172,9 +456,12 @@ export default function DiscoverPage() {
 
   // Send pending message when chat ID is set
   useEffect(() => {
+    console.log('[DEBUG] Pending message useEffect:', { currentChatId, pendingMessage })
     if (currentChatId && pendingMessage) {
+      console.log('[DEBUG] Will send pending message in 100ms:', pendingMessage)
       // Small delay to ensure useChat hook is re-initialized with new ID
       const timer = setTimeout(() => {
+        console.log('[DEBUG] Sending pending message now:', pendingMessage)
         sendMessage({ text: pendingMessage })
         setPendingMessage(null)
       }, 100)
@@ -416,29 +703,41 @@ export default function DiscoverPage() {
                 if (!message.originalMessage) return null
 
                 const originalMsg = message.originalMessage
+                const parts = originalMsg.parts || []
+
+                // Separate parts by type
+                const textParts = parts.filter((p: any) => p.type === 'text')
+                const toolParts = parts.filter((p: any) => p.type?.startsWith('tool-'))
 
                 return (
-                  <div className="flex flex-col gap-1 w-full">
-                    {originalMsg.parts?.map((part: any, i: number) => {
-                      // Tool parts
-                      if (part.type?.startsWith('tool-')) {
-                        return (
-                          <ToolRenderer
-                            key={i}
-                            part={part}
-                            onRetry={() => {
-                              // Find user query from context
-                              const userQuery = part.input?.query || ''
-                              handleRetry(userQuery)
-                            }}
-                            onSuggestionClick={handleSuggestionClick}
-                          />
-                        )
-                      }
-                      return null
-                    })}
+                  <div className="message-layers space-y-4 w-full">
+                    {/* Layer 1: Thinking Indicator (if tool is executing) */}
+                    {originalMsg.role === 'assistant' && isLoading && toolParts.length > 0 && (
+                      <div className="thinking-layer flex items-center gap-2 text-xs text-muted-foreground animate-pulse">
+                        <Brain className="h-3.5 w-3.5" />
+                        <span>Analyzing data...</span>
+                      </div>
+                    )}
 
-                    {/* Citations - only for assistant messages */}
+                    {/* Layer 2: Text Response (streaming) */}
+                    {textParts.map((part: any, i: number) => (
+                      <div key={`text-${i}`} className="text-layer">
+                        <Response className="prose prose-sm dark:prose-invert max-w-none">
+                          {part.text}
+                        </Response>
+                      </div>
+                    ))}
+
+                    {/* Layer 3: Tool Visualizations (progressive disclosure with Accordion) */}
+                    {toolParts.length > 0 && (
+                      <ToolAccordionList
+                        toolParts={toolParts}
+                        handleRetry={handleRetry}
+                        handleSuggestionClick={handleSuggestionClick}
+                      />
+                    )}
+
+                    {/* Layer 4: Citations */}
                     {originalMsg.role === 'assistant' && originalMsg.id && (
                       <CitationList
                         messageId={originalMsg.id}
@@ -518,15 +817,22 @@ export default function DiscoverPage() {
         {/* AI Elements PromptInput */}
         <PromptInput
           onSubmit={async (data) => {
-            if (!data.text?.trim() || isLoading) return
+            console.log('[DEBUG] onSubmit called with:', { text: data.text, isLoading, currentChatId })
+
+            if (!data.text?.trim() || isLoading) {
+              console.log('[DEBUG] Blocked: empty text or isLoading=true')
+              return
+            }
 
             // Clear previous error
             clearError()
 
             // Create chat if none exists and save message for later
             if (!currentChatId) {
+              console.log('[DEBUG] No chat ID, creating new chat...')
               const newChatId = await createChat()
               if (newChatId) {
+                console.log('[DEBUG] Chat created:', newChatId, 'Setting pending message:', data.text)
                 setCurrentChatId(newChatId)
                 setChatHasTitle(false)
                 setPendingMessage(data.text)
@@ -536,6 +842,7 @@ export default function DiscoverPage() {
             }
 
             // Send message
+            console.log('[DEBUG] Sending message directly:', data.text)
             sendMessage({ text: data.text })
           }}
           className="mb-2"

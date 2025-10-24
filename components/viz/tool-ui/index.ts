@@ -11,6 +11,7 @@ export { TimelineToolUI } from './TimelineToolUI'
 export { NetworkToolUI } from './NetworkToolUI'
 export { HeatmapToolUI } from './HeatmapToolUI'
 export { ComparisonToolUI } from './ComparisonToolUI'
+export { RankUsersToolUI } from './RankUsersToolUI'
 
 export type { MapToolUIProps } from './MapToolUI'
 export type { TimelineToolUIProps } from './TimelineToolUI'

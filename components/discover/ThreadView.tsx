@@ -104,13 +104,16 @@ export function ThreadView({ message, depth = 0, onReply, onBranch, renderCustom
             </div>
           </div>
 
-          {/* Message Content */}
-          <div className="text-sm">
-            <Response>{message.content}</Response>
-          </div>
-
-          {/* Custom Content (Tool Results, Citations, etc.) */}
-          {renderCustomContent && renderCustomContent(message)}
+          {/* Message Content - Only render if no custom content renderer or if it returns null */}
+          {renderCustomContent ? (
+            // Use custom content renderer (handles both text and tools)
+            renderCustomContent(message)
+          ) : (
+            // Fallback: render plain content
+            <div className="text-sm">
+              <Response>{message.content}</Response>
+            </div>
+          )}
 
           {/* Reply Indicator (for nested messages) */}
           {isNested && (
