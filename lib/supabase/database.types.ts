@@ -6,8 +6,105 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
-  // Allows to automatically instantiate createClient with right options
+export interface Database {
+  public: {
+    Tables: {
+      experiences: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          story_text: string
+          category: string
+          tags: string[]
+          date_occurred: string | null
+          time_of_day: string | null
+          duration: string | null
+          location_text: string | null
+          location_lat: number | null
+          location_lng: number | null
+          question_answers: Json
+          visibility: 'public' | 'private' | 'shared'
+          ai_enhancement_used: boolean
+          user_edited_ai: boolean
+          enhancement_model: string | null
+          embedding: string | null
+          embedding_model: string | null
+          embedding_generated_at: string | null
+          views_count: number
+          likes_count: number
+          comments_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Omit<Database['public']['Tables']['experiences']['Row'], 'id'>> & {
+          user_id: string
+          title: string
+          story_text: string
+          category: string
+        }
+        Update: Partial<Database['public']['Tables']['experiences']['Row']>
+      }
+      profiles: {
+        Row: {
+          id: string
+          username: string | null
+          display_name: string | null
+          bio: string | null
+          avatar_url: string | null
+          xp: number
+          level: number
+          total_experiences: number
+          total_views: number
+          last_xp_earned_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['profiles']['Row']>
+        Update: Partial<Database['public']['Tables']['profiles']['Row']>
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      publish_experience_atomic: {
+        Args: {
+          p_user_id: string
+          p_title: string
+          p_story_text: string
+          p_category: string
+          p_tags: string[]
+          p_date_occurred?: string | null
+          p_time_of_day?: string | null
+          p_duration?: string | null
+          p_location_text?: string | null
+          p_location_lat?: number | null
+          p_location_lng?: number | null
+          p_question_answers?: Json
+          p_visibility?: string
+          p_ai_enhancement_used?: boolean
+          p_user_edited_ai?: boolean
+          p_enhancement_model?: string | null
+          p_attributes?: Json
+          p_witnesses?: Json
+          p_embedding?: Json | null
+        }
+        Returns: {
+          experience_id: string
+          xp_earned: number
+          badges_earned: string[]
+          leveled_up: boolean
+          new_level: number
+        }[]
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"

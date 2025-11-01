@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import DiffMatchPatch from 'diff-match-patch';
 import type { TextSegment } from '@/lib/utils/text-diff';
+import { enrichTextSchema, type EnrichTextInput } from '@/lib/validation/submit-schemas';
+import { sanitizeRichText, containsSuspiciousPatterns } from '@/lib/validation/sanitization';
 
 /**
  * Text Enrichment API - Merge question answers and attributes into original text
@@ -11,47 +13,61 @@ import type { TextSegment } from '@/lib/utils/text-diff';
  * - Question answers (date, location, witnesses, etc.)
  *
  * Creates a more complete narrative without changing the user's voice.
- * Returns segments for interactive editing.
+ * Returns segments for interactive editing with full validation.
  */
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface EnrichmentData {
-  text: string;
-  attributes: Record<string, { value: string; confidence: number }>;
-  answers: Record<string, any>;
-  language?: string;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const data: EnrichmentData = await request.json();
-    const { text, attributes, answers, language = 'de' } = data;
+    // Parse and validate request body
+    const body = await request.json();
 
-    if (!text || text.trim().length < 50) {
+    // Validate with Zod schema
+    const validation = enrichTextSchema.safeParse(body);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Text is too short for enrichment (minimum 50 characters)' },
+        {
+          error: 'Invalid input',
+          details: validation.error.flatten().fieldErrors
+        },
         { status: 400 }
       );
     }
+
+    const { text, attributes, answers, language = 'de' }: EnrichTextInput = validation.data;
+
+    // Check for suspicious patterns
+    if (containsSuspiciousPatterns(text)) {
+      console.warn('Suspicious patterns in enrich-text request');
+      return NextResponse.json(
+        { error: 'Content contains prohibited patterns' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize text (allow rich text for this endpoint)
+    const sanitizedText = sanitizeRichText(text);
 
     // Prepare enrichment context
     const attributesList = Object.entries(attributes || {})
       .map(([key, attr]) => `- ${key}: ${attr.value}`)
       .join('\n');
 
-    const answersList = Object.entries(answers || {})
-      .filter(([_, value]) => value !== undefined && value !== '')
-      .map(([key, value]) => `- ${key}: ${value}`)
+    // Convert answers array to text list
+    const answersList = (answers || [])
+      .filter(a => a.answer !== undefined && a.answer !== null && a.answer !== '')
+      .map(a => `- ${a.question}: ${a.answer}`)
       .join('\n');
 
     const prompt = `Integriere die zusätzlichen Informationen natürlich in den Text.
 
 **Original-Text:**
 """
-${text}
+${sanitizedText}
 """
 
 **Zusätzliche Informationen aus Fragen:**
@@ -95,20 +111,23 @@ Gib NUR den angereicherten Text zurück, keine Erklärungen.`;
       max_tokens: 2000,
     });
 
-    const enrichedText = completion.choices[0].message.content || text;
+    const aiResponse = completion.choices[0].message.content || sanitizedText;
+
+    // Sanitize the enriched text from AI
+    const enrichedText = sanitizeRichText(aiResponse);
 
     // Calculate segments with proper positions
-    const segments = calculateSegments(text, enrichedText, attributes, answers);
+    const segments = calculateSegments(sanitizedText, enrichedText, attributes, answers || []);
 
     // Convert to highlights for backward compatibility
     const highlights = segmentsToHighlights(segments);
 
     return NextResponse.json({
       enrichedText: enrichedText.trim(),
-      originalText: text,
+      originalText: sanitizedText,
       highlights, // Backward compatibility
       segments, // NEW: Detailed segments for interactive editing
-      hasChanges: enrichedText !== text,
+      hasChanges: enrichedText !== sanitizedText,
     });
 
   } catch (error: any) {

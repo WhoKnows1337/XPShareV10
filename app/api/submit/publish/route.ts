@@ -1,328 +1,169 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generateEmbedding } from '@/lib/openai/client';
+import { publishSchema, type PublishInput } from '@/lib/validation/submit-schemas';
+import {
+  sanitizeText,
+  sanitizeRichText,
+  sanitizeAttributeValue,
+  sanitizeEmail,
+  sanitizeLocation,
+  sanitizeCoordinates,
+  containsSuspiciousPatterns
+} from '@/lib/validation/sanitization';
 
 /**
- * Publish Experience API - Saves experience and returns rewards
+ * Optimized Publish Experience API using PostgreSQL atomic function
+ * Significantly reduced complexity - delegates transaction handling to DB
  */
-
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const startTime = Date.now();
+
   try {
-    const supabase = await createClient();
-
-    // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await (supabase as any).auth.getUser();
-
+    // ============================================================
+    // 1. AUTHENTICATION CHECK
+    // ============================================================
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const experienceData = await request.json();
+    // ============================================================
+    // 2. REQUEST VALIDATION & SANITIZATION
+    // ============================================================
+    const body = await request.json();
+    const validation = publishSchema.safeParse(body);
 
-    // Get final approved text (user's choice)
-    const finalText = experienceData.finalText ||
-                     (experienceData.wasEnhanced ? experienceData.enhancedText : experienceData.text);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Validation failed',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
 
-    // Insert experience into database
-    const { data: experience, error: insertError } = await (supabase as any)
-      .from('experiences')
-      .insert({
-        user_id: user.id,
-        title: experienceData.title,
-        story_text: finalText,  // User's approved text
-        category: experienceData.category,
-        tags: experienceData.tags || [],
-        date_occurred: experienceData.date || null,
-        time_of_day: experienceData.time || null,
-        location_text: experienceData.location || null,
-        location_lat: experienceData.locationLat || null,
-        location_lng: experienceData.locationLng || null,
-        question_answers: experienceData.extraQuestions || {},
-        visibility: experienceData.visibility || 'public',
-        // NEW: AI enhancement metadata
-        ai_enhancement_used: experienceData.wasEnhanced || false,
-        user_edited_ai: experienceData.wasEdited || false,
-        enhancement_model: experienceData.wasEnhanced ? 'gpt-4o-mini' : null,
+    const data: PublishInput = validation.data;
+
+    // Security check for suspicious patterns
+    if (containsSuspiciousPatterns(data.text)) {
+      console.warn(`Suspicious patterns detected for user ${user.id}`);
+      return NextResponse.json(
+        { error: 'Content contains prohibited patterns' },
+        { status: 400 }
+      );
+    }
+
+    // ============================================================
+    // 3. PREPARE DATA FOR ATOMIC FUNCTION
+    // ============================================================
+    const sanitizedData = {
+      title: sanitizeText(data.title),
+      text: sanitizeRichText(data.text),
+      enhancedText: data.enhancedText ? sanitizeRichText(data.enhancedText) : undefined,
+      category: data.category,
+      tags: data.tags.map(tag => sanitizeText(tag)),
+      location: data.location ? sanitizeLocation(data.location) : null,
+      coordinates: (data.locationLat && data.locationLng)
+        ? sanitizeCoordinates(data.locationLat, data.locationLng)
+        : null,
+    };
+
+    const finalText = sanitizedData.enhancedText && data.enhancementEnabled
+      ? sanitizedData.enhancedText
+      : sanitizedData.text;
+
+    // Generate embedding if text is substantial
+    let embedding = null;
+    if (finalText.length > 100) {
+      try {
+        embedding = await generateEmbedding(finalText);
+      } catch (err) {
+        console.error('Embedding generation failed:', err);
+        // Continue without embedding - not critical
+      }
+    }
+
+    // Prepare attributes for DB function
+    const attributes = data.attributes ? Object.entries(data.attributes).map(([key, attr]) => ({
+      key,
+      value: sanitizeAttributeValue(attr.value),
+      customValue: attr.customValue ? sanitizeAttributeValue(attr.customValue) : null,
+      confidence: Math.min(1, Math.max(0, attr.confidence)),
+      isManuallyEdited: attr.isManuallyEdited || false,
+    })) : [];
+
+    // Prepare witnesses for DB function
+    const witnesses = data.witnesses ? data.witnesses.map(witness => ({
+      name: sanitizeText(witness.name),
+      email: witness.email ? sanitizeEmail(witness.email) : null,
+      userId: witness.userId || null,
+    })) : [];
+
+    // ============================================================
+    // 4. CALL ATOMIC DATABASE FUNCTION
+    // ============================================================
+    const { data: result, error: dbError } = await supabase
+      .rpc('publish_experience_atomic', {
+        p_user_id: user.id,
+        p_title: sanitizedData.title,
+        p_story_text: finalText,
+        p_category: sanitizedData.category,
+        p_tags: sanitizedData.tags,
+        p_date_occurred: data.dateOccurred || null,
+        p_time_of_day: data.timeOfDay || null,
+        p_duration: data.duration || null,
+        p_location_text: sanitizedData.location,
+        p_location_lat: sanitizedData.coordinates?.lat || null,
+        p_location_lng: sanitizedData.coordinates?.lng || null,
+        p_question_answers: data.questionAnswers || {},
+        p_visibility: data.visibility,
+        p_ai_enhancement_used: data.aiEnhancementUsed || false,
+        p_user_edited_ai: data.userEditedAi || false,
+        p_enhancement_model: data.enhancementModel || null,
+        p_attributes: attributes,
+        p_witnesses: witnesses,
+        p_embedding: embedding,
       })
-      .select()
       .single();
 
-    if (insertError) {
-      console.error('Insert error:', insertError);
-      return NextResponse.json({ error: 'Failed to save experience', details: insertError.message }, { status: 500 });
+    if (dbError) {
+      console.error('Database error:', dbError);
+      return NextResponse.json(
+        {
+          error: 'Failed to save experience',
+          details: dbError.message,
+        },
+        { status: 500 }
+      );
     }
 
-    // Save media files if any
-    if (experienceData.mediaUrls && experienceData.mediaUrls.length > 0) {
-      const mediaRecords = experienceData.mediaUrls.map((url: string, index: number) => ({
-        experience_id: experience.id,
-        type: url.includes('sketch') ? 'sketch' : url.includes('video') ? 'video' : url.includes('audio') ? 'audio' : 'photo',
-        url,
-        sort_order: index,
-      }));
-
-      const { error: mediaError } = await (supabase as any)
-        .from('experience_media')
-        .insert(mediaRecords);
-
-      if (mediaError) {
-        console.error('Error saving media:', mediaError);
-        // Don't fail the entire publish if media save fails
-      }
-    }
-
-    // Save witnesses if any
-    if (experienceData.witnesses && experienceData.witnesses.length > 0) {
-      const witnessRecords = experienceData.witnesses.map((witness: any) => ({
-        experience_id: experience.id,
-        name: witness.type === 'user' ? witness.username : witness.email,
-        contact_info: witness.type === 'email' ? witness.email : null,
-        is_verified: false,
-      }));
-
-      const { error: witnessError } = await (supabase as any)
-        .from('experience_witnesses')
-        .insert(witnessRecords);
-
-      if (witnessError) {
-        console.error('Error saving witnesses:', witnessError);
-        // Don't fail the entire publish if witness save fails
-      }
-    }
-
-    // Generate and save embedding for semantic search
-    try {
-      // Use the final approved text for embedding
-      const embedding = await generateEmbedding(finalText);
-
-      await (supabase as any)
-        .from('experiences')
-        .update({ embedding: JSON.stringify(embedding) })
-        .eq('id', experience.id);
-
-      console.log(`Generated embedding (${embedding.length} dimensions) for experience ${experience.id}`);
-    } catch (embeddingError) {
-      console.error('Embedding generation error:', embeddingError);
-      // Don't fail the entire publish if embedding fails
-    }
-
-    // Save attributes to experience_attributes table
-    if (experienceData.attributes && Object.keys(experienceData.attributes).length > 0) {
-      const attributeRecords = Object.entries(experienceData.attributes).map(([key, attr]: [string, any]) => {
-        const isCustomValue = attr.isCustom || (attr.value === 'other' && attr.customValue);
-        const customValue = attr.customValue || null;
-
-        return {
-          experience_id: experience.id,
-          attribute_key: key,
-          attribute_value: attr.value,
-          custom_value: customValue,
-          is_custom_value: isCustomValue,
-          confidence: attr.confidence / 100, // Convert from 0-100 to 0.0-1.0
-          source: attr.isManuallyEdited ? 'user_confirmed' : 'ai_extracted',
-          verified_by_user: attr.isManuallyEdited || false,
-          created_by: user.id,
-        };
-      });
-
-      const { error: attributesError } = await (supabase as any)
-        .from('experience_attributes')
-        .insert(attributeRecords);
-
-      if (attributesError) {
-        console.error('Error saving attributes:', attributesError);
-        // Don't fail the entire publish if attributes fail
-      }
-
-      // Track custom values for admin review
-      for (const [key, attr] of Object.entries(experienceData.attributes)) {
-        const typedAttr = attr as any;
-        if (typedAttr.customValue && typedAttr.customValue.trim()) {
-          await trackCustomValue(supabase, key, typedAttr.customValue.trim());
-        }
-      }
-    }
-
-    // Calculate XP earned based on contribution
-    let xpEarned = 50; // Base XP
-
-    // Bonus for word count
-    if (experienceData.wordCount >= 500) xpEarned += 200;
-    else if (experienceData.wordCount >= 300) xpEarned += 100;
-    else if (experienceData.wordCount >= 150) xpEarned += 50;
-    else if (experienceData.wordCount >= 50) xpEarned += 20;
-
-    // Bonus for extra questions
-    if (experienceData.extraQuestions && Object.keys(experienceData.extraQuestions).length > 0) {
-      xpEarned += 100;
-    }
-
-    // Bonus for attributes (5 XP per confirmed attribute)
-    if (experienceData.attributes && Object.keys(experienceData.attributes).length > 0) {
-      const attributeCount = Object.keys(experienceData.attributes).length;
-      xpEarned += attributeCount * 5;
-    }
-
-    // Award XP to user
-    const { data: profile } = await (supabase as any)
-      .from('profiles')
-      .select('xp, level')
-      .eq('id', user.id)
-      .single();
-
-    const currentXP = profile?.xp || 0;
-    const currentLevel = profile?.level || 1;
-    const newXP = currentXP + xpEarned;
-
-    // Calculate new level (100 XP per level, simple formula)
-    const newLevel = Math.floor(newXP / 100) + 1;
-    const leveledUp = newLevel > currentLevel;
-
-    // Update profile
-    await (supabase as any)
-      .from('profiles')
-      .update({
-        xp: newXP,
-        level: newLevel,
-      })
-      .eq('id', user.id);
-
-    // Check for badges earned (simplified logic)
-    const badgesEarned: string[] = [];
-
-    // First Experience badge
-    const { count } = await (supabase as any)
-      .from('experiences')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-
-    if (count === 1) {
-      badgesEarned.push('First Experience');
-      // Award badge in database
-      await awardBadge(supabase, user.id, 'first-experience');
-    }
-
-    // Detailed Reporter badge (>300 words)
-    if (experienceData.wordCount >= 300 && !badgesEarned.includes('Detailed Reporter')) {
-      badgesEarned.push('Detailed Reporter');
-      await awardBadge(supabase, user.id, 'detailed-reporter');
-    }
-
-    // Pattern Seeker badge (completed extra questions)
-    if (
-      experienceData.extraQuestions &&
-      Object.keys(experienceData.extraQuestions).length > 0 &&
-      !badgesEarned.includes('Pattern Seeker')
-    ) {
-      badgesEarned.push('Pattern Seeker');
-      await awardBadge(supabase, user.id, 'pattern-seeker');
-    }
+    // ============================================================
+    // 5. SUCCESS RESPONSE
+    // ============================================================
+    const processingTime = Date.now() - startTime;
 
     return NextResponse.json({
-      experienceId: experience.id,
-      xpEarned,
-      badgesEarned,
-      leveledUp,
-      newLevel: leveledUp ? newLevel : undefined,
+      success: true,
+      experienceId: result.experience_id,
+      xpEarned: result.xp_earned,
+      badgesEarned: result.badges_earned || [],
+      leveledUp: result.leveled_up,
+      newLevel: result.new_level,
+      processingTimeMs: processingTime,
     });
+
   } catch (error: any) {
-    console.error('Publish error:', error);
+    console.error('Publish endpoint error:', error);
 
     return NextResponse.json(
       {
         error: 'Failed to publish experience',
-        details: error.message,
+        message: error.message || 'Unknown error',
       },
       { status: 500 }
     );
-  }
-}
-
-// Helper function to award badges
-async function awardBadge(supabase: any, userId: string, badgeSlug: string) {
-  try {
-    // Get badge ID
-    const { data: badge } = await (supabase as any)
-      .from('badges')
-      .select('id, name')
-      .eq('slug', badgeSlug)
-      .single();
-
-    if (!badge) return;
-
-    // Check if user already has badge
-    const { data: existing } = await (supabase as any)
-      .from('user_badges')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('badge_id', badge.id)
-      .single();
-
-    if (existing) return;
-
-    // Award badge
-    await (supabase as any).from('user_badges').insert({
-      user_id: userId,
-      badge_id: badge.id,
-    });
-
-    // Create notification
-    await (supabase as any).from('notifications').insert({
-      user_id: userId,
-      type: 'badge_earned',
-      title: `Badge Earned: ${badge.name}`,
-      message: `You've earned the ${badge.name} badge!`,
-      read: false,
-    });
-  } catch (error) {
-    console.error('Award badge error:', error);
-  }
-}
-
-// Helper function to track custom attribute values
-async function trackCustomValue(supabase: any, attributeKey: string, customValue: string) {
-  try {
-    // Normalize value for deduplication (lowercase, trimmed)
-    const canonical = customValue.toLowerCase().trim();
-
-    // Check if this custom value already exists
-    const { data: existing } = await (supabase as any)
-      .from('custom_attribute_suggestions')
-      .select('id, times_used')
-      .eq('attribute_key', attributeKey)
-      .eq('canonical_value', canonical)
-      .single();
-
-    if (existing) {
-      // Increment times_used counter
-      await (supabase as any)
-        .from('custom_attribute_suggestions')
-        .update({
-          times_used: existing.times_used + 1,
-          last_used_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id);
-
-      console.log(`Incremented custom value "${customValue}" for ${attributeKey} (now ${existing.times_used + 1}x)`);
-    } else {
-      // Insert new custom value suggestion
-      await (supabase as any)
-        .from('custom_attribute_suggestions')
-        .insert({
-          attribute_key: attributeKey,
-          custom_value: customValue,
-          canonical_value: canonical,
-          times_used: 1,
-          status: 'pending_review',
-        });
-
-      console.log(`New custom value "${customValue}" tracked for ${attributeKey}`);
-    }
-  } catch (error) {
-    console.error('Track custom value error:', error);
-    // Don't fail the entire publish if tracking fails
   }
 }

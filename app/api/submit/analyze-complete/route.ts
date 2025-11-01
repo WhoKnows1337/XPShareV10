@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createClient } from '@/lib/supabase/server';
 import { attributeSchemaToJSONSchema } from '@/lib/openai/structured-outputs';
+import { analyzeCompleteSchema, type AnalyzeCompleteInput } from '@/lib/validation/submit-schemas';
+import { sanitizeText, sanitizeAttributeValue, containsSuspiciousPatterns } from '@/lib/validation/sanitization';
 
 /**
  * Complete AI Analysis API - Extract everything in one call:
@@ -11,8 +13,8 @@ import { attributeSchemaToJSONSchema } from '@/lib/openai/structured-outputs';
  * - Structured Attributes (based on category) using OpenAI Structured Outputs
  * - Missing info detection
  *
- * Uses OpenAI GPT-4o-mini with Structured Outputs for 100% schema compliance
- * This eliminates fuzzy matching and provides ~40% cost savings through better accuracy
+ * Uses OpenAI GPT-4o with Structured Outputs for 100% schema compliance
+ * Includes validation and sanitization for security
  */
 
 const openai = new OpenAI({
@@ -29,14 +31,35 @@ interface AttributeSchema {
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, language = 'de' } = await request.json();
+    // Parse and validate request body
+    const body = await request.json();
 
-    if (!text || text.trim().length < 30) {
+    // Validate with Zod schema
+    const validation = analyzeCompleteSchema.safeParse(body);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Text is too short for analysis (minimum 30 characters)' },
+        {
+          error: 'Invalid input',
+          details: validation.error.flatten().fieldErrors
+        },
         { status: 400 }
       );
     }
+
+    const { text, language = 'de', category: providedCategory, existingAttributes }: AnalyzeCompleteInput = validation.data;
+
+    // Check for suspicious patterns
+    if (containsSuspiciousPatterns(text)) {
+      console.warn('Suspicious patterns in analyze-complete request');
+      return NextResponse.json(
+        { error: 'Content contains prohibited patterns' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize the text
+    const sanitizedText = sanitizeText(text);
 
     const supabase = await createClient();
 
@@ -55,7 +78,7 @@ export async function POST(request: NextRequest) {
     const categoryPrompt = `Analyze this experience text and determine the most specific category.
 
 Text Language: ${language}
-Text: "${text}"
+Text: "${sanitizedText}"
 
 Available Categories (choose the most specific subcategory BY SLUG):
 ${categories.map(c => `- slug: "${c.slug}" (name: ${c.name})`).join('\n')}
@@ -133,7 +156,7 @@ CRITICAL:
       const identificationPrompt = `Analyze this text and identify which attributes are EXPLICITLY mentioned.
 
 Language: ${language}
-Text: "${text}"
+Text: "${sanitizedText}"
 
 Available Attributes:
 ${attributeSchema.map(attr => {
@@ -268,7 +291,7 @@ EXTRACTION RULES:
     const analysisPrompt = `Analyze this ${detectedCategory} experience and extract structured information.
 
 Language: ${language}
-Text: "${text}"
+Text: "${sanitizedText}"
 ${attributeInstructions}
 
 ALSO EXTRACT:
@@ -307,14 +330,19 @@ Return complete JSON with all fields: title, tags[], attributes{}, missing_info[
       }
     }
 
+    // Sanitize AI output before returning
+    const sanitizedTitle = sanitizeText(analysisResult.title || 'Untitled Experience');
+    const sanitizedTags = (analysisResult.tags || []).map((tag: string) => sanitizeText(tag));
+    const sanitizedMissingInfo = (analysisResult.missing_info || []).map((info: string) => sanitizeText(info));
+
     // Return complete analysis (summary removed - generated later in finalize-metadata)
     return NextResponse.json({
       category: detectedCategory,
       categoryConfidence: categoryResult.confidence,
-      title: analysisResult.title || 'Untitled Experience',
-      tags: analysisResult.tags || [],
+      title: sanitizedTitle,
+      tags: sanitizedTags,
       attributes: cleanedAttributes,
-      missing_info: analysisResult.missing_info || [],
+      missing_info: sanitizedMissingInfo,
       confidence: categoryResult.confidence || 0.8,
       _debug: {
         twoPassExtraction: true,
