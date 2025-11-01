@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize text (allow rich text for this endpoint)
-    const sanitizedText = await sanitizeRichText(text);
+    const sanitizedText = sanitizeRichText(text);
 
     // Prepare enrichment context
     const attributesList = Object.entries(attributes || {})
@@ -133,7 +133,7 @@ Gib NUR den angereicherten Text zurück, keine Erklärungen.`;
     const aiResponse = completion.choices[0].message.content || sanitizedText;
 
     // Sanitize the enriched text from AI
-    const enrichedText = await sanitizeRichText(aiResponse);
+    const enrichedText = sanitizeRichText(aiResponse);
 
     // Calculate segments with proper positions
     const segments = calculateSegments(sanitizedText, enrichedText, attributes, answers || []);

@@ -1,51 +1,39 @@
 // ============================================================
 // SANITIZATION UTILITIES FOR XSS & INJECTION PREVENTION
+// Using sanitize-html (Node.js native, no jsdom needed)
 // ============================================================
 
-/**
- * Lazy-load DOMPurify to avoid build-time issues with jsdom
- * Only loads when actually needed at runtime
- */
-let DOMPurify: any = null;
-async function getDOMPurify() {
-  if (!DOMPurify) {
-    const { default: purify } = await import('isomorphic-dompurify');
-    DOMPurify = purify;
-  }
-  return DOMPurify;
-}
+import sanitizeHtml from 'sanitize-html';
 
 /**
- * Configuration for DOMPurify to strip all HTML but keep text content
+ * Configuration for strict text sanitization - removes ALL HTML
  */
-const STRIP_HTML_CONFIG = {
-  ALLOWED_TAGS: [], // No HTML tags allowed
-  ALLOWED_ATTR: [], // No attributes allowed
-  KEEP_CONTENT: true, // Keep text content
-  RETURN_DOM: false,
-  RETURN_DOM_FRAGMENT: false,
+const STRIP_HTML_CONFIG: sanitizeHtml.IOptions = {
+  allowedTags: [], // No HTML tags allowed
+  allowedAttributes: {}, // No attributes allowed
+  disallowedTagsMode: 'discard',
+  allowedIframeHostnames: [],
 };
 
 /**
- * Configuration for DOMPurify to allow basic formatting
+ * Configuration for rich text - allows basic formatting only
  */
-const BASIC_HTML_CONFIG = {
-  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p'],
-  ALLOWED_ATTR: [],
-  KEEP_CONTENT: true,
+const BASIC_HTML_CONFIG: sanitizeHtml.IOptions = {
+  allowedTags: ['b', 'i', 'em', 'strong', 'u', 'br', 'p'],
+  allowedAttributes: {},
+  disallowedTagsMode: 'discard',
+  allowedIframeHostnames: [],
 };
 
 /**
  * Strictly sanitize text input - removes ALL HTML/scripts
  * Use for: usernames, titles, tags, simple text fields
  */
-export async function sanitizeText(text: string): Promise<string> {
+export function sanitizeText(text: string): string {
   if (!text) return '';
 
-  const purify = await getDOMPurify();
-
-  // First pass: Use DOMPurify to remove all HTML
-  let clean = purify.sanitize(text, STRIP_HTML_CONFIG) as string;
+  // First pass: Use sanitize-html to remove all HTML
+  let clean = sanitizeHtml(text, STRIP_HTML_CONFIG);
 
   // Second pass: Remove potential SQL injection patterns
   clean = removeSQLPatterns(clean);
@@ -58,47 +46,36 @@ export async function sanitizeText(text: string): Promise<string> {
 
 /**
  * Sanitize rich text content - allows basic formatting
- * Use for: experience stories, descriptions, enhanced text
+ * Use for: experience descriptions, comments, rich text editors
  */
-export async function sanitizeRichText(text: string): Promise<string> {
+export function sanitizeRichText(text: string): string {
   if (!text) return '';
 
-  const purify = await getDOMPurify();
+  // Allow basic formatting tags only
+  let clean = sanitizeHtml(text, BASIC_HTML_CONFIG);
 
-  // Use DOMPurify with basic HTML config
-  let clean = purify.sanitize(text, BASIC_HTML_CONFIG) as string;
-
-  // Remove SQL patterns but preserve formatting
+  // Remove SQL injection patterns
   clean = removeSQLPatterns(clean);
 
   return clean;
 }
 
 /**
- * Sanitize attribute values for database storage
- * Use for: custom attribute values, category-specific fields
+ * Sanitize attribute values (enums, select options, etc.)
  */
-export async function sanitizeAttributeValue(value: string): Promise<string> {
-  if (!value) return '';
+export function sanitizeAttributeValue(value: any): string {
+  if (value === null || value === undefined) return '';
 
-  const purify = await getDOMPurify();
+  const stringValue = String(value);
 
   // Strip all HTML
-  let clean = purify.sanitize(value, STRIP_HTML_CONFIG) as string;
+  let clean = sanitizeHtml(stringValue, STRIP_HTML_CONFIG);
 
-  // Convert to lowercase for canonical storage
-  clean = clean.toLowerCase();
-
-  // Remove special characters that could cause issues
-  clean = clean.replace(/[<>'"`;]/g, '');
+  // Remove special characters that could be used for injection
+  clean = clean.replace(/[<>\"'`]/g, '');
 
   // Normalize whitespace
   clean = normalizeWhitespace(clean);
-
-  // Truncate to reasonable length
-  if (clean.length > 500) {
-    clean = clean.substring(0, 500);
-  }
 
   return clean;
 }
@@ -106,19 +83,21 @@ export async function sanitizeAttributeValue(value: string): Promise<string> {
 /**
  * Sanitize email addresses
  */
-export async function sanitizeEmail(email: string): Promise<string> {
+export function sanitizeEmail(email: string): string {
   if (!email) return '';
 
-  const purify = await getDOMPurify();
+  // Strip all HTML first
+  let clean = sanitizeHtml(email, STRIP_HTML_CONFIG);
 
-  // Basic sanitization
-  let clean = email.toLowerCase().trim();
+  // Remove whitespace
+  clean = clean.trim().toLowerCase();
 
-  // Remove any HTML/script attempts
-  clean = purify.sanitize(clean, STRIP_HTML_CONFIG) as string;
+  // Basic email validation pattern
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-  // Remove suspicious characters
-  clean = clean.replace(/[<>'"`;]/g, '');
+  if (!emailRegex.test(clean)) {
+    throw new Error('Invalid email format');
+  }
 
   return clean;
 }
@@ -149,19 +128,19 @@ export function sanitizeFileName(fileName: string): string {
 /**
  * Sanitize URLs
  */
-export function sanitizeUrl(url: string): string {
+export function sanitizeURL(url: string): string {
   if (!url) return '';
 
+  // Strip HTML
+  let clean = sanitizeHtml(url, STRIP_HTML_CONFIG);
+
+  // Only allow http/https protocols
   try {
-    const parsed = new URL(url);
-
-    // Only allow http(s) protocols
+    const parsed = new URL(clean);
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return '';
+      throw new Error('Invalid URL protocol');
     }
-
-    // Reconstruct URL to remove any injection attempts
-    return parsed.toString();
+    return parsed.href;
   } catch {
     return '';
   }
@@ -170,11 +149,11 @@ export function sanitizeUrl(url: string): string {
 /**
  * Sanitize location text
  */
-export async function sanitizeLocation(location: string): Promise<string> {
+export function sanitizeLocation(location: string): string {
   if (!location) return '';
 
   // Basic text sanitization
-  let clean = await sanitizeText(location);
+  let clean = sanitizeText(location);
 
   // Remove coordinate-like patterns that might be injection attempts
   clean = clean.replace(/[();]/g, '');
@@ -208,7 +187,7 @@ export function sanitizeCoordinates(lat: number, lng: number): { lat: number; ln
  */
 export async function sanitizeJSON(data: any): Promise<any> {
   if (typeof data === 'string') {
-    return await sanitizeText(data);
+    return sanitizeText(data);
   }
 
   if (Array.isArray(data)) {
@@ -219,7 +198,7 @@ export async function sanitizeJSON(data: any): Promise<any> {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(data)) {
       // Sanitize the key as well
-      const cleanKey = await sanitizeText(key);
+      const cleanKey = sanitizeText(key);
       sanitized[cleanKey] = await sanitizeJSON(value);
     }
     return sanitized;
@@ -234,16 +213,14 @@ export async function sanitizeJSON(data: any): Promise<any> {
 // ============================================================
 
 /**
- * Remove potential SQL injection patterns
+ * Remove common SQL injection patterns
  */
 function removeSQLPatterns(text: string): string {
-  // Remove common SQL keywords used in injection
+  // Remove SQL keywords that could indicate injection attempts
   const sqlPatterns = [
-    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|CREATE|ALTER|EXEC|EXECUTE|SCRIPT|JAVASCRIPT)\b)/gi,
-    /(--|#|\/\*|\*\/)/g, // SQL comments
-    /(\bOR\b\s*\d+\s*=\s*\d+)/gi, // OR 1=1 patterns
-    /(\bAND\b\s*\d+\s*=\s*\d+)/gi, // AND 1=1 patterns
-    /(\'|\"|`|;|\\x[0-9a-f]{2}|\\u[0-9a-f]{4})/gi, // Quotes and hex/unicode escapes
+    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|SCRIPT|JAVASCRIPT|ONERROR|ONLOAD)\b)/gi,
+    /(--[^\n]*)/g, // SQL comments
+    /(\/\*[\s\S]*?\*\/)/g, // Multi-line comments
   ];
 
   let clean = text;
@@ -255,79 +232,46 @@ function removeSQLPatterns(text: string): string {
 }
 
 /**
- * Normalize whitespace in text
+ * Normalize whitespace
  */
 function normalizeWhitespace(text: string): string {
   return text
-    .replace(/[\r\n]+/g, ' ') // Replace line breaks with space
-    .replace(/\s+/g, ' ')     // Replace multiple spaces with single space
-    .trim();                  // Remove leading/trailing whitespace
+    .replace(/\s+/g, ' ') // Multiple spaces to single space
+    .replace(/\n\s*\n/g, '\n') // Multiple newlines to single newline
+    .trim();
 }
 
-// ============================================================
-// VALIDATION HELPERS
-// ============================================================
-
 /**
- * Check if text contains suspicious patterns
+ * Check for suspicious patterns that indicate potential attacks
  */
 export function containsSuspiciousPatterns(text: string): boolean {
-  const patterns = [
-    /<script/i,
-    /javascript:/i,
-    /on\w+\s*=/i, // Event handlers like onclick=
-    /\beval\s*\(/i,
-    /\bexec\s*\(/i,
-    /SELECT.*FROM/i,
-    /INSERT.*INTO/i,
-    /UPDATE.*SET/i,
-    /DELETE.*FROM/i,
-    /DROP\s+(TABLE|DATABASE)/i,
-    /\.\.\//,  // Path traversal
-    /\\x[0-9a-f]{2}/i, // Hex escapes
-    /\\u[0-9a-f]{4}/i, // Unicode escapes
+  const suspiciousPatterns = [
+    /<script[^>]*>.*?<\/script>/gi, // Script tags
+    /javascript:/gi, // JavaScript protocol
+    /on\w+\s*=/gi, // Event handlers (onclick, onerror, etc.)
+    /data:text\/html/gi, // Data URIs with HTML
+    /vbscript:/gi, // VBScript protocol
+    /&#/g, // HTML entities (often used in XSS)
+    /\\x[0-9a-f]{2}/gi, // Hex encoding
+    /\\u[0-9a-f]{4}/gi, // Unicode encoding
   ];
 
-  return patterns.some(pattern => pattern.test(text));
-}
-
-/**
- * Validate that sanitized text maintains essential content
- */
-export function validateSanitization(original: string, sanitized: string): boolean {
-  // If original had content, sanitized should too
-  if (original.trim().length > 0 && sanitized.trim().length === 0) {
-    return false;
-  }
-
-  // Check if too much content was removed (potential over-sanitization)
-  const removalRatio = 1 - (sanitized.length / original.length);
-  if (removalRatio > 0.5 && original.length > 100) {
-    // More than 50% removed on substantial text might indicate an issue
-    console.warn('Sanitization removed more than 50% of content', {
-      original: original.length,
-      sanitized: sanitized.length,
-      ratio: removalRatio,
-    });
-  }
-
-  return true;
+  return suspiciousPatterns.some(pattern => pattern.test(text));
 }
 
 // ============================================================
-// EXPORT ALL SANITIZERS AS A COLLECTION
+// EXPORTS
 // ============================================================
 
-export const sanitizers = {
-  text: sanitizeText,
-  richText: sanitizeRichText,
-  attribute: sanitizeAttributeValue,
-  email: sanitizeEmail,
-  fileName: sanitizeFileName,
-  url: sanitizeUrl,
-  location: sanitizeLocation,
-  coordinates: sanitizeCoordinates,
-  json: sanitizeJSON,
+export default {
+  sanitizeText,
+  sanitizeRichText,
+  sanitizeAttributeValue,
+  sanitizeEmail,
+  sanitizeFileName,
+  sanitizeURL,
+  sanitizeLocation,
+  sanitizeCoordinates,
+  sanitizeJSON,
+  containsSuspiciousPatterns,
 };
-
-export default sanitizers;

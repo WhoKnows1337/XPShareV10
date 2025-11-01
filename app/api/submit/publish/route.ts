@@ -64,14 +64,14 @@ export async function POST(request: NextRequest) {
     // 3. PREPARE DATA FOR ATOMIC FUNCTION
     // ============================================================
     const sanitizedData = {
-      title: await sanitizeText(data.title),
-      text: await sanitizeRichText(data.text),
-      enhancedText: data.enhancedText ? await sanitizeRichText(data.enhancedText) : undefined,
+      title: sanitizeText(data.title),
+      text: sanitizeRichText(data.text),
+      enhancedText: data.enhancedText ? sanitizeRichText(data.enhancedText) : undefined,
       category: data.category,
-      tags: await Promise.all(data.tags.map(tag => sanitizeText(tag))),
-      location: data.location ? await sanitizeLocation(data.location) : null,
+      tags: data.tags.map(tag => sanitizeText(tag)),
+      location: data.location ? sanitizeLocation(data.location) : null,
       coordinates: (data.locationLat && data.locationLng)
-        ? await sanitizeCoordinates(data.locationLat, data.locationLng)
+        ? sanitizeCoordinates(data.locationLat, data.locationLng)
         : null,
     };
 
@@ -93,16 +93,16 @@ export async function POST(request: NextRequest) {
     // Prepare attributes for DB function
     const attributes = data.attributes ? await Promise.all(Object.entries(data.attributes).map(async ([key, attr]) => ({
       key,
-      value: await sanitizeAttributeValue(attr.value),
-      customValue: attr.customValue ? await sanitizeAttributeValue(attr.customValue) : null,
+      value: sanitizeAttributeValue(attr.value),
+      customValue: attr.customValue ? sanitizeAttributeValue(attr.customValue) : null,
       confidence: Math.min(1, Math.max(0, attr.confidence)),
       isManuallyEdited: attr.isManuallyEdited || false,
     }))) : [];
 
     // Prepare witnesses for DB function
     const witnesses = data.witnesses ? await Promise.all(data.witnesses.map(async (witness) => ({
-      name: await sanitizeText(witness.name),
-      email: witness.email ? await sanitizeEmail(witness.email) : null,
+      name: sanitizeText(witness.name),
+      email: witness.email ? sanitizeEmail(witness.email) : null,
       userId: witness.userId || null,
     }))) : [];
 
