@@ -176,6 +176,9 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.13.12
         version: 3.13.12(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tiptap/core':
+        specifier: ^2.26.4
+        version: 2.26.4(@tiptap/pm@2.26.4)
       '@tiptap/extension-image':
         specifier: ^2.10.4
         version: 2.26.4(@tiptap/core@2.26.4(@tiptap/pm@2.26.4))
