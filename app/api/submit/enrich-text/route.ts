@@ -25,10 +25,29 @@ export async function POST(request: NextRequest) {
     // Parse and validate request body
     const body = await request.json();
 
+    console.log('enrich-text request body:', {
+      hasText: !!body.text,
+      textLength: body.text?.length,
+      hasAttributes: !!body.attributes,
+      attributesCount: Object.keys(body.attributes || {}).length,
+      hasAnswers: !!body.answers,
+      answersType: Array.isArray(body.answers) ? 'array' : typeof body.answers,
+      language: body.language
+    });
+
     // Validate with Zod schema
     const validation = enrichTextSchema.safeParse(body);
 
     if (!validation.success) {
+      console.error('enrich-text validation failed:', {
+        errors: validation.error.flatten().fieldErrors,
+        receivedData: {
+          textLength: body.text?.length,
+          attributesKeys: Object.keys(body.attributes || {}),
+          answersLength: body.answers?.length
+        }
+      });
+
       return NextResponse.json(
         {
           error: 'Invalid input',

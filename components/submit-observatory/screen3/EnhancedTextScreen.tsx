@@ -115,6 +115,13 @@ export function EnhancedTextScreen() {
   }, []); // Only run on mount
 
   const generateSummary = async () => {
+    // Check if text is long enough before attempting summary
+    if (!screen1.text || screen1.text.trim().length < 50) {
+      console.log('Text too short for summary, skipping generation');
+      setSummary(''); // Set empty summary for short texts
+      return;
+    }
+
     setSummarizing(true);
     try {
       const response = await fetch('/api/submit/generate-summary', {
@@ -135,27 +142,58 @@ export function EnhancedTextScreen() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Summary generation failed' }));
         console.error('Summary generation API error:', errorData);
-        throw new Error(errorData.error || 'Summary generation failed');
+        // Don't throw for summary generation - it's optional
+        setSummary(''); // Set empty summary on error
+        return;
       }
 
       const data = await response.json();
       setSummary(data.summary);
     } catch (error) {
       console.error('Summary generation error:', error);
+      setSummary(''); // Set empty summary on error
     } finally {
       setSummarizing(false);
     }
   };
 
   const enhanceText = async () => {
+    // Skip enhancement if text is too short
+    if (!screen1.text || screen1.text.trim().length < 30) {
+      console.log('Text too short for enhancement, skipping');
+      setEnhancedText('', []);
+      return;
+    }
+
     setEnhancing(true);
     try {
+      // Ensure attributes is an object with proper structure
+      // Convert confidence from percentage (0-100) to decimal (0-1) if needed
+      const attributesObject: Record<string, { value: string; confidence: number; isManuallyEdited: boolean }> = {};
+
+      for (const [key, attr] of Object.entries(screen2.attributes || {})) {
+        if (attr && typeof attr === 'object' && 'value' in attr) {
+          attributesObject[key] = {
+            value: String(attr.value || ''),
+            confidence: attr.confidence > 1 ? attr.confidence / 100 : attr.confidence, // Convert from percentage if needed
+            isManuallyEdited: attr.isManuallyEdited || false
+          };
+        }
+      }
+
+      // Log what we're sending for debugging
+      console.log('Sending to enrich-text API:', {
+        textLength: screen1.text.length,
+        attributes: attributesObject,
+        answersCount: Object.keys(screen2.extraQuestions || {}).length,
+      });
+
       const response = await fetch('/api/submit/enrich-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: screen1.text,
-          attributes: screen2.attributes,
+          attributes: attributesObject, // Already in the correct format from screen2
           // Convert extraQuestions object to array format expected by API
           answers: Object.entries(screen2.extraQuestions || {}).map(([id, answer]) => ({
             id,
@@ -170,8 +208,21 @@ export function EnhancedTextScreen() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Text enrichment failed' }));
-        console.error('Text enrichment API error:', errorData);
-        throw new Error(errorData.error || 'Text enrichment failed');
+        console.error('Text enrichment API error:', {
+          status: response.status,
+          error: errorData.error,
+          details: errorData.details,
+          sentData: {
+            textLength: screen1.text?.length,
+            attributesCount: Object.keys(screen2.attributes || {}).length,
+            answersCount: Object.keys(screen2.extraQuestions || {}).length
+          }
+        });
+        throw new Error(
+          errorData.details
+            ? `Validation failed: ${JSON.stringify(errorData.details)}`
+            : errorData.error || 'Text enrichment failed'
+        );
       }
 
       const data = await response.json();
