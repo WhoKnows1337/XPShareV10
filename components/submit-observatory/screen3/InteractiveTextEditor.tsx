@@ -146,7 +146,7 @@ export function InteractiveTextEditor({ onTextChange, onTextBlur }: InteractiveT
         italic: false,
         strike: false,
       }),
-      AIHighlight, // ⭐ Our custom mark with inclusive: false and exitable: true
+      AIHighlight as any, // ⭐ Our custom mark with inclusive: false and exitable: true (type assertion for @tiptap version mismatch)
     ],
     content: hasSegments
       ? segmentsToTiptapJSON(screen3.segments)
