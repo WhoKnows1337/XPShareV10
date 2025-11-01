@@ -34,10 +34,18 @@ export async function POST(request: NextRequest) {
     // Parse and validate request body
     const body = await request.json();
 
+    // Log the incoming request for debugging
+    console.log('analyze-complete request body:', body);
+
     // Validate with Zod schema
     const validation = analyzeCompleteSchema.safeParse(body);
 
     if (!validation.success) {
+      console.error('Validation failed:', {
+        errors: validation.error.flatten().fieldErrors,
+        receivedData: body
+      });
+
       return NextResponse.json(
         {
           error: 'Invalid input',

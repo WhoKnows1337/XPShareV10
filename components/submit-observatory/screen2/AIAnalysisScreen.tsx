@@ -149,7 +149,20 @@ export function AIAnalysisScreen() {
       if (!response.ok) {
         // Get the actual error message from the API
         const errorData = await response.json().catch(() => ({ error: 'Analysis failed' }));
-        throw new Error(errorData.error || `Analysis failed with status ${response.status}`);
+        console.error('AI Analysis API error:', {
+          status: response.status,
+          error: errorData.error,
+          details: errorData.details,
+          sentData: {
+            text: screen1.text.substring(0, 100) + '...', // Show first 100 chars
+            language: currentLocale.substring(0, 2)
+          }
+        });
+        throw new Error(
+          errorData.details
+            ? `Validation failed: ${JSON.stringify(errorData.details)}`
+            : errorData.error || `Analysis failed with status ${response.status}`
+        );
       }
 
       const data = await response.json();

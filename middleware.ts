@@ -123,17 +123,21 @@ export async function middleware(request: NextRequest) {
       new Date(currentLimit.resetTime).toISOString()
     )
 
-    // Check for suspicious patterns in API requests
+    // Check for suspicious patterns in API requests (check pathname only, not full URL)
     const suspiciousPatterns = [
-      /(\.\.|\/\/)/,  // Path traversal
+      /\.\./,          // Path traversal (parent directory)
       /<script/i,      // Script injection
       /javascript:/i,  // JavaScript protocol
       /on\w+\s*=/i,    // Event handlers
     ]
 
-    if (suspiciousPatterns.some(pattern => pattern.test(request.url))) {
+    // Check only the pathname and query string, not the full URL
+    const pathAndQuery = requestPathname + request.nextUrl.search
+
+    if (suspiciousPatterns.some(pattern => pattern.test(pathAndQuery))) {
       console.warn('Suspicious API request detected:', {
-        url: request.url,
+        pathname: requestPathname,
+        query: request.nextUrl.search,
         ip: getClientIP(request),
         timestamp: new Date().toISOString(),
       })
