@@ -868,11 +868,7 @@ export default function DiscoverPage() {
                   </Button>
                 </PromptInputActionMenuTrigger>
                 <PromptInputActionMenuContent>
-                  <PromptInputActionAddAttachments
-                    accept="image/*,application/pdf,.txt,.md"
-                    multiple
-                    aria-label="Add attachments"
-                  />
+                  <PromptInputActionAddAttachments />
                 </PromptInputActionMenuContent>
               </PromptInputActionMenu>
 
@@ -907,10 +903,10 @@ export default function DiscoverPage() {
         open={showShortcutsModal}
         onOpenChange={setShowShortcutsModal}
         shortcuts={[
-          { key: 'Ctrl+K', description: 'Focus input' },
-          { key: 'Ctrl+N', description: 'New chat' },
-          { key: 'Ctrl+/', description: 'Show shortcuts' },
-          { key: '?', description: 'Show shortcuts' },
+          { key: 'k', ctrl: true, description: 'Focus input', action: () => {} },
+          { key: 'n', ctrl: true, description: 'New chat', action: () => {} },
+          { key: '/', ctrl: true, description: 'Show shortcuts', action: () => setShowShortcutsModal(prev => !prev) },
+          { key: '?', description: 'Show shortcuts', action: () => setShowShortcutsModal(prev => !prev) },
         ]}
       />
       </div>

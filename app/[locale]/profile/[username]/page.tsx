@@ -151,8 +151,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   // Format profile data
   const profileData = {
     id: profile.id,
-    username: profile.username,
-    display_name: profile.display_name || profile.username,
+    username: profile.username || 'user',
+    display_name: profile.display_name || profile.username || 'user',
     avatar_url: profile.avatar_url || null,
     bio: profile.bio || null,
     location_city: profile.location_city || null,

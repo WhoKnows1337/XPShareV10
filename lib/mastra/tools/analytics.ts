@@ -18,7 +18,7 @@ import type { XPShareContext } from '../types'
  * User contribution rankings by experience count, category diversity, or XP.
  * Uses SQL function from Phase 1 for optimal performance.
  */
-export const rankUsersTool = createTool<XPShareContext>({
+export const rankUsersTool = createTool({
   id: 'rankUsers',
   description:
     'USER LEADERBOARD & RANKINGS: Get top contributors ranked by experience count and category diversity. Returns user rankings with usernames, contribution counts, and category expertise. Use this when user asks for "top contributors", "leaderboard", "most active users", "who contributes most", "user rankings", or "find contributors".',
@@ -39,7 +39,7 @@ export const rankUsersTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Call SQL function from Phase 1
     const { data, error } = await supabase.rpc('aggregate_users_by_category', {
@@ -76,7 +76,7 @@ export const rankUsersTool = createTool<XPShareContext>({
  * Deep-dive analysis of a specific category.
  * Provides counts, date distribution, and top attributes.
  */
-export const analyzeCategoryTool = createTool<XPShareContext>({
+export const analyzeCategoryTool = createTool({
   id: 'analyzeCategory',
   description:
     'BASIC CATEGORY SUMMARY: Simple data summary for a category (counts, locations, dates). Returns raw JSON with total experiences, date distribution, top locations, and common attributes. DO NOT use for insights, patterns, or statistical analysis - use generateInsights or detectPatterns instead. Use this ONLY for basic "how many", "where", "when" questions.',
@@ -123,7 +123,7 @@ export const analyzeCategoryTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Build query for category experiences
     let query = supabase
@@ -160,7 +160,7 @@ export const analyzeCategoryTool = createTool<XPShareContext>({
 
     // Analyze locations
     const locationCounts: Record<string, number> = {}
-    experiences.forEach((exp) => {
+    experiences.forEach((exp: any) => {
       if (exp.location_text) {
         locationCounts[exp.location_text] = (locationCounts[exp.location_text] || 0) + 1
       }
@@ -173,7 +173,7 @@ export const analyzeCategoryTool = createTool<XPShareContext>({
 
     // Analyze dates (monthly distribution)
     const monthCounts: Record<string, number> = {}
-    experiences.forEach((exp) => {
+    experiences.forEach((exp: any) => {
       if (exp.date_occurred) {
         const month = exp.date_occurred.slice(0, 7) // YYYY-MM
         monthCounts[month] = (monthCounts[month] || 0) + 1
@@ -189,7 +189,7 @@ export const analyzeCategoryTool = createTool<XPShareContext>({
 
     if (params.includeAttributes) {
       const attrCounts: Record<string, number> = {}
-      experiences.forEach((exp) => {
+      experiences.forEach((exp: any) => {
         const attrs = exp.experience_attributes || []
         attrs.forEach((attr: any) => {
           attrCounts[attr.attribute_key] = (attrCounts[attr.attribute_key] || 0) + 1
@@ -223,7 +223,7 @@ export const analyzeCategoryTool = createTool<XPShareContext>({
  * Side-by-side comparison of two categories.
  * Analyzes differences in volume, distribution, attributes, and patterns.
  */
-export const compareCategoryTool = createTool<XPShareContext>({
+export const compareCategoryTool = createTool({
   id: 'compareCategories',
   description:
     'Compare two categories side-by-side. Analyzes differences in experience volume, geographic distribution, temporal patterns, and common attributes. Use this to understand category differences and similarities.',
@@ -254,7 +254,7 @@ export const compareCategoryTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Fetch data for both categories
     const fetchCategoryData = async (category: string, dateRange?: any) => {
@@ -323,7 +323,7 @@ export const compareCategoryTool = createTool<XPShareContext>({
  * Find correlations between attributes within a category.
  * Analyzes co-occurrence patterns and statistical relationships.
  */
-export const attributeCorrelationTool = createTool<XPShareContext>({
+export const attributeCorrelationTool = createTool({
   id: 'attributeCorrelation',
   description:
     'Find correlations between attributes within a category. Analyzes which attributes frequently appear together and their co-occurrence strength. Use this to discover attribute patterns and relationships.',
@@ -362,7 +362,7 @@ export const attributeCorrelationTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Fetch category experiences with attributes
     const { data, error } = await supabase
@@ -390,7 +390,7 @@ export const attributeCorrelationTool = createTool<XPShareContext>({
     const cooccurrenceMatrix: Record<string, Record<string, number>> = {}
     const attributeCounts: Record<string, number> = {}
 
-    experiences.forEach((exp) => {
+    experiences.forEach((exp: any) => {
       const attrs = exp.experience_attributes || []
       const attrKeys = attrs.map((a: any) => a.attribute_key)
 

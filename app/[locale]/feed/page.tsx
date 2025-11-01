@@ -143,7 +143,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     if (currentTab === 'following') {
       // Use Following Feed RPC
       try {
-        const { data: followingData, error: followingError } = await supabase.rpc('get_following_feed', {
+        const { data: followingData, error: followingError } = await (supabase.rpc as any)('get_following_feed', {
           p_user_id: user.id,
           p_limit: 20,
           p_offset: 0
@@ -179,7 +179,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         )]
 
         // Call For-You-Feed RPC
-        const { data: forYouData, error: rpcError } = await supabase.rpc('get_for_you_feed', {
+        const { data: forYouData, error: rpcError } = await (supabase.rpc as any)('get_for_you_feed', {
           p_user_id: user.id,
           p_liked_categories: likedCategories.length > 0 ? likedCategories : ['ufo', 'paranormal'],
           p_user_location: userProfile?.location_city ?? undefined,

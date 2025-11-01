@@ -238,7 +238,7 @@ function analyzeTrend(
   // Aggregate by period
   const periodCounts = new Map<string, number>()
 
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const dateStr = item.date_occurred || item.created_at || item.period
     if (!dateStr) return
 

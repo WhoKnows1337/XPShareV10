@@ -169,6 +169,7 @@ export interface SubmitFlowState {
 
   // Draft Actions
   saveDraft: () => void;
+  saveDraftAndExit: () => boolean;
   loadDraft: () => void;
   clearDraft: () => void;
 
@@ -591,6 +592,16 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           lastSaved: new Date().toISOString(),
           isDraft: true,
         }),
+
+      saveDraftAndExit: () => {
+        // Save current state with timestamp
+        set({
+          lastSaved: new Date().toISOString(),
+          isDraft: true,
+        });
+        // Navigation will be handled by the component calling this
+        return true;
+      },
 
       loadDraft: () => {
         // Draft is automatically loaded from localStorage via persist middleware

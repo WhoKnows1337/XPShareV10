@@ -75,7 +75,7 @@ export const createAnalyzeCategoryTool = (supabase: any) =>
 
       // Analyze locations
       const locationCounts: Record<string, number> = {}
-      experiences.forEach((exp) => {
+      experiences.forEach((exp: any) => {
         if (exp.location_text) {
           locationCounts[exp.location_text] = (locationCounts[exp.location_text] || 0) + 1
         }
@@ -88,7 +88,7 @@ export const createAnalyzeCategoryTool = (supabase: any) =>
 
       // Analyze dates (monthly distribution)
       const monthCounts: Record<string, number> = {}
-      experiences.forEach((exp) => {
+      experiences.forEach((exp: any) => {
         if (exp.date_occurred) {
           const month = exp.date_occurred.slice(0, 7) // YYYY-MM
           monthCounts[month] = (monthCounts[month] || 0) + 1
@@ -106,7 +106,7 @@ export const createAnalyzeCategoryTool = (supabase: any) =>
       if (params.includeAttributes) {
         const attributeCounts: Record<string, Record<string, number>> = {}
 
-        experiences.forEach((exp) => {
+        experiences.forEach((exp: any) => {
           const attrs = exp.experience_attributes || []
           attrs.forEach((attr: any) => {
             if (!attributeCounts[attr.attribute_key]) {

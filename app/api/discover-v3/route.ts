@@ -183,7 +183,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     // Sanitize messages (convert UIMessage[] to Mastra format)
     const sanitizedMessages = messages
-      .map((msg: UIMessage) => {
+      .map((msg: any) => {
         let content: string = ''
 
         if (typeof msg.content === 'string') {
@@ -273,7 +273,7 @@ export async function POST(req: NextRequest): Promise<Response> {
             // Format chunk for client consumption
             const formattedChunk = {
               type: chunk.type,
-              payload: chunk.payload,
+              payload: (chunk as any).payload,
               metadata: {
                 thinkingMode,
                 complexityScore: complexityAnalysis.score,

@@ -33,6 +33,22 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { SearchTrendsChart } from '@/components/admin/search-trends-chart'
 
+// Note: database.types.ts has duplicate Database definitions
+// We extract the needed type directly from the search_analytics table
+interface SearchAnalyticsRow {
+  clicked_result_id: string | null
+  created_at: string | null
+  execution_time_ms: number | null
+  filters: unknown | null
+  id: string
+  language: string | null
+  query_embedding: string | null
+  query_text: string
+  result_count: number | null
+  search_type: string | null
+  user_id: string | null
+}
+
 interface SearchStat {
   query_text: string
   search_count: number
@@ -70,8 +86,8 @@ export function SearchAnalyticsClient() {
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - daysAgo)
 
-      // Fetch search analytics
-      const { data: searches, error } = await supabase
+      // Fetch search analytics with proper typing
+      const { data, error } = await supabase
         .from('search_analytics')
         .select('*')
         .gte('created_at', startDate.toISOString())
@@ -79,10 +95,13 @@ export function SearchAnalyticsClient() {
 
       if (error) throw error
 
-      if (!searches || searches.length === 0) {
+      if (!data || data.length === 0) {
         setIsLoading(false)
         return
       }
+
+      // Type assertion for searches
+      const searches: SearchAnalyticsRow[] = data
 
       // Calculate metrics
       setTotalSearches(searches.length)
@@ -173,7 +192,7 @@ export function SearchAnalyticsClient() {
         .sort((a, b) => b.attempt_count - a.attempt_count)
         .slice(0, 15)
 
-      setZeroResultQueries(zeroResults as any)
+      setZeroResultQueries(zeroResults)
 
     } catch (error) {
       console.error('Error fetching search analytics:', error)

@@ -75,11 +75,7 @@ All tools return visualization-ready data:
 The UI components will handle rendering - just provide clean, structured data.
 `,
 
-  model: {
-    provider: 'OPEN_AI',
-    name: 'gpt-4o-mini',
-    toolChoice: 'auto',
-  },
+  model: openai('gpt-4o-mini'),
 
   tools: {
     temporalAnalysis: temporalAnalysisTool,

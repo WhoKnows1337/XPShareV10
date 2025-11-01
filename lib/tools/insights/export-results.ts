@@ -100,7 +100,7 @@ function arrayToCSV(data: any[], fields?: string[]): string {
   } else {
     // Collect all unique keys
     const allKeys = new Set<string>()
-    flattened.forEach((item) => {
+    flattened.forEach((item: any) => {
       Object.keys(item).forEach((key) => allKeys.add(key))
     })
     headers = Array.from(allKeys).sort()
@@ -113,7 +113,7 @@ function arrayToCSV(data: any[], fields?: string[]): string {
   rows.push(headers.map((h) => escapeCSV(h)).join(','))
 
   // Data rows
-  flattened.forEach((item) => {
+  flattened.forEach((item: any) => {
     const values = headers.map((header) => escapeCSV(item[header]))
     rows.push(values.join(','))
   })

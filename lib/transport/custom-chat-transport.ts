@@ -15,8 +15,8 @@ export interface CustomChatTransportOptions {
   timeout?: number
 }
 
-export class CustomChatTransport implements ChatTransport {
-  private defaultTransport: DefaultChatTransport
+export class CustomChatTransport implements ChatTransport<any> {
+  private defaultTransport: DefaultChatTransport<any>
 
   constructor(options: CustomChatTransportOptions) {
     console.log('[CustomChatTransport] Initializing with options:', {
@@ -118,7 +118,16 @@ export class CustomChatTransport implements ChatTransport {
     })
 
     try {
-      const stream = await this.defaultTransport.sendMessages(options)
+      // Properly typed parameters for DefaultChatTransport
+      const transportOptions = {
+        messages: options.messages,
+        trigger: 'submit-message' as const,
+        chatId: 'chat-' + Date.now(),
+        messageId: undefined as string | undefined,
+        abortSignal: options.abortSignal,
+      }
+      
+      const stream = await this.defaultTransport.sendMessages(transportOptions)
       console.log('[CustomChatTransport] sendMessages() stream received successfully')
       return stream
     } catch (error) {
@@ -133,7 +142,7 @@ export class CustomChatTransport implements ChatTransport {
   /**
    * Reconnect to an existing stream (delegates to DefaultChatTransport)
    */
-  reconnectToStream(options: any): ReadableStream {
+  async reconnectToStream(options: any): Promise<ReadableStream | null> {
     console.log('[CustomChatTransport] reconnectToStream() called')
     return this.defaultTransport.reconnectToStream(options)
   }

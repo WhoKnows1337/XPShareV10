@@ -68,7 +68,7 @@ export const createAttributeCorrelationTool = (supabase: any) =>
       const cooccurrenceMatrix: Record<string, Record<string, number>> = {}
       const attributeCounts: Record<string, number> = {}
 
-      experiences.forEach((exp) => {
+      experiences.forEach((exp: any) => {
         const attrs = exp.experience_attributes || []
         const attrKeys = attrs.map((a: any) => a.attribute_key)
 

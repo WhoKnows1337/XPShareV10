@@ -68,9 +68,9 @@ export default async function TimelinePage({ searchParams }: TimelinePageProps) 
     upvote_count: exp.upvote_count ?? 0,
     comment_count: exp.comment_count ?? 0,
     user_profiles: exp.user_profiles ? {
-      username: (exp.user_profiles as any).username,
-      display_name: (exp.user_profiles as any).display_name ?? (exp.user_profiles as any).username,
-      avatar_url: (exp.user_profiles as any).avatar_url ?? undefined
+      username: exp.user_profiles.username || 'user',
+      display_name: exp.user_profiles.display_name || exp.user_profiles.username || 'user',
+      avatar_url: exp.user_profiles.avatar_url ?? undefined
     } : undefined
   })) || []
 

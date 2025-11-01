@@ -112,17 +112,17 @@ export async function POST(request: NextRequest) {
         p_story_text: finalText,
         p_category: sanitizedData.category,
         p_tags: sanitizedData.tags,
-        p_date_occurred: data.dateOccurred || null,
-        p_time_of_day: data.timeOfDay || null,
-        p_duration: data.duration || null,
-        p_location_text: sanitizedData.location,
-        p_location_lat: sanitizedData.coordinates?.lat || null,
-        p_location_lng: sanitizedData.coordinates?.lng || null,
+        p_date_occurred: data.dateOccurred || undefined,
+        p_time_of_day: data.timeOfDay || undefined,
+        p_duration: data.duration || undefined,
+        p_location_text: sanitizedData.location ?? undefined,
+        p_location_lat: sanitizedData.coordinates?.lat || undefined,
+        p_location_lng: sanitizedData.coordinates?.lng || undefined,
         p_question_answers: data.questionAnswers || {},
         p_visibility: data.visibility,
         p_ai_enhancement_used: data.aiEnhancementUsed || false,
         p_user_edited_ai: data.userEditedAi || false,
-        p_enhancement_model: data.enhancementModel || null,
+        p_enhancement_model: data.enhancementModel || undefined,
         p_attributes: attributes,
         p_witnesses: witnesses,
         p_embedding: embedding,
@@ -146,13 +146,15 @@ export async function POST(request: NextRequest) {
     // ============================================================
     const processingTime = Date.now() - startTime;
 
+    const typedResult = result as any;
+
     return NextResponse.json({
       success: true,
-      experienceId: result.experience_id,
-      xpEarned: result.xp_earned,
-      badgesEarned: result.badges_earned || [],
-      leveledUp: result.leveled_up,
-      newLevel: result.new_level,
+      experienceId: typedResult.experience_id,
+      xpEarned: typedResult.xp_earned,
+      badgesEarned: typedResult.badges_earned || [],
+      leveledUp: typedResult.leveled_up,
+      newLevel: typedResult.new_level,
       processingTimeMs: processingTime,
     });
 

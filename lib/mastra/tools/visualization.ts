@@ -13,7 +13,7 @@ import type { XPShareContext } from '../types'
 // 1. Temporal Analysis Tool
 // ============================================================================
 
-export const temporalAnalysisTool = createTool<XPShareContext>({
+export const temporalAnalysisTool = createTool({
   id: 'temporalAnalysis',
   description:
     'Analyze temporal patterns and trends. Aggregates experiences by time periods (hour/day/week/month/year) with optional category and location grouping. Use this to discover time-based patterns.',
@@ -54,7 +54,7 @@ export const temporalAnalysisTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Call SQL function from Phase 1
     const { data, error } = await supabase.rpc('temporal_aggregation', {
@@ -101,7 +101,7 @@ export const temporalAnalysisTool = createTool<XPShareContext>({
 // 2. Generate Map Tool (Geographic Visualizations)
 // ============================================================================
 
-export const generateMapTool = createTool<XPShareContext>({
+export const generateMapTool = createTool({
   id: 'generateMap',
   description:
     'Create geographic visualizations with GeoJSON markers and heatmap data. Use for location-based questions and "where" questions. Returns visualization-ready geographic data.',
@@ -169,7 +169,7 @@ export const generateMapTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Build query
     let query = supabase
@@ -263,7 +263,7 @@ export const generateMapTool = createTool<XPShareContext>({
 // 3. Generate Timeline Tool (Event Timelines)
 // ============================================================================
 
-export const generateTimelineTool = createTool<XPShareContext>({
+export const generateTimelineTool = createTool({
   id: 'generateTimeline',
   description:
     'Create chronological event timelines for individual experience journeys. Use for chronological storytelling and "my experiences over time" questions. Returns ordered events with metadata.',
@@ -313,7 +313,7 @@ export const generateTimelineTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
     const userId = runtimeContext.get('userId')
 
     // Build query
@@ -387,7 +387,7 @@ export const generateTimelineTool = createTool<XPShareContext>({
 // 4. Generate Network Tool (Relationship Networks)
 // ============================================================================
 
-export const generateNetworkTool = createTool<XPShareContext>({
+export const generateNetworkTool = createTool({
   id: 'generateNetwork',
   description:
     'Create relationship networks showing connections between users, experiences, or categories. Use for connections, clusters, and "who/what is related" questions. Returns nodes and edges for graph visualization.',
@@ -432,7 +432,7 @@ export const generateNetworkTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     if (params.type === 'category-connections') {
       // Query category co-occurrence (users who post in multiple categories)
@@ -520,7 +520,7 @@ export const generateNetworkTool = createTool<XPShareContext>({
 // 5. Generate Dashboard Tool (Multi-Metric Dashboards)
 // ============================================================================
 
-export const generateDashboardTool = createTool<XPShareContext>({
+export const generateDashboardTool = createTool({
   id: 'generateDashboard',
   description:
     'Create multi-metric dashboards with various chart types. Use for overview, analytics, and "show me everything" questions. Returns multiple chart configurations (bar, pie, line, etc.).',
@@ -559,7 +559,7 @@ export const generateDashboardTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     const charts: any[] = []
 

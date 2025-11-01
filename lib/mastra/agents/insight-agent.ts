@@ -83,11 +83,7 @@ Provide:
 - Follow-up suggestions when appropriate
 `,
 
-  model: {
-    provider: 'OPEN_AI',
-    name: 'gpt-4o',
-    toolChoice: 'auto',
-  },
+  model: openai('gpt-4o'),
 
   tools: {
     generateInsights: generateInsightsTool,

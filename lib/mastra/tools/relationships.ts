@@ -18,7 +18,7 @@ import type { XPShareContext } from '../types'
  * Multi-dimensional relationship discovery using weighted similarity scores.
  * Uses SQL function for semantic, geographic, temporal, and attribute similarity.
  */
-export const findConnectionsTool = createTool<XPShareContext>({
+export const findConnectionsTool = createTool({
   id: 'findConnections',
   description:
     'NETWORK ANALYSIS: Build relationship networks between experiences using multi-dimensional similarity scores. Requires an experienceId to analyze connections. Combines semantic vectors (0.4), geographic distance (0.3), temporal proximity (0.2), and attribute overlap (0.1) into weighted similarity scores. Returns ranked list of connected experiences with scores. DO NOT use for simple search - use this only when user asks for "connections", "relationships", "network", "similar to specific experience", or "related to [experience ID]".',
@@ -70,7 +70,7 @@ export const findConnectionsTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Call SQL function from Phase 1 (using request-scoped Supabase client)
     const { data, error } = await supabase.rpc('find_related_experiences', {
@@ -130,7 +130,7 @@ export const findConnectionsTool = createTool<XPShareContext>({
  *
  * Note: Has OPTIONAL RLS - can fetch data by category or analyze provided data.
  */
-export const detectPatternsTool = createTool<XPShareContext>({
+export const detectPatternsTool = createTool({
   id: 'detectPatterns',
   description:
     'PATTERN DETECTION: Statistical analysis to detect anomalies, trends, clusters, and correlations in experience datasets. Analyzes temporal spikes/trends, geographic hotspots/clusters, semantic themes, and attribute correlations using statistical methods (standard deviation, clustering). Can fetch data automatically by category OR analyze pre-fetched data. Returns confidence-scored patterns with evidence. Use this when user asks to "detect patterns", "find anomalies", "discover trends", "identify clusters", or "analyze statistical patterns".',
@@ -167,7 +167,7 @@ export const detectPatternsTool = createTool<XPShareContext>({
 
     if (data.length === 0 && params.category) {
       try {
-        const supabase = runtimeContext.get('supabase')
+        const supabase = runtimeContext.get('supabase') as any
         const { data: fetchedData, error } = await supabase
           .from('experiences')
           .select('id, category, location_text, date_occurred, created_at, title, story_text')
@@ -266,7 +266,7 @@ function detectTemporalPatterns(data: any[]): any[] {
 
   // Extract dates
   const dateCounts: Record<string, number> = {}
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const date = item.date_occurred || item.created_at || item.period || item.month
     if (date) {
       const month = typeof date === 'string' ? date.slice(0, 7) : date
@@ -301,7 +301,7 @@ function detectGeographicPatterns(data: any[]): any[] {
 
   // Extract locations
   const locationCounts: Record<string, number> = {}
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const location = item.location_text || item.location
     if (location) {
       const normalized = location.toLowerCase().trim()
@@ -335,7 +335,7 @@ function detectSemanticPatterns(data: any[]): any[] {
 
   // Extract categories
   const categoryCounts: Record<string, number> = {}
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const category = item.category
     if (category) {
       categoryCounts[category] = (categoryCounts[category] || 0) + 1

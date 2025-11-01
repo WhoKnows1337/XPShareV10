@@ -135,7 +135,7 @@ function detectTemporalPatterns(data: any[]): any[] {
 
   // Extract dates
   const dateCounts: Record<string, number> = {}
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const date = item.date_occurred || item.created_at || item.period || item.month
     if (date) {
       const month = typeof date === 'string' ? date.slice(0, 7) : date
@@ -170,7 +170,7 @@ function detectGeographicPatterns(data: any[]): any[] {
 
   // Extract locations
   const locationCounts: Record<string, number> = {}
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const location = item.location_text || item.location
     if (location) {
       const normalized = location.toLowerCase().trim()
@@ -200,7 +200,7 @@ function detectSemanticPatterns(data: any[]): any[] {
 
   // Extract categories
   const categoryCounts: Record<string, number> = {}
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const category = item.category
     if (category) {
       categoryCounts[category] = (categoryCounts[category] || 0) + 1

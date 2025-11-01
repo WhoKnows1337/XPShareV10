@@ -7,6 +7,9 @@ import { ArrowLeft, Eye, Heart, MessageCircle, Share2, TrendingUp, Users, Award 
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
+import type { Database } from '@/lib/supabase/database.types'
+
+type Experience = Database['public']['Tables']['experiences']['Row']
 
 export default async function ImpactDashboardPage({
   params,
@@ -21,7 +24,7 @@ export default async function ImpactDashboardPage({
   } = await supabase.auth.getUser()
 
   // Fetch experience
-  const { data: experience, error } = await supabase
+  const { data: experience, error } = (await supabase
     .from('experiences')
     .select(`
       *,
@@ -31,7 +34,7 @@ export default async function ImpactDashboardPage({
       )
     `)
     .eq('id', id)
-    .single()
+    .single()) as { data: Experience | null; error: any }
 
   if (error || !experience) {
     notFound()
@@ -43,29 +46,29 @@ export default async function ImpactDashboardPage({
   }
 
   // Fetch detailed analytics
-  const { data: viewsByDay } = await supabase
+  const { data: viewsByDay } = (await supabase
     .from('experience_views')
     .select('viewed_at')
     .eq('experience_id', id)
-    .order('viewed_at', { ascending: true })
+    .order('viewed_at', { ascending: true })) as { data: { viewed_at: string }[] | null; error: any }
 
-  const { data: likesByDay } = await supabase
+  const { data: likesByDay } = (await supabase
     .from('upvotes')
     .select('created_at, user_id')
     .eq('experience_id', id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false })) as { data: { created_at: string; user_id: string }[] | null; error: any }
 
-  const { data: comments } = await supabase
+  const { data: comments } = (await supabase
     .from('comments')
     .select('created_at, user_id')
     .eq('experience_id', id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false })) as { data: { created_at: string; user_id: string }[] | null; error: any }
 
-  const { data: shares } = await supabase
+  const { data: shares } = (await supabase
     .from('experience_shares')
     .select('created_at, platform')
     .eq('experience_id', id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false })) as { data: { created_at: string; platform: string }[] | null; error: any }
 
   // Calculate metrics
   const totalViews = experience.view_count || 0

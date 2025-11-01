@@ -266,11 +266,8 @@ Remember: Your Extended Thinking mode gives you time to reason deeply. Use it to
   `,
 
   // Claude 3.7 Sonnet with Extended Thinking
-  model: anthropic('claude-3-7-sonnet-20250219', {
-    // Extended Thinking Configuration
-    // Note: This is configured via model settings, not model provider options
-    // The actual thinkingMode will be set at runtime in the API route
-  }),
+  // Note: Extended Thinking mode is configured at runtime via modelSettings in API route
+  model: anthropic('claude-3-7-sonnet-20250219'),
 
   // All 15 tools for comprehensive capabilities
   tools: {

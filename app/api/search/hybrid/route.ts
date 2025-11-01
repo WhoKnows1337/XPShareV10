@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
     // Step 2: Execute hybrid search
     const supabase = await createClient()
 
+    // Type-safe RPC call - Supabase type inference still limited for RPC
     const { data: results, error: searchError } = await (supabase as any).rpc('hybrid_search', {
       p_query_text: query,
       p_query_embedding: queryEmbedding,

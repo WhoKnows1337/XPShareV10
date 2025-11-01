@@ -70,7 +70,7 @@ function detectTemporalSpikes(data: any[]): Insight[] {
 
   // Group by period
   const periodCounts = new Map<string, number>()
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const date = item.date_occurred || item.created_at || item.period
     if (!date) return
 
@@ -87,7 +87,7 @@ function detectTemporalSpikes(data: any[]): Insight[] {
   const stdDev = Math.sqrt(variance)
 
   // Find spikes (> mean + 2 * stdDev)
-  periodCounts.forEach((count, period) => {
+  periodCounts.forEach((count: any, period) => {
     if (count > mean + 2 * stdDev) {
       const confidence = Math.min(0.99, (count - mean) / (3 * stdDev))
 
@@ -120,7 +120,7 @@ function detectTemporalTrends(data: any[]): Insight[] {
 
   // Group by period
   const periodCounts = new Map<string, number>()
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const date = item.date_occurred || item.created_at || item.period
     if (!date) return
 
@@ -202,7 +202,7 @@ function detectGeographicHotspots(data: any[]): Insight[] {
   // Simple grid-based clustering (1° x 1° cells)
   const gridCounts = new Map<string, { count: number; lat: number; lng: number }>()
 
-  geoData.forEach((item) => {
+  geoData.forEach((item: any) => {
     const gridLat = Math.floor(item.location_lat)
     const gridLng = Math.floor(item.location_lng)
     const key = `${gridLat},${gridLng}`
@@ -217,7 +217,7 @@ function detectGeographicHotspots(data: any[]): Insight[] {
   // Find hotspots (> 5% of total data in one cell)
   const threshold = Math.max(3, geoData.length * 0.05)
 
-  gridCounts.forEach((cell, key) => {
+  gridCounts.forEach((cell: any, key) => {
     if (cell.count >= threshold) {
       const percentage = (cell.count / geoData.length) * 100
       const confidence = Math.min(0.95, percentage / 20)
@@ -250,7 +250,7 @@ function detectCategoryPatterns(data: any[]): Insight[] {
 
   // Count by category
   const categoryCounts = new Map<string, number>()
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     if (item.category) {
       categoryCounts.set(item.category, (categoryCounts.get(item.category) || 0) + 1)
     }
@@ -260,7 +260,7 @@ function detectCategoryPatterns(data: any[]): Insight[] {
 
   // Find dominant category (> 40% of data)
   const total = data.length
-  categoryCounts.forEach((count, category) => {
+  categoryCounts.forEach((count: any, category) => {
     const percentage = (count / total) * 100
 
     if (percentage > 40) {

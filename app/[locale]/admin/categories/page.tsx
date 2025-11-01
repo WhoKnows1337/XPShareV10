@@ -6,6 +6,24 @@ import Link from 'next/link'
 import { FolderOpen, Plus, MessageSquare, Tag, TrendingUp, CheckCircle2, Circle, AlertCircle } from 'lucide-react'
 import { CategoriesTreeView } from './categories-tree-view'
 
+interface QuestionCategoryRow {
+  id: string
+  slug: string
+  name: string
+  icon: string | null
+  emoji: string | null
+  color: string | null
+  description: string | null
+  level: number | null
+  is_active: boolean | null
+  parent_category_id: string | null
+  sort_order: number
+  created_at: string | null
+  updated_at: string | null
+  created_by: string | null
+  updated_by: string | null
+}
+
 interface CategoryWithStats {
   id: string
   slug: string
@@ -23,16 +41,18 @@ interface CategoryWithStats {
 export default async function CategoriesOverviewPage() {
   const supabase = await createClient()
 
-  // Fetch all categories
-  const { data: categories } = await supabase
+  // Fetch all categories with type assertion
+  const { data: categoriesData } = await supabase
     .from('question_categories')
     .select('*')
     .order('level')
     .order('sort_order', { ascending: true })
 
-  if (!categories) {
+  if (!categoriesData) {
     return <div>Error loading categories</div>
   }
+
+  const categories: QuestionCategoryRow[] = categoriesData
 
   // Get question counts for each category
   const categoriesWithStats: CategoryWithStats[] = await Promise.all(

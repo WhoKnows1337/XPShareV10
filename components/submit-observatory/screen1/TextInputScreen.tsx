@@ -8,6 +8,7 @@ import { VoiceButton } from './VoiceButton';
 import { OCRButton } from './OCRButton';
 import { NavigationButtons } from '../shared/NavigationButtons';
 import { useTranslations } from 'next-intl';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { Lock } from 'lucide-react';
 
 export function TextInputScreen() {
@@ -15,6 +16,7 @@ export function TextInputScreen() {
   const { screen1, setText, canGoNext, goNext, reset, isDraft, saveDraft } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const isMobile = useIsMobile();
 
   // Hydration fix: Only compute canGoNext on client
   useEffect(() => {
@@ -74,13 +76,27 @@ export function TextInputScreen() {
       </div>
 
       {/* Word Counter + Input Methods Row */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <WordCounter wordCount={screen1.wordCount} charCount={screen1.charCount} />
-        <div className="flex gap-2">
-          <VoiceButton onTranscript={handleVoiceTranscript} />
-          <OCRButton onTextExtracted={handleOCRText} />
+      {isMobile ? (
+        // Mobile: Stack vertically with prominent Voice Button
+        <div className="space-y-3 mb-3">
+          <div className="w-full">
+            <VoiceButton onTranscript={handleVoiceTranscript} isMobile={true} />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <WordCounter wordCount={screen1.wordCount} charCount={screen1.charCount} />
+            <OCRButton onTextExtracted={handleOCRText} />
+          </div>
         </div>
-      </div>
+      ) : (
+        // Desktop: Original layout
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <WordCounter wordCount={screen1.wordCount} charCount={screen1.charCount} />
+          <div className="flex gap-2">
+            <VoiceButton onTranscript={handleVoiceTranscript} />
+            <OCRButton onTextExtracted={handleOCRText} />
+          </div>
+        </div>
+      )}
 
       {/* Privacy Notice - Hidden */}
       {/* <div className="p-2 bg-glass-bg border border-glass-border rounded flex items-center gap-2 text-xs text-text-tertiary leading-tight">

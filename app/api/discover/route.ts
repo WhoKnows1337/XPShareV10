@@ -378,9 +378,6 @@ START BY CALLING advancedSearch NOW!`,
         console.error('[Discovery API] Error:', error)
         // Note: onError callback should not return a value in AI SDK 5.0
       },
-
-      // Timeout handling (2 minutes)
-      abortSignal: AbortSignal.timeout(120000),
     })
 
     // Log query performance
@@ -408,8 +405,6 @@ START BY CALLING advancedSearch NOW!`,
 
     // Return stream response with smooth streaming, metadata, and rate limit headers
     const response = result.toUIMessageStreamResponse({
-      // Forward error details to client for debugging (AI SDK 5.0 masks errors by default)
-      getErrorMessage,
       // Note: AI SDK 5.0 uses messageMetadata function instead of experimental_metadata
       // Metadata is now extracted from the stream parts rather than passed directly
       // The threading metadata (replyToId, threadId, branchId, chatId) should be handled

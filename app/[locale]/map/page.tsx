@@ -20,10 +20,10 @@ export default async function MapPage() {
     .eq('id', user.id)
     .single()
 
-  // Map profile to handle null display_name
+  // Map profile to handle null values
   const mappedProfile = profile ? {
-    username: profile.username,
-    display_name: profile.display_name ?? profile.username
+    username: profile.username || 'user',
+    display_name: profile.display_name || profile.username || 'user'
   } : null
 
   return (

@@ -9,20 +9,50 @@ import { EnhancedTextScreen } from '@/components/submit-observatory/screen3/Enha
 import { FilesWitnessesScreen } from '@/components/submit-observatory/screen4/FilesWitnessesScreen';
 import { SuccessScreen } from '@/components/submit-observatory/success/SuccessScreen';
 import { AnimatePresence, motion } from 'framer-motion';
+import { DraftStatusBadge } from '@/components/submit-observatory/shared/DraftStatusBadge';
+import { ResumeDraftBanner } from '@/components/submit-observatory/shared/ResumeDraftBanner';
+import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 export default function ExperienceSubmitPage() {
-  const { currentStep, loadDraft } = useSubmitFlowStore();
+  const { currentStep, loadDraft, setCurrentStep } = useSubmitFlowStore();
+  const isMobile = useIsMobile();
 
   // Load draft on mount
   useEffect(() => {
     loadDraft();
   }, [loadDraft]);
 
+  // Warn about unsaved changes before leaving (browser navigation only)
+  useUnsavedChangesWarning();
+
+  // Swipe navigation for mobile (only between steps 1-4, not on success)
+  const { isSwiping } = useSwipeNavigation({
+    onSwipeLeft: () => {
+      if (currentStep < 4) {
+        setCurrentStep(currentStep + 1);
+      }
+    },
+    onSwipeRight: () => {
+      if (currentStep > 1 && currentStep <= 4) {
+        setCurrentStep(currentStep - 1);
+      }
+    },
+    enabled: isMobile && currentStep <= 4,
+  });
+
   return (
     <div className="min-h-screen bg-space-deep relative flex flex-col">
+      {/* Draft Status Badge - Fixed Position */}
+      <DraftStatusBadge />
+
       {/* Main Content - Contained within Viewport */}
       <div className="flex-1 flex items-center justify-center py-6 px-4 max-h-[calc(100vh-80px)] overflow-hidden">
         <div className="w-full max-w-4xl">
+          {/* Resume Draft Banner - Above Card */}
+          <ResumeDraftBanner />
+
           {/* Single Integrated Card with Progress */}
           <div className="glass-card p-6 max-h-[calc(100vh-140px)] overflow-y-auto custom-scrollbar">
             {/* Progress Indicator - Inside Card, hide on success */}

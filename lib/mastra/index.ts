@@ -55,6 +55,6 @@ export { orchestratorAgent, networkOrchestratorAgent }
  * Prefer this over direct imports to get access to Mastra instance configuration
  * (logger, telemetry, storage, etc.)
  */
-export function getAgent(name: string) {
+export function getAgent(name: 'orchestrator' | 'networkOrchestrator') {
   return mastra.getAgent(name)
 }

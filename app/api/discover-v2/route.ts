@@ -115,7 +115,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     console.log('[DEBUG] Raw messages received:', JSON.stringify(messages, null, 2))
 
     const sanitizedMessages = messages
-      .map((msg: UIMessage) => {
+      .map((msg: any) => {
         // Extract content from either .content or .parts array (AI SDK format)
         let content: string = ''
 
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     const uiMessageStream = createUIMessageStream({
       execute: async ({ writer }) => {
-        for await (const part of toAISdkFormat(agentStream, { from: 'agent' })!) {
+        for await (const part of toAISdkFormat(agentStream, { from: 'agent' }) as any) {
           writer.write(part)
         }
       },

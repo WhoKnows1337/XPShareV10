@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 
 interface VoiceButtonProps {
   onTranscript: (transcript: string) => void;
+  isMobile?: boolean;
 }
 
-export function VoiceButton({ onTranscript }: VoiceButtonProps) {
+export function VoiceButton({ onTranscript, isMobile = false }: VoiceButtonProps) {
   const t = useTranslations('submit.screen1.voice');
   const [isMounted, setIsMounted] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -118,23 +119,23 @@ export function VoiceButton({ onTranscript }: VoiceButtonProps) {
     <Button
       onClick={handleClick}
       disabled={isProcessing}
-      variant={isRecording ? "destructive" : "outline"}
-      size="sm"
-      className="text-xs"
+      variant={isRecording ? "destructive" : "default"}
+      size={isMobile ? "lg" : "sm"}
+      className={isMobile ? "w-full text-base py-6" : "text-xs"}
     >
       {isProcessing ? (
         <>
-          <Loader2 className="w-3 h-3 animate-spin" />
+          <Loader2 className={isMobile ? "w-5 h-5 animate-spin mr-2" : "w-3 h-3 animate-spin"} />
           {t('processing')}
         </>
       ) : isRecording ? (
         <>
-          <MicOff className="w-3 h-3" />
+          <MicOff className={isMobile ? "w-5 h-5 mr-2" : "w-3 h-3"} />
           {t('stop')}
         </>
       ) : (
         <>
-          <Mic className="w-3 h-3" />
+          <Mic className={isMobile ? "w-5 h-5 mr-2" : "w-3 h-3"} />
           {t('start')}
         </>
       )}

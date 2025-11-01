@@ -1,8 +1,11 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
+import { toast } from 'sonner';
 
 interface NavigationButtonsProps {
   onBack?: () => void;
@@ -16,6 +19,7 @@ interface NavigationButtonsProps {
   showNext?: boolean;
   showReset?: boolean;
   resetConfirm?: boolean;
+  showSaveExit?: boolean; // NEW: Show Save & Exit button
 }
 
 export function NavigationButtons({
@@ -30,12 +34,21 @@ export function NavigationButtons({
   showNext = true,
   showReset = false,
   resetConfirm = false,
+  showSaveExit = true, // Default: show Save & Exit
 }: NavigationButtonsProps) {
   const t = useTranslations('submit.shared.navigation');
+  const router = useRouter();
+  const { saveDraftAndExit, isDraft } = useSubmitFlowStore();
 
   // Use translations as fallback for labels
   const finalNextLabel = nextLabel || t('next');
   const finalBackLabel = backLabel || t('back');
+
+  const handleSaveAndExit = () => {
+    saveDraftAndExit();
+    toast.success('Draft gespeichert! Du kannst jederzeit weitermachen.');
+    router.push('/feed');
+  };
 
   return (
     <div className="grid grid-cols-3 gap-4 pt-6">
@@ -66,9 +79,19 @@ export function NavigationButtons({
         )}
       </div>
 
-      {/* Center Column: Draft Status */}
+      {/* Center Column: Save & Exit */}
       <div className="flex items-center justify-center">
-        {/* Save status hidden per user request */}
+        {showSaveExit && isDraft && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSaveAndExit}
+            className="text-xs text-text-tertiary hover:text-text-primary"
+          >
+            <Save className="w-3 h-3 mr-1" />
+            Save & Exit
+          </Button>
+        )}
       </div>
 
       {/* Right Column: Next Button */}

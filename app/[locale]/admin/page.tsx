@@ -24,17 +24,19 @@ export default async function AdminDashboard() {
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-  const { data: analyticsData } = await supabase
+  const { data: analyticsRawData } = await supabase
     .from('question_analytics')
     .select('answered_count, shown_count')
     .gte('date', sevenDaysAgo.toISOString().split('T')[0])
+
+  const analyticsData: { answered_count: number | null; shown_count: number | null }[] | null = analyticsRawData
 
   const totalAnswers = analyticsData?.reduce((sum, row) => sum + (row.answered_count || 0), 0) || 0
   const totalShown = analyticsData?.reduce((sum, row) => sum + (row.shown_count || 0), 0) || 0
   const answerRate = totalShown > 0 ? Math.round((totalAnswers / totalShown) * 100) : 0
 
   // Fetch categories with question counts and analytics
-  const { data: categories } = await supabase
+  const { data: categoriesData } = await supabase
     .from('question_categories')
     .select(`
       *,
@@ -43,6 +45,8 @@ export default async function AdminDashboard() {
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
     .limit(6)
+
+  const categories: { id: string; slug: string; name: string; icon: string | null; [key: string]: unknown }[] | null = categoriesData
 
   // Fetch analytics summary for categories
   const categoryIds = categories?.map(c => c.id) || []
@@ -53,10 +57,12 @@ export default async function AdminDashboard() {
 
   // Fetch attribute counts per category from attribute_schema
   const categorySlugs = categories?.map(c => c.slug) || []
-  const { data: attributeCounts } = await supabase
+  const { data: attributeCountsRaw } = await supabase
     .from('attribute_schema')
     .select('category_slug')
     .in('category_slug', categorySlugs)
+
+  const attributeCounts: { category_slug: string | null }[] | null = attributeCountsRaw
 
   // Count attributes per category
   const attributeCountByCategory = (attributeCounts || []).reduce((acc, attr) => {
@@ -83,11 +89,22 @@ export default async function AdminDashboard() {
   })
 
   // Fetch recent changes with user info
-  const { data: recentChanges } = await supabase
+  const { data: recentChangesRaw } = await supabase
     .from('question_change_history')
     .select('*')
     .order('changed_at', { ascending: false })
     .limit(5)
+
+  interface RecentChange {
+    id: string
+    changed_at: string | null
+    change_type: string | null
+    entity_type: string | null
+    description: string | null
+    changed_by: string | null
+  }
+
+  const recentChanges: RecentChange[] | null = recentChangesRaw
 
   const stats = [
     {

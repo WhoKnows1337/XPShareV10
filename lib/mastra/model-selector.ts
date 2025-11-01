@@ -14,13 +14,13 @@
 
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
-import type { LanguageModelV2 } from 'ai'
+import type { LanguageModel } from 'ai'
 
 /**
  * Model Configuration
  */
 export interface ModelConfig {
-  model: LanguageModelV2
+  model: LanguageModel
   thinkingMode?: 'standard' | 'extended'
   cost: number // Cost per 1k tokens (average)
   latency: number // Expected latency in seconds
@@ -138,12 +138,9 @@ export const MODELS = {
   },
 
   // OpenAI o3-mini - High Effort
+  // Note: reasoning.effort must be passed via providerOptions in generate/stream calls
   O3_MINI_HIGH: {
-    model: openai('o3-mini', {
-      reasoning: {
-        effort: 'high',
-      },
-    }),
+    model: openai('o3-mini'),
     cost: 0.028, // ~$0.028 per query
     latency: 15, // ~15s
     name: 'OpenAI o3-mini (High)',

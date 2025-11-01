@@ -78,7 +78,7 @@ export interface ExportResult {
  *
  * Note: Has OPTIONAL RLS - can fetch data by category or analyze provided data.
  */
-export const generateInsightsTool = createTool<XPShareContext>({
+export const generateInsightsTool = createTool({
   id: 'generateInsights',
   description:
     'UNIFIED ANALYSIS TOOL: Analyze experiences by category with two modes: 1) complexity="basic" for simple summaries (counts, locations, dates), 2) complexity="insights" for advanced statistical analysis with confidence scores, pattern detection, and recommendations. Can fetch data automatically by category OR analyze pre-fetched data. Use this when user asks to analyze, generate insights, or understand patterns in experience data.',
@@ -132,7 +132,7 @@ export const generateInsightsTool = createTool<XPShareContext>({
     let analysisData = params.data || []
 
     if (params.category && !params.data) {
-      const supabase = runtimeContext.get('supabase')
+      const supabase = runtimeContext.get('supabase') as any
       const { data: fetchedData, error } = await supabase
         .from('experiences')
         .select('*')
@@ -225,7 +225,7 @@ export const generateInsightsTool = createTool<XPShareContext>({
  *
  * Note: This tool does NOT use RLS (no Supabase access) - operates on provided data.
  */
-export const predictTrendsTool = createTool<XPShareContext>({
+export const predictTrendsTool = createTool({
   id: 'predictTrends',
   description:
     'Analyze temporal trends and generate predictions using linear regression. Features: Linear regression with R² calculation, Pearson correlation coefficient, Confidence intervals for predictions, Multiple time granularities (day/week/month/year), Trend significance classification. Returns historical data, trend analysis, and forecast predictions.',
@@ -321,7 +321,7 @@ export const predictTrendsTool = createTool<XPShareContext>({
  *
  * Note: This tool does NOT use RLS (no Supabase access) - operates on provided data.
  */
-export const suggestFollowupsTool = createTool<XPShareContext>({
+export const suggestFollowupsTool = createTool({
   id: 'suggestFollowups',
   description:
     'Generate intelligent follow-up suggestions based on query results and context. Features: GPT-powered context-aware suggestions, Template-based fallback suggestions, Multiple suggestion types (explore, filter, visualize, analyze, compare, export), Priority scoring for relevance, Conversation history awareness. Returns array of actionable follow-up queries with descriptions and icons.',
@@ -412,7 +412,7 @@ export const suggestFollowupsTool = createTool<XPShareContext>({
  *
  * Note: This tool does NOT use RLS (no Supabase access) - operates on provided data.
  */
-export const exportResultsTool = createTool<XPShareContext>({
+export const exportResultsTool = createTool({
   id: 'exportResults',
   description:
     'Export query results and analysis data in JSON or CSV format. Features: JSON export with optional metadata, CSV export with automatic flattening of nested objects, Custom filename support, Field selection for CSV exports, Automatic timestamp generation, Data normalization (handles arrays, objects, wrappers). Returns export content as string with metadata.',
@@ -474,7 +474,7 @@ function detectTemporalSpikes(data: any[]): Insight[] {
 
   // Group by period
   const periodCounts = new Map<string, number>()
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const date = item.date_occurred || item.created_at || item.period
     if (!date) return
 
@@ -491,7 +491,7 @@ function detectTemporalSpikes(data: any[]): Insight[] {
   const stdDev = Math.sqrt(variance)
 
   // Find spikes (> mean + 2 * stdDev)
-  periodCounts.forEach((count, period) => {
+  periodCounts.forEach((count: any, period) => {
     if (count > mean + 2 * stdDev) {
       const confidence = Math.min(0.99, (count - mean) / (3 * stdDev))
 
@@ -521,7 +521,7 @@ function detectTemporalTrends(data: any[]): Insight[] {
 
   // Group by period
   const periodCounts = new Map<string, number>()
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const date = item.date_occurred || item.created_at || item.period
     if (!date) return
 
@@ -600,7 +600,7 @@ function detectGeographicHotspots(data: any[]): Insight[] {
   // Simple grid-based clustering (1° x 1° cells)
   const gridCounts = new Map<string, { count: number; lat: number; lng: number }>()
 
-  geoData.forEach((item) => {
+  geoData.forEach((item: any) => {
     const gridLat = Math.floor(item.location_lat)
     const gridLng = Math.floor(item.location_lng)
     const key = `${gridLat},${gridLng}`
@@ -615,7 +615,7 @@ function detectGeographicHotspots(data: any[]): Insight[] {
   // Find hotspots (> 5% of total data in one cell)
   const threshold = Math.max(3, geoData.length * 0.05)
 
-  gridCounts.forEach((cell, key) => {
+  gridCounts.forEach((cell: any, key) => {
     if (cell.count >= threshold) {
       const percentage = (cell.count / geoData.length) * 100
       const confidence = Math.min(0.95, percentage / 20)
@@ -645,7 +645,7 @@ function detectCategoryPatterns(data: any[]): Insight[] {
 
   // Count by category
   const categoryCounts = new Map<string, number>()
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     if (item.category) {
       categoryCounts.set(item.category, (categoryCounts.get(item.category) || 0) + 1)
     }
@@ -655,7 +655,7 @@ function detectCategoryPatterns(data: any[]): Insight[] {
 
   // Find dominant category (> 40% of data)
   const total = data.length
-  categoryCounts.forEach((count, category) => {
+  categoryCounts.forEach((count: any, category) => {
     const percentage = (count / total) * 100
 
     if (percentage > 40) {
@@ -866,7 +866,7 @@ function analyzeTrend(
   // Aggregate by period
   const periodCounts = new Map<string, number>()
 
-  data.forEach((item) => {
+  data.forEach((item: any) => {
     const dateStr = item.date_occurred || item.created_at || item.period
     if (!dateStr) return
 
@@ -1217,7 +1217,7 @@ function arrayToCSV(data: any[], fields?: string[]): string {
     headers = fields
   } else {
     const allKeys = new Set<string>()
-    flattened.forEach((item) => {
+    flattened.forEach((item: any) => {
       Object.keys(item).forEach((key) => allKeys.add(key))
     })
     headers = Array.from(allKeys).sort()
@@ -1226,7 +1226,7 @@ function arrayToCSV(data: any[], fields?: string[]): string {
   const rows: string[] = []
   rows.push(headers.map((h) => escapeCSV(h)).join(','))
 
-  flattened.forEach((item) => {
+  flattened.forEach((item: any) => {
     const values = headers.map((header) => escapeCSV(item[header]))
     rows.push(values.join(','))
   })

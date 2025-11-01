@@ -19,6 +19,16 @@ import {
   getNearbyExperiences,
 } from '@/lib/api/experiences'
 import { getImageBlurDataURL } from '@/lib/utils/image-blur'
+import type { Database } from '@/lib/supabase/database.types'
+
+type ExperienceWithProfile = Database['public']['Tables']['experiences']['Row'] & {
+  user_profiles: {
+    id: string
+    username: string | null
+    display_name: string | null
+    avatar_url: string | null
+  } | null
+}
 
 // Dynamic imports for heavy components
 const CommentsSection = dynamic(
@@ -82,7 +92,21 @@ export async function generateMetadata({
   const supabase = await createClient()
   const { id } = await params
 
-  const { data: experience } = await supabase
+  interface ExperienceMetadata {
+    id: string
+    title: string
+    story_text: string | null
+    category: string
+    date_occurred: string | null
+    location_text: string | null
+    tags: string[] | null
+    user_profiles: {
+      username: string | null
+      display_name: string | null
+    } | null
+  }
+
+  const { data: experienceRaw } = (await supabase
     .from('experiences')
     .select(`
       id,
@@ -98,7 +122,9 @@ export async function generateMetadata({
       )
     `)
     .eq('id', id)
-    .single()
+    .single()) as { data: ExperienceMetadata | null; error: any }
+
+  const experience: ExperienceMetadata | null = experienceRaw
 
   if (!experience) {
     return {
@@ -106,7 +132,9 @@ export async function generateMetadata({
     }
   }
 
-  const profile = experience.user_profiles as any
+  // Type guard to ensure TypeScript knows this is ExperienceMetadata
+  const exp: ExperienceMetadata = experience
+  const profile = experience.user_profiles
   const authorName = profile?.display_name || profile?.username || 'Anonymous'
   const categoryLabel = categoryLabels[experience.category] || experience.category
   const description = experience.story_text
@@ -160,7 +188,7 @@ export default async function ExperiencePage({
   } = await supabase.auth.getUser()
 
   // Fetch experience with related data
-  const { data: experience, error } = await supabase
+  const { data: experience, error } = (await supabase
     .from('experiences')
     .select(`
       *,
@@ -172,7 +200,7 @@ export default async function ExperiencePage({
       )
     `)
     .eq('id', id)
-    .single()
+    .single()) as { data: ExperienceWithProfile | null; error: any }
 
   if (error || !experience) {
     notFound()
@@ -191,10 +219,10 @@ export default async function ExperiencePage({
     .select(`
       earned_at,
       badges (
-        slug,
+        id,
         name,
         description,
-        icon,
+        icon_name,
         rarity
       )
     `)
@@ -236,7 +264,7 @@ export default async function ExperiencePage({
   }
 
   // Fetch author's experiences for timeline
-  const { data: authorExperiences } = await supabase
+  const { data: authorExperiencesRaw } = await supabase
     .from('experiences')
     .select('created_at, date_occurred')
     .eq('user_id', experience.user_id!)
@@ -244,8 +272,10 @@ export default async function ExperiencePage({
     .order('created_at', { ascending: false })
     .limit(50)
 
+  const authorExperiences: { created_at: string | null; date_occurred: string | null }[] | null = authorExperiencesRaw
+
   // Fetch dynamic Q&A answers
-  const { data: dynamicAnswers } = await supabase
+  const { data: dynamicAnswersRaw } = await supabase
     .from('experience_answers')
     .select(`
       id,
@@ -259,15 +289,38 @@ export default async function ExperiencePage({
     `)
     .eq('experience_id', id)
 
+  interface DynamicAnswer {
+    id: string
+    answer_value: unknown
+    dynamic_questions: {
+      id: string
+      question_text: string
+      question_type: string
+      options: unknown
+    }
+  }
+
+  const dynamicAnswers: DynamicAnswer[] | null = dynamicAnswersRaw
+
   // Fetch media
-  const { data: mediaItems } = await supabase
+  const { data: mediaItemsRaw } = await supabase
     .from('experience_media')
     .select('*')
     .eq('experience_id', id)
     .order('sort_order', { ascending: true })
 
+  interface MediaItem {
+    id: string
+    url: string
+    type: string
+    caption: string | null
+    [key: string]: unknown
+  }
+
+  const mediaItems: MediaItem[] | null = mediaItemsRaw
+
   // Get hero image (first image) for blur placeholder
-  const heroImage = mediaItems?.find((item: any) => item.type === 'image')
+  const heroImage = mediaItems?.find((item) => item.type === 'image')
   let heroImageBlur = ''
   if (heroImage?.url) {
     try {
@@ -278,13 +331,23 @@ export default async function ExperiencePage({
   }
 
   // Fetch witnesses
-  const { data: witnesses } = await supabase
+  const { data: witnessesRaw } = await supabase
     .from('experience_witnesses')
     .select('*')
     .eq('experience_id', id)
 
+  interface Witness {
+    id: string
+    name: string
+    is_verified: boolean | null
+    testimony: string | null
+    [key: string]: unknown
+  }
+
+  const witnesses: Witness[] | null = witnessesRaw
+
   // Fetch linked experiences
-  const { data: linkedExps } = await supabase
+  const { data: linkedExpsRaw } = await supabase
     .from('experience_links')
     .select(`
       linked_experience_id,
@@ -300,6 +363,22 @@ export default async function ExperiencePage({
       )
     `)
     .eq('source_experience_id', id)
+
+  interface LinkedExperience {
+    linked_experience_id: string
+    experiences: {
+      id: string
+      title: string
+      category: string
+      user_profiles: {
+        username: string | null
+        display_name: string | null
+        avatar_url: string | null
+      } | null
+    }
+  }
+
+  const linkedExps: LinkedExperience[] | null = linkedExpsRaw
 
   // Check if current user has liked this experience
   let isLiked = false
@@ -317,33 +396,40 @@ export default async function ExperiencePage({
   // Check if current user is following the author
   let isFollowing = false
   if (user?.id && user.id !== experience.user_id) {
-    const { data: followData } = await supabase.rpc('is_following', {
+    const { data: followData } = await (supabase.rpc as any)('is_following', {
       p_follower_id: user.id,
-      p_following_id: experience.user_id!,
+      p_following_id: experience.user_id,
     })
 
     isFollowing = !!followData
   }
 
-  const profile = experience.user_profiles as any
+  interface UserProfileInfo {
+    id: string
+    username: string | null
+    display_name: string | null
+    avatar_url: string | null
+  }
+
+  const profile: UserProfileInfo | null = experience.user_profiles as UserProfileInfo | null
   const isAuthor = user?.id === experience.user_id
 
   // Prepare user data for components
   const userData = {
     id: experience.user_id!,
     username: profile?.username || 'unknown',
-    display_name: profile?.display_name,
-    avatar_url: profile?.avatar_url,
-    level: authorProfile?.level ?? undefined,
-    total_xp: authorProfile?.total_xp ?? undefined,
+    display_name: profile?.display_name ?? undefined,
+    avatar_url: profile?.avatar_url ?? undefined,
+    level: (authorProfile as { level: number | null; total_xp: number | null } | null)?.level ?? undefined,
+    total_xp: (authorProfile as { level: number | null; total_xp: number | null } | null)?.total_xp ?? undefined,
     total_experiences: totalExperiences || 0,
     topBadges:
-      authorBadges?.map((ub: any) => ({
-        slug: ub.badges.slug,
-        name: ub.badges.name,
-        description: ub.badges.description,
-        icon: ub.badges.icon,
-        rarity: ub.badges.rarity,
+      authorBadges?.filter(ub => ub.badges !== null).map((ub) => ({
+        slug: ub.badges!.id, // Using id as slug
+        name: ub.badges!.name,
+        description: ub.badges!.description || '',
+        icon: ub.badges!.icon_name || '',
+        rarity: ub.badges!.rarity || 'common',
       })) || [],
   }
 
@@ -359,10 +445,10 @@ export default async function ExperiencePage({
         currentUserId={user?.id}
         isFollowing={isFollowing}
         authorTimeline={(authorExperiences || [])
-          .filter((exp) => exp.created_at !== null)
+          .filter((exp) => experience.created_at !== null)
           .map((exp) => ({
-            created_at: exp.created_at!,
-            date_occurred: exp.date_occurred ?? undefined,
+            created_at: experience.created_at!,
+            date_occurred: experience.date_occurred ?? undefined,
           }))}
         experienceId={experience.id}
       />
@@ -391,7 +477,7 @@ export default async function ExperiencePage({
           externalEvents={externalEvents}
         />
         <CrossCategoryInsights
-          insights={crossCategoryInsights as any}
+          insights={crossCategoryInsights}
           currentCategory={experience.category}
         />
         {experience.location_lat && experience.location_lng && (
@@ -407,39 +493,43 @@ export default async function ExperiencePage({
   )
 
   // Transform data for ExperienceContent
-  const formattedDynamicAnswers = (dynamicAnswers || []).map((answer: any) => ({
+  const formattedDynamicAnswers = (dynamicAnswers || []).map((answer) => ({
     question_id: answer.dynamic_questions.id,
     question_text: answer.dynamic_questions.question_text,
     answer_type: answer.dynamic_questions.question_type as 'text' | 'chips' | 'slider',
-    answer_value: answer.answer_value,
-    options: answer.dynamic_questions.options,
+    answer_value: answer.answer_value as string | number | string[],
+    options: answer.dynamic_questions.options as string[] | undefined,
   }))
 
   const formattedMedia = (mediaItems || [])
-    .filter((item: any) => item.type === 'image')
-    .map((item: any) => ({
+    .filter((item) => item.type === 'image')
+    .map((item) => ({
       id: item.id,
       url: item.url,
       type: 'image' as const,
-      caption: item.caption,
+      caption: item.caption ?? undefined,
     }))
 
   const formattedSketches = (mediaItems || [])
-    .filter((item: any) => item.type === 'sketch')
-    .map((item: any) => item.url)
+    .filter((item) => item.type === 'sketch')
+    .map((item) => item.url)
 
-  const formattedWitnesses = (witnesses || []).map((w: any) => ({
+  const formattedWitnesses = (witnesses || []).map((w) => ({
     id: w.id,
     name: w.name,
-    is_verified: w.is_verified,
-    testimony: w.testimony,
+    is_verified: w.is_verified ?? false,
+    testimony: w.testimony ?? undefined,
   }))
 
-  const formattedLinkedExperiences = (linkedExps || []).map((link: any) => ({
+  const formattedLinkedExperiences = (linkedExps || []).map((link) => ({
     id: link.experiences.id,
     title: link.experiences.title,
     category: link.experiences.category,
-    user_profiles: link.experiences.user_profiles,
+    user_profiles: link.experiences.user_profiles ? {
+      username: link.experiences.user_profiles.username || 'unknown',
+      display_name: link.experiences.user_profiles.display_name ?? undefined,
+      avatar_url: link.experiences.user_profiles.avatar_url ?? undefined,
+    } : undefined,
   }))
 
   const mainContentArea = (

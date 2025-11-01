@@ -9,10 +9,30 @@ export default async function QuestionsPage() {
   const supabase = await createClient()
 
   // Fetch all categories with question counts
-  const { data: categories } = await supabase
+  const { data: categoriesRaw } = await supabase
     .from('question_categories')
     .select('*')
     .order('sort_order', { ascending: true })
+
+  interface QuestionCategoryRow {
+    id: string
+    slug: string
+    name: string
+    icon: string | null
+    emoji: string | null
+    color: string | null
+    description: string | null
+    level: number | null
+    is_active: boolean | null
+    parent_category_id: string | null
+    sort_order: number
+    created_at: string | null
+    updated_at: string | null
+    created_by: string | null
+    updated_by: string | null
+  }
+
+  const categories: QuestionCategoryRow[] | null = categoriesRaw
 
   // Get question counts for each category
   const categoriesWithCounts = await Promise.all(

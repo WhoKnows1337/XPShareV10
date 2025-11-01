@@ -33,16 +33,14 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
     redirect('/login')
   }
 
-  const id = profile.id
-
   return (
     <div className="min-h-screen bg-space-deep py-8">
       <div className="container mx-auto max-w-2xl px-4">
         <ProfileEditForm
-          userId={id}
+          userId={profile.id}
           initialData={{
-            username: profile.username,
-            displayName: profile.display_name || profile.username,
+            username: profile.username || 'user',
+            displayName: profile.display_name || profile.username || 'user',
             bio: profile.bio ?? undefined,
             avatarUrl: profile.avatar_url ?? undefined,
             locationCity: profile.location_city ?? undefined,

@@ -89,12 +89,12 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
 
   // Get active users count
-  const { data: activeUsers } = await supabase
+  const { data: activeUsers } = (await supabase
     .from('experiences')
     .select('user_id')
     .eq('category', slug)
     .eq('visibility', 'public')
-    .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+    .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())) as { data: { user_id: string }[] | null; error: any }
 
   const uniqueUsers = new Set(activeUsers?.map(e => e.user_id)).size
 

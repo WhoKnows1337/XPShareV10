@@ -70,11 +70,7 @@ Always provide:
 - Suggest next actions if relevant
 `,
 
-  model: {
-    provider: 'OPEN_AI',
-    name: 'gpt-4o-mini',
-    toolChoice: 'auto',
-  },
+  model: openai('gpt-4o-mini'),
 
   tools: {
     advancedSearch: advancedSearchTool,

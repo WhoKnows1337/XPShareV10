@@ -18,7 +18,7 @@ import type { XPShareContext } from '../types'
  * Multi-dimensional search with complex filtering.
  * Supports categories, locations, time ranges, dates, attributes, tags, emotions.
  */
-export const advancedSearchTool = createTool<XPShareContext>({
+export const advancedSearchTool = createTool({
   id: 'advancedSearch',
   description:
     'Search experiences with multi-dimensional filters. Supports categories, locations (city/country/radius), time of day (morning/afternoon/evening/night), date ranges, tags, and emotions. Use this for complex queries combining multiple criteria (e.g., "UFOs in California at night", "Dreams in 2024 with fear emotion"). NOTE: For queries about SPECIFIC ATTRIBUTE VALUES like "triangle-shaped", "orb-shaped", "lucid dreams" - use searchByAttributes tool instead.',
@@ -96,7 +96,7 @@ export const advancedSearchTool = createTool<XPShareContext>({
 
   execute: async ({ runtimeContext, context: params }) => {
     // Get Supabase client from RuntimeContext (request-scoped for RLS)
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Build base query
     let query = supabase.from('experiences').select(
@@ -216,7 +216,7 @@ export const advancedSearchTool = createTool<XPShareContext>({
  * Precise attribute-based querying with AND/OR logic.
  * Uses SQL function from Phase 1 for optimal performance.
  */
-export const searchByAttributesTool = createTool<XPShareContext>({
+export const searchByAttributesTool = createTool({
   id: 'searchByAttributes',
   description:
     'Search for experiences by SPECIFIC ATTRIBUTE VALUES. Use this tool when the user mentions concrete attribute characteristics like "triangle-shaped UFO" (shape=triangle), "orb-shaped craft" (shape=orb), "lucid dream" (dream_type=lucid), "red light" (light_color=red), etc. This tool searches in the experience_attributes table, NOT in story text. Examples: "Find triangle-shaped UFOs", "Show me experiences with orb lights", "Search for lucid dreams".',
@@ -256,7 +256,7 @@ export const searchByAttributesTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Call SQL function from Phase 1
     const { data, error } = await supabase.rpc('search_by_attributes', {
@@ -291,7 +291,7 @@ export const searchByAttributesTool = createTool<XPShareContext>({
  * Vector similarity search using OpenAI embeddings.
  * Finds semantically related experiences based on meaning, not just keywords.
  */
-export const semanticSearchTool = createTool<XPShareContext>({
+export const semanticSearchTool = createTool({
   id: 'semanticSearch',
   description:
     'Vector similarity search using AI embeddings. Finds experiences with similar meaning to your query, even if they use different words. Use this for semantic/conceptual searches.',
@@ -323,7 +323,7 @@ export const semanticSearchTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     try {
       // Step 1: Generate embedding for query (using AI SDK)
@@ -394,7 +394,7 @@ export const semanticSearchTool = createTool<XPShareContext>({
  * Multi-language full-text search using PostgreSQL FTS.
  * Supports German, English, French, Spanish with ts_rank scoring.
  */
-export const fullTextSearchTool = createTool<XPShareContext>({
+export const fullTextSearchTool = createTool({
   id: 'fullTextSearch',
   description:
     'Multi-language full-text search with ranking. Searches through titles and story text using PostgreSQL FTS. Supports German, English, French, Spanish.',
@@ -426,7 +426,7 @@ export const fullTextSearchTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Call SQL function from Phase 1
     const { data, error } = await supabase.rpc('full_text_search', {
@@ -461,7 +461,7 @@ export const fullTextSearchTool = createTool<XPShareContext>({
  * PostGIS-powered geographic search with radius and bounding box support.
  * Uses SQL function from Phase 1 for optimal spatial queries.
  */
-export const geoSearchTool = createTool<XPShareContext>({
+export const geoSearchTool = createTool({
   id: 'geoSearch',
   description:
     'Geographic search using PostGIS. Supports radius search (find experiences within X km of a point) and bounding box search (find experiences within a rectangle). Use this for location-based queries like "UFO sightings in California", "dreams in Europe", "experiences near New York within 50km".',
@@ -494,7 +494,7 @@ export const geoSearchTool = createTool<XPShareContext>({
   }),
 
   execute: async ({ runtimeContext, context: params }) => {
-    const supabase = runtimeContext.get('supabase')
+    const supabase = runtimeContext.get('supabase') as any
 
     // Validate required params based on search type
     if (params.searchType === 'radius') {

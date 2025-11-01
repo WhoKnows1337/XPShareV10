@@ -163,7 +163,7 @@ async function fetchCategoryData(supabase: any, category: string, dateRange?: an
 function analyzeGeography(data: any[]): Array<{ location: string; count: number }> {
   const locationCounts: Record<string, number> = {}
 
-  data.forEach((exp) => {
+  data.forEach((exp: any) => {
     if (exp.location_text) {
       const normalized = exp.location_text.toLowerCase().trim()
       locationCounts[normalized] = (locationCounts[normalized] || 0) + 1
@@ -178,7 +178,7 @@ function analyzeGeography(data: any[]): Array<{ location: string; count: number 
 function analyzeTemporalDistribution(data: any[]): Array<{ month: string; count: number }> {
   const monthCounts: Record<string, number> = {}
 
-  data.forEach((exp) => {
+  data.forEach((exp: any) => {
     if (exp.date_occurred) {
       const month = exp.date_occurred.slice(0, 7) // YYYY-MM
       monthCounts[month] = (monthCounts[month] || 0) + 1
@@ -193,7 +193,7 @@ function analyzeTemporalDistribution(data: any[]): Array<{ month: string; count:
 function analyzeAttributes(data: any[]): Array<{ key: string; count: number }> {
   const attrCounts: Record<string, number> = {}
 
-  data.forEach((exp) => {
+  data.forEach((exp: any) => {
     const attrs = exp.experience_attributes || []
     attrs.forEach((attr: any) => {
       attrCounts[attr.attribute_key] = (attrCounts[attr.attribute_key] || 0) + 1
