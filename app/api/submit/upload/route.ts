@@ -4,6 +4,10 @@ import { uploadSchema, validateFileUpload } from '@/lib/validation/submit-schema
 import { sanitizeFileName } from '@/lib/validation/sanitization';
 import crypto from 'crypto';
 
+// ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Secure File Upload API
  * Handles media uploads with validation, sanitization, and virus scanning

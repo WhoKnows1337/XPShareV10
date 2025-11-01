@@ -3,6 +3,10 @@ import OpenAI from 'openai';
 import { analyzeTextChanges } from '@/lib/utils/text-diff';
 import { createClient } from '@/lib/supabase/server';
 
+// ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Incremental Analysis API - Re-analyze edited text
  *

@@ -12,6 +12,10 @@ import {
   containsSuspiciousPatterns
 } from '@/lib/validation/sanitization';
 
+// ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Optimized Publish Experience API using PostgreSQL atomic function
  * Significantly reduced complexity - delegates transaction handling to DB

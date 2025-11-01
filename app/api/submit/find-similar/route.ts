@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Find Similar Experiences API - Pattern matching for similar experiences
  * Uses category, tags, location, duration, and text similarity

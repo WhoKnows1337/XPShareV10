@@ -29,6 +29,11 @@ interface AttributeSchema {
   description: string | null;
 }
 
+// ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
+// Edge Runtime doesn't support async cookies() properly with Supabase SSR
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // Disable caching for authenticated requests
+
 export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
