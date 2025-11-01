@@ -77,32 +77,45 @@ export function FilesWitnessesScreen() {
         }
       }
 
-      // Step 2: Prepare experience data
+      // Step 2: Prepare experience data matching the publishSchema
       const experienceData = {
         // Screen 1
         text: screen1.text,
-        wordCount: screen1.wordCount,
+        // wordCount is not needed by backend
 
         // Screen 2
         title: screen2.title,
         category: screen2.category,
         tags: screen2.tags,
         attributes: screen2.attributes,
-        date: screen2.date,
-        time: screen2.time,
-        location: screen2.location,
-        locationLat: screen2.locationLat,
-        locationLng: screen2.locationLng,
-        duration: screen2.duration,
-        extraQuestions: screen2.extraQuestions,
+
+        // Map date and time to expected field names
+        dateOccurred: screen2.date || null,
+        timeOfDay: screen2.time || null,
+
+        location: screen2.location || null,
+        locationLat: screen2.locationLat || null,
+        locationLng: screen2.locationLng || null,
+        duration: screen2.duration || null,
+
+        // Convert extraQuestions object to questionAnswers array format
+        questionAnswers: Object.entries(screen2.extraQuestions || {}).map(([id, answer]) => ({
+          id,
+          question: id, // Using id as question for now
+          answer,
+          type: typeof answer === 'boolean' ? 'boolean' :
+                typeof answer === 'number' ? 'number' : 'text'
+        })),
 
         // Screen 3
-        summary: screen3.summary,
+        summary: screen3.summary || '',
         enhancedText: screen3.enhancementEnabled ? screen3.enhancedText : screen1.text,
+        enhancementEnabled: screen3.enhancementEnabled,
+        aiEnhancementUsed: screen3.enhancementEnabled,
+        userEditedAi: false, // TODO: Track if user edited AI enhancements
 
         // Screen 4
-        // Map 'anonymous' to 'community' to match DB constraint
-        visibility: visibility === 'anonymous' ? 'community' : visibility,
+        visibility: visibility, // Keep as-is, backend validates enum values
         mediaUrls: uploadedFileUrls,
         witnesses: screen4.witnesses,
       };
