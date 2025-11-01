@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize the text
-    const sanitizedText = sanitizeText(text);
+    const sanitizedText = await sanitizeText(text);
 
     const supabase = await createClient();
 
@@ -358,9 +358,9 @@ Return complete JSON with all fields: title, tags[], attributes{}, missing_info[
     }
 
     // Sanitize AI output before returning
-    const sanitizedTitle = sanitizeText(analysisResult.title || 'Untitled Experience');
-    const sanitizedTags = (analysisResult.tags || []).map((tag: string) => sanitizeText(tag));
-    const sanitizedMissingInfo = (analysisResult.missing_info || []).map((info: string) => sanitizeText(info));
+    const sanitizedTitle = await sanitizeText(analysisResult.title || 'Untitled Experience');
+    const sanitizedTags = await Promise.all((analysisResult.tags || []).map((tag: string) => sanitizeText(tag)));
+    const sanitizedMissingInfo = await Promise.all((analysisResult.missing_info || []).map((info: string) => sanitizeText(info)));
 
     // Return complete analysis (summary removed - generated later in finalize-metadata)
     return NextResponse.json({

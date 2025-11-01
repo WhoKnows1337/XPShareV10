@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 4.4. Sanitize filename
-        const sanitizedName = sanitizeFileName(file.name);
+        const sanitizedName = await sanitizeFileName(file.name);
 
         // 4.5. Check file content (basic magic number validation)
         const buffer = await file.arrayBuffer();

@@ -1,8 +1,19 @@
-import DOMPurify from 'isomorphic-dompurify';
-
 // ============================================================
 // SANITIZATION UTILITIES FOR XSS & INJECTION PREVENTION
 // ============================================================
+
+/**
+ * Lazy-load DOMPurify to avoid build-time issues with jsdom
+ * Only loads when actually needed at runtime
+ */
+let DOMPurify: any = null;
+async function getDOMPurify() {
+  if (!DOMPurify) {
+    const { default: purify } = await import('isomorphic-dompurify');
+    DOMPurify = purify;
+  }
+  return DOMPurify;
+}
 
 /**
  * Configuration for DOMPurify to strip all HTML but keep text content
@@ -28,11 +39,13 @@ const BASIC_HTML_CONFIG = {
  * Strictly sanitize text input - removes ALL HTML/scripts
  * Use for: usernames, titles, tags, simple text fields
  */
-export function sanitizeText(text: string): string {
+export async function sanitizeText(text: string): Promise<string> {
   if (!text) return '';
 
+  const purify = await getDOMPurify();
+
   // First pass: Use DOMPurify to remove all HTML
-  let clean = DOMPurify.sanitize(text, STRIP_HTML_CONFIG) as string;
+  let clean = purify.sanitize(text, STRIP_HTML_CONFIG) as string;
 
   // Second pass: Remove potential SQL injection patterns
   clean = removeSQLPatterns(clean);
@@ -47,11 +60,13 @@ export function sanitizeText(text: string): string {
  * Sanitize rich text content - allows basic formatting
  * Use for: experience stories, descriptions, enhanced text
  */
-export function sanitizeRichText(text: string): string {
+export async function sanitizeRichText(text: string): Promise<string> {
   if (!text) return '';
 
+  const purify = await getDOMPurify();
+
   // Use DOMPurify with basic HTML config
-  let clean = DOMPurify.sanitize(text, BASIC_HTML_CONFIG) as string;
+  let clean = purify.sanitize(text, BASIC_HTML_CONFIG) as string;
 
   // Remove SQL patterns but preserve formatting
   clean = removeSQLPatterns(clean);
@@ -63,11 +78,13 @@ export function sanitizeRichText(text: string): string {
  * Sanitize attribute values for database storage
  * Use for: custom attribute values, category-specific fields
  */
-export function sanitizeAttributeValue(value: string): string {
+export async function sanitizeAttributeValue(value: string): Promise<string> {
   if (!value) return '';
 
+  const purify = await getDOMPurify();
+
   // Strip all HTML
-  let clean = DOMPurify.sanitize(value, STRIP_HTML_CONFIG) as string;
+  let clean = purify.sanitize(value, STRIP_HTML_CONFIG) as string;
 
   // Convert to lowercase for canonical storage
   clean = clean.toLowerCase();
@@ -89,14 +106,16 @@ export function sanitizeAttributeValue(value: string): string {
 /**
  * Sanitize email addresses
  */
-export function sanitizeEmail(email: string): string {
+export async function sanitizeEmail(email: string): Promise<string> {
   if (!email) return '';
+
+  const purify = await getDOMPurify();
 
   // Basic sanitization
   let clean = email.toLowerCase().trim();
 
   // Remove any HTML/script attempts
-  clean = DOMPurify.sanitize(clean, STRIP_HTML_CONFIG) as string;
+  clean = purify.sanitize(clean, STRIP_HTML_CONFIG) as string;
 
   // Remove suspicious characters
   clean = clean.replace(/[<>'"`;]/g, '');
@@ -151,11 +170,11 @@ export function sanitizeUrl(url: string): string {
 /**
  * Sanitize location text
  */
-export function sanitizeLocation(location: string): string {
+export async function sanitizeLocation(location: string): Promise<string> {
   if (!location) return '';
 
   // Basic text sanitization
-  let clean = sanitizeText(location);
+  let clean = await sanitizeText(location);
 
   // Remove coordinate-like patterns that might be injection attempts
   clean = clean.replace(/[();]/g, '');
@@ -187,21 +206,21 @@ export function sanitizeCoordinates(lat: number, lng: number): { lat: number; ln
 /**
  * Sanitize JSON data before storage
  */
-export function sanitizeJSON(data: any): any {
+export async function sanitizeJSON(data: any): Promise<any> {
   if (typeof data === 'string') {
-    return sanitizeText(data);
+    return await sanitizeText(data);
   }
 
   if (Array.isArray(data)) {
-    return data.map(item => sanitizeJSON(item));
+    return await Promise.all(data.map(item => sanitizeJSON(item)));
   }
 
   if (data && typeof data === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(data)) {
       // Sanitize the key as well
-      const cleanKey = sanitizeText(key);
-      sanitized[cleanKey] = sanitizeJSON(value);
+      const cleanKey = await sanitizeText(key);
+      sanitized[cleanKey] = await sanitizeJSON(value);
     }
     return sanitized;
   }

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const { text, language = 'en' }: AnalyzeInput = validation.data;
 
     // Sanitize the text to prevent injection attacks
-    const sanitizedText = sanitizeText(text);
+    const sanitizedText = await sanitizeText(text);
 
     // Additional validation: Check if text is actually meaningful
     if (sanitizedText.length < 50) {
@@ -97,13 +97,13 @@ Respond ONLY with valid JSON in this exact format:
     const result = JSON.parse(completion.choices[0].message.content || '{}');
 
     // Validate and sanitize AI output to prevent injection
-    const title = sanitizeText(result.title || 'Untitled Experience');
+    const title = await sanitizeText(result.title || 'Untitled Experience');
     const category = CATEGORIES.includes(result.category) ? result.category : 'Other';
     const tags = Array.isArray(result.tags)
-      ? result.tags
+      ? await Promise.all(result.tags
           .slice(0, 8)
           .filter((tag: string) => typeof tag === 'string' && tag.length > 0)
-          .map((tag: string) => sanitizeText(tag)) // Sanitize each tag
+          .map((tag: string) => sanitizeText(tag))) // Sanitize each tag
       : [];
 
     return NextResponse.json({
