@@ -132,7 +132,11 @@ export function EnhancedTextScreen() {
         }),
       });
 
-      if (!response.ok) throw new Error('Summary generation failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Summary generation failed' }));
+        console.error('Summary generation API error:', errorData);
+        throw new Error(errorData.error || 'Summary generation failed');
+      }
 
       const data = await response.json();
       setSummary(data.summary);
@@ -152,12 +156,23 @@ export function EnhancedTextScreen() {
         body: JSON.stringify({
           text: screen1.text,
           attributes: screen2.attributes,
-          answers: screen2.extraQuestions,
+          // Convert extraQuestions object to array format expected by API
+          answers: Object.entries(screen2.extraQuestions || {}).map(([id, answer]) => ({
+            id,
+            question: id, // Using ID as question for now
+            answer,
+            type: typeof answer === 'boolean' ? 'boolean' :
+                  typeof answer === 'number' ? 'number' : 'text'
+          })),
           language: 'de',
         }),
       });
 
-      if (!response.ok) throw new Error('Text enrichment failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Text enrichment failed' }));
+        console.error('Text enrichment API error:', errorData);
+        throw new Error(errorData.error || 'Text enrichment failed');
+      }
 
       const data = await response.json();
       console.log('[EnhancedTextScreen] API Response:', {
