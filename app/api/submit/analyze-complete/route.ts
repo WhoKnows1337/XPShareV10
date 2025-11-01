@@ -34,6 +34,20 @@ interface AttributeSchema {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // Disable caching for authenticated requests
 
+
+// OPTIONS handler for CORS pre-flight requests
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body

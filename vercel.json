@@ -7,6 +7,16 @@
     "app/api/discover-v2/route.ts": {
       "memory": 1024,
       "maxDuration": 60
+    },
+    "app/api/submit/analyze-complete/route.ts": {
+      "runtime": "nodejs20.x",
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "app/api/submit/publish/route.ts": {
+      "runtime": "nodejs20.x",
+      "memory": 1024,
+      "maxDuration": 60
     }
   }
 }
