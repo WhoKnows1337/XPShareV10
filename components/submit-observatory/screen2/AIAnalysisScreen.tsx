@@ -131,11 +131,19 @@ export function AIAnalysisScreen() {
         throw new Error('Text ist zu kurz für die Analyse (mindestens 30 Zeichen erforderlich). Bitte gehe zurück und füge mehr Text hinzu.');
       }
 
+      // Get current locale for API (de, en, fr, etc.)
+      const currentLocale = typeof window !== 'undefined'
+        ? window.location.pathname.split('/')[1] || 'de'
+        : 'de';
+
       // Step 1: Complete analysis including title, category, tags, AND attributes
       const response = await fetch('/api/submit/analyze-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: screen1.text }),
+        body: JSON.stringify({
+          text: screen1.text,
+          language: currentLocale.substring(0, 2) // Ensure 2-char language code
+        }),
       });
 
       if (!response.ok) {
