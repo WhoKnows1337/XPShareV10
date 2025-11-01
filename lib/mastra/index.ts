@@ -8,7 +8,6 @@
 
 import { Mastra } from '@mastra/core'
 import { PostgresStore } from '@mastra/pg'
-import { LibSQLStore } from '@mastra/libsql'
 
 // Import orchestrator agents
 import { orchestratorAgent } from './agents/orchestrator'
@@ -22,13 +21,9 @@ import { networkOrchestratorAgent } from './agents/orchestrator-network'
  * - Storage: Conditional (LibSQLStore :memory: local, PostgresStore production)
  */
 // Debug logging
-const storageProvider = process.env.NODE_ENV === 'production'
-  ? new PostgresStore({
-      connectionString: process.env.DIRECT_DATABASE_URL!,
-    })
-  : new LibSQLStore({
-      url: ':memory:',
-    })
+const storageProvider = new PostgresStore({
+  connectionString: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL!,
+})
 
 console.log('[Mastra Init] NODE_ENV:', process.env.NODE_ENV)
 console.log('[Mastra Init] Storage Provider:', storageProvider.constructor.name)
