@@ -272,11 +272,23 @@
   "categories": {
     "paranormal": "Paranormal",
     "ufo_sighting": "Avistamiento OVNI",
+    "ufo-uap": "Avistamientos OVNI/FANI",
     "synchronicity": "Sincronicidad",
+    "spiritual": "Espiritual",
     "spiritual_experience": "Experiencia Espiritual",
+    "nde": "ECM",
+    "nde-obe": "Experiencias Cercanas a la Muerte y Fuera del Cuerpo",
     "near_death_experience": "Experiencia Cercana a la Muerte",
+    "psychedelic": "Psicodélico",
     "psychic_experience": "Experiencia Psíquica",
     "cryptid_encounter": "Encuentro con Críptido",
+    "dreams": "Sueños y Sueños Lúcidos",
+    "ghost-spirit": "Fantasmas y Apariciones",
+    "consciousness-inner": "Conciencia y Experiencias Interiores",
+    "extraterrestrial-sky": "Fenómenos Extraterrestres y Celestiales",
+    "entities-apparitions": "Entidades y Apariciones",
+    "time-space-sync": "Tiempo, Espacio y Sincronicidad",
+    "gesundheit": "Salud",
     "other": "Otro"
   },
   "time": {

@@ -78,6 +78,31 @@ export function FilesWitnessesScreen() {
       }
 
       // Step 2: Prepare experience data matching the publishSchema
+      // Transform attributes: Convert confidence from 0-100 to 0-1
+      const transformedAttributes = screen2.attributes ? Object.fromEntries(
+        Object.entries(screen2.attributes).map(([key, attr]) => [
+          key,
+          {
+            ...attr,
+            confidence: typeof attr.confidence === 'number' && attr.confidence > 1
+              ? attr.confidence / 100
+              : attr.confidence,
+          },
+        ])
+      ) : {};
+
+      // Transform duration values to match schema
+      const durationMap: Record<string, string> = {
+        'less_than_1min': 'seconds',
+        '1_to_5min': 'minutes',
+        'more_than_5min': 'minutes',
+      };
+
+      // Convert date string to ISO datetime if it exists
+      const dateOccurredISO = screen2.date
+        ? (screen2.date.includes('T') ? screen2.date : `${screen2.date}T12:00:00.000Z`)
+        : null;
+
       const experienceData = {
         // Screen 1
         text: screen1.text,
@@ -87,16 +112,16 @@ export function FilesWitnessesScreen() {
         title: screen2.title,
         category: screen2.category,
         tags: screen2.tags,
-        attributes: screen2.attributes,
+        attributes: transformedAttributes,
 
         // Map date and time to expected field names
-        dateOccurred: screen2.date || null,
+        dateOccurred: dateOccurredISO,
         timeOfDay: screen2.time || null,
 
         location: screen2.location || null,
         locationLat: screen2.locationLat || null,
         locationLng: screen2.locationLng || null,
-        duration: screen2.duration || null,
+        duration: screen2.duration ? (durationMap[screen2.duration] || screen2.duration) : null,
 
         // Convert extraQuestions object to questionAnswers array format
         questionAnswers: Object.entries(screen2.extraQuestions || {}).map(([id, answer]) => ({
@@ -118,6 +143,9 @@ export function FilesWitnessesScreen() {
         visibility: visibility, // Keep as-is, backend validates enum values
         mediaUrls: uploadedFileUrls,
         witnesses: screen4.witnesses,
+
+        // Metadata - Add missing language field
+        language: 'de', // TODO: Get from i18n context
       };
 
       // Step 3: Publish experience
@@ -131,7 +159,13 @@ export function FilesWitnessesScreen() {
 
       if (!publishRes.ok) {
         const error = await publishRes.json();
-        throw new Error(error.details || error.error || 'Failed to publish');
+        console.error('Publish API Error:', {
+          status: publishRes.status,
+          error: error,
+          details: error.details,
+          sentData: experienceData,
+        });
+        throw new Error(JSON.stringify(error.details) || error.error || 'Failed to publish');
       }
 
       const result = await publishRes.json();
@@ -139,11 +173,11 @@ export function FilesWitnessesScreen() {
       // Success!
       toast.success(t('toast.publishSuccess'), { id: 'publish' });
 
-      // Clear the draft and navigate to success screen
-      reset();
-
-      // Navigate to the experience detail page
+      // Navigate to the experience detail page immediately
       router.push(`/experiences/${result.experienceId}`);
+
+      // Clear the draft after navigation
+      reset();
 
       // Show rewards notification
       if (result.xpEarned > 0) {

@@ -39,9 +39,9 @@ export function EnhancedTextScreen() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [qualityScore, setQualityScore] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
-  // ⭐ Initialize as true if segments already exist (from Step 2)
+  // ⭐ Initialize as true if segments already exist (from Step 2) or enrichment was done in Step 2
   const [initialEnhancementDone, setInitialEnhancementDone] = useState(
-    () => screen3.segments && screen3.segments.length > 0
+    () => (screen3.segments && screen3.segments.length > 0) || screen3.enrichmentCompletedInStep2
   );
 
   // Change detection state
@@ -89,7 +89,8 @@ export function EnhancedTextScreen() {
     }
   };
 
-  // ⭐ Run both summary and enhancement in parallel on mount
+  // ⭐ Run both summary and enhancement in parallel on mount - IN THE BACKGROUND!
+  // NO LOADING SCREENS - UI is shown immediately
   useEffect(() => {
     const initializeScreen = async () => {
       const tasks = [];
@@ -100,7 +101,9 @@ export function EnhancedTextScreen() {
       }
 
       // Add text enhancement if enabled and not already done
+      // Skip if enrichment was completed in Step 2
       if (screen3.enhancementEnabled && screen1.text &&
+          !screen3.enrichmentCompletedInStep2 &&
           (!screen3.enhancedText || !screen3.segments || screen3.segments.length === 0)) {
         tasks.push(enhanceText());
       }
@@ -118,12 +121,21 @@ export function EnhancedTextScreen() {
     // Check if text is long enough before attempting summary
     if (!screen1.text || screen1.text.trim().length < 50) {
       console.log('Text too short for summary, skipping generation');
-      setSummary(''); // Set empty summary for short texts
+      // Don't clear the summary if it already exists from a previous run
+      if (!screen3.summary) {
+        setSummary('');
+      }
       return;
     }
 
     setSummarizing(true);
     try {
+      console.log('Generating summary for text:', {
+        textLength: screen1.text.length,
+        category: screen2.category,
+        hasMetadata: !!(screen2.date || screen2.time || screen2.location)
+      });
+
       const response = await fetch('/api/submit/generate-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -141,17 +153,24 @@ export function EnhancedTextScreen() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Summary generation failed' }));
-        console.error('Summary generation API error:', errorData);
-        // Don't throw for summary generation - it's optional
-        setSummary(''); // Set empty summary on error
+        console.error('Summary generation API error:', {
+          status: response.status,
+          error: errorData
+        });
+        // For summary, we can use a fallback - just take the first 200 chars
+        const fallbackSummary = screen1.text.substring(0, 200) + (screen1.text.length > 200 ? '...' : '');
+        setSummary(fallbackSummary);
         return;
       }
 
       const data = await response.json();
+      console.log('Summary generated successfully:', data.summary?.substring(0, 100) + '...');
       setSummary(data.summary);
     } catch (error) {
       console.error('Summary generation error:', error);
-      setSummary(''); // Set empty summary on error
+      // Fallback summary
+      const fallbackSummary = screen1.text.substring(0, 200) + (screen1.text.length > 200 ? '...' : '');
+      setSummary(fallbackSummary);
     } finally {
       setSummarizing(false);
     }
@@ -168,14 +187,19 @@ export function EnhancedTextScreen() {
     setEnhancing(true);
     try {
       // Ensure attributes is an object with proper structure
-      // Convert confidence from percentage (0-100) to decimal (0-1) if needed
+      // ALWAYS convert confidence to decimal (0-1) for the API
       const attributesObject: Record<string, { value: string; confidence: number; isManuallyEdited: boolean }> = {};
 
       for (const [key, attr] of Object.entries(screen2.attributes || {})) {
         if (attr && typeof attr === 'object' && 'value' in attr) {
+          // Always ensure confidence is in 0-1 range for API
+          const confidenceValue = typeof attr.confidence === 'number'
+            ? (attr.confidence > 1 ? attr.confidence / 100 : attr.confidence)
+            : 0.95; // Default confidence
+
           attributesObject[key] = {
             value: String(attr.value || ''),
-            confidence: attr.confidence > 1 ? attr.confidence / 100 : attr.confidence, // Convert from percentage if needed
+            confidence: confidenceValue,
             isManuallyEdited: attr.isManuallyEdited || false
           };
         }
@@ -314,21 +338,8 @@ export function EnhancedTextScreen() {
     resetDetection,
   ]);
 
-  // ⭐ Show loading state during initial processing (summary + AI enhancement)
-  // Combine both loading states into ONE to avoid double loading screens
-  const isInitialProcessing =
-    (isSummarizing && !screen3.summary) ||
-    (isEnhancing && screen3.enhancementEnabled && !initialEnhancementDone);
-
-  if (isInitialProcessing) {
-    return (
-      <LoadingState
-        icon="sparkles"
-        title={t('loadingTitle')}
-        description={t('loadingDescription')}
-      />
-    );
-  }
+  // ⭐ REMOVED: No loading screens at all!
+  // The UI is shown immediately and processing happens in the background
 
   return (
     <div className="space-y-4">

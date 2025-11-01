@@ -130,9 +130,9 @@ export function SegmentTooltip({ segment, position, onRemove, onEdit, onClose }:
             <div className="flex items-center justify-between text-xs">
               <span className="text-text-tertiary">KI-Zuversicht</span>
               <span className="text-text-primary font-medium">
-                {segment.source.confidence >= 90 ? '🟢 Hoch' :
-                 segment.source.confidence >= 70 ? '🟡 Mittel' : '🟠 Niedrig'}
-                {' '}({segment.source.confidence}%)
+                {segment.source.confidence >= 0.9 ? '🟢 Hoch' :
+                 segment.source.confidence >= 0.7 ? '🟡 Mittel' : '🟠 Niedrig'}
+                {' '}({Math.round(segment.source.confidence * 100)}%)
               </span>
             </div>
           </div>

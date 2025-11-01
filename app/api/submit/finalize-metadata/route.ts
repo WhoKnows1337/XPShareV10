@@ -36,11 +36,18 @@ export async function POST(request: NextRequest) {
     const data: FinalizeMetadataRequest = await request.json();
     const { enhancedText, originalText, category, metadata, attributes, language = 'de' } = data;
 
-    if (!enhancedText || enhancedText.trim().length < 50) {
-      return NextResponse.json(
-        { error: 'Enhanced text is too short for metadata generation (minimum 50 characters)' },
-        { status: 400 }
-      );
+    // Allow texts with 30+ characters (more flexible)
+    if (!enhancedText || enhancedText.trim().length < 30) {
+      // Generate simple metadata for very short texts
+      const simpleTitle = originalText.trim().substring(0, 80);
+      const simpleSummary = enhancedText.trim().substring(0, 200);
+
+      return NextResponse.json({
+        title: simpleTitle,
+        summary: simpleSummary,
+        tags: ['experience', category?.replace(/-/g, ' ')].filter(Boolean),
+        qualityScore: { title: 70, summary: 70 }
+      });
     }
 
     // Build context from all available information

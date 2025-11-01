@@ -192,7 +192,7 @@ export function MetadataSidebar({ categories = [], onRegenerateSummary, isSummar
                       <div className="text-text-secondary mt-0.5">{attr.value}</div>
                     </div>
                     <div className="text-[10px] px-1.5 py-0.5 rounded bg-accent-cyan/20 text-accent-cyan">
-                      {Math.round(attr.confidence)}%
+                      {Math.round(attr.confidence * 100)}%
                     </div>
                   </div>
                 ))

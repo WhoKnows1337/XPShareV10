@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
         p_attributes: attributes,
         p_witnesses: witnesses,
         p_embedding: embedding,
+        p_media_urls: data.mediaUrls || [], // NEW: Send media URLs to function
       })
       .single();
 

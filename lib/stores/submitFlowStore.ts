@@ -78,6 +78,9 @@ export interface Screen3Data {
   finalText?: string;       // User's approved text for saving
   wasEnhanced?: boolean;    // true = saved with AI, false = saved original
   wasEdited?: boolean;      // true = user made manual edits
+
+  // FIX: Track if enrichment was completed in Step 2 to avoid double loading
+  enrichmentCompletedInStep2?: boolean;
 }
 
 // Screen 4: Files + Witnesses
@@ -141,6 +144,7 @@ export interface SubmitFlowState {
   // NEW: Advanced Screen 3 Actions
   setTextSegments: (segments: TextSegment[]) => void;
   setTextVersionAfterAI: (text: string) => void;
+  setEnrichmentCompletedInStep2: (completed: boolean) => void;
   removeSegment: (segmentId: string) => void;
   editSegment: (segmentId: string, newText: string) => void;
   setCurrentText: (text: string) => void;
@@ -216,6 +220,7 @@ const initialScreen3: Screen3Data = {
     change: null,
   },
   undoStack: [],
+  enrichmentCompletedInStep2: false,
 };
 
 const initialScreen4: Screen4Data = {
@@ -373,6 +378,14 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
               ...state.screen3.textVersions,
               afterAIEnhancement: text,
             },
+          },
+        })),
+
+      setEnrichmentCompletedInStep2: (completed) =>
+        set((state) => ({
+          screen3: {
+            ...state.screen3,
+            enrichmentCompletedInStep2: completed,
           },
         })),
 
@@ -632,7 +645,20 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
       goBack: () => {
         const state = get();
         if (state.canGoBack()) {
-          set({ currentStep: state.currentStep - 1 });
+          const newStep = state.currentStep - 1;
+          // Reset enrichmentCompletedInStep2 flag when going back from Step 3 to Step 2
+          // This ensures the enrichment can run again if needed
+          if (state.currentStep === 3 && newStep === 2) {
+            set({
+              currentStep: newStep,
+              screen3: {
+                ...state.screen3,
+                enrichmentCompletedInStep2: false,
+              },
+            });
+          } else {
+            set({ currentStep: newStep });
+          }
         }
       },
 

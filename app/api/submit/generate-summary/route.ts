@@ -14,11 +14,13 @@ export async function POST(request: NextRequest) {
   try {
     const { text, metadata } = await request.json();
 
-    if (!text || text.trim().length < 50) {
-      return NextResponse.json(
-        { error: 'Text is too short for summarization (minimum 50 characters)' },
-        { status: 400 }
-      );
+    // Allow texts with 30+ characters (more flexible)
+    if (!text || text.trim().length < 30) {
+      // Return a simple fallback summary for very short texts
+      return NextResponse.json({
+        summary: text?.trim() || '',
+        charCount: text?.trim().length || 0,
+      });
     }
 
     // Build context from metadata if available

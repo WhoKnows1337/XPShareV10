@@ -51,8 +51,9 @@ export const attributeValueSchema = z.string()
       .trim();
   });
 
-// Category enum matching your database
+// Category enum matching your database and translations
 export const categorySchema = z.enum([
+  // Original categories
   'glitch-in-matrix',
   'time-slip',
   'telepathic',
@@ -68,7 +69,24 @@ export const categorySchema = z.enum([
   'premonition',
   'psychokinesis',
   'apparition',
-  'other'
+  'other',
+  // New categories from translations
+  'consciousness-inner',
+  'cryptid_encounter',
+  'dreams',
+  'entities-apparitions',
+  'extraterrestrial-sky',
+  'gesundheit',
+  'ghost-spirit',
+  'nde',
+  'nde-obe',
+  'near_death_experience',
+  'psychedelic',
+  'psychic_experience',
+  'spiritual',
+  'spiritual_experience',
+  'time-space-sync',
+  'ufo-uap',
 ]);
 
 // ============================================================

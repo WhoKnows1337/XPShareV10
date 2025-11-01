@@ -103,6 +103,7 @@ export function AIAnalysisScreen() {
   };
 
   // Run AI analysis on mount if not already analyzed
+  // ⭐ This runs in the BACKGROUND - no loading screen!
   useEffect(() => {
     if (!hasAnalyzed && screen1.text && !screen2.title) {
       analyzeText();
@@ -112,29 +113,32 @@ export function AIAnalysisScreen() {
   const analyzeText = async () => {
     setAnalyzing(true);
     setAnalysisError(null);
-    
+
     // Reset analysis steps to pending (no time counters)
     setAnalysisSteps([
       { id: '1', label: t('analysisSteps.step1'), status: 'pending' },
       { id: '2', label: t('analysisSteps.step2'), status: 'pending' },
       { id: '3', label: t('analysisSteps.step3'), status: 'pending' },
     ]);
-    
+
     try {
       // ⭐ Step 1: Activate "Text analysieren"
       setAnalysisSteps(prev => prev.map((s, i) =>
         i === 0 ? { ...s, status: 'active' as const } : s
       ));
-      
+
       // Validate text length before sending to API
       if (!screen1.text || screen1.text.trim().length < 30) {
         throw new Error('Text ist zu kurz für die Analyse (mindestens 30 Zeichen erforderlich). Bitte gehe zurück und füge mehr Text hinzu.');
       }
 
       // Get current locale for API (de, en, fr, etc.)
-      const currentLocale = typeof window !== 'undefined'
-        ? window.location.pathname.split('/')[1] || 'de'
-        : 'de';
+      // Check if the first segment is a valid locale, otherwise default to 'de'
+      const pathSegment = typeof window !== 'undefined'
+        ? window.location.pathname.split('/')[1]
+        : '';
+      const validLocales = ['de', 'en', 'fr', 'es'];
+      const currentLocale = validLocales.includes(pathSegment) ? pathSegment : 'de';
 
       // Step 1: Complete analysis including title, category, tags, AND attributes
       const response = await fetch('/api/submit/analyze-complete', {
@@ -237,7 +241,7 @@ export function AIAnalysisScreen() {
     } finally {
       setAnalyzing(false);
     }
-  };;
+  };
 
   // Callback for AIHeroHeader to reload questions when attributes change
   const handleReloadQuestions = async () => {
@@ -261,7 +265,7 @@ export function AIAnalysisScreen() {
     let enrichedTextContent = screen1.text; // Fallback to original
 
     try {
-      const { setEnhancedText, setEnhancing, setAIResults, setSummary } = useSubmitFlowStore.getState();
+      const { setEnhancedText, setEnhancing, setAIResults, setSummary, setEnrichmentCompletedInStep2 } = useSubmitFlowStore.getState();
       setEnhancing(true);
 
       // ⭐ Step 1: Activate "Attribute einarbeiten"
@@ -270,13 +274,22 @@ export function AIAnalysisScreen() {
       ));
 
       // Step 1: Enrich text with attributes and answers from questions
+      // Convert extraQuestions object to array format expected by API
+      const answersArray = Object.entries(screen2.extraQuestions || {}).map(([id, answer]) => ({
+        id,
+        question: id, // Using ID as question for now
+        answer,
+        type: typeof answer === 'boolean' ? 'boolean' :
+              typeof answer === 'number' ? 'number' : 'text'
+      }));
+
       const enrichResponse = await fetch('/api/submit/enrich-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: screen1.text,
           attributes: screen2.attributes,
-          answers: screen2.extraQuestions,
+          answers: answersArray, // Send as array, not object
           language: 'de',
         }),
       });
@@ -291,6 +304,8 @@ export function AIAnalysisScreen() {
           const { setTextSegments, setTextVersionAfterAI } = useSubmitFlowStore.getState();
           setTextSegments(enrichData.segments);
           setTextVersionAfterAI(enrichData.enrichedText);
+          // ⭐ Mark enrichment as completed in Step 2 to prevent double loading screen
+          setEnrichmentCompletedInStep2(true);
         }
       }
 
@@ -364,8 +379,9 @@ export function AIAnalysisScreen() {
     goNext();
   };
 
-  // Show loading state during analysis
-  if (isAnalyzing) {
+  // Show loading state during initial analysis (first time only)
+  // This is shown when navigating from Step 1 to Step 2 for the first time
+  if (isAnalyzing && !hasAnalyzed && !screen2.title) {
     return (
       <LoadingState
         icon="telescope"
@@ -430,13 +446,14 @@ export function AIAnalysisScreen() {
     );
   }
 
+  // ⭐ MAIN UI - Shows immediately, no waiting for analysis!
   return (
     <AnimatePresence mode="wait">
       <div className="space-y-6">
-        {/* Hero Header: AI Analysis Results */}
+        {/* Hero Header: AI Analysis Results - will show loading states inline */}
         <AIHeroHeader onReloadQuestions={handleReloadQuestions} />
 
-        {/* Questions Section */}
+        {/* Questions Section - always visible */}
         <div>
           <div className="mb-4">
             <h2 className="section-title-observatory">
