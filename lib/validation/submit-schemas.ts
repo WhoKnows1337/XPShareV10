@@ -178,8 +178,32 @@ export const publishSchema = z.object({
   summary: z.string().max(1000).optional(),
 
   // Screen 4 data
-  mediaUrls: z.array(z.string().url()).max(10).optional(),
+  mediaUrls: z.array(z.string().url()).max(10).optional(), // Backwards compatibility
+  media: z.array(z.object({
+    url: z.string().url(),
+    duration: z.number().min(0).max(86400).optional(), // Max 24 hours in seconds
+    width: z.number().min(1).max(10000).optional(),
+    height: z.number().min(1).max(10000).optional(),
+  })).max(10).optional(),
   witnesses: z.array(witnessSchema).max(5).optional(),
+  externalLinks: z.array(z.object({
+    url: z.string().url(),
+    platform: z.enum([
+      'youtube', 'vimeo', 'twitter', 'spotify', 'soundcloud',
+      'tiktok', 'instagram', 'facebook', 'maps', 'website'
+    ]),
+    title: z.string().max(500).optional(),
+    description: z.string().max(2000).optional(),
+    thumbnail_url: z.string().url().optional(),
+    author_name: z.string().max(200).optional(),
+    author_url: z.string().url().optional(),
+    provider_name: z.string().max(100).optional(),
+    provider_url: z.string().url().optional(),
+    html: z.string().optional(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    duration: z.number().optional(),
+  })).max(20).optional(),
   visibility: z.enum(['public', 'anonymous', 'private']).default('public'),
 
   // Metadata

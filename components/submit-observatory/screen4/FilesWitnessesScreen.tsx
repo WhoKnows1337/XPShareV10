@@ -1,21 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { FileText, Link2, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { FileUploadSection } from './FileUploadSection';
 import { WitnessesSection } from './WitnessesSection';
+import { LinkSection } from './LinkSection';
 import { SplitPublishButton } from './SplitPublishButton';
 import { NavigationButtons } from '../shared/NavigationButtons';
+import { UppyFileUploadRef } from './UppyFileUpload';
+import type { LinkMetadata } from '@/lib/types/link-preview';
 
 export function FilesWitnessesScreen() {
   const t = useTranslations('submit.screen4');
   const router = useRouter();
   const { screen1, screen2, screen3, screen4, goBack, reset, setPublishing } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const uppyRef = useRef<UppyFileUploadRef | null>(null);
+  const [uploadedMedia, setUploadedMedia] = useState<Array<{
+    url: string;
+    duration?: number;
+    width?: number;
+    height?: number;
+  }>>([]);
+  const [externalLinks, setExternalLinks] = useState<LinkMetadata[]>([]);
 
   const handleReset = () => {
     if (showResetConfirm) {
@@ -27,7 +41,17 @@ export function FilesWitnessesScreen() {
     }
   };
 
-  const handlePublish = async (visibility: 'public' | 'anonymous' | 'private') => {
+  // Handle Uppy upload completion
+  const handleUploadComplete = (files: Array<{
+    url: string;
+    duration?: number;
+    width?: number;
+    height?: number;
+  }>) => {
+    setUploadedMedia(files);
+  };
+
+  const handlePublishClick = async (visibility: 'public' | 'anonymous' | 'private') => {
     try {
       setPublishing(true);
 
@@ -38,42 +62,17 @@ export function FilesWitnessesScreen() {
 
       toast.loading(t('toast.publishing'), { id: 'publish' });
 
-      // Step 1: Upload files if any
-      const uploadedFileUrls: string[] = [];
-      if (screen4.files.length > 0) {
+      // Step 1: Trigger Uppy upload if files exist
+      if (screen4.files.length > 0 && uppyRef.current) {
         toast.loading(t('toast.uploadingFiles', { count: screen4.files.length }), { id: 'publish' });
 
-        for (let i = 0; i < screen4.files.length; i++) {
-          const file = screen4.files[i];
-          const formData = new FormData();
-          formData.append('file', file);
-
-          // Determine file type (with fallback for deserialized files)
-          const fileType = file.type || '';
-          const fileName = file.name || '';
-
-          let type = 'photo';
-          if (fileType.startsWith('video/') || /\.(mp4|mov|avi|webm)$/i.test(fileName)) {
-            type = 'video';
-          } else if (fileType.startsWith('audio/') || /\.(mp3|wav|m4a|ogg)$/i.test(fileName)) {
-            type = 'audio';
-          } else if (fileName.includes('sketch')) {
-            type = 'sketch';
-          }
-
-          formData.append('type', type);
-
-          const uploadRes = await fetch('/api/media/upload', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!uploadRes.ok) {
-            throw new Error(`Failed to upload ${file.name}`);
-          }
-
-          const uploadData = await uploadRes.json();
-          uploadedFileUrls.push(uploadData.url);
+        try {
+          // Trigger Uppy upload - results will be captured in handleUploadComplete
+          await uppyRef.current.upload();
+          // Wait a bit for the complete callback
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (uploadErr) {
+          throw new Error('File upload failed');
         }
       }
 
@@ -141,8 +140,10 @@ export function FilesWitnessesScreen() {
 
         // Screen 4
         visibility: visibility, // Keep as-is, backend validates enum values
-        mediaUrls: uploadedFileUrls,
+        mediaUrls: uploadedMedia.map(m => m.url), // URLs for backwards compatibility
+        media: uploadedMedia, // Extended media with metadata
         witnesses: screen4.witnesses,
+        externalLinks: externalLinks, // Link preview metadata
 
         // Metadata - Add missing language field
         language: 'de', // TODO: Get from i18n context
@@ -212,14 +213,14 @@ export function FilesWitnessesScreen() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="space-y-3"
+      className="space-y-4"
     >
       {/* Compact Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mb-2"
+        className="mb-4"
       >
         <h1 className="section-title-observatory text-base sm:text-lg">
           {t('title')}
@@ -229,28 +230,59 @@ export function FilesWitnessesScreen() {
         </p>
       </motion.div>
 
-      {/* Side-by-Side Layout - Desktop: 50/50, Mobile: Stacked */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-none lg:max-h-[600px]">
-        {/* File Upload Section - Compact */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="min-h-0"
-        >
-          <FileUploadSection />
-        </motion.div>
+      {/* Tab Layout */}
+      <Tabs defaultValue="files" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="files" className="gap-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Files & Media</span>
+            <span className="sm:hidden">Files</span>
+            {screen4.files.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {screen4.files.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="links" className="gap-2">
+            <Link2 className="h-4 w-4" />
+            <span className="hidden sm:inline">External Links</span>
+            <span className="sm:hidden">Links</span>
+            {externalLinks.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {externalLinks.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="witnesses" className="gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Witnesses</span>
+            <span className="sm:hidden">People</span>
+            {screen4.witnesses.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {screen4.witnesses.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Witnesses Section - Compact */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="min-h-0"
-        >
+        {/* Files Tab - forceMount to keep Uppy state */}
+        <TabsContent value="files" className="space-y-4 data-[state=inactive]:hidden" forceMount>
+          <FileUploadSection
+            ref={uppyRef}
+            onUploadComplete={handleUploadComplete}
+          />
+        </TabsContent>
+
+        {/* Links Tab - forceMount to keep state */}
+        <TabsContent value="links" className="space-y-4 data-[state=inactive]:hidden" forceMount>
+          <LinkSection onLinksChange={setExternalLinks} />
+        </TabsContent>
+
+        {/* Witnesses Tab - forceMount to keep state */}
+        <TabsContent value="witnesses" className="space-y-4 data-[state=inactive]:hidden" forceMount>
           <WitnessesSection />
-        </motion.div>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Navigation - Compact */}
       <motion.div
@@ -267,7 +299,7 @@ export function FilesWitnessesScreen() {
           resetConfirm={showResetConfirm}
         />
 
-        <SplitPublishButton onPublish={handlePublish} />
+        <SplitPublishButton onPublish={handlePublishClick} />
       </motion.div>
     </motion.div>
   );

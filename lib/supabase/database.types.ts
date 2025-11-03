@@ -982,37 +982,43 @@ export type Database = {
       }
       experience_witnesses: {
         Row: {
-          contact_info: string | null
           created_at: string | null
+          email: string | null
           experience_id: string
           id: string
           is_verified: boolean | null
           name: string
           testimony: string | null
+          user_id: string | null
           verified_at: string | null
           verified_by: string | null
+          witness_type: string | null
         }
         Insert: {
-          contact_info?: string | null
           created_at?: string | null
+          email?: string | null
           experience_id: string
           id?: string
           is_verified?: boolean | null
           name: string
           testimony?: string | null
+          user_id?: string | null
           verified_at?: string | null
           verified_by?: string | null
+          witness_type?: string | null
         }
         Update: {
-          contact_info?: string | null
           created_at?: string | null
+          email?: string | null
           experience_id?: string
           id?: string
           is_verified?: boolean | null
           name?: string
           testimony?: string | null
+          user_id?: string | null
           verified_at?: string | null
           verified_by?: string | null
+          witness_type?: string | null
         }
         Relationships: [
           {
@@ -4275,31 +4281,58 @@ export type Database = {
         Args: { ai_question_id: string; template_question_text?: string }
         Returns: string
       }
-      publish_experience_atomic: {
-        Args: {
-          p_ai_enhancement_used?: boolean
-          p_attributes?: Json
-          p_category: string
-          p_date_occurred?: string
-          p_duration?: string
-          p_embedding?: Json
-          p_enhancement_model?: string
-          p_location_lat?: number
-          p_location_lng?: number
-          p_location_text?: string
-          p_media_urls?: string[]
-          p_question_answers?: Json
-          p_story_text: string
-          p_tags: string[]
-          p_time_of_day?: string
-          p_title: string
-          p_user_edited_ai?: boolean
-          p_user_id: string
-          p_visibility?: string
-          p_witnesses?: Json
-        }
-        Returns: Json
-      }
+      publish_experience_atomic:
+        | {
+            Args: {
+              p_ai_enhancement_used?: boolean
+              p_attributes?: Json
+              p_category: string
+              p_date_occurred?: string
+              p_duration?: string
+              p_embedding?: Json
+              p_enhancement_model?: string
+              p_location_lat?: number
+              p_location_lng?: number
+              p_location_text?: string
+              p_media_urls?: string[]
+              p_question_answers?: Json
+              p_story_text: string
+              p_tags: string[]
+              p_time_of_day?: string
+              p_title: string
+              p_user_edited_ai?: boolean
+              p_user_id: string
+              p_visibility?: string
+              p_witnesses?: Json
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_ai_enhancement_used?: boolean
+              p_attributes?: Json
+              p_category: string
+              p_date_occurred?: string
+              p_duration?: string
+              p_embedding?: Json
+              p_enhancement_model?: string
+              p_location_lat?: number
+              p_location_lng?: number
+              p_location_text?: string
+              p_media?: Json
+              p_media_urls?: string[]
+              p_question_answers?: Json
+              p_story_text: string
+              p_tags: string[]
+              p_time_of_day?: string
+              p_title: string
+              p_user_edited_ai?: boolean
+              p_user_id: string
+              p_visibility?: string
+              p_witnesses?: Json
+            }
+            Returns: Json
+          }
       refresh_analytics_summary: { Args: never; Returns: undefined }
       refresh_analytics_views: { Args: never; Returns: undefined }
       refresh_stale_similarity_caches: { Args: never; Returns: number }

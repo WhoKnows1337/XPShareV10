@@ -99,12 +99,32 @@ export async function POST(request: NextRequest) {
       isManuallyEdited: attr.isManuallyEdited || false,
     }))) : [];
 
-    // Prepare witnesses for DB function
-    const witnesses = data.witnesses ? await Promise.all(data.witnesses.map(async (witness) => ({
-      name: sanitizeText(witness.name),
-      email: witness.email ? sanitizeEmail(witness.email) : null,
-      userId: witness.userId || null,
-    }))) : [];
+    // Prepare witnesses for DB function (with separated email/userId fields)
+    const witnesses = data.witnesses ? await Promise.all(data.witnesses.map(async (witness) => {
+      const sanitizedName = sanitizeText(witness.name);
+
+      // Separate email and userId - exactly one must be set
+      if (witness.userId) {
+        return {
+          name: sanitizedName,
+          userId: witness.userId,
+          email: null,
+        };
+      } else if (witness.email) {
+        return {
+          name: sanitizedName,
+          email: sanitizeEmail(witness.email),
+          userId: null,
+        };
+      } else {
+        // No contact info - still valid (optional witness contact)
+        return {
+          name: sanitizedName,
+          email: null,
+          userId: null,
+        };
+      }
+    })) : [];
 
     // ============================================================
     // 4. CALL ATOMIC DATABASE FUNCTION
@@ -130,7 +150,8 @@ export async function POST(request: NextRequest) {
         p_attributes: attributes,
         p_witnesses: witnesses,
         p_embedding: embedding,
-        p_media_urls: data.mediaUrls || [], // NEW: Send media URLs to function
+        p_media_urls: data.mediaUrls || [], // Backwards compatibility
+        p_media: data.media || [], // NEW: Media with metadata
       })
       .single();
 
@@ -145,12 +166,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const typedResult = result as any;
+    const experienceId = typedResult.experience_id;
+
+    // ============================================================
+    // 4.5. SAVE EXTERNAL LINKS (if provided)
+    // ============================================================
+    if (data.externalLinks && data.externalLinks.length > 0) {
+      try {
+        const linksToInsert = data.externalLinks.map(link => ({
+          experience_id: experienceId,
+          url: link.url,
+          platform: link.platform,
+          title: link.title || null,
+          description: link.description || null,
+          thumbnail_url: link.thumbnail_url || null,
+          author_name: link.author_name || null,
+          author_url: link.author_url || null,
+          provider_name: link.provider_name || null,
+          provider_url: link.provider_url || null,
+          html: link.html || null,
+          width: link.width || null,
+          height: link.height || null,
+          duration: link.duration || null,
+          created_by: user.id,
+        }));
+
+        const { error: linksError } = await supabase
+          .from('experience_external_links')
+          .insert(linksToInsert);
+
+        if (linksError) {
+          console.error('Failed to save external links:', linksError);
+          // Don't fail the entire request, just log the error
+        }
+      } catch (linkErr) {
+        console.error('Error inserting external links:', linkErr);
+        // Continue - links are non-critical
+      }
+    }
+
     // ============================================================
     // 5. SUCCESS RESPONSE
     // ============================================================
     const processingTime = Date.now() - startTime;
-
-    const typedResult = result as any;
 
     return NextResponse.json({
       success: true,

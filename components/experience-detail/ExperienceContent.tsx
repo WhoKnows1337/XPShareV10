@@ -27,6 +27,8 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  Play,
+  Music,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -43,8 +45,9 @@ interface DynamicAnswer {
 interface MediaItem {
   id: string
   url: string
-  type: 'image' | 'audio'
+  type: 'image' | 'audio' | 'video'
   caption?: string
+  duration_seconds?: number
 }
 
 interface Witness {
@@ -429,6 +432,36 @@ export function ExperienceContent({
                       sizes="(max-width: 768px) 50vw, 33vw"
                     />
                   )}
+
+                  {item.type === 'video' && (
+                    <div className="relative w-full h-full">
+                      <video
+                        src={item.url}
+                        preload="metadata"
+                        className="w-full h-full object-cover"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      {/* Play icon overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                          <Play className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {item.type === 'audio' && (
+                    <div className="relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+                      <Music className="w-12 h-12 mb-3 text-purple-600 dark:text-purple-400" />
+                      <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Audio Recording</p>
+                      {item.duration_seconds && (
+                        <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                          {Math.floor(item.duration_seconds / 60)}:{(item.duration_seconds % 60).toString().padStart(2, '0')}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {item.caption && (
                     <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-2">
                       <p className="text-xs truncate">{item.caption}</p>

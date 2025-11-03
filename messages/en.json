@@ -499,6 +499,33 @@
         "infoPoint2": "Add their own details and perspectives",
         "infoPoint3": "Grant you +30 XP when they confirm"
       },
+      "filesWitnesses": {
+        "linksTitle": "External Links",
+        "linksDescription": "Add relevant YouTube videos, tweets, articles, or other links to support your experience",
+        "linkPlaceholder": "Paste URL (YouTube, Twitter, article, etc.)",
+        "addLink": "Add Link",
+        "addingLink": "Adding...",
+        "noLinksYet": "No links added yet",
+        "linkSupport": "Supported: YouTube, Vimeo, Twitter/X, Spotify, SoundCloud, TikTok, Instagram, Facebook, Google Maps, and any website",
+        "linkLoading": {
+          "fetching": "Fetching link...",
+          "stillLoading": "Still loading...",
+          "almostThere": "Almost there..."
+        },
+        "linkError": {
+          "invalidUrl": "Invalid URL format. Please enter a valid URL.",
+          "unknown": "Failed to add link. Please try again.",
+          "timeout": "This link takes too long to load. Please try a different one.",
+          "timeoutHint": "The website might be slow or unavailable. Try a different link.",
+          "networkError": "Could not reach the website. Please check if the link is correct.",
+          "networkHint": "Make sure the link is accessible from a browser.",
+          "security": "This URL was blocked for security reasons.",
+          "securityHint": "Dangerous links or file types are not allowed.",
+          "rateLimit": "Too many requests. Please wait a moment and try again.",
+          "invalidResponse": "Invalid response from server",
+          "retry": "Try Again"
+        }
+      },
       "publish": {
         "publish": "Publish",
         "tooltipTitle": "Tip: Choose Visibility",
@@ -986,6 +1013,7 @@
   },
   "categories": {
     "paranormal": "Paranormal",
+    "paranormal-anomalies": "Paranormal Anomalies",
     "ufo_sighting": "UFO Sighting",
     "ufo-uap": "UFO/UAP Sightings",
     "synchronicity": "Synchronicity",

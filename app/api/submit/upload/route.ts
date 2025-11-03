@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { uploadSchema, validateFileUpload } from '@/lib/validation/submit-schemas';
 import { sanitizeFileName } from '@/lib/validation/sanitization';
 import crypto from 'crypto';
+import sharp from 'sharp';
 
 // ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
 export const runtime = 'nodejs';
@@ -90,10 +91,20 @@ export async function POST(request: NextRequest) {
     const files: File[] = [];
     const experienceId = formData.get('experienceId') as string | null;
 
-    // Extract files from form data
+    // Extract files and metadata from form data
+    const fileDurations = new Map<string, number>(); // Store duration per file
+
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('file') && value instanceof File) {
         files.push(value);
+      }
+      // Extract duration metadata (client-side extracted)
+      if (key.startsWith('duration_') && typeof value === 'string') {
+        const fileIndex = key.replace('duration_', '');
+        const duration = parseInt(value, 10);
+        if (!isNaN(duration) && duration > 0) {
+          fileDurations.set(fileIndex, duration);
+        }
       }
     }
 
@@ -120,7 +131,8 @@ export async function POST(request: NextRequest) {
       error?: string;
     }> = [];
 
-    for (const file of files) {
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      const file = files[fileIndex];
       try {
         // 4.1. Check file size
         if (file.size > MAX_FILE_SIZE) {
@@ -178,6 +190,11 @@ export async function POST(request: NextRequest) {
         const uniqueName = `${timestamp}-${hash}-${sanitizedName}`;
 
         // ============================================================
+        // 4.7. EXTRACT METADATA (width, height, duration)
+        // ============================================================
+        const metadata = await extractMediaMetadata(buffer, file.type);
+
+        // ============================================================
         // 5. UPLOAD TO SUPABASE STORAGE
         // ============================================================
         const bucketName = getStorageBucket(file.type);
@@ -212,6 +229,9 @@ export async function POST(request: NextRequest) {
         if (experienceId) {
           const mediaType = getMediaType(file.type);
 
+          // Get client-side extracted duration (if available)
+          const clientDuration = fileDurations.get(`file${fileIndex}`);
+
           await (supabase as any)
             .from('experience_media')
             .insert({
@@ -224,6 +244,10 @@ export async function POST(request: NextRequest) {
               storage_path: filePath,
               uploaded_by: user.id,
               sort_order: uploadResults.length,
+              // Media metadata
+              width: metadata.width,
+              height: metadata.height,
+              duration_seconds: clientDuration || metadata.durationSeconds, // Prefer client-side duration
             });
         }
 
@@ -387,6 +411,59 @@ function getMediaType(mimeType: string): string {
   if (mimeType.startsWith('audio/')) return 'audio';
   if (mimeType.startsWith('video/')) return 'video';
   return 'other';
+}
+
+/**
+ * Extract metadata from media files (images, videos, audio)
+ */
+async function extractMediaMetadata(
+  buffer: ArrayBuffer,
+  mimeType: string
+): Promise<{
+  width: number | null;
+  height: number | null;
+  durationSeconds: number | null;
+}> {
+  try {
+    // Image metadata extraction with sharp
+    if (mimeType.startsWith('image/')) {
+      const imageBuffer = Buffer.from(buffer);
+      const metadata = await sharp(imageBuffer).metadata();
+
+      return {
+        width: metadata.width || null,
+        height: metadata.height || null,
+        durationSeconds: null, // Images don't have duration
+      };
+    }
+
+    // For video/audio, we would need ffprobe or similar
+    // For now, return null for duration (can be added later with @ffmpeg/ffmpeg)
+    if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
+      // TODO: Add video/audio duration extraction with ffprobe
+      // This requires ffmpeg which is heavy for serverless
+      // Alternative: Extract duration client-side and send with upload
+      return {
+        width: null,
+        height: null,
+        durationSeconds: null,
+      };
+    }
+
+    return {
+      width: null,
+      height: null,
+      durationSeconds: null,
+    };
+  } catch (error) {
+    console.error('Metadata extraction error:', error);
+    // Return null values on error - metadata extraction is non-critical
+    return {
+      width: null,
+      height: null,
+      durationSeconds: null,
+    };
+  }
 }
 
 // ============================================================

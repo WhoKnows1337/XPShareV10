@@ -12,7 +12,7 @@ import { useFocusTrap } from '@/lib/hooks/useFocusTrap'
 interface MediaItem {
   id: string
   url: string
-  type: 'image' | 'audio'
+  type: 'image' | 'audio' | 'video'
   caption?: string
 }
 
@@ -118,6 +118,26 @@ export function MediaLightbox({ media, initialIndex, isOpen, onClose }: MediaLig
                   sizes="95vw"
                   priority
                 />
+              )}
+
+              {currentMedia.type === 'video' && (
+                <video
+                  src={currentMedia.url}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-full"
+                  style={{ maxHeight: '80vh' }}
+                />
+              )}
+
+              {currentMedia.type === 'audio' && (
+                <div className="flex flex-col items-center gap-6">
+                  <div className="text-white text-center">
+                    <p className="text-2xl font-semibold mb-2">Audio Recording</p>
+                    <p className="text-gray-300">{currentMedia.caption || `Track ${currentIndex + 1}`}</p>
+                  </div>
+                  <audio src={currentMedia.url} controls autoPlay className="w-full max-w-lg" />
+                </div>
               )}
             </motion.div>
           </AnimatePresence>

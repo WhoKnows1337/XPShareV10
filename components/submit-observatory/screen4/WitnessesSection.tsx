@@ -70,7 +70,7 @@ export function WitnessesSection() {
   };
 
   return (
-    <div className="glass-card p-4 space-y-3 max-h-[550px] overflow-y-auto custom-scrollbar">
+    <div className="card-observatory p-3 sm:p-4 space-y-3">
       {/* Section Header - Compact */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
