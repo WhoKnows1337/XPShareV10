@@ -714,8 +714,20 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
       }),
       // Migration: Convert old File[] drafts to new uploadedMedia format
       migrate: (persistedState: any, version: number) => {
+        // Ensure screen4 exists at all
+        if (!persistedState?.screen4) {
+          console.log('[Store Migration] screen4 missing, initializing with defaults');
+          persistedState = persistedState || {};
+          persistedState.screen4 = {
+            uploadedMedia: [],
+            witnesses: [],
+            visibility: 'public' as const,
+          };
+          return persistedState;
+        }
+
         // Check if old format exists (screen4.files instead of screen4.uploadedMedia)
-        if (persistedState?.screen4?.files && Array.isArray(persistedState.screen4.files)) {
+        if (persistedState.screen4.files && Array.isArray(persistedState.screen4.files)) {
           console.log('[Store Migration] Detected old File[] format, clearing incompatible data');
 
           // Clear old File[] array (cannot be serialized/restored)
@@ -727,6 +739,22 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
             '[Store Migration] Old uploaded files were cleared. ' +
             'Please re-upload your files. (File objects cannot be persisted in localStorage)'
           );
+        }
+
+        // Ensure witnesses array exists (migration for older versions)
+        if (!persistedState.screen4.witnesses) {
+          console.log('[Store Migration] Initializing witnesses array');
+          persistedState.screen4.witnesses = [];
+        }
+
+        // Ensure uploadedMedia array exists
+        if (!persistedState.screen4.uploadedMedia) {
+          persistedState.screen4.uploadedMedia = [];
+        }
+
+        // Ensure visibility is set
+        if (!persistedState.screen4.visibility) {
+          persistedState.screen4.visibility = 'public';
         }
 
         return persistedState;

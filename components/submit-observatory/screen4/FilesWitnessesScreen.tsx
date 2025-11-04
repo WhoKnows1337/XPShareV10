@@ -285,7 +285,7 @@ export function FilesWitnessesScreen() {
             <span className="sm:hidden">People</span>
             {screen4.witnesses?.length > 0 && (
               <Badge variant="secondary" className="ml-1">
-                {screen4.witnesses.length}
+                {screen4.witnesses?.length || 0}
               </Badge>
             )}
           </TabsTrigger>

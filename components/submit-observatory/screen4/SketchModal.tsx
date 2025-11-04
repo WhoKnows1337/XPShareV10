@@ -1,25 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
-
-// Dynamic import of tldraw to avoid SSR issues
-const Tldraw = dynamic(
-  async () => {
-    const { Tldraw } = await import('tldraw');
-    return Tldraw;
-  },
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-[500px] bg-space-deep/60">
-        <Loader2 className="w-8 h-8 text-observatory-gold animate-spin" />
-      </div>
-    ),
-  }
-);
+import '@excalidraw/excalidraw/index.css';
 
 interface SketchModalProps {
   open: boolean;
@@ -27,62 +12,78 @@ interface SketchModalProps {
   onSave: (file: File) => void;
 }
 
+// Dynamic import for SSR compatibility
+const Excalidraw = dynamic(
+  () => import('@excalidraw/excalidraw').then((mod) => mod.Excalidraw),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
+        <div className="text-lg text-gray-600">Loading drawing canvas...</div>
+      </div>
+    ),
+  }
+);
+
 export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
-  const [editor, setEditor] = useState<any>(null);
+  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  // ESC key handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
   const handleSave = async () => {
-    if (!editor) return;
+    if (!excalidrawAPI) return;
 
     try {
       setIsSaving(true);
 
-      // Get all shapes on canvas
-      const shapes = editor.getCurrentPageShapes();
-      if (shapes.length === 0) {
+      const elements = excalidrawAPI.getSceneElements();
+      if (elements.length === 0) {
         alert('Please draw something first!');
         setIsSaving(false);
         return;
       }
 
-      // Export to SVG first
-      const svg = await editor.getSvg(shapes);
-      if (!svg) {
-        throw new Error('Failed to generate SVG');
-      }
+      const appState = excalidrawAPI.getAppState();
+      const files = excalidrawAPI.getFiles();
 
-      // Convert SVG to PNG blob
-      const svgString = new XMLSerializer().serializeToString(svg);
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
+      const { exportToBlob } = await import('@excalidraw/excalidraw');
+      const blob = await exportToBlob({
+        elements,
+        appState,
+        files,
+        mimeType: 'image/png',
+      });
 
-      img.onload = () => {
-        canvas.width = img.width || 800;
-        canvas.height = img.height || 600;
-        ctx?.drawImage(img, 0, 0);
+      const file = new File([blob], `sketch-${Date.now()}.png`, {
+        type: 'image/png',
+      });
 
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const file = new File([blob], `sketch-${Date.now()}.png`, {
-              type: 'image/png',
-            });
-            onSave(file);
-            onClose();
-          }
-          setIsSaving(false);
-        }, 'image/png');
-      };
-
-      img.onerror = () => {
-        alert('Failed to convert sketch to image');
-        setIsSaving(false);
-      };
-
-      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgString)));
+      onSave(file);
+      onClose();
     } catch (error) {
       console.error('Error saving sketch:', error);
       alert('Failed to save sketch');
+    } finally {
       setIsSaving(false);
     }
   };
@@ -91,75 +92,86 @@ export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] bg-white"
+      >
+        {/* Container with explicit height as required by Excalidraw */}
+        <div style={{ height: '100vh', width: '100vw' }}>
+          <Excalidraw
+            excalidrawAPI={(api) => setExcalidrawAPI(api)}
+            initialData={{
+              appState: {
+                viewBackgroundColor: '#ffffff',
+                currentItemStrokeColor: '#000000',
+                currentItemFontFamily: 2, // Helvetica (normal)
+                activeTool: { type: 'freedraw', locked: false },
+                zenModeEnabled: true,
+                gridSize: 0,
+              },
+            }}
+            UIOptions={{
+              canvasActions: {
+                loadScene: false,
+                export: false,
+                saveAsImage: false,
+                toggleTheme: false,
+                changeViewBackgroundColor: false,
+              },
+              tools: {
+                image: true,
+              },
+            }}
+            renderTopRightUI={() => (
+              <div className="flex items-center gap-2 mr-4">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="btn-observatory flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Sketch
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                  title="Close (ESC)"
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
+              </div>
+            )}
+          />
+        </div>
 
-        {/* Modal */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-4xl glass-card overflow-hidden"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-glass-border">
-            <div>
-              <h2 className="text-lg font-semibold text-text-primary">Draw a Sketch</h2>
-              <p className="text-xs text-text-tertiary mt-0.5">
-                Use the tools below to draw, then save your sketch
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-space-deep/40 rounded-lg transition-all"
-            >
-              <X className="w-5 h-5 text-text-secondary" />
-            </button>
-          </div>
-
-          {/* tldraw Canvas */}
-          <div className="h-[500px] bg-white">
-            <Tldraw
-              onMount={(editor) => setEditor(editor)}
-              persistenceKey="xpshare-sketch"
-            />
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between p-4 border-t border-glass-border">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="btn-observatory flex items-center gap-2 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Save Sketch
-                </>
-              )}
-            </button>
-          </div>
-        </motion.div>
-      </div>
+        {/* Minimal CSS for UI hiding only */}
+        <style jsx global>{`
+          .excalidraw .default-sidebar-trigger,
+          .excalidraw button[aria-label*='Menu'],
+          .excalidraw .sidebar-trigger,
+          .excalidraw .ToolIcon__lock,
+          .excalidraw .dropdown-menu-button,
+          .excalidraw button[aria-label*='More tools'],
+          .excalidraw .excalidraw-sidebar,
+          .excalidraw .layer-ui__library,
+          .excalidraw .layer-ui__wrapper__footer-center,
+          .excalidraw button[aria-label*='Layers'],
+          .excalidraw .mobile-misc-tools-container {
+            display: none !important;
+          }
+        `}</style>
+      </motion.div>
     </AnimatePresence>
   );
 }
