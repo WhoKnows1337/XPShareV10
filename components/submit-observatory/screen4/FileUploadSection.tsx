@@ -2,7 +2,7 @@
 
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
-import { Pencil } from 'lucide-react';
+import { Pencil, Info } from 'lucide-react';
 import { useState, forwardRef } from 'react';
 import { toast } from 'sonner';
 import { SketchModal } from './SketchModal';
@@ -11,6 +11,10 @@ import { UppyFileUpload, type UppyFileUploadRef } from './UppyFileUpload';
 interface FileUploadSectionProps {
   onUploadComplete?: (uploadedFiles: Array<{
     url: string;
+    type: string;
+    fileName: string;      // ✅ Original filename
+    size: number;          // ✅ File size in bytes
+    mimeType?: string;     // ✅ Original MIME type
     duration?: number;
     width?: number;
     height?: number;
@@ -20,13 +24,7 @@ interface FileUploadSectionProps {
 export const FileUploadSection = forwardRef<UppyFileUploadRef, FileUploadSectionProps>(
   ({ onUploadComplete }, ref) => {
   const t = useTranslations('submit.screen4.files');
-  const { updateScreen4 } = useSubmitFlowStore();
   const [showSketchModal, setShowSketchModal] = useState(false);
-
-  const handleFilesReady = (files: File[]) => {
-    // Update store with files for local preview/management
-    updateScreen4({ files });
-  };
 
   const handleSketchSave = (file: File) => {
     // Add sketch to Uppy programmatically via ref
@@ -53,7 +51,6 @@ export const FileUploadSection = forwardRef<UppyFileUploadRef, FileUploadSection
         {/* Uppy Component with built-in dropzone, camera, and audio */}
         <UppyFileUpload
           ref={ref}
-          onFilesReady={handleFilesReady}
           onUploadComplete={onUploadComplete}
           onError={handleError}
         />
@@ -70,6 +67,15 @@ export const FileUploadSection = forwardRef<UppyFileUploadRef, FileUploadSection
             {t('sketch', 'Draw a Sketch')}
           </span>
         </button>
+
+        {/* Upload Limits Info */}
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-observatory-gold/5 border border-observatory-gold/20">
+          <Info className="w-4 h-4 text-observatory-gold/80 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-text-secondary space-y-0.5">
+            <p className="font-medium text-observatory-gold/90">Max. Dateigrößen:</p>
+            <p>Bilder: 20 MB • Videos: 1 GB • Audio: 200 MB • Dokumente: 200 MB</p>
+          </div>
+        </div>
       </div>
 
       {/* Sketch Modal */}

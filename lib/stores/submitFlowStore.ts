@@ -85,7 +85,17 @@ export interface Screen3Data {
 
 // Screen 4: Files + Witnesses
 export interface Screen4Data {
-  files: File[]; // Array of File objects
+  // CHANGED: Store uploaded media URLs instead of File objects (for localStorage compatibility)
+  uploadedMedia: Array<{
+    id: string; // Unique ID for React keys
+    url: string; // R2 URL from upload response
+    type: 'image' | 'video' | 'audio' | 'sketch' | 'document';
+    fileName: string;
+    size: number;
+    duration?: number; // For video/audio
+    width?: number; // For images/videos
+    height?: number; // For images/videos
+  }>;
   witnesses: Array<{
     type: 'user' | 'email';
     userId?: string;
@@ -155,8 +165,8 @@ export interface SubmitFlowState {
 
   // Screen 4 Actions
   updateScreen4: (data: Partial<Screen4Data>) => void;
-  addFile: (file: Screen4Data['files'][0]) => void;
-  removeFile: (fileId: string) => void;
+  addUploadedMedia: (media: Screen4Data['uploadedMedia'][0]) => void; // Changed from addFile
+  removeUploadedMedia: (mediaId: string) => void; // Changed from removeFile
   addWitness: (witness: Screen4Data['witnesses'][0]) => void;
   removeWitness: (witnessId: string) => void;
   setVisibility: (visibility: Screen4Data['visibility']) => void;
@@ -225,7 +235,7 @@ const initialScreen3: Screen3Data = {
 };
 
 const initialScreen4: Screen4Data = {
-  files: [],
+  uploadedMedia: [], // Changed from files: []
   witnesses: [],
   visibility: 'public',
 };
@@ -536,20 +546,20 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           isDraft: true,
         })),
 
-      addFile: (file) =>
+      addUploadedMedia: (media) =>
         set((state) => ({
           screen4: {
             ...state.screen4,
-            files: [...state.screen4.files, file],
+            uploadedMedia: [...(state.screen4.uploadedMedia || []), media],
           },
           isDraft: true,
         })),
 
-      removeFile: (fileId) =>
+      removeUploadedMedia: (mediaId) =>
         set((state) => ({
           screen4: {
             ...state.screen4,
-            files: state.screen4.files.filter((f) => f.name !== fileId),
+            uploadedMedia: (state.screen4.uploadedMedia || []).filter((m) => m.id !== mediaId),
           },
           isDraft: true,
         })),
@@ -558,7 +568,7 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         set((state) => ({
           screen4: {
             ...state.screen4,
-            witnesses: [...state.screen4.witnesses, witness],
+            witnesses: [...(state.screen4.witnesses || []), witness],
           },
           isDraft: true,
         })),
@@ -567,7 +577,7 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         set((state) => ({
           screen4: {
             ...state.screen4,
-            witnesses: state.screen4.witnesses.filter(
+            witnesses: (state.screen4.witnesses || []).filter(
               (w) => (w.type === 'user' ? w.username : w.email) !== witnessId
             ),
           },
@@ -702,6 +712,25 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         lastSaved: state.lastSaved,
         isDraft: state.isDraft,
       }),
+      // Migration: Convert old File[] drafts to new uploadedMedia format
+      migrate: (persistedState: any, version: number) => {
+        // Check if old format exists (screen4.files instead of screen4.uploadedMedia)
+        if (persistedState?.screen4?.files && Array.isArray(persistedState.screen4.files)) {
+          console.log('[Store Migration] Detected old File[] format, clearing incompatible data');
+
+          // Clear old File[] array (cannot be serialized/restored)
+          persistedState.screen4.uploadedMedia = [];
+          delete persistedState.screen4.files;
+
+          // Show user-friendly warning (will be visible in console)
+          console.warn(
+            '[Store Migration] Old uploaded files were cleared. ' +
+            'Please re-upload your files. (File objects cannot be persisted in localStorage)'
+          );
+        }
+
+        return persistedState;
+      },
     }
   )
 );

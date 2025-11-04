@@ -63,6 +63,7 @@ export const categorySchema = z.enum([
   'near-death',
   'ufo-sighting',
   'paranormal',
+  'paranormal-anomalies',
   'cryptid',
   'past-life',
   'shared-dream',
@@ -181,6 +182,7 @@ export const publishSchema = z.object({
   mediaUrls: z.array(z.string().url()).max(10).optional(), // Backwards compatibility
   media: z.array(z.object({
     url: z.string().url(),
+    type: z.enum(['image', 'video', 'audio', 'sketch', 'document']), // ✅ FIXED: Added required type field
     duration: z.number().min(0).max(86400).optional(), // Max 24 hours in seconds
     width: z.number().min(1).max(10000).optional(),
     height: z.number().min(1).max(10000).optional(),

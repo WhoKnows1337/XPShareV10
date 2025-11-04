@@ -144,9 +144,9 @@ export const RATE_LIMIT_CONFIGS = {
     windowMs: 60 * 1000, // 1 minute
   },
 
-  // File upload: 5 requests per minute
+  // File upload: 50 requests per minute (generous for dev/testing)
   FILE_UPLOAD: {
-    maxRequests: 5,
+    maxRequests: 50,
     windowMs: 60 * 1000, // 1 minute
   },
 

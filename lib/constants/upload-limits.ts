@@ -6,10 +6,10 @@
 export const UPLOAD_LIMITS = {
   // File sizes in bytes
   MAX_FILE_SIZE: {
-    IMAGE: 10 * 1024 * 1024, // 10MB
-    VIDEO: 500 * 1024 * 1024, // 500MB
-    AUDIO: 50 * 1024 * 1024, // 50MB
-    DOCUMENT: 20 * 1024 * 1024, // 20MB for PDFs and Office docs
+    IMAGE: 20 * 1024 * 1024, // 20MB
+    VIDEO: 1 * 1024 * 1024 * 1024, // 1GB
+    AUDIO: 200 * 1024 * 1024, // 200MB
+    DOCUMENT: 200 * 1024 * 1024, // 200MB for PDFs and Office docs
     DEFAULT: 500 * 1024 * 1024, // 500MB for all media types
   },
 

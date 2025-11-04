@@ -11,6 +11,7 @@ import {
   sanitizeCoordinates,
   containsSuspiciousPatterns
 } from '@/lib/validation/sanitization';
+import { copyInR2, deleteFromR2, extractKeyFromUrl, getPublicUrl } from '@/lib/storage/r2-client';
 
 // ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
 export const runtime = 'nodejs';
@@ -37,9 +38,11 @@ export async function POST(request: NextRequest) {
     // 2. REQUEST VALIDATION & SANITIZATION
     // ============================================================
     const body = await request.json();
+
     const validation = publishSchema.safeParse(body);
 
     if (!validation.success) {
+      console.error('[Publish] Validation error:', validation.error.flatten().fieldErrors);
       return NextResponse.json(
         {
           error: 'Validation failed',
@@ -50,6 +53,13 @@ export async function POST(request: NextRequest) {
     }
 
     const data: PublishInput = validation.data;
+
+    // 🔍 DEBUG: Log media data
+    console.log('[Publish] Media data received:', {
+      mediaUrls: body.mediaUrls,
+      media: body.media,
+      mediaLength: body.media?.length || 0,
+    });
 
     // Security check for suspicious patterns
     if (containsSuspiciousPatterns(data.text)) {
@@ -170,7 +180,94 @@ export async function POST(request: NextRequest) {
     const experienceId = typedResult.experience_id;
 
     // ============================================================
-    // 4.5. SAVE EXTERNAL LINKS (if provided)
+    // 4.5. SAVE MEDIA (if provided)
+    // ============================================================
+    if (data.media && data.media.length > 0) {
+      try {
+        console.log('[Publish] Processing', data.media.length, 'media files');
+
+        // ✅ TWO-PATH SYSTEM: Copy from uploads-pending/ to experiences/
+        const mediaToInsert = await Promise.all(data.media.map(async (item, index) => {
+          let finalUrl = item.url;
+
+          // Check if file is in pending location
+          if (item.url.includes('/uploads-pending/')) {
+            console.log('[Publish] Moving temp file to final location:', item.url);
+
+            try {
+              const tempKey = extractKeyFromUrl(item.url);
+              if (!tempKey) {
+                throw new Error('Invalid URL format');
+              }
+
+              // Generate final key: Replace uploads-pending/ with experiences/
+              const finalKey = tempKey.replace('uploads-pending/', 'experiences/');
+
+              // Copy to final location
+              await copyInR2(tempKey, finalKey);
+
+              // Update URL to final location
+              finalUrl = getPublicUrl(finalKey);
+
+              // Delete temp file (non-blocking, cleanup)
+              deleteFromR2(tempKey).catch(err => {
+                console.warn('[Publish] Failed to delete temp file:', tempKey, err);
+              });
+
+              console.log('[Publish] File moved:', tempKey, '→', finalKey);
+            } catch (copyErr) {
+              console.error('[Publish] Failed to copy file:', item.url, copyErr);
+              // Continue with original URL if copy fails
+            }
+          }
+
+          return {
+            experience_id: experienceId,
+            type: item.type,
+            url: finalUrl, // ✅ Use final URL
+            file_name: item.fileName || null, // ✅ Original filename
+            mime_type: item.mimeType || null, // ✅ MIME type (e.g., 'application/pdf')
+            file_size: item.size || null, // ✅ File size in bytes
+            duration_seconds: item.duration || null,
+            width: item.width || null,
+            height: item.height || null,
+            sort_order: index,
+            created_by: user.id,
+          };
+        }));
+
+        const { error: mediaError } = await supabase
+          .from('experience_media')
+          .insert(mediaToInsert);
+
+        if (mediaError) {
+          console.error('Failed to save media:', mediaError);
+        } else {
+          console.log('[Publish] Saved', mediaToInsert.length, 'media files to DB');
+        }
+
+        // ============================================================
+        // 4.7. CLEANUP: Delete temporary upload entries from DB
+        // ============================================================
+        const { error: cleanupError } = await supabase
+          .from('experience_media')
+          .delete()
+          .eq('experience_id', experienceId)
+          .like('url', '%uploads-pending%');
+
+        if (cleanupError) {
+          console.warn('[Publish] Failed to cleanup temp URLs:', cleanupError);
+          // Don't fail publish - just log warning
+        } else {
+          console.log('[Publish] Cleaned up temp URL entries from DB');
+        }
+      } catch (mediaErr) {
+        console.error('Error inserting media:', mediaErr);
+      }
+    }
+
+    // ============================================================
+    // 4.6. SAVE EXTERNAL LINKS (if provided)
     // ============================================================
     if (data.externalLinks && data.externalLinks.length > 0) {
       try {

@@ -4,11 +4,11 @@
  * Basic offline support with cache-first strategy.
  */
 
-const CACHE_NAME = 'xpshare-v1'
+const CACHE_NAME = 'xpshare-v2' // Bumped to force cache refresh
 const urlsToCache = [
   '/',
   '/discover',
-  '/offline',
+  // '/offline' removed - route doesn't exist
 ]
 
 // Install

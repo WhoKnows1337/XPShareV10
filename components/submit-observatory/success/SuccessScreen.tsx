@@ -35,6 +35,48 @@ export function SuccessScreen() {
     setError(null);
 
     try {
+      // Helper to normalize media type from MIME type to enum value
+      const normalizeMediaType = (type: string): 'image' | 'video' | 'audio' | 'sketch' | 'document' => {
+        if (type === 'image' || type === 'video' || type === 'audio' || type === 'sketch' || type === 'document') {
+          return type;
+        }
+        if (type.startsWith('image/') || type === 'photo') return 'image';
+        if (type.startsWith('video/')) return 'video';
+        if (type.startsWith('audio/')) return 'audio';
+        if (type === 'application/pdf' || type.startsWith('application/')) return 'document';
+        if (type === 'sketch') return 'sketch';
+        console.warn(`[Publish] Unknown media type "${type}", defaulting to "image"`);
+        return 'image';
+      };
+
+      const uploadedFiles = screen4.uploadedMedia || [];
+      console.log('[SuccessScreen] Using uploaded media from store:', uploadedFiles);
+
+      // Transform attributes confidence
+      const transformedAttributes = screen2.attributes ? Object.fromEntries(
+        Object.entries(screen2.attributes).map(([key, attr]) => [
+          key,
+          {
+            ...attr,
+            confidence: typeof attr.confidence === 'number' && attr.confidence > 1
+              ? attr.confidence / 100
+              : attr.confidence,
+          },
+        ])
+      ) : {};
+
+      // Duration mapping
+      const durationMap: Record<string, string> = {
+        'less_than_1min': 'seconds',
+        '1_to_5min': 'minutes',
+        'more_than_5min': 'minutes',
+      };
+
+      // Date formatting
+      const dateOccurredISO = screen2.date
+        ? (screen2.date.includes('T') ? screen2.date : `${screen2.date}T12:00:00.000Z`)
+        : null;
+
       // Prepare experience data
       const experienceData = {
         // Screen 1: Text
@@ -45,26 +87,50 @@ export function SuccessScreen() {
         title: screen2.title,
         category: screen2.category,
         tags: screen2.tags,
-        attributes: screen2.attributes, // AI-extracted attributes
-        date: screen2.date,
-        time: screen2.time,
-        location: screen2.location,
-        locationLat: screen2.locationLat,
-        locationLng: screen2.locationLng,
-        duration: screen2.duration,
-        extraQuestions: screen2.extraQuestions,
+        attributes: transformedAttributes,
+        dateOccurred: dateOccurredISO,
+        timeOfDay: screen2.time || null,
+        location: screen2.location || null,
+        locationLat: screen2.locationLat || null,
+        locationLng: screen2.locationLng || null,
+        duration: screen2.duration ? (durationMap[screen2.duration] || screen2.duration) : null,
+        questionAnswers: screen2.extraQuestions ? Object.entries(screen2.extraQuestions).map(([id, answer]) => ({
+          id,
+          question: id,
+          answer,
+          type: typeof answer === 'boolean' ? 'boolean' :
+                typeof answer === 'number' ? 'number' : 'text'
+        })) : [],
 
         // Screen 3: Summary
-        summary: screen3.summary,
+        summary: screen3.summary || '',
         enhancedText: screen3.enhancementEnabled ? screen3.enhancedText : screen1.text,
+        enhancementEnabled: screen3.enhancementEnabled,
+        aiEnhancementUsed: screen3.enhancementEnabled,
+        userEditedAi: false,
 
-        // Screen 4: Visibility
+        // Screen 4: Visibility & Media
         visibility: screen4.visibility,
-
-        // TODO: Handle file uploads and witnesses
-        // files: screen4.files,
-        // witnesses: screen4.witnesses,
+        mediaUrls: uploadedFiles.map(m => m.url),
+        media: uploadedFiles.map(m => ({
+          url: m.url,
+          type: normalizeMediaType(m.type),
+          fileName: m.fileName, // ✅ Original filename
+          mimeType: m.mimeType, // ✅ Original MIME type
+          size: m.size, // ✅ File size
+          duration: m.duration,
+          width: m.width,
+          height: m.height,
+        })),
+        witnesses: screen4.witnesses || [],
+        externalLinks: screen4.externalLinks || [],
+        language: 'de',
       };
+
+      console.log('[SuccessScreen] Sending to publish API:', {
+        mediaCount: experienceData.media.length,
+        mediaData: experienceData.media,
+      });
 
       // Call publish API
       const response = await fetch('/api/submit/publish', {
@@ -74,7 +140,14 @@ export function SuccessScreen() {
       });
 
       if (!response.ok) {
-        throw new Error('Publish failed');
+        const error = await response.json();
+        console.error('Publish API Error:', {
+          status: response.status,
+          error: error,
+          details: error.details,
+          sentData: experienceData,
+        });
+        throw new Error(JSON.stringify(error.details) || error.error || 'Failed to publish');
       }
 
       const result = await response.json();

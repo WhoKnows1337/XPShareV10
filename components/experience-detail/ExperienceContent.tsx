@@ -6,6 +6,12 @@ import Link from 'next/link'
 import { MediaLightbox } from './MediaLightbox'
 import { LinkedExperiences } from './LinkedExperiences'
 import { InviteWitnessDialog } from './InviteWitnessDialog'
+import { MediaTabsSection } from './MediaTabsSection'
+import type { Photo } from './tabs/PhotosTab'
+import type { VideoItem } from './tabs/VideosTab'
+import type { AudioItem } from './tabs/AudioTab'
+import type { LinkPreviewCardProps } from './LinkPreviewCard'
+import type { DocumentPreviewProps } from './DocumentPreview'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -90,6 +96,12 @@ interface ExperienceContentProps {
   originalLanguage?: string
   currentLanguage?: string
   isAuthor?: boolean
+  // NEW: Grouped media for tabs
+  photos?: Photo[]
+  videos?: VideoItem[]
+  audio?: AudioItem[]
+  externalLinks?: LinkPreviewCardProps[]
+  documents?: DocumentPreviewProps[]
 }
 
 const categoryLabels: Record<string, string> = {
@@ -134,6 +146,12 @@ export function ExperienceContent({
   originalLanguage,
   currentLanguage = 'de',
   isAuthor = false,
+  // NEW: Grouped media for tabs
+  photos = [],
+  videos = [],
+  audio = [],
+  externalLinks = [],
+  documents = [],
 }: ExperienceContentProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
@@ -406,105 +424,16 @@ export function ExperienceContent({
       </motion.div>
       )}
 
-      {/* Media Gallery */}
-      {media.length > 0 && (
-        <motion.div variants={itemVariants}>
-          <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <ImageIcon className="w-5 h-5" />
-              <h3 className="text-lg font-semibold">Media Gallery</h3>
-              <Badge variant="secondary">{media.length}</Badge>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {media.map((item, index) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleMediaClick(index)}
-                  className="relative aspect-square overflow-hidden rounded-lg border group cursor-pointer"
-                >
-                  {item.type === 'image' && (
-                    <Image
-                      src={item.url}
-                      alt={item.caption || 'Experience media'}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform"
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                    />
-                  )}
-
-                  {item.type === 'video' && (
-                    <div className="relative w-full h-full">
-                      <video
-                        src={item.url}
-                        preload="metadata"
-                        className="w-full h-full object-cover"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      {/* Play icon overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-                          <Play className="w-8 h-8 text-gray-900 ml-1" fill="currentColor" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {item.type === 'audio' && (
-                    <div className="relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-                      <Music className="w-12 h-12 mb-3 text-purple-600 dark:text-purple-400" />
-                      <p className="text-sm font-medium text-purple-900 dark:text-purple-100">Audio Recording</p>
-                      {item.duration_seconds && (
-                        <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
-                          {Math.floor(item.duration_seconds / 60)}:{(item.duration_seconds % 60).toString().padStart(2, '0')}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {item.caption && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-2">
-                      <p className="text-xs truncate">{item.caption}</p>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Media Tabs Section - NEW: Replaces separate Media Gallery and Sketches sections */}
+      <motion.div variants={itemVariants}>
+        <MediaTabsSection
+          photos={photos}
+          videos={videos}
+          audio={audio}
+          externalLinks={externalLinks}
+          documents={documents}
+        />
       </motion.div>
-      )}
-
-      {/* Sketches */}
-      {sketches.length > 0 && (
-        <motion.div variants={itemVariants}>
-          <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Palette className="w-5 h-5" />
-              <h3 className="text-lg font-semibold">Sketches & Drawings</h3>
-              <Badge variant="secondary">{sketches.length}</Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sketches.map((sketch, idx) => (
-                <div
-                  key={idx}
-                  className="relative aspect-video overflow-hidden rounded-lg border bg-muted"
-                >
-                  <Image
-                    src={sketch}
-                    alt={`Sketch ${idx + 1}`}
-                    fill
-                    className="object-contain"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-      )}
 
       {/* Witnesses */}
       <motion.div variants={itemVariants}>

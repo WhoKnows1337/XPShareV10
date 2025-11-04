@@ -1,0 +1,1 @@
+- du hast mit diesem befehl  Bash(killall node 2>/dev/null; sleep 2; PORT=3002 npm run dev) mal WIEDER meine ganze wsl abgeschossen. bitte merk dir das du das niemals machen darfst auf die art

@@ -63,22 +63,39 @@ export const DANGEROUS_SIGNATURES: MagicByteSignature[] = [
 /**
  * Read the first N bytes from a File object
  */
+/**
+ * Read the first N bytes from a File object
+ * Works in both browser (FileReader) and server (Buffer/ArrayBuffer)
+ */
 async function readFileBytes(file: File, numBytes: number): Promise<Uint8Array> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+  try {
+    // Server-side (Node.js): Use arrayBuffer() method
+    // This works in Next.js API routes where File is a Blob
     const blob = file.slice(0, numBytes);
+    const arrayBuffer = await blob.arrayBuffer();
+    return new Uint8Array(arrayBuffer);
+  } catch (error) {
+    // Fallback: Try browser FileReader (should never hit this in API routes)
+    if (typeof FileReader !== 'undefined') {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        const blob = file.slice(0, numBytes);
 
-    reader.onload = () => {
-      if (reader.result instanceof ArrayBuffer) {
-        resolve(new Uint8Array(reader.result));
-      } else {
-        reject(new Error('Failed to read file as ArrayBuffer'));
-      }
-    };
+        reader.onload = () => {
+          if (reader.result instanceof ArrayBuffer) {
+            resolve(new Uint8Array(reader.result));
+          } else {
+            reject(new Error('Failed to read file as ArrayBuffer'));
+          }
+        };
 
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(blob);
-  });
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(blob);
+      });
+    }
+    
+    throw new Error('Unable to read file bytes: No compatible API available');
+  }
 }
 
 /**
@@ -192,7 +209,23 @@ export async function verifyMimeType(file: File, claimedMimeType: string): Promi
     };
   }
 
-  // Exact match required for non-ZIP formats
+  // ✅ Allow common image format conversions (Industry Best Practice)
+  // WhatsApp/Apps often rename or convert images (PNG → JPEG, etc.)
+  // All these formats are safe and interchangeable for security purposes
+  const imageFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const isImageConversion =
+    imageFormats.includes(detectedType) &&
+    imageFormats.includes(claimedMimeType);
+
+  if (isImageConversion) {
+    console.log(`[Magic Bytes] ✅ Allowing image format conversion: ${claimedMimeType} → ${detectedType}`);
+    return {
+      valid: true,
+      detectedType,
+    };
+  }
+
+  // Exact match required for non-image formats (PDF, Video, Audio, etc.)
   if (detectedType === claimedMimeType) {
     return {
       valid: true,
@@ -200,7 +233,7 @@ export async function verifyMimeType(file: File, claimedMimeType: string): Promi
     };
   }
 
-  // MIME type mismatch
+  // MIME type mismatch for non-image formats
   return {
     valid: false,
     detectedType,

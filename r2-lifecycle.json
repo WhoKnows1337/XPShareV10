@@ -1,0 +1,14 @@
+{
+  "rules": [
+    {
+      "id": "cleanup-pending-uploads",
+      "status": "Enabled",
+      "filter": {
+        "prefix": "uploads-pending/"
+      },
+      "expiration": {
+        "days": 1
+      }
+    }
+  ]
+}

@@ -283,12 +283,25 @@ export function AIAnalysisScreen() {
               typeof answer === 'number' ? 'number' : 'text'
       }));
 
+      // Transform attributes: Convert confidence from 0-100 to 0-1 if needed
+      const transformedAttributes = screen2.attributes ? Object.fromEntries(
+        Object.entries(screen2.attributes).map(([key, attr]) => [
+          key,
+          {
+            ...attr,
+            confidence: typeof attr.confidence === 'number' && attr.confidence > 1
+              ? attr.confidence / 100
+              : attr.confidence,
+          },
+        ])
+      ) : {};
+
       const enrichResponse = await fetch('/api/submit/enrich-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: screen1.text,
-          attributes: screen2.attributes,
+          attributes: transformedAttributes,
           answers: answersArray, // Send as array, not object
           language: 'de',
         }),

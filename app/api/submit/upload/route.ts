@@ -4,6 +4,7 @@ import { uploadSchema, validateFileUpload } from '@/lib/validation/submit-schema
 import { sanitizeFileName } from '@/lib/validation/sanitization';
 import crypto from 'crypto';
 import sharp from 'sharp';
+import { uploadToR2, generateFileKey } from '@/lib/storage/r2-client';
 
 // ⚠️ CRITICAL: Force Node.js runtime for Supabase cookies() compatibility on Vercel
 export const runtime = 'nodejs';
@@ -15,7 +16,7 @@ export const dynamic = 'force-dynamic';
  */
 
 // Configuration
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024; // 1GB (max, will be validated per-type)
 const MAX_FILES_PER_REQUEST = 10;
 const ALLOWED_MIME_TYPES = {
   // Images
@@ -27,14 +28,39 @@ const ALLOWED_MIME_TYPES = {
   'audio/mpeg': ['.mp3'],
   'audio/wav': ['.wav'],
   'audio/webm': ['.weba'],
+  'audio/x-m4a': ['.m4a'],
+  'audio/ogg': ['.ogg'],
   // Video
   'video/mp4': ['.mp4'],
   'video/webm': ['.webm'],
   'video/quicktime': ['.mov'],
+  'video/x-msvideo': ['.avi'],
+  // Documents
+  'application/pdf': ['.pdf'],
+  // Spreadsheets
+  'application/vnd.ms-excel': ['.xls'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
 };
 
 // Rate limiting: Track uploads per user
 const uploadRateLimit = new Map<string, { count: number; resetTime: number }>();
+
+// Type-specific file size limits (matching frontend limits)
+function getMaxFileSizeForType(mimeType: string): number {
+  if (mimeType.startsWith('image/')) {
+    return 20 * 1024 * 1024; // 20MB for images
+  }
+  if (mimeType.startsWith('video/')) {
+    return 1 * 1024 * 1024 * 1024; // 1GB for videos
+  }
+  if (mimeType.startsWith('audio/')) {
+    return 200 * 1024 * 1024; // 200MB for audio
+  }
+  if (mimeType === 'application/pdf' || mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+    return 200 * 1024 * 1024; // 200MB for documents
+  }
+  return 500 * 1024 * 1024; // 500MB default
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -128,26 +154,31 @@ export async function POST(request: NextRequest) {
     const uploadResults: Array<{
       originalName: string;
       url?: string;
+      type?: string;
+      width?: number;
+      height?: number;
+      duration?: number;
       error?: string;
     }> = [];
 
     for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
       const file = files[fileIndex];
       try {
-        // 4.1. Check file size
-        if (file.size > MAX_FILE_SIZE) {
-          uploadResults.push({
-            originalName: file.name,
-            error: `File too large (max ${MAX_FILE_SIZE / 1024 / 1024}MB)`,
-          });
-          continue;
-        }
-
-        // 4.2. Validate MIME type
+        // 4.1. Validate MIME type first (needed for size check)
         if (!Object.keys(ALLOWED_MIME_TYPES).includes(file.type)) {
           uploadResults.push({
             originalName: file.name,
             error: `File type ${file.type} not allowed`,
+          });
+          continue;
+        }
+
+        // 4.2. Check type-specific file size
+        const maxSize = getMaxFileSizeForType(file.type);
+        if (file.size > maxSize) {
+          uploadResults.push({
+            originalName: file.name,
+            error: `File too large (max ${maxSize / 1024 / 1024}MB for ${file.type})`,
           });
           continue;
         }
@@ -195,66 +226,84 @@ export async function POST(request: NextRequest) {
         const metadata = await extractMediaMetadata(buffer, file.type);
 
         // ============================================================
-        // 5. UPLOAD TO SUPABASE STORAGE
+        // 5. UPLOAD TO CLOUDFLARE R2
         // ============================================================
-        const bucketName = getStorageBucket(file.type);
-        const filePath = `${user.id}/${uniqueName}`;
 
-        const { data: uploadData, error: uploadError } = await (supabase as any)
-          .storage
-          .from(bucketName)
-          .upload(filePath, buffer, {
+        // Generate unique file key for R2
+        const fileKey = generateFileKey(user.id, sanitizedName, 'experiences');
+
+        try {
+          // Upload to R2
+          const uploadResult = await uploadToR2({
+            key: fileKey,
+            body: Buffer.from(buffer),
             contentType: file.type,
-            upsert: false, // Don't overwrite existing files
+            metadata: {
+              userId: user.id,
+              originalName: file.name,
+              uploadedAt: new Date().toISOString(),
+            },
           });
 
-        if (uploadError) {
-          console.error('Storage upload error:', uploadError);
+          console.log(`[R2] Upload success:`, {
+            key: uploadResult.key,
+            size: uploadResult.size,
+            url: uploadResult.url,
+          });
+
+          const publicUrl = uploadResult.url;
+
+          // Validate URL (Debug - Same validation as Zod uses)
+          try {
+            new URL(publicUrl);
+            console.log('[Upload] ✅ URL is valid:', publicUrl);
+          } catch (urlError) {
+            console.error('[Upload] ❌ URL is INVALID:', publicUrl, urlError);
+          }
+
+          // ============================================================
+          // 6. DETERMINE MEDIA TYPE & METADATA
+          // ============================================================
+          const mediaType = getMediaType(file.type);
+          const clientDuration = fileDurations.get(`file${fileIndex}`);
+
+          // ============================================================
+          // 7. SAVE METADATA TO DATABASE (if experienceId provided)
+          // ============================================================
+          if (experienceId) {
+            await (supabase as any)
+              .from('experience_media')
+              .insert({
+                experience_id: experienceId,
+                type: mediaType,
+                url: publicUrl,
+                file_size: file.size,
+                mime_type: file.type,
+                sort_order: uploadResults.length,
+                // Media metadata
+                width: metadata.width,
+                height: metadata.height,
+                duration_seconds: clientDuration || metadata.durationSeconds, // Prefer client-side duration
+              });
+          }
+
+          uploadResults.push({
+            originalName: file.name,
+            url: publicUrl,
+            type: mediaType,
+            width: metadata.width || undefined,
+            height: metadata.height || undefined,
+            duration: clientDuration || metadata.durationSeconds || undefined,
+          });
+
+        } catch (uploadError: any) {
+          console.error('[R2] Upload error:', uploadError);
           uploadResults.push({
             originalName: file.name,
             error: 'Upload failed',
           });
           continue;
         }
-
-        // Get public URL
-        const { data: { publicUrl } } = (supabase as any)
-          .storage
-          .from(bucketName)
-          .getPublicUrl(filePath);
-
-        // ============================================================
-        // 6. SAVE METADATA TO DATABASE (if experienceId provided)
-        // ============================================================
-        if (experienceId) {
-          const mediaType = getMediaType(file.type);
-
-          // Get client-side extracted duration (if available)
-          const clientDuration = fileDurations.get(`file${fileIndex}`);
-
-          await (supabase as any)
-            .from('experience_media')
-            .insert({
-              experience_id: experienceId,
-              type: mediaType,
-              url: publicUrl,
-              filename: sanitizedName,
-              file_size: file.size,
-              mime_type: file.type,
-              storage_path: filePath,
-              uploaded_by: user.id,
-              sort_order: uploadResults.length,
-              // Media metadata
-              width: metadata.width,
-              height: metadata.height,
-              duration_seconds: clientDuration || metadata.durationSeconds, // Prefer client-side duration
-            });
-        }
-
-        uploadResults.push({
-          originalName: file.name,
-          url: publicUrl,
-        });
 
       } catch (fileError: any) {
         console.error(`Error processing file ${file.name}:`, fileError);
@@ -378,8 +427,16 @@ function validateFileSignature(bytes: Uint8Array, mimeType: string): boolean {
     'image/webp': [[0x52, 0x49, 0x46, 0x46]], // RIFF
     'audio/mpeg': [[0xFF, 0xFB], [0xFF, 0xF3], [0xFF, 0xF2], [0x49, 0x44, 0x33]], // MP3 or ID3
     'audio/wav': [[0x52, 0x49, 0x46, 0x46]], // RIFF
+    'audio/webm': [[0x1A, 0x45, 0xDF, 0xA3]], // EBML
+    'audio/x-m4a': [[0x00, 0x00, 0x00]], // M4A starts with 00 00 00
+    'audio/ogg': [[0x4F, 0x67, 0x67, 0x53]], // OggS
     'video/mp4': [[0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]], // ftyp
     'video/webm': [[0x1A, 0x45, 0xDF, 0xA3]], // EBML
+    'video/quicktime': [[0x00, 0x00, 0x00]], // MOV starts with 00 00 00
+    'video/x-msvideo': [[0x52, 0x49, 0x46, 0x46]], // AVI RIFF
+    'application/pdf': [[0x25, 0x50, 0x44, 0x46]], // %PDF
+    'application/vnd.ms-excel': [[0xD0, 0xCF, 0x11, 0xE0]], // XLS (OLE2)
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [[0x50, 0x4B, 0x03, 0x04]], // XLSX (ZIP)
   };
 
   const validSignatures = signatures[mimeType];
@@ -400,6 +457,9 @@ function getStorageBucket(mimeType: string): string {
   if (mimeType.startsWith('image/')) return 'experience-images';
   if (mimeType.startsWith('audio/')) return 'experience-audio';
   if (mimeType.startsWith('video/')) return 'experience-videos';
+  if (mimeType === 'application/pdf' || mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+    return 'experience-documents';
+  }
   return 'experience-media'; // Default bucket
 }
 
@@ -407,9 +467,12 @@ function getStorageBucket(mimeType: string): string {
  * Get media type category from MIME type
  */
 function getMediaType(mimeType: string): string {
-  if (mimeType.startsWith('image/')) return 'photo';
+  if (mimeType.startsWith('image/')) return 'image'; // Changed from 'photo' to 'image' for DB compatibility
   if (mimeType.startsWith('audio/')) return 'audio';
   if (mimeType.startsWith('video/')) return 'video';
+  if (mimeType === 'application/pdf' || mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+    return 'document';
+  }
   return 'other';
 }
 

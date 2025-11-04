@@ -320,7 +320,7 @@ export default async function ExperiencePage({
   const mediaItems: MediaItem[] | null = mediaItemsRaw
 
   // Get hero image (first image) for blur placeholder
-  const heroImage = mediaItems?.find((item) => item.type === 'image')
+  const heroImage = mediaItems?.find((item) => item.type === 'photo' || item.type === 'image')
   let heroImageBlur = ''
   if (heroImage?.url) {
     try {
@@ -345,6 +345,33 @@ export default async function ExperiencePage({
   }
 
   const witnesses: Witness[] | null = witnessesRaw
+
+  // Fetch external links
+  const { data: externalLinksRaw } = await supabase
+    .from('experience_external_links')
+    .select('*')
+    .eq('experience_id', id)
+    .order('created_at', { ascending: true })
+
+  interface ExternalLink {
+    id: string
+    url: string
+    platform: string | null
+    title: string | null
+    description: string | null
+    thumbnail_url: string | null
+    author_name: string | null
+    author_url: string | null
+    provider_name: string | null
+    provider_url: string | null
+    html: string | null
+    width: number | null
+    height: number | null
+    duration: number | null
+    [key: string]: unknown
+  }
+
+  const externalLinks: ExternalLink[] | null = externalLinksRaw
 
   // Fetch linked experiences
   const { data: linkedExpsRaw } = await supabase
@@ -501,17 +528,75 @@ export default async function ExperiencePage({
     options: answer.dynamic_questions.options as string[] | undefined,
   }))
 
-  const formattedMedia = (mediaItems || [])
-    .filter((item) => item.type === 'image')
+  // Group media by type for tabs
+  const formattedPhotos = (mediaItems || [])
+    .filter((item) => item.type === 'photo' || item.type === 'image' || item.type === 'sketch')
     .map((item) => ({
       id: item.id,
       url: item.url,
-      type: 'image' as const,
+      type: item.type,
       caption: item.caption ?? undefined,
+      isSketch: item.type === 'sketch',
     }))
 
-  const formattedSketches = (mediaItems || [])
-    .filter((item) => item.type === 'sketch')
+  const formattedVideos = (mediaItems || [])
+    .filter((item) => item.type === 'video')
+    .map((item) => ({
+      id: item.id,
+      url: item.url,
+      type: item.type,
+      caption: item.caption ?? undefined,
+      duration: (item as any).duration_seconds ?? undefined,
+    }))
+
+  const formattedAudio = (mediaItems || [])
+    .filter((item) => item.type === 'audio')
+    .map((item) => ({
+      id: item.id,
+      url: item.url,
+      type: item.type,
+      caption: item.caption ?? undefined,
+      duration: (item as any).duration_seconds ?? undefined,
+    }))
+
+  const formattedDocuments = (mediaItems || [])
+    .filter((item) => item.type === 'document' || item.type === 'pdf')
+    .map((item) => ({
+      id: item.id,
+      url: item.url,
+      type: item.type,
+      caption: item.caption ?? undefined,
+      fileName: (item as any).file_name ?? 'Document', // ✅ Use file_name instead of mime_type
+      fileSize: (item as any).file_size ?? undefined,
+    }))
+
+  const formattedLinks = (externalLinks || []).map((link) => ({
+    id: link.id,
+    url: link.url,
+    platform: link.platform ?? undefined,
+    title: link.title ?? undefined,
+    description: link.description ?? undefined,
+    thumbnailUrl: link.thumbnail_url ?? undefined,
+    authorName: link.author_name ?? undefined,
+    authorUrl: link.author_url ?? undefined,
+    providerName: link.provider_name ?? undefined,
+    providerUrl: link.provider_url ?? undefined,
+    html: link.html ?? undefined,
+    width: link.width ?? undefined,
+    height: link.height ?? undefined,
+    duration: link.duration ?? undefined,
+  }))
+
+  // Keep backwards compatibility for old components (will be replaced by tabs)
+  const formattedMedia = formattedPhotos.map((item) => ({
+    id: item.id,
+    url: item.url,
+    type: 'image' as const,
+    caption: item.caption,
+  }))
+
+  const formattedSketches = formattedPhotos
+    .filter((item) => item.isSketch)
     .map((item) => item.url)
 
   const formattedWitnesses = (witnesses || []).map((w) => ({
@@ -555,6 +640,12 @@ export default async function ExperiencePage({
         linkedExperiences={formattedLinkedExperiences}
         isTranslated={false}
         isAuthor={isAuthor}
+        // NEW: Grouped media for tabs
+        photos={formattedPhotos}
+        videos={formattedVideos}
+        audio={formattedAudio}
+        documents={formattedDocuments}
+        externalLinks={formattedLinks}
       />
 
       {/* Comments Section */}

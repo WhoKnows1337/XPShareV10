@@ -23,16 +23,34 @@ export function FilesWitnessesScreen() {
   const { screen1, screen2, screen3, screen4, goBack, reset, setPublishing } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const uppyRef = useRef<UppyFileUploadRef | null>(null);
-  const [uploadedMedia, setUploadedMedia] = useState<Array<{
-    url: string;
-    duration?: number;
-    width?: number;
-    height?: number;
-  }>>([]);
   const [externalLinks, setExternalLinks] = useState<LinkMetadata[]>([]);
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (showResetConfirm) {
+      // Get uploaded media URLs for cleanup
+      const uploadedUrls = screen4.uploadedMedia?.map(m => m.url) || [];
+
+      // Call cleanup API if there are uploads
+      if (uploadedUrls.length > 0) {
+        try {
+          const response = await fetch('/api/media/cleanup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: uploadedUrls }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('[Reset] Cleaned up', result.deleted, 'files from R2');
+          } else {
+            console.warn('[Reset] Cleanup API returned error:', response.status);
+          }
+        } catch (err) {
+          console.warn('[Reset] Cleanup request failed:', err);
+          // Continue with reset even if cleanup fails
+        }
+      }
+
       reset();
       setShowResetConfirm(false);
     } else {
@@ -41,43 +59,69 @@ export function FilesWitnessesScreen() {
     }
   };
 
-  // Handle Uppy upload completion
+  // Handle Uppy upload completion - SYNC TO STORE
   const handleUploadComplete = (files: Array<{
     url: string;
+    type: string;
+    fileName: string;
+    size: number;
+    mimeType?: string;
     duration?: number;
     width?: number;
     height?: number;
   }>) => {
-    setUploadedMedia(files);
+    console.log('[FilesWitnessesScreen] handleUploadComplete called with', files.length, 'files');
+
+    // ✅ FIX: Sync to store instead of local state
+    // Transform to store format with required fields
+    const mediaItems = files.map((file, index) => ({
+      id: `${Date.now()}-${index}`,
+      url: file.url,
+      type: normalizeMediaType(file.type),
+      fileName: file.fileName, // ✅ Use extracted filename from server response
+      mimeType: file.mimeType, // ✅ Include original MIME type
+      size: file.size, // ✅ Use extracted file size from server response
+      duration: file.duration,
+      width: file.width,
+      height: file.height,
+    }));
+
+    console.log('[FilesWitnessesScreen] Syncing to store:', mediaItems);
+
+    // Update store with all uploaded media
+    useSubmitFlowStore.setState((state) => ({
+      screen4: {
+        ...state.screen4,
+        uploadedMedia: mediaItems,
+      },
+    }));
+  };
+
+  // Helper to normalize media type from MIME type to enum value
+  const normalizeMediaType = (type: string): 'image' | 'video' | 'audio' | 'sketch' | 'document' => {
+    if (type === 'image' || type === 'video' || type === 'audio' || type === 'sketch' || type === 'document') {
+      return type;
+    }
+    if (type.startsWith('image/') || type === 'photo') return 'image';
+    if (type.startsWith('video/')) return 'video';
+    if (type.startsWith('audio/')) return 'audio';
+    if (type === 'application/pdf' || type.startsWith('application/')) return 'document';
+    if (type === 'sketch') return 'sketch';
+    console.warn(`[Publish] Unknown media type "${type}", defaulting to "image"`);
+    return 'image';
   };
 
   const handlePublishClick = async (visibility: 'public' | 'anonymous' | 'private') => {
     try {
       setPublishing(true);
-
-      // Update visibility in store
       useSubmitFlowStore.setState((state) => ({
         screen4: { ...state.screen4, visibility },
       }));
-
       toast.loading(t('toast.publishing'), { id: 'publish' });
 
-      // Step 1: Trigger Uppy upload if files exist
-      if (screen4.files.length > 0 && uppyRef.current) {
-        toast.loading(t('toast.uploadingFiles', { count: screen4.files.length }), { id: 'publish' });
+      const uploadedFiles = screen4.uploadedMedia || [];
+      console.log('[Publish] Using uploaded media from store:', uploadedFiles);
 
-        try {
-          // Trigger Uppy upload - results will be captured in handleUploadComplete
-          await uppyRef.current.upload();
-          // Wait a bit for the complete callback
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (uploadErr) {
-          throw new Error('File upload failed');
-        }
-      }
-
-      // Step 2: Prepare experience data matching the publishSchema
-      // Transform attributes: Convert confidence from 0-100 to 0-1
       const transformedAttributes = screen2.attributes ? Object.fromEntries(
         Object.entries(screen2.attributes).map(([key, attr]) => [
           key,
@@ -90,66 +134,57 @@ export function FilesWitnessesScreen() {
         ])
       ) : {};
 
-      // Transform duration values to match schema
       const durationMap: Record<string, string> = {
         'less_than_1min': 'seconds',
         '1_to_5min': 'minutes',
         'more_than_5min': 'minutes',
       };
 
-      // Convert date string to ISO datetime if it exists
       const dateOccurredISO = screen2.date
         ? (screen2.date.includes('T') ? screen2.date : `${screen2.date}T12:00:00.000Z`)
         : null;
 
       const experienceData = {
-        // Screen 1
         text: screen1.text,
-        // wordCount is not needed by backend
-
-        // Screen 2
         title: screen2.title,
         category: screen2.category,
         tags: screen2.tags,
         attributes: transformedAttributes,
-
-        // Map date and time to expected field names
         dateOccurred: dateOccurredISO,
         timeOfDay: screen2.time || null,
-
         location: screen2.location || null,
         locationLat: screen2.locationLat || null,
         locationLng: screen2.locationLng || null,
         duration: screen2.duration ? (durationMap[screen2.duration] || screen2.duration) : null,
-
-        // Convert extraQuestions object to questionAnswers array format
         questionAnswers: Object.entries(screen2.extraQuestions || {}).map(([id, answer]) => ({
           id,
-          question: id, // Using id as question for now
+          question: id,
           answer,
           type: typeof answer === 'boolean' ? 'boolean' :
                 typeof answer === 'number' ? 'number' : 'text'
         })),
-
-        // Screen 3
         summary: screen3.summary || '',
         enhancedText: screen3.enhancementEnabled ? screen3.enhancedText : screen1.text,
         enhancementEnabled: screen3.enhancementEnabled,
         aiEnhancementUsed: screen3.enhancementEnabled,
-        userEditedAi: false, // TODO: Track if user edited AI enhancements
-
-        // Screen 4
-        visibility: visibility, // Keep as-is, backend validates enum values
-        mediaUrls: uploadedMedia.map(m => m.url), // URLs for backwards compatibility
-        media: uploadedMedia, // Extended media with metadata
-        witnesses: screen4.witnesses,
-        externalLinks: externalLinks, // Link preview metadata
-
-        // Metadata - Add missing language field
-        language: 'de', // TODO: Get from i18n context
+        userEditedAi: false,
+        visibility: visibility,
+        mediaUrls: uploadedFiles.map(m => m.url),
+        media: uploadedFiles.map(m => ({
+          url: m.url,
+          type: normalizeMediaType(m.type),
+          fileName: m.fileName, // ✅ Original filename
+          mimeType: m.mimeType, // ✅ Original MIME type
+          size: m.size, // ✅ File size
+          duration: m.duration,
+          width: m.width,
+          height: m.height,
+        })),
+        witnesses: screen4.witnesses || [],
+        externalLinks: externalLinks,
+        language: 'de',
       };
 
-      // Step 3: Publish experience
       toast.loading(t('toast.creating'), { id: 'publish' });
 
       const publishRes = await fetch('/api/submit/publish', {
@@ -170,17 +205,10 @@ export function FilesWitnessesScreen() {
       }
 
       const result = await publishRes.json();
-
-      // Success!
       toast.success(t('toast.publishSuccess'), { id: 'publish' });
-
-      // Navigate to the experience detail page immediately
-      router.push(`/experiences/${result.experienceId}`);
-
-      // Clear the draft after navigation
       reset();
+      router.replace(`/experiences/${result.experienceId}`);
 
-      // Show rewards notification
       if (result.xpEarned > 0) {
         setTimeout(() => {
           toast.success(t('toast.xpEarned', { xp: result.xpEarned }), {
@@ -215,7 +243,6 @@ export function FilesWitnessesScreen() {
       transition={{ duration: 0.4 }}
       className="space-y-4"
     >
-      {/* Compact Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -230,16 +257,15 @@ export function FilesWitnessesScreen() {
         </p>
       </motion.div>
 
-      {/* Tab Layout */}
       <Tabs defaultValue="files" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="files" className="gap-2">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Files & Media</span>
             <span className="sm:hidden">Files</span>
-            {screen4.files.length > 0 && (
+            {screen4.uploadedMedia?.length > 0 && (
               <Badge variant="secondary" className="ml-1">
-                {screen4.files.length}
+                {screen4.uploadedMedia.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -257,7 +283,7 @@ export function FilesWitnessesScreen() {
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Witnesses</span>
             <span className="sm:hidden">People</span>
-            {screen4.witnesses.length > 0 && (
+            {screen4.witnesses?.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {screen4.witnesses.length}
               </Badge>
@@ -265,7 +291,6 @@ export function FilesWitnessesScreen() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Files Tab - forceMount to keep Uppy state */}
         <TabsContent value="files" className="space-y-4 data-[state=inactive]:hidden" forceMount>
           <FileUploadSection
             ref={uppyRef}
@@ -273,18 +298,15 @@ export function FilesWitnessesScreen() {
           />
         </TabsContent>
 
-        {/* Links Tab - forceMount to keep state */}
         <TabsContent value="links" className="space-y-4 data-[state=inactive]:hidden" forceMount>
           <LinkSection onLinksChange={setExternalLinks} />
         </TabsContent>
 
-        {/* Witnesses Tab - forceMount to keep state */}
         <TabsContent value="witnesses" className="space-y-4 data-[state=inactive]:hidden" forceMount>
           <WitnessesSection />
         </TabsContent>
       </Tabs>
 
-      {/* Navigation - Compact */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
