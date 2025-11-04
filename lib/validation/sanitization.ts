@@ -108,18 +108,28 @@ export function sanitizeEmail(email: string): string {
 export function sanitizeFileName(fileName: string): string {
   if (!fileName) return '';
 
-  // Remove path traversal attempts
-  let clean = fileName.replace(/\.\./g, '');
-  clean = clean.replace(/[\/\\]/g, '');
+  // SECURITY: Strip HTML/scripts first
+  let clean = sanitizeHtml(fileName, STRIP_HTML_CONFIG);
 
-  // Remove special characters
-  clean = clean.replace(/[<>:"|?*]/g, '');
+  // SECURITY: Remove path traversal patterns
+  clean = clean.replace(/\.\.[\/\\]/g, ''); // Remove ../  and ..\
+  clean = clean.replace(/^[\/\\]+/, ''); // Remove leading slashes
+  clean = clean.replace(/[\/\\]+/g, '_'); // Replace slashes with underscores
 
-  // Limit length
+  // SECURITY: Remove control characters (0x00-0x1F, 0x7F)
+  clean = clean.replace(/[\x00-\x1F\x7F]/g, '');
+
+  // SECURITY: Remove potentially dangerous characters
+  clean = clean.replace(/[<>:"|?*]/g, '_');
+
+  // Normalize whitespace
+  clean = normalizeWhitespace(clean);
+
+  // Limit length (filesystem + DB limits)
   if (clean.length > 255) {
-    const ext = clean.split('.').pop();
-    const name = clean.substring(0, 250);
-    clean = ext ? `${name}.${ext}` : name;
+    const ext = clean.match(/\.[^.]+$/)?.[0] || '';
+    const nameWithoutExt = clean.slice(0, clean.length - ext.length);
+    clean = nameWithoutExt.slice(0, 255 - ext.length) + ext;
   }
 
   return clean;
@@ -259,6 +269,55 @@ export function containsSuspiciousPatterns(text: string): boolean {
   return suspiciousPatterns.some(pattern => pattern.test(text));
 }
 
+/**
+ * MIME type whitelist for file uploads
+ */
+const ALLOWED_MIME_TYPES = [
+  // Images
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  // Videos
+  'video/mp4',
+  'video/quicktime',
+  'video/x-msvideo',
+  'video/webm',
+  // Audio
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/ogg',
+  'audio/webm',
+  'audio/x-m4a',
+  // Documents
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX
+  'application/vnd.ms-excel', // XLS
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+  'application/msword', // DOC
+];
+
+/**
+ * Validate MIME type against whitelist
+ * Returns the validated MIME type or null if invalid
+ */
+export function validateMimeType(mimeType: string): string | null {
+  if (!mimeType) return null;
+
+  // Normalize to lowercase
+  const normalized = mimeType.toLowerCase().trim();
+
+  // Check against whitelist
+  if (ALLOWED_MIME_TYPES.includes(normalized)) {
+    return normalized;
+  }
+
+  console.warn(`[Security] Invalid MIME type rejected: ${mimeType}`);
+  return null;
+}
+
 // ============================================================
 // EXPORTS
 // ============================================================
@@ -274,4 +333,5 @@ export default {
   sanitizeCoordinates,
   sanitizeJSON,
   containsSuspiciousPatterns,
+  validateMimeType,
 };

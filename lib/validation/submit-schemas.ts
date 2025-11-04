@@ -182,7 +182,10 @@ export const publishSchema = z.object({
   mediaUrls: z.array(z.string().url()).max(10).optional(), // Backwards compatibility
   media: z.array(z.object({
     url: z.string().url(),
-    type: z.enum(['image', 'video', 'audio', 'sketch', 'document']), // ✅ FIXED: Added required type field
+    type: z.enum(['image', 'video', 'audio', 'sketch', 'document']),
+    fileName: z.string().max(500).optional(), // ✅ FIXED: Added fileName
+    mimeType: z.string().max(100).optional(), // ✅ FIXED: Added mimeType
+    size: z.number().min(0).max(5 * 1024 * 1024 * 1024).optional(), // ✅ FIXED: Added size (max 5GB)
     duration: z.number().min(0).max(86400).optional(), // Max 24 hours in seconds
     width: z.number().min(1).max(10000).optional(),
     height: z.number().min(1).max(10000).optional(),
@@ -213,7 +216,7 @@ export const publishSchema = z.object({
   aiEnhancementUsed: z.boolean().default(false),
   userEditedAi: z.boolean().default(false),
   enhancementModel: z.string().optional(),
-});
+});;
 
 // POST /api/submit/upload - File upload validation
 export const uploadSchema = z.object({

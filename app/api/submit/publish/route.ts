@@ -9,7 +9,9 @@ import {
   sanitizeEmail,
   sanitizeLocation,
   sanitizeCoordinates,
-  containsSuspiciousPatterns
+  containsSuspiciousPatterns,
+  sanitizeFileName,
+  validateMimeType,
 } from '@/lib/validation/sanitization';
 import { copyInR2, deleteFromR2, extractKeyFromUrl, getPublicUrl } from '@/lib/storage/r2-client';
 
@@ -221,12 +223,16 @@ export async function POST(request: NextRequest) {
             }
           }
 
+          // 🔒 SECURITY: Sanitize fileName and validate mimeType
+          const sanitizedFileName = item.fileName ? sanitizeFileName(item.fileName) : null;
+          const validatedMimeType = item.mimeType ? validateMimeType(item.mimeType) : null;
+
           return {
             experience_id: experienceId,
             type: item.type,
             url: finalUrl, // ✅ Use final URL
-            file_name: item.fileName || null, // ✅ Original filename
-            mime_type: item.mimeType || null, // ✅ MIME type (e.g., 'application/pdf')
+            file_name: sanitizedFileName, // 🔒 SANITIZED: Removes HTML, path traversal, control chars
+            mime_type: validatedMimeType, // 🔒 VALIDATED: Whitelist check
             file_size: item.size || null, // ✅ File size in bytes
             duration_seconds: item.duration || null,
             width: item.width || null,
@@ -235,6 +241,9 @@ export async function POST(request: NextRequest) {
             created_by: user.id,
           };
         }));
+
+        // 🔍 DEBUG: Log exactly what we're inserting
+        console.log('[Publish] Inserting to DB:', JSON.stringify(mediaToInsert, null, 2));
 
         const { error: mediaError } = await supabase
           .from('experience_media')
