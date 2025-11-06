@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excalidraw Scrollbar Test</title>
+    <link rel="stylesheet" href="https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/excalidraw.min.css" />
+    <script>
+        window.EXCALIDRAW_ASSET_PATH = "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/";
+    </script>
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom": "https://esm.sh/react-dom@18.2.0"
+        }
+    }
+    </script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        #open-button {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 16px 32px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        #open-button:hover {
+            background: #2563eb;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: white;
+            z-index: 9999;
+        }
+
+        #modal.open {
+            display: block;
+        }
+
+        #close-button {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 10000;
+            padding: 8px 16px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #excalidraw-container {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* NUCLEAR OPTION: Kill ALL scrollbars */
+        .excalidraw,
+        .excalidraw *,
+        .excalidraw .excalidraw-canvas-container,
+        .excalidraw .excalidraw-canvas-container * {
+            overflow: hidden !important;
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+
+        .excalidraw::-webkit-scrollbar,
+        .excalidraw *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        .excalidraw {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+        }
+
+        .excalidraw .excalidraw-canvas-container {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            position: relative !important;
+        }
+
+        #test-results {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            background: rgba(255, 255, 0, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 10001;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <button id="open-button">Open Excalidraw Modal</button>
+
+    <div id="modal">
+        <button id="close-button">Close (ESC)</button>
+        <div id="excalidraw-container"></div>
+        <div id="test-results">
+            <strong>Scrollbar Test:</strong><br>
+            <span id="results">Checking...</span>
+        </div>
+    </div>
+
+    <script type="module">
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { Excalidraw } from 'https://esm.sh/@excalidraw/excalidraw@0.18.0';
+
+        const openBtn = document.getElementById('open-button');
+        const closeBtn = document.getElementById('close-button');
+        const modal = document.getElementById('modal');
+        const container = document.getElementById('excalidraw-container');
+        const resultsEl = document.getElementById('results');
+
+        let root = null;
+
+        openBtn.addEventListener('click', () => {
+            modal.classList.add('open');
+            openBtn.style.display = 'none';
+
+            if (!root) {
+                const App = () => {
+                    React.useEffect(() => {
+                        // Check for scrollbars after render
+                        setTimeout(() => {
+                            const excalidrawEl = document.querySelector('.excalidraw');
+                            const canvasContainer = document.querySelector('.excalidraw-canvas-container');
+
+                            const results = [];
+
+                            if (excalidrawEl) {
+                                const hasVScroll = excalidrawEl.scrollHeight > excalidrawEl.clientHeight;
+                                const hasHScroll = excalidrawEl.scrollWidth > excalidrawEl.clientWidth;
+                                results.push(`Vertical: ${hasVScroll ? '❌ YES' : '✅ NO'}`);
+                                results.push(`Horizontal: ${hasHScroll ? '❌ YES' : '✅ NO'}`);
+                                results.push(`Dimensions: ${excalidrawEl.clientWidth}x${excalidrawEl.clientHeight}`);
+                            }
+
+                            resultsEl.innerHTML = results.join('<br>');
+                        }, 2000);
+                    }, []);
+
+                    return React.createElement(Excalidraw, {
+                        initialData: {
+                            appState: {
+                                viewBackgroundColor: '#ffffff',
+                                zenModeEnabled: true,
+                                gridSize: 0,
+                                viewModeEnabled: false,
+                                scrollToContent: false,
+                            },
+                            scrollToContent: false,
+                        },
+                        viewModeEnabled: false,
+                    });
+                };
+
+                root = ReactDOM.createRoot(container);
+                root.render(React.createElement(App));
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('open');
+            openBtn.style.display = 'block';
+        });
+
+        // ESC key handler
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('open')) {
+                modal.classList.remove('open');
+                openBtn.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
