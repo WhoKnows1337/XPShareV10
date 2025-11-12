@@ -114,7 +114,7 @@ export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
                 currentItemStrokeColor: '#000000',
                 currentItemFontFamily: 2, // Helvetica (normal)
                 activeTool: { type: 'freedraw', locked: false },
-                zenModeEnabled: true,
+                zenModeEnabled: false,
                 gridSize: 0,
               },
             }}
