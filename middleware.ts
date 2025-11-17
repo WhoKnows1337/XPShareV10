@@ -54,6 +54,17 @@ export async function middleware(request: NextRequest) {
   // ============================================================
   // API ROUTE SECURITY & RATE LIMITING
   // ============================================================
+  // Check for /api/ OR /locale/api/ patterns
+  const localeApiMatch = requestPathname.match(/^\/(de|en|fr|es)(\/api\/.+)/);
+
+  if (localeApiMatch) {
+    // REDIRECT: /de/api/... → /api/...
+    // API routes should NEVER have locale prefixes
+    const url = request.nextUrl.clone();
+    url.pathname = localeApiMatch[2]; // e.g., "/api/media/confirm"
+    return NextResponse.redirect(url, { status: 307 }); // Temporary redirect
+  }
+
   if (requestPathname.startsWith('/api/')) {
     // Apply security headers for API routes
     const apiResponse = NextResponse.next()
@@ -334,7 +345,7 @@ export const config = {
 
     // Enable redirects that add missing locales
     // (e.g. `/pathnames` -> `/en/pathnames`)
-    // Note: api is not excluded as it needs middleware processing
-    '/((?!_next|_vercel|.*\\..*).*)'
+    // IMPORTANT: Exclude /api routes from locale matching to prevent /de/api/... URLs
+    '/((?!api|_next|_vercel|.*\\..*).*)'
   ],
 }
