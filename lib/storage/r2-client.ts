@@ -184,6 +184,53 @@ export async function getPresignedUrl(key: string, expiresIn: number = 3600): Pr
   }
 }
 
+/**
+ * Generate a presigned URL for uploading files directly to R2
+ * This allows clients to upload directly without going through the API
+ *
+ * @param key - File path in bucket where file will be uploaded
+ * @param contentType - MIME type of the file
+ * @param maxFileSize - Maximum file size in bytes (optional, for additional validation)
+ * @param expiresIn - Expiration time in seconds (default: 900 = 15 minutes)
+ *
+ * @example
+ * const uploadUrl = await getPresignedUploadUrl(
+ *   'uploads-pending/users/123/video.mp4',
+ *   'video/mp4',
+ *   1073741824, // 1GB
+ *   900 // 15 minutes
+ * );
+ */
+export async function getPresignedUploadUrl(
+  key: string,
+  contentType: string,
+  maxFileSize?: number,
+  expiresIn: number = 900
+): Promise<string> {
+  const config = getR2Config();
+  const client = getR2Client();
+
+  const putCommand = new PutObjectCommand({
+    Bucket: config.bucketName,
+    Key: key,
+    ContentType: contentType,
+    ...(maxFileSize && {
+      // Add content-length-range condition if maxFileSize is provided
+      Metadata: {
+        maxSize: maxFileSize.toString(),
+      },
+    }),
+  });
+
+  try {
+    const signedUrl = await getSignedUrl(client, putCommand, { expiresIn });
+    return signedUrl;
+  } catch (error: any) {
+    console.error('[R2] Presigned upload URL error:', error);
+    throw new Error(`Failed to generate presigned upload URL: ${error.message}`);
+  }
+}
+
 // =============================================================================
 // COPY FUNCTIONS
 // =============================================================================

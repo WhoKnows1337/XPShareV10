@@ -1,5 +1,5 @@
 import Uppy, { type UppyOptions } from '@uppy/core';
-import XHRUpload from '@uppy/xhr-upload';
+import AwsS3 from '@uppy/aws-s3';
 import Compressor from '@uppy/compressor';
 import ThumbnailGenerator from '@uppy/thumbnail-generator';
 import GoldenRetriever from '@uppy/golden-retriever';
@@ -54,14 +54,56 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
   });
 
   // ============================================================
-  // Upload Method: Standard XHR Upload
+  // Upload Method: Direct to R2 via Presigned URLs
   // ============================================================
-  uppy.use(XHRUpload, {
-    endpoint: '/api/media/upload', // Correct R2 upload endpoint
-    formData: true,
-    fieldName: 'file',
-    allowedMetaFields: ['type', 'originalMimeType'], // ✅ Send both normalized type AND original MIME
-    limit: 3, // Max 3 concurrent uploads
+  uppy.use(AwsS3, {
+    async getUploadParameters(file) {
+      // 1. Request presigned URL from API
+      const response = await fetch('/api/media/presigned-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.meta.originalMimeType || file.type,
+          type: file.meta.type,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to get upload URL');
+      }
+
+      const data = await response.json();
+
+      console.log('[Uppy S3] Got presigned URL:', {
+        fileName: file.name,
+        key: data.key,
+        expiresIn: data.expiresIn,
+      });
+
+      // Store key in file metadata for later confirmation
+      uppy.setFileMeta(file.id, { uploadKey: data.key });
+
+      // 2. Return upload parameters for S3/R2
+      return {
+        method: 'PUT' as const,
+        url: data.uploadUrl,
+        fields: {}, // R2 doesn't need form fields for presigned PUT
+        headers: {
+          'Content-Type': (file.meta.originalMimeType as string) || file.type || 'application/octet-stream',
+        },
+      };
+    },
+
+    // Limit concurrent uploads
+    limit: 3,
+
+    // Don't use multipart for R2 (simpler presigned URL approach)
+    shouldUseMultipart: false,
   });
 
   // ============================================================
@@ -134,30 +176,69 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
   });
 
   // ============================================================
-  // ON COMPLETE: Aggregate results with metadata
+  // ON COMPLETE: Confirm uploads and get metadata
   // ============================================================
-  uppy.on('complete', (result) => {
+  uppy.on('complete', async (result) => {
     if (!onComplete) return;
 
-    const uploadedFiles = (result?.successful || [])
-      .map((file) => {
-        const responseBody = file.response?.body as any;
-        const fileMeta = file.meta;
+    // For each successful upload, confirm with server to get metadata
+    const confirmations = (result?.successful || []).map(async (file) => {
+      const fileMeta = file.meta;
+      const uploadKey = fileMeta.uploadKey as string;
 
-        // Server returns: { success, url, type, fileName, size, metadata: { width, height }, ... }
-        // NO results array - direct extraction!
+      if (!uploadKey) {
+        console.error('[Uppy] Upload key missing for file:', file.name);
+        return null;
+      }
+
+      try {
+        // Confirm upload with server
+        const response = await fetch('/api/media/confirm', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            key: uploadKey,
+            fileName: file.name,
+            mimeType: fileMeta.originalMimeType || file.type,
+            type: fileMeta.type,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('[Uppy] Upload confirmation failed for:', file.name);
+          return null;
+        }
+
+        const data = await response.json();
+
+        console.log('[Uppy] Upload confirmed:', {
+          fileName: file.name,
+          url: data.url,
+          type: data.type,
+        });
+
+        // Return formatted file data
         return {
-          url: responseBody?.url || '',
-          type: responseBody?.type || 'image', // Extract type from server response (image/video/audio/sketch/document)
-          fileName: responseBody?.fileName || file.name, // ✅ Extract original filename from server response
-          size: responseBody?.size || 0, // ✅ Extract file size from server response
-          mimeType: fileMeta?.originalMimeType as string | undefined, // ✅ Include original MIME type
-          duration: fileMeta?.duration as number | undefined,
-          width: responseBody?.metadata?.width || responseBody?.width,
-          height: responseBody?.metadata?.height || responseBody?.height,
+          url: data.url || '',
+          type: data.type || 'image',
+          fileName: data.fileName || file.name,
+          size: data.size || file.size || 0,
+          mimeType: fileMeta.originalMimeType as string | undefined,
+          duration: fileMeta.duration as number | undefined,
+          width: data.metadata?.width,
+          height: data.metadata?.height,
         };
-      })
-      .filter(file => file.url && file.url !== ''); // Only include files with valid URLs
+      } catch (error) {
+        console.error('[Uppy] Error confirming upload:', error);
+        return null;
+      }
+    });
+
+    // Wait for all confirmations
+    const uploadedFiles = (await Promise.all(confirmations))
+      .filter((file) => file !== null); // Remove failed confirmations
 
     onComplete(uploadedFiles);
   });
