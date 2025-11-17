@@ -56,7 +56,9 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
   // Get base URL without locale prefix for API calls
   const getApiUrl = (path: string) => {
     if (typeof window === 'undefined') return path;
-    return `${window.location.origin}${path}`;
+    const fullUrl = `${window.location.origin}${path}`;
+    console.log('[getApiUrl] path:', path, '→ fullUrl:', fullUrl);
+    return fullUrl;
   };
 
   // ============================================================
@@ -213,7 +215,13 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
         });
 
         if (!response.ok) {
-          console.error('[Uppy] Upload confirmation failed for:', file.name);
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('[Uppy] Upload confirmation failed:', {
+            fileName: file.name,
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData,
+          });
           return null;
         }
 

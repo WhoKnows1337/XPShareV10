@@ -27,7 +27,10 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401, headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
     }
 
     // 2. PARSE REQUEST BODY
@@ -35,7 +38,10 @@ export async function POST(request: NextRequest) {
     const { key, fileName, mimeType, type } = body;
 
     if (!key) {
-      return NextResponse.json({ error: 'Missing required field: key' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required field: key' },
+        { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
     }
 
     // 3. VERIFY KEY BELONGS TO USER (security check)
@@ -46,7 +52,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json(
         { error: 'Unauthorized: File does not belong to you' },
-        { status: 403 }
+        { status: 403, headers: { 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
@@ -94,7 +100,7 @@ export async function POST(request: NextRequest) {
       console.error('[Upload Confirm] File not found in R2:', error);
       return NextResponse.json(
         { error: 'File not found', message: 'Upload may have failed' },
-        { status: 404 }
+        { status: 404, headers: { 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
@@ -152,26 +158,43 @@ export async function POST(request: NextRequest) {
     }
 
     // 8. RETURN SUCCESS RESPONSE
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      path: key,
-      type: dbType,
-      fileName: fileName || key.split('/').pop() || 'unknown',
-      size: fileSize,
-      metadata: {
-        width,
-        height,
-        // duration will be provided client-side for video/audio
+    return NextResponse.json(
+      {
+        success: true,
+        url: publicUrl,
+        path: key,
+        type: dbType,
+        fileName: fileName || key.split('/').pop() || 'unknown',
+        size: fileSize,
+        metadata: {
+          width,
+          height,
+          // duration will be provided client-side for video/audio
+        },
       },
-    });
+      { headers: { 'Access-Control-Allow-Origin': '*' } }
+    );
   } catch (error: any) {
     console.error('[Upload Confirm] Error:', error);
     return NextResponse.json(
       { error: 'Upload confirmation failed', message: error.message },
-      { status: 500 }
+      { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } }
     );
   }
+}
+
+/**
+ * Handle CORS preflight requests
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
 
 // Runtime configuration

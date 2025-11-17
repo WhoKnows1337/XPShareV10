@@ -4,7 +4,7 @@
  * Basic offline support with cache-first strategy.
  */
 
-const CACHE_NAME = 'xpshare-v2' // Bumped to force cache refresh
+const CACHE_NAME = 'xpshare-v3' // Bumped to force cache refresh after absolute URL fix
 const urlsToCache = [
   '/',
   '/discover',
