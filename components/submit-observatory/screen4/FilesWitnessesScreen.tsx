@@ -91,11 +91,14 @@ export function FilesWitnessesScreen() {
 
     console.log('[FilesWitnessesScreen] Syncing to store:', mediaItems);
 
-    // Update store with all uploaded media
+    // ✅ FIX: MERGE new files with existing ones (don't overwrite!)
     useSubmitFlowStore.setState((state) => ({
       screen4: {
         ...state.screen4,
-        uploadedMedia: mediaItems,
+        uploadedMedia: [
+          ...(state.screen4.uploadedMedia || []),  // Keep existing files
+          ...mediaItems  // Add new files
+        ],
       },
     }));
   };

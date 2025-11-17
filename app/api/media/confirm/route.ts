@@ -66,11 +66,17 @@ export async function POST(request: NextRequest) {
 
     // 4. VERIFY FILE EXISTS IN R2
     const config = {
-      accountId: process.env.R2_ACCOUNT_ID!,
-      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-      bucketName: process.env.R2_BUCKET_NAME || 'xpshare-media',
+      accountId: process.env.R2_ACCOUNT_ID!.trim(),
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!.trim(),
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!.trim(),
+      bucketName: (process.env.R2_BUCKET_NAME || 'xpshare-media').trim(),
     };
+
+    console.log('[Upload Confirm] R2 Config:', {
+      accountId: config.accountId?.substring(0, 8) + '...',
+      bucketName: config.bucketName,
+      keyLength: config.accessKeyId?.length,
+    });
 
     const r2Client = new S3Client({
       region: 'auto',
@@ -81,25 +87,72 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // RETRY LOGIC: Try up to 3 times with 500ms delay for eventual consistency
     let fileSize = 0;
-    try {
-      const headCommand = new HeadObjectCommand({
-        Bucket: config.bucketName,
-        Key: key,
-      });
+    let lastError: any = null;
+    const maxRetries = 3;
+    const retryDelay = 500; // ms
 
-      const headResult = await r2Client.send(headCommand);
-      fileSize = headResult.ContentLength || 0;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[Upload Confirm] Attempt ${attempt}/${maxRetries} to verify file in R2...`);
 
-      console.log('[Upload Confirm] File verified in R2:', {
+        const headCommand = new HeadObjectCommand({
+          Bucket: config.bucketName,
+          Key: key,
+        });
+
+        const headResult = await r2Client.send(headCommand);
+        fileSize = headResult.ContentLength || 0;
+
+        console.log('[Upload Confirm] ✅ File verified in R2:', {
+          key,
+          size: fileSize,
+          contentType: headResult.ContentType,
+          attempt,
+        });
+
+        // Success! Break out of retry loop
+        lastError = null;
+        break;
+      } catch (error: any) {
+        lastError = error;
+        console.error(`[Upload Confirm] ❌ Attempt ${attempt}/${maxRetries} failed:`, {
+          errorName: error.name,
+          errorCode: error.$metadata?.httpStatusCode || error.Code,
+          errorMessage: error.message,
+          key,
+          bucket: config.bucketName,
+        });
+
+        // If not the last attempt, wait before retrying
+        if (attempt < maxRetries) {
+          console.log(`[Upload Confirm] Retrying in ${retryDelay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+      }
+    }
+
+    // If all retries failed, return 404
+    if (lastError) {
+      console.error('[Upload Confirm] All retries exhausted. File not found in R2:', {
+        errorName: lastError.name,
+        errorCode: lastError.$metadata?.httpStatusCode || lastError.Code,
+        errorMessage: lastError.message,
         key,
-        size: fileSize,
-        contentType: headResult.ContentType,
+        bucket: config.bucketName,
       });
-    } catch (error: any) {
-      console.error('[Upload Confirm] File not found in R2:', error);
+
       return NextResponse.json(
-        { error: 'File not found', message: 'Upload may have failed' },
+        {
+          error: 'File not found',
+          message: 'Upload may have failed or R2 is experiencing delays',
+          details: {
+            errorCode: lastError.Code || lastError.name,
+            key,
+            bucket: config.bucketName,
+          }
+        },
         { status: 404, headers: { 'Access-Control-Allow-Origin': '*' } }
       );
     }
