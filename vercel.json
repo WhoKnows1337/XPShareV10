@@ -15,6 +15,10 @@
     "app/api/submit/publish/route.ts": {
       "memory": 1024,
       "maxDuration": 60
+    },
+    "app/api/media/upload/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
     }
   }
 }

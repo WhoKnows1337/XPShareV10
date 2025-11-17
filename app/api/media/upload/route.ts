@@ -273,3 +273,14 @@ export async function OPTIONS() {
     },
   });
 }
+
+// Route configuration for Vercel
+export const config = {
+  api: {
+    bodyParser: false, // Disable default body parser for file uploads
+  },
+};
+
+// Runtime configuration
+export const runtime = 'nodejs';
+export const maxDuration = 60; // 60 seconds for large file uploads
