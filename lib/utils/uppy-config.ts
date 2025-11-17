@@ -54,10 +54,11 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
   });
 
   // Get base URL without locale prefix for API calls
+  // Cache bust: Force new bundle generation
   const getApiUrl = (path: string) => {
     if (typeof window === 'undefined') return path;
     const fullUrl = `${window.location.origin}${path}`;
-    console.log('[getApiUrl] path:', path, '→ fullUrl:', fullUrl);
+    console.log('[Uppy Config v2] API URL:', path, '→', fullUrl);
     return fullUrl;
   };
 
