@@ -53,13 +53,19 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
     debug: true, // Enable debug mode to see all events in console
   });
 
+  // Get base URL without locale prefix for API calls
+  const getApiUrl = (path: string) => {
+    if (typeof window === 'undefined') return path;
+    return `${window.location.origin}${path}`;
+  };
+
   // ============================================================
   // Upload Method: Direct to R2 via Presigned URLs
   // ============================================================
   uppy.use(AwsS3, {
     async getUploadParameters(file) {
-      // 1. Request presigned URL from API
-      const response = await fetch('/api/media/presigned-url', {
+      // 1. Request presigned URL from API (using absolute URL to avoid locale prefix)
+      const response = await fetch(getApiUrl('/api/media/presigned-url'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,8 +198,8 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
       }
 
       try {
-        // Confirm upload with server
-        const response = await fetch('/api/media/confirm', {
+        // Confirm upload with server (using absolute URL to avoid locale prefix)
+        const response = await fetch(getApiUrl('/api/media/confirm'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
