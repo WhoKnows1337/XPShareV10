@@ -29,12 +29,13 @@ function getR2Config() {
     throw new Error('R2_SECRET_ACCESS_KEY is not set in environment variables');
   }
 
+  // Trim all values to remove any whitespace/newlines
   return {
-    accountId: process.env.R2_ACCOUNT_ID,
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    bucketName: process.env.R2_BUCKET_NAME || 'xpshare-media',
-    publicUrl: process.env.R2_PUBLIC_URL || `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`,
+    accountId: process.env.R2_ACCOUNT_ID.trim(),
+    accessKeyId: process.env.R2_ACCESS_KEY_ID.trim(),
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY.trim(),
+    bucketName: (process.env.R2_BUCKET_NAME || 'xpshare-media').trim(),
+    publicUrl: (process.env.R2_PUBLIC_URL || `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev`).trim(),
   };
 }
 

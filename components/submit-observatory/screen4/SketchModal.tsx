@@ -107,7 +107,24 @@ export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
         {/* Container with explicit height as required by Excalidraw */}
         <div style={{ height: '100vh', width: '100vw' }}>
           <Excalidraw
-            excalidrawAPI={(api) => setExcalidrawAPI(api)}
+            excalidrawAPI={(api) => {
+              setExcalidrawAPI(api);
+              // Set default tool to freedraw (pen) after API is ready
+              if (api) {
+                setTimeout(() => {
+                  api.updateScene({
+                    appState: {
+                      activeTool: {
+                        type: 'freedraw',
+                        customType: null,
+                        locked: false,
+                        lastActiveTool: null,
+                      },
+                    },
+                  });
+                }, 100);
+              }
+            }}
             initialData={{
               appState: {
                 viewBackgroundColor: '#ffffff',
