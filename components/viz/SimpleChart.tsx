@@ -104,7 +104,7 @@ export function SimpleChart({
               cx="50%"
               cy="50%"
               outerRadius={120}
-              label={(entry) => `${entry.label}: ${entry.value}`}
+              label={(entry: any) => `${entry.label}: ${entry.value}`}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />

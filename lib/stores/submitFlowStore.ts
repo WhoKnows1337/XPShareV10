@@ -92,6 +92,7 @@ export interface Screen4Data {
     type: 'image' | 'video' | 'audio' | 'sketch' | 'document';
     fileName: string;
     size: number;
+    mimeType?: string; // Original MIME type
     duration?: number; // For video/audio
     width?: number; // For images/videos
     height?: number; // For images/videos
@@ -126,6 +127,15 @@ export interface SubmitFlowState {
   // Draft Management
   lastSaved: string | null;
   isDraft: boolean;
+
+  // Publish Result (for Success Screen)
+  publishResult: {
+    experienceId: string;
+    xpEarned: number;
+    badgesEarned: string[];
+    leveledUp: boolean;
+    newLevel?: number;
+  } | null;
 
   // Actions
   setCurrentStep: (step: number) => void;
@@ -258,6 +268,7 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
       isPublishing: false,
 
       lastSaved: null,
+      publishResult: null,
       isDraft: false,
 
       // Step Actions
@@ -617,7 +628,13 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         // Draft is automatically loaded from localStorage via persist middleware
       },
 
-      clearDraft: () =>
+      clearDraft: () => {
+        // Explicitly clear localStorage to prevent auto-loading old drafts
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('submit-flow-storage');
+        }
+
+        // Clear Zustand state
         set({
           screen1: initialScreen1,
           screen2: initialScreen2,
@@ -627,7 +644,8 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           totalSteps: 4,
           lastSaved: null,
           isDraft: false,
-        }),
+        });
+      },
 
       // Navigation
       canGoNext: () => {
@@ -684,7 +702,13 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
       },
 
       // Reset
-      reset: () =>
+      reset: () => {
+        // Explicitly clear localStorage to prevent auto-loading old drafts
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('submit-flow-storage');
+        }
+
+        // Clear Zustand state
         set({
           screen1: initialScreen1,
           screen2: initialScreen2,
@@ -698,7 +722,9 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           isPublishing: false,
           lastSaved: null,
           isDraft: false,
-        }),
+          publishResult: null,
+        });
+      },
     }),
     {
       name: 'submit-flow-storage', // localStorage key
@@ -708,12 +734,19 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         screen2: state.screen2,
         screen3: state.screen3,
         screen4: state.screen4,
-        currentStep: state.currentStep,
+        // Don't persist step 5 (SuccessScreen) - reset to step 1 instead
+        currentStep: state.currentStep === 5 ? 1 : state.currentStep,
         lastSaved: state.lastSaved,
         isDraft: state.isDraft,
       }),
       // Migration: Convert old File[] drafts to new uploadedMedia format
       migrate: (persistedState: any, version: number) => {
+        // FIX: Reset currentStep to 1 if it's 5 (SuccessScreen should never be persisted)
+        if (persistedState?.currentStep === 5) {
+          console.log('[Store Migration] Resetting currentStep from 5 to 1 (SuccessScreen not persistable)');
+          persistedState.currentStep = 1;
+        }
+
         // Ensure screen4 exists at all
         if (!persistedState?.screen4) {
           console.log('[Store Migration] screen4 missing, initializing with defaults');

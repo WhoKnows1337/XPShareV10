@@ -555,6 +555,10 @@
         "timeRemaining": "~{time}s remaining"
       }
     },
+    "discoveryLoading": {
+      "title": "Discovering Patterns",
+      "description": "Analyzing your experience across time and space"
+    },
     "success": {
       "title": "Experience Published!",
       "subtitle": "Your experience has been successfully saved and can be viewed by others.",
@@ -565,6 +569,28 @@
       "view": "View Experience",
       "share": "Share Link",
       "submitAnother": "Submit Another",
+      "discovery": {
+        "findingSimilar": "Finding similar experiences",
+        "detectingPatterns": "Detecting patterns",
+        "checkingEvents": "Checking external events",
+        "error": "Pattern discovery failed",
+        "errorDesc": "Some insights may be missing. Your experience was published successfully."
+      },
+      "insights": {
+        "title": "Discovered Connections",
+        "solar": {
+          "title": "⚡ Solar Activity Correlation",
+          "description": "Geomagnetic storm activity detected on your sighting date. {percentage}% of similar experiences occur during solar activity."
+        },
+        "lunar": {
+          "title": "🌙 Lunar Correlation",
+          "description": "Your experience occurred during {phase} phase. {percentage}% of similar reports happen during this lunar phase."
+        },
+        "seismic": {
+          "title": "🌍 Seismic Activity Match",
+          "description": "Magnitude {magnitude} earthquake detected {distance}km from your location, approximately {time} before your experience."
+        }
+      },
       "rewards": {
         "title": "🎁 Your Rewards",
         "xpEarned": "XP Earned",
@@ -693,10 +719,12 @@
         "edit": "Edit",
         "analytics": "Analytics",
         "questions": "Questions",
+        "answers": "Answers",
         "attributes": "Attributes",
         "noCategories": "No categories found",
         "newCategory": "New Category",
-        "rate": "Rate"
+        "rate": "Rate",
+        "create": "Create"
       },
       "recentChanges": {
         "title": "Recent Changes",

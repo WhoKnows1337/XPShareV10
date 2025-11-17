@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare witnesses for DB function (with separated email/userId fields)
     const witnesses = data.witnesses ? await Promise.all(data.witnesses.map(async (witness) => {
-      const sanitizedName = sanitizeText(witness.name);
+      const sanitizedName = sanitizeText(witness.name || '');
 
       // Separate email and userId - exactly one must be set
       if (witness.userId) {
@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
         }));
 
         const { error: linksError } = await supabase
-          .from('experience_external_links')
+          .from('experience_external_links' as any)
           .insert(linksToInsert);
 
         if (linksError) {

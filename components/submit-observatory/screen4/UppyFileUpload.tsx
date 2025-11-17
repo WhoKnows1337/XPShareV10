@@ -19,6 +19,10 @@ export interface UppyFileUploadProps {
   onFilesReady?: (files: File[]) => void;
   onUploadComplete?: (uploadedFiles: Array<{
     url: string;
+    type: string;
+    fileName: string;
+    size: number;
+    mimeType?: string;
     duration?: number;
     width?: number;
     height?: number;
@@ -39,14 +43,8 @@ interface UppyFile {
   size: number;
   data: File;
   preview?: string;
-  error?: string; // Upload error message
-  progress?: {
-    uploadComplete: boolean;
-    uploadStarted: boolean;
-    percentage: number;
-    bytesUploaded?: number;
-    bytesTotal?: number;
-  };
+  error?: string | null; // Upload error message
+  progress?: any; // Uppy FileProgress type
 }
 
 /**
@@ -124,7 +122,7 @@ export const UppyFileUpload = forwardRef<UppyFileUploadRef, UppyFileUploadProps>
       });
 
       // Update UI when thumbnails are generated
-      uppy.on('thumbnail:generated', (file, preview) => {
+      uppy.on('thumbnail:generated' as any, (file: any, preview: any) => {
         console.log('[thumbnail:generated]', file.name);
         updateFileList(uppy);
       });
@@ -186,7 +184,7 @@ export const UppyFileUpload = forwardRef<UppyFileUploadRef, UppyFileUploadProps>
         console.log('[upload-progress] Overall:', currentProgress, '%');
       });
 
-      uppy.on('upload', (data) => {
+      uppy.on('upload', (data: any) => {
         console.log('[upload] Started with', data?.fileIDs?.length || 0, 'files');
         setIsUploading(true);
         setUploadProgress(0); // Reset to 0 at start
@@ -206,7 +204,7 @@ export const UppyFileUpload = forwardRef<UppyFileUploadRef, UppyFileUploadProps>
       });
 
       uppy.on('complete', (result) => {
-        console.log('[complete]', result.successful.length, 'successful,', result.failed.length, 'failed');
+        console.log('[complete]', result?.successful?.length || 0, 'successful,', result?.failed?.length || 0, 'failed');
         setUploadProgress(100); // Show 100% briefly
         setUploadETA(null); // Reset ETA to prevent stuck "1s remaining"
 
@@ -247,7 +245,7 @@ export const UppyFileUpload = forwardRef<UppyFileUploadRef, UppyFileUploadProps>
           id: f.id,
           name: f.name,
           type: f.type || '',
-          size: f.size,
+          size: f.size || 0,
           data: f.data as File,
           preview: f.preview,
           error: f.error,
@@ -654,7 +652,7 @@ export const UppyFileUpload = forwardRef<UppyFileUploadRef, UppyFileUploadProps>
                         {file.error ? (
                           // Upload failed - show error icon and retry button
                           <>
-                            <AlertCircle className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-red-400" title={file.error} />
+                            <AlertCircle className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-red-400" />
                             <button
                               type="button"
                               onClick={() => {
@@ -671,7 +669,7 @@ export const UppyFileUpload = forwardRef<UppyFileUploadRef, UppyFileUploadProps>
                           </>
                         ) : file.progress?.uploadComplete ? (
                           // Upload successful - show checkmark
-                          <CheckCircle className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-green-400" title="Upload successful" />
+                          <CheckCircle className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-green-400" />
                         ) : null}
 
                         {/* Remove button - always visible when not uploading */}

@@ -64,7 +64,7 @@ export const FileUploadSection = forwardRef<UppyFileUploadRef, FileUploadSection
         >
           <Pencil className="w-4 h-4 text-observatory-gold" />
           <span className="text-sm text-observatory-gold font-medium">
-            {t('sketch', 'Draw a Sketch')}
+            {t('sketch')}
           </span>
         </button>
 

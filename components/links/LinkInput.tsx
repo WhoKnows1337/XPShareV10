@@ -25,14 +25,14 @@ export function LinkInput({ onLinkAdded, disabled = false }: LinkInputProps) {
       return;
     }
 
-    setLoadingMessage(t('linkLoading.fetching', 'Fetching link...'));
+    setLoadingMessage(t('linkLoading.fetching'));
 
     const timer1 = setTimeout(() => {
-      setLoadingMessage(t('linkLoading.stillLoading', 'Still loading...'));
+      setLoadingMessage(t('linkLoading.stillLoading'));
     }, 3000);
 
     const timer2 = setTimeout(() => {
-      setLoadingMessage(t('linkLoading.almostThere', 'Almost there...'));
+      setLoadingMessage(t('linkLoading.almostThere'));
     }, 8000);
 
     return () => {
@@ -68,18 +68,18 @@ export function LinkInput({ onLinkAdded, disabled = false }: LinkInputProps) {
         // Handle specific error codes from backend
         if (errorData.code === 'TIMEOUT') {
           setErrorCode('TIMEOUT');
-          setError(t('linkError.timeout', 'This link takes too long to load. Please try a different one.'));
+          setError(t('linkError.timeout'));
         } else if (errorData.code === 'NETWORK_ERROR') {
           setErrorCode('NETWORK_ERROR');
-          setError(t('linkError.networkError', 'Could not reach the website. Please check if the link is correct.'));
+          setError(t('linkError.networkError'));
         } else if (errorData.error === 'URL security check failed') {
           setErrorCode('SECURITY');
-          setError(t('linkError.security', 'This URL was blocked for security reasons.'));
+          setError(t('linkError.security'));
         } else if (errorData.error === 'Rate limit exceeded') {
           setErrorCode('RATE_LIMIT');
-          setError(t('linkError.rateLimit', 'Too many requests. Please wait a moment and try again.'));
+          setError(t('linkError.rateLimit'));
         } else {
-          setError(errorData.error || t('linkError.unknown', 'Failed to add link. Please try again.'));
+          setError(errorData.error || t('linkError.unknown'));
         }
         return;
       }
@@ -92,15 +92,15 @@ export function LinkInput({ onLinkAdded, disabled = false }: LinkInputProps) {
         setError(null);
         setErrorCode(null);
       } else {
-        setError(t('linkError.invalidResponse', 'Invalid response from server'));
+        setError(t('linkError.invalidResponse'));
       }
     } catch (err) {
       if (err instanceof TypeError && err.message.includes('URL')) {
-        setError(t('linkError.invalidUrl', 'Invalid URL format. Please enter a valid URL.'));
+        setError(t('linkError.invalidUrl'));
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError(t('linkError.unknown', 'Failed to add link. Please try again.'));
+        setError(t('linkError.unknown'));
       }
     } finally {
       setIsLoading(false);
@@ -123,7 +123,7 @@ export function LinkInput({ onLinkAdded, disabled = false }: LinkInputProps) {
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder={t('linkPlaceholder', 'Paste URL (YouTube, Twitter, article, etc.)')}
+              placeholder={t('linkPlaceholder')}
               disabled={disabled || isLoading}
               className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-observatory-gold/30 rounded-lg
                 text-white placeholder:text-observatory-gold/40
@@ -151,7 +151,7 @@ export function LinkInput({ onLinkAdded, disabled = false }: LinkInputProps) {
           ) : (
             <>
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('addLink', 'Add Link')}</span>
+              <span className="hidden sm:inline">{t('addLink')}</span>
             </>
           )}
         </button>
@@ -174,17 +174,17 @@ export function LinkInput({ onLinkAdded, disabled = false }: LinkInputProps) {
               <p>{error}</p>
               {errorCode === 'TIMEOUT' && (
                 <p className="mt-1 text-xs text-red-400/70">
-                  {t('linkError.timeoutHint', 'The website might be slow or unavailable. Try a different link.')}
+                  {t('linkError.timeoutHint')}
                 </p>
               )}
               {errorCode === 'NETWORK_ERROR' && (
                 <p className="mt-1 text-xs text-red-400/70">
-                  {t('linkError.networkHint', 'Make sure the link is accessible from a browser.')}
+                  {t('linkError.networkHint')}
                 </p>
               )}
               {errorCode === 'SECURITY' && (
                 <p className="mt-1 text-xs text-red-400/70">
-                  {t('linkError.securityHint', 'Dangerous links or file types are not allowed.')}
+                  {t('linkError.securityHint')}
                 </p>
               )}
             </div>
@@ -199,16 +199,13 @@ export function LinkInput({ onLinkAdded, disabled = false }: LinkInputProps) {
               disabled:opacity-50 disabled:cursor-not-allowed
               transition-all"
           >
-            {t('linkError.retry', 'Try Again')}
+            {t('linkError.retry')}
           </button>
         </div>
       )}
 
       <p className="text-xs text-observatory-gold/60">
-        {t(
-          'linkSupport',
-          'Supported: YouTube, Vimeo, Twitter/X, Spotify, SoundCloud, TikTok, Instagram, Facebook, Google Maps, and any website'
-        )}
+        {t('linkSupport')}
       </p>
     </div>
   );

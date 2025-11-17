@@ -314,7 +314,6 @@ export async function POST(request: NextRequest) {
     let metadata: Partial<LinkMetadata> = {
       url: sanitizedUrl,
       platform,
-      domain: extractDomain(sanitizedUrl),
     };
 
     // Try oEmbed first for supported platforms (faster)

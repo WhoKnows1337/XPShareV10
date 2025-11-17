@@ -34,7 +34,7 @@ export function LinkSection({ onLinksChange }: LinkSectionProps) {
       <div className="flex items-center gap-2">
         <LinkIcon className="w-4 h-4 text-observatory-gold" />
         <h2 className="text-sm font-medium text-white">
-          {t('linksTitle', 'External Links')}
+          {t('linksTitle')}
         </h2>
         {links.length > 0 && (
           <span className="text-xs text-observatory-gold/60 bg-observatory-gold/10 px-2 py-0.5 rounded-full">

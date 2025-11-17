@@ -192,13 +192,22 @@ export function EnhancedTextScreen() {
 
       for (const [key, attr] of Object.entries(screen2.attributes || {})) {
         if (attr && typeof attr === 'object' && 'value' in attr) {
+          // Convert value to string and trim
+          const valueStr = String(attr.value || '').trim();
+
+          // ✅ FIX: Skip attributes with empty values (e.g., has_witnesses, has_documentation)
+          if (!valueStr) {
+            console.log(`[EnhancedTextScreen] Skipping attribute "${key}" with empty value`);
+            continue;
+          }
+
           // Always ensure confidence is in 0-1 range for API
           const confidenceValue = typeof attr.confidence === 'number'
             ? (attr.confidence > 1 ? attr.confidence / 100 : attr.confidence)
             : 0.95; // Default confidence
 
           attributesObject[key] = {
-            value: String(attr.value || ''),
+            value: valueStr,
             confidence: confidenceValue,
             isManuallyEdited: attr.isManuallyEdited || false
           };

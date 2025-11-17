@@ -12,6 +12,7 @@ import { CorrelationCard } from './CorrelationCard';
 import { TemporalPatternCard } from './TemporalPatternCard';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface PublishResult {
   experienceId: string;
@@ -39,10 +40,8 @@ interface DiscoveryStep {
 export function SuccessScreen() {
   const t = useTranslations('submit.success');
   const router = useRouter();
-  const { screen1, screen2, screen3, screen4, reset } = useSubmitFlowStore();
+  const { screen1, screen2, screen3, screen4, reset, publishResult } = useSubmitFlowStore();
 
-  const [publishResult, setPublishResult] = useState<PublishResult | null>(null);
-  const [isPublishing, setIsPublishing] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Pattern discovery states
@@ -52,141 +51,10 @@ export function SuccessScreen() {
   const [similarCount, setSimilarCount] = useState(0);
 
   useEffect(() => {
-    handlePublish();
-  }, []);
-
-  const handlePublish = async () => {
-    setIsPublishing(true);
-    setError(null);
-
-    try {
-      // Helper to normalize media type from MIME type to enum value
-      const normalizeMediaType = (type: string): 'image' | 'video' | 'audio' | 'sketch' | 'document' => {
-        if (type === 'image' || type === 'video' || type === 'audio' || type === 'sketch' || type === 'document') {
-          return type;
-        }
-        if (type.startsWith('image/') || type === 'photo') return 'image';
-        if (type.startsWith('video/')) return 'video';
-        if (type.startsWith('audio/')) return 'audio';
-        if (type === 'application/pdf' || type.startsWith('application/')) return 'document';
-        if (type === 'sketch') return 'sketch';
-        console.warn(`[Publish] Unknown media type "${type}", defaulting to "image"`);
-        return 'image';
-      };
-
-      const uploadedFiles = screen4.uploadedMedia || [];
-      console.log('[SuccessScreen] Using uploaded media from store:', uploadedFiles);
-
-      // Transform attributes confidence
-      const transformedAttributes = screen2.attributes ? Object.fromEntries(
-        Object.entries(screen2.attributes).map(([key, attr]) => [
-          key,
-          {
-            ...attr,
-            confidence: typeof attr.confidence === 'number' && attr.confidence > 1
-              ? attr.confidence / 100
-              : attr.confidence,
-          },
-        ])
-      ) : {};
-
-      // Duration mapping
-      const durationMap: Record<string, string> = {
-        'less_than_1min': 'seconds',
-        '1_to_5min': 'minutes',
-        'more_than_5min': 'minutes',
-      };
-
-      // Date formatting
-      const dateOccurredISO = screen2.date
-        ? (screen2.date.includes('T') ? screen2.date : `${screen2.date}T12:00:00.000Z`)
-        : null;
-
-      // Prepare experience data
-      const experienceData = {
-        // Screen 1: Text
-        text: screen1.text,
-        wordCount: screen1.wordCount,
-
-        // Screen 2: AI Analysis + Questions
-        title: screen2.title,
-        category: screen2.category,
-        tags: screen2.tags,
-        attributes: transformedAttributes,
-        dateOccurred: dateOccurredISO,
-        timeOfDay: screen2.time || null,
-        location: screen2.location || null,
-        locationLat: screen2.locationLat || null,
-        locationLng: screen2.locationLng || null,
-        duration: screen2.duration ? (durationMap[screen2.duration] || screen2.duration) : null,
-        questionAnswers: screen2.extraQuestions ? Object.entries(screen2.extraQuestions).map(([id, answer]) => ({
-          id,
-          question: id,
-          answer,
-          type: typeof answer === 'boolean' ? 'boolean' :
-                typeof answer === 'number' ? 'number' : 'text'
-        })) : [],
-
-        // Screen 3: Summary
-        summary: screen3.summary || '',
-        enhancedText: screen3.enhancementEnabled ? screen3.enhancedText : screen1.text,
-        enhancementEnabled: screen3.enhancementEnabled,
-        aiEnhancementUsed: screen3.enhancementEnabled,
-        userEditedAi: false,
-
-        // Screen 4: Visibility & Media
-        visibility: screen4.visibility,
-        mediaUrls: uploadedFiles.map(m => m.url),
-        media: uploadedFiles.map(m => ({
-          url: m.url,
-          type: normalizeMediaType(m.type),
-          fileName: m.fileName, // ✅ Original filename
-          mimeType: m.mimeType, // ✅ Original MIME type
-          size: m.size, // ✅ File size
-          duration: m.duration,
-          width: m.width,
-          height: m.height,
-        })),
-        witnesses: screen4.witnesses || [],
-        externalLinks: screen4.externalLinks || [],
-        language: 'de',
-      };
-
-      console.log('[SuccessScreen] Sending to publish API:', {
-        mediaCount: experienceData.media.length,
-        mediaData: experienceData.media,
-      });
-
-      // Call publish API
-      const response = await fetch('/api/submit/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(experienceData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Publish API Error:', {
-          status: response.status,
-          error: error,
-          details: error.details,
-          sentData: experienceData,
-        });
-        throw new Error(JSON.stringify(error.details) || error.error || 'Failed to publish');
-      }
-
-      const result = await response.json();
-      setPublishResult(result);
-
-      // Start pattern discovery after successful publish
-      await handlePatternDiscovery(result.experienceId);
-    } catch (err: any) {
-      console.error('Publish error:', err);
-      setError(err.message || 'Publishing failed');
-    } finally {
-      setIsPublishing(false);
+    if (publishResult) {
+      handlePatternDiscovery(publishResult.experienceId);
     }
-  };
+  }, [publishResult]);
 
   const handlePatternDiscovery = async (experienceId: string) => {
     setIsDiscovering(true);
@@ -195,19 +63,19 @@ export function SuccessScreen() {
     const steps: DiscoveryStep[] = [
       {
         id: 'similar',
-        label: t('discovery.findingSimilar', 'Finding similar experiences'),
+        label: t('discovery.findingSimilar'),
         status: 'active',
         icon: Users,
       },
       {
         id: 'patterns',
-        label: t('discovery.detectingPatterns', 'Detecting patterns'),
+        label: t('discovery.detectingPatterns'),
         status: 'pending',
         icon: TrendingUp,
       },
       {
         id: 'events',
-        label: t('discovery.checkingEvents', 'Checking external events'),
+        label: t('discovery.checkingEvents'),
         status: 'pending',
         icon: Globe,
       },
@@ -218,59 +86,59 @@ export function SuccessScreen() {
 
     try {
       // Step 1: Find Similar Experiences
-      const similarResponse = await fetch(`/api/submit/find-similar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category: screen2.category,
-          tags: screen2.tags,
-          location: screen2.location,
-          locationLat: screen2.locationLat,
-          locationLng: screen2.locationLng,
-          duration: screen2.duration,
-          excludeId: experienceId,
-        }),
-      });
+      const similarResponse = await fetch(
+        `/api/submit/find-similar?experienceId=${encodeURIComponent(experienceId)}`
+      );
 
       if (similarResponse.ok) {
         const similarData = await similarResponse.json();
-        setSimilarCount(similarData.length || 0);
+        const similar = similarData.similar || [];
+        setSimilarCount(similar.length);
         setDiscoverySteps(prev => prev.map(s =>
           s.id === 'similar'
-            ? { ...s, status: 'completed', count: similarData.length }
+            ? { ...s, status: 'completed', count: similar.length }
             : s.id === 'patterns'
             ? { ...s, status: 'active' }
             : s
         ));
+      } else {
+        console.warn('Failed to find similar experiences:', await similarResponse.text());
       }
 
       // Step 2: Pattern Analysis
       const patternsResponse = await fetch(`/api/patterns/for-experience/${experienceId}`);
+      let patternCorrelations: Record<string, { strength: number; description: string }> = {};
+      
       if (patternsResponse.ok) {
         const patternsData = await patternsResponse.json();
 
+        // Store correlations for later use
+        if (patternsData.insights?.correlations) {
+          patternCorrelations = patternsData.insights.correlations;
+        }
+
         // Extract insights
-        if (patternsData.geographicClusters?.length > 0) {
-          const cluster = patternsData.geographicClusters[0];
+        if (patternsData.insights?.geographic?.length > 0) {
+          const cluster = patternsData.insights.geographic[0];
           insights.push({
             type: 'wave',
             data: {
               count: cluster.count,
-              location: cluster.location || screen2.location,
+              location: cluster.attribute || screen2.location,
               timeframe: '30 days',
-              trend: cluster.trend || 200,
+              trend: 200,
             },
           });
         }
 
-        if (patternsData.temporalPatterns?.length > 0) {
-          const temporal = patternsData.temporalPatterns[0];
+        if (patternsData.insights?.temporal?.length > 0) {
+          const temporal = patternsData.insights.temporal[0];
           insights.push({
             type: 'temporal',
             data: {
-              period: temporal.period,
+              period: temporal.timeOfDay || temporal.dayOfWeek || temporal.season,
               count: temporal.count,
-              trend: temporal.percentageChange || 300,
+              trend: temporal.percentage || 300,
               comparison: 'vs. previous month',
             },
           });
@@ -305,41 +173,97 @@ export function SuccessScreen() {
         let correlationCount = 0;
 
         // Solar Activity
-        if (eventsData.solarActivity?.length > 0) {
-          const solar = eventsData.solarActivity[0];
+        const solarEvents = eventsData.externalEvents?.filter((e: any) => e.type === 'solar') || [];
+        if (solarEvents.length > 0) {
+          const solar = solarEvents[0];
+          
+          // Calculate percentage from relevance (0-1 scale to percentage)
+          // Or use correlation data from pattern analysis if available
+          let percentage = Math.round(solar.relevance * 100);
+          
+          // Check if we have historical correlation data
+          const solarCorrelation = Object.values(patternCorrelations).find((corr: any) => 
+            corr.description?.toLowerCase().includes('solar') || 
+            corr.description?.toLowerCase().includes('kp')
+          );
+          if (solarCorrelation) {
+            percentage = Math.round(solarCorrelation.strength * 100);
+          }
+
           insights.push({
             type: 'solar',
             data: {
-              kpIndex: solar.kp_index,
-              date: solar.date,
-              percentage: 80, // Mock data - should come from pattern analysis
+              kpIndex: solar.data?.flux ? Math.min(9, Math.round(solar.data.flux * 1e5)) : 6,
+              date: solar.timestamp,
+              percentage,
             },
           });
           correlationCount++;
         }
 
         // Moon Phase
-        if (eventsData.moonPhase) {
+        const moonEvents = eventsData.externalEvents?.filter((e: any) => e.type === 'moon') || [];
+        if (moonEvents.length > 0) {
+          const moon = moonEvents[0];
+          
+          // Calculate percentage from relevance
+          let percentage = Math.round(moon.relevance * 100);
+          
+          // Check if we have historical correlation data
+          const lunarCorrelation = Object.values(patternCorrelations).find((corr: any) => 
+            corr.description?.toLowerCase().includes('moon') || 
+            corr.description?.toLowerCase().includes('lunar')
+          );
+          if (lunarCorrelation) {
+            percentage = Math.round(lunarCorrelation.strength * 100);
+          }
+
           insights.push({
             type: 'lunar',
             data: {
-              phase: eventsData.moonPhase.phase,
-              illumination: eventsData.moonPhase.illumination,
-              percentage: 75,
+              phase: moon.data?.phase || moon.title,
+              illumination: moon.data?.illumination || 0.9,
+              percentage,
             },
           });
           correlationCount++;
         }
 
         // Seismic Activity
-        if (eventsData.earthquakes?.length > 0) {
-          const quake = eventsData.earthquakes[0];
+        const earthquakes = eventsData.externalEvents?.filter((e: any) => e.type === 'earthquake') || [];
+        if (earthquakes.length > 0) {
+          const quake = earthquakes[0];
+          
+          // Calculate percentage from relevance
+          let percentage = Math.round(quake.relevance * 100);
+          
+          // Check if we have historical correlation data
+          const seismicCorrelation = Object.values(patternCorrelations).find((corr: any) => 
+            corr.description?.toLowerCase().includes('earthquake') || 
+            corr.description?.toLowerCase().includes('seismic')
+          );
+          if (seismicCorrelation) {
+            percentage = Math.round(seismicCorrelation.strength * 100);
+          }
+
+          // Calculate distance and time from event data
+          const distance = quake.data?.properties?.place ? 
+            parseInt(quake.data.properties.place.match(/\d+/)?.[0] || '50') : 50;
+          
+          const eventTime = new Date(quake.timestamp);
+          const experienceTime = new Date(screen2.date || Date.now());
+          const hoursDiff = Math.abs(experienceTime.getTime() - eventTime.getTime()) / (1000 * 60 * 60);
+          const time = hoursDiff < 24 ? 
+            `${Math.round(hoursDiff)} hours` : 
+            `${Math.round(hoursDiff / 24)} days`;
+
           insights.push({
             type: 'seismic',
             data: {
-              magnitude: quake.magnitude,
-              distance: quake.distance_km,
-              time: quake.time,
+              magnitude: quake.data?.properties?.mag || 5.0,
+              distance,
+              time,
+              percentage,
             },
           });
           correlationCount++;
@@ -355,36 +279,24 @@ export function SuccessScreen() {
       setPatternInsights(insights);
     } catch (err) {
       console.error('Pattern discovery error:', err);
-      // Non-critical - mark all as completed anyway
+
+      // Show error toast to user
+      toast.error(t('discovery.error'), {
+        description: t('discovery.errorDesc'),
+        duration: 5000,
+      });
+
+      // Mark all as completed to show results screen
       setDiscoverySteps(prev => prev.map(s => ({ ...s, status: 'completed' })));
     } finally {
       setIsDiscovering(false);
     }
-  };
+  };;
 
   const handleSubmitAnother = () => {
     reset();
     router.push('/submit');
   };
-
-  // Show publishing loading
-  if (isPublishing) {
-    return (
-      <div className="max-w-3xl mx-auto flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="glass-card p-12 text-center space-y-6">
-          <div className="w-16 h-16 mx-auto">
-            <div className="w-full h-full border-4 border-observatory-gold border-t-transparent rounded-full animate-spin" />
-          </div>
-          <h2 className="text-2xl font-bold text-text-primary">
-            {t('publishing')}
-          </h2>
-          <p className="text-text-secondary">
-            {t('publishingDesc')}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // Show pattern discovery loading
   if (isDiscovering) {
@@ -402,7 +314,7 @@ export function SuccessScreen() {
             {t('error')}
           </h2>
           <p className="text-text-secondary">{error}</p>
-          <button onClick={handlePublish} className="btn-observatory">
+          <button onClick={() => router.push('/submit')} className="btn-observatory">
             {t('retry')}
           </button>
         </div>
@@ -482,7 +394,7 @@ export function SuccessScreen() {
           <div className="flex items-center gap-3">
             <Sparkles className="w-6 h-6 text-observatory-gold" />
             <h2 className="text-2xl font-bold text-text-primary">
-              {t('insights.title', 'Discovered Connections')}
+              {t('insights.title')}
             </h2>
           </div>
 
@@ -507,11 +419,8 @@ export function SuccessScreen() {
                   <CorrelationCard
                     key={`solar-${index}`}
                     type="solar"
-                    title={t('insights.solar.title', '⚡ Solar Activity Correlation')}
-                    description={t(
-                      'insights.solar.description',
-                      `Geomagnetic storm activity detected on your sighting date. ${insight.data.percentage}% of similar experiences occur during solar activity.`
-                    )}
+                    title={t('insights.solar.title')}
+                    description={t('insights.solar.description')}
                     metric={{
                       value: insight.data.kpIndex,
                       label: 'KP-Index',
@@ -528,11 +437,8 @@ export function SuccessScreen() {
                   <CorrelationCard
                     key={`lunar-${index}`}
                     type="lunar"
-                    title={t('insights.lunar.title', '🌙 Lunar Correlation')}
-                    description={t(
-                      'insights.lunar.description',
-                      `Your experience occurred during ${insight.data.phase} phase. ${insight.data.percentage}% of similar reports happen during this lunar phase.`
-                    )}
+                    title={t('insights.lunar.title')}
+                    description={t('insights.lunar.description')}
                     metric={{
                       value: `${Math.round(insight.data.illumination * 100)}%`,
                       label: 'Illumination',
@@ -549,11 +455,8 @@ export function SuccessScreen() {
                   <CorrelationCard
                     key={`seismic-${index}`}
                     type="seismic"
-                    title={t('insights.seismic.title', '🌍 Seismic Activity Match')}
-                    description={t(
-                      'insights.seismic.description',
-                      `Magnitude ${insight.data.magnitude} earthquake detected ${insight.data.distance}km from your location, approximately ${insight.data.time} before your experience.`
-                    )}
+                    title={t('insights.seismic.title')}
+                    description={t('insights.seismic.description')}
                     metric={{
                       value: insight.data.magnitude,
                       label: 'Magnitude',

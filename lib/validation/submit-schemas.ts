@@ -31,9 +31,12 @@ export const fileSchema = z.object({
 
 // Witness validation
 export const witnessSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(100).optional(), // Optional - can be derived from email/username
   email: emailSchema.optional(),
-  userId: z.string().uuid().optional(),
+  userId: z.string().optional(), // Changed from uuid() to string() - allows username
+  type: z.enum(['email', 'user']).optional(), // Added for compatibility with WitnessesSection
+  username: z.string().optional(), // Added for compatibility with WitnessesSection
+  status: z.enum(['pending', 'confirmed', 'declined']).optional(), // Added for compatibility with WitnessesSection
 }).refine(
   (data) => data.email || data.userId,
   "Either email or userId must be provided"

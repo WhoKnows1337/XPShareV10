@@ -100,10 +100,10 @@ export function DiscoveryLoadingScreen({ steps, onComplete }: DiscoveryLoadingSc
           className="text-center mb-8"
         >
           <h2 className="text-3xl font-bold bg-gradient-to-r from-observatory-gold via-observatory-accent to-observatory-gold bg-clip-text text-transparent mb-2">
-            {t('discoveryLoading.title', 'Discovering Patterns')}
+            {t('discoveryLoading.title')}
           </h2>
           <p className="text-slate-400">
-            {t('discoveryLoading.description', 'Analyzing your experience across time and space')}
+            {t('discoveryLoading.description')}
           </p>
         </motion.div>
 

@@ -113,7 +113,6 @@ export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
                 viewBackgroundColor: '#ffffff',
                 currentItemStrokeColor: '#000000',
                 currentItemFontFamily: 2, // Helvetica (normal)
-                activeTool: { type: 'freedraw', locked: false },
                 zenModeEnabled: false,
                 gridSize: 0,
               },

@@ -37,8 +37,8 @@ export function TemporalPatternCard({
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>{t('temporal.activity', 'Activity Trend')}</span>
-          <span>{count} {t('temporal.reports', 'reports')}</span>
+          <span>{t('temporal.activity')}</span>
+          <span>{count} {t('temporal.reports')}</span>
         </div>
         <div className="flex items-end gap-1 h-16">
           {data.map((value, i) => {
@@ -74,7 +74,6 @@ export function TemporalPatternCard({
 
   const description = t(
     'temporal.description',
-    `${count} reports in ${period}. This represents a ${trend}% increase ${comparison}.`,
     { count, period, trend, comparison }
   );
 
@@ -83,18 +82,18 @@ export function TemporalPatternCard({
       type="temporal"
       severity="medium"
       icon={Calendar}
-      title={t('temporal.title', '📈 Temporal Pattern Detected')}
+      title={t('temporal.title')}
       description={description}
       metric={{
         value: `+${trend}%`,
-        label: t('temporal.increase', 'increase'),
+        label: t('temporal.increase'),
         trend: 'up',
       }}
       visual={<MiniTimeline />}
       cta={
         onExplore
           ? {
-              label: t('temporal.cta', 'View Timeline'),
+              label: t('temporal.cta'),
               onClick: onExplore,
             }
           : undefined

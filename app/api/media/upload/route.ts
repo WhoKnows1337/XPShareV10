@@ -134,11 +134,11 @@ export async function POST(request: NextRequest) {
     console.log('[Upload] Allowed MIME types:', allowedMimeTypes.slice(0, 10), '... (showing first 10)');
     console.log('[Upload] MIME type check:', {
       fileType: originalMimeType, // ✅ Validate original MIME type
-      isAllowed: allowedMimeTypes.includes(originalMimeType),
+      isAllowed: allowedMimeTypes.includes(originalMimeType as any),
     });
 
     // ✅ Validate original MIME type, not the potentially modified file.type
-    if (!allowedMimeTypes.includes(originalMimeType)) {
+    if (!allowedMimeTypes.includes(originalMimeType as any)) {
       console.error('[Upload] MIME TYPE REJECTED:', {
         fileName: file.name,
         fileType: originalMimeType,

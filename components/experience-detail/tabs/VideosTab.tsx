@@ -98,6 +98,7 @@ export function VideosTab({ videos }: VideosTabProps) {
       {/* Lightbox for video playback */}
       {lightboxIndex !== null && (
         <MediaLightbox
+          isOpen={true}
           media={lightboxMedia}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}

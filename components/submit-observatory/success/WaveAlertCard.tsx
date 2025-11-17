@@ -27,8 +27,8 @@ export function WaveAlertCard({
   const MiniHeatmap = () => (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-slate-500">
-        <span>{t('waveAlert.recentActivity', 'Recent Activity')}</span>
-        <span>{count} {t('waveAlert.reports', 'reports')}</span>
+        <span>{t('waveAlert.recentActivity')}</span>
+        <span>{count} {t('waveAlert.reports')}</span>
       </div>
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: 28 }).map((_, i) => {
@@ -67,12 +67,10 @@ export function WaveAlertCard({
   const description = trend
     ? t(
         'waveAlert.descriptionWithTrend',
-        `${count} similar experiences reported in ${location} within ${timeframe}. This is a ${trend}% increase compared to the previous period.`,
         { count, location, timeframe, trend }
       )
     : t(
         'waveAlert.description',
-        `${count} similar experiences reported in ${location} within ${timeframe}.`,
         { count, location, timeframe }
       );
 
@@ -81,18 +79,18 @@ export function WaveAlertCard({
       type="wave-detection"
       severity="high"
       icon={Waves}
-      title={t('waveAlert.title', '🌊 Wave Detection Alert!')}
+      title={t('waveAlert.title')}
       description={description}
       metric={{
         value: count,
-        label: t('waveAlert.similar', 'similar reports'),
+        label: t('waveAlert.similar'),
         trend: trend && trend > 0 ? 'up' : undefined,
       }}
       visual={<MiniHeatmap />}
       cta={
         onExplore
           ? {
-              label: t('waveAlert.cta', 'Explore Wave Map'),
+              label: t('waveAlert.cta'),
               onClick: onExplore,
             }
           : undefined

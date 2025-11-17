@@ -50,7 +50,6 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
       ],
     },
     autoProceed: true, // Auto-upload when files are added (with progress indicator)
-    allowDuplicateUploads: false, // Prevent duplicates (will show confirmation dialog)
     debug: true, // Enable debug mode to see all events in console
   });
 
@@ -140,7 +139,7 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
   uppy.on('complete', (result) => {
     if (!onComplete) return;
 
-    const uploadedFiles = result.successful
+    const uploadedFiles = (result?.successful || [])
       .map((file) => {
         const responseBody = file.response?.body as any;
         const fileMeta = file.meta;

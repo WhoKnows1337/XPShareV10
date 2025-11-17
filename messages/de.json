@@ -529,6 +529,10 @@
         "timeRemaining": "~{time}s verbleibend"
       }
     },
+    "discoveryLoading": {
+      "title": "Entdecke Muster",
+      "description": "Analysiere deine Erfahrung über Zeit und Raum"
+    },
     "success": {
       "title": "Erfahrung veröffentlicht!",
       "subtitle": "Deine Erfahrung wurde erfolgreich gespeichert und kann von anderen gesehen werden.",
@@ -558,6 +562,28 @@
         "description": "Diese Erfahrungen haben ähnliche Muster oder Merkmale wie deine. Erkunde sie, um mehr zu erfahren.",
         "loading": "Suche ähnliche Muster...",
         "noSimilar": "Deine Erfahrung ist einzigartig! Noch keine ähnlichen Muster gefunden."
+      },
+      "discovery": {
+        "findingSimilar": "Finde ähnliche Erfahrungen",
+        "detectingPatterns": "Erkenne Muster",
+        "checkingEvents": "Prüfe externe Ereignisse",
+        "error": "Mustererkennung fehlgeschlagen",
+        "errorDesc": "Einige Einblicke könnten fehlen. Deine Erfahrung wurde erfolgreich veröffentlicht."
+      },
+      "insights": {
+        "title": "Entdeckte Verbindungen",
+        "solar": {
+          "title": "⚡ Solare Aktivitätskorrelation",
+          "description": "Geomagnetische Sturmaktivität am Datum deiner Sichtung erkannt. {percentage}% ähnlicher Erfahrungen treten während solarer Aktivität auf."
+        },
+        "lunar": {
+          "title": "🌙 Mondkorrelation",
+          "description": "Deine Erfahrung ereignete sich während der {phase}-Phase. {percentage}% ähnlicher Berichte geschehen während dieser Mondphase."
+        },
+        "seismic": {
+          "title": "🌍 Seismische Aktivitätsübereinstimmung",
+          "description": "Erdbeben der Stärke {magnitude} etwa {distance}km von deinem Standort entfernt erkannt, ungefähr {time} vor deiner Erfahrung."
+        }
       }
     }
   },
@@ -666,8 +692,12 @@
         "addQuestions": "Fragen Hinzufügen",
         "edit": "Bearbeiten",
         "analytics": "Analytics",
-        "questions": "{count} Fragen",
-        "answers": "{count} Antworten",
+        "questions": "Fragen",
+        "answers": "Antworten",
+        "attributes": "Attribute",
+        "noCategories": "Keine Kategorien gefunden",
+        "newCategory": "Neue Kategorie",
+        "rate": "Rate",
         "avgRate": "⌀ {rate}% Antwortrate",
         "create": "Erstellen",
         "delete": "Löschen"

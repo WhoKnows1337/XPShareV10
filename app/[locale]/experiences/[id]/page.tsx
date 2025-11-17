@@ -348,7 +348,7 @@ export default async function ExperiencePage({
 
   // Fetch external links
   const { data: externalLinksRaw } = await supabase
-    .from('experience_external_links')
+    .from('experience_external_links' as any)
     .select('*')
     .eq('experience_id', id)
     .order('created_at', { ascending: true })
@@ -371,7 +371,7 @@ export default async function ExperiencePage({
     [key: string]: unknown
   }
 
-  const externalLinks: ExternalLink[] | null = externalLinksRaw
+  const externalLinks: ExternalLink[] | null = externalLinksRaw as any
 
   // Fetch linked experiences
   const { data: linkedExpsRaw } = await supabase

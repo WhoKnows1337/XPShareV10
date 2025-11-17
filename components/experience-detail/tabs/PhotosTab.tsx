@@ -92,6 +92,7 @@ export function PhotosTab({ photos }: PhotosTabProps) {
       {/* Lightbox */}
       {lightboxIndex !== null && (
         <MediaLightbox
+          isOpen={true}
           media={lightboxMedia}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}

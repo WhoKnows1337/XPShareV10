@@ -6,9 +6,11 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { FileText, Link2, Users } from 'lucide-react';
+import { FileText, Link2, Users, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { FileUploadSection } from './FileUploadSection';
 import { WitnessesSection } from './WitnessesSection';
 import { LinkSection } from './LinkSection';
@@ -20,10 +22,11 @@ import type { LinkMetadata } from '@/lib/types/link-preview';
 export function FilesWitnessesScreen() {
   const t = useTranslations('submit.screen4');
   const router = useRouter();
-  const { screen1, screen2, screen3, screen4, goBack, reset, setPublishing } = useSubmitFlowStore();
+  const { screen1, screen2, screen3, screen4, goBack, reset, setPublishing, setCurrentStep } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const uppyRef = useRef<UppyFileUploadRef | null>(null);
   const [externalLinks, setExternalLinks] = useState<LinkMetadata[]>([]);
+  const [publishError, setPublishError] = useState<{ message: string; details?: Record<string, string[]> } | null>(null);
 
   const handleReset = async () => {
     if (showResetConfirm) {
@@ -122,16 +125,39 @@ export function FilesWitnessesScreen() {
       const uploadedFiles = screen4.uploadedMedia || [];
       console.log('[Publish] Using uploaded media from store:', uploadedFiles);
 
+      // ✅ FIX: Filter out attributes without values (e.g., has_witnesses, has_documentation)
       const transformedAttributes = screen2.attributes ? Object.fromEntries(
-        Object.entries(screen2.attributes).map(([key, attr]) => [
-          key,
-          {
-            ...attr,
-            confidence: typeof attr.confidence === 'number' && attr.confidence > 1
-              ? attr.confidence / 100
-              : attr.confidence,
-          },
-        ])
+        Object.entries(screen2.attributes)
+          .filter(([key, attr]) => {
+            // Only include attributes that have a non-empty value
+            const hasValue = attr && 'value' in attr && String(attr.value || '').trim().length > 0;
+            if (!hasValue) {
+              console.log(`[Publish] Skipping attribute "${key}" with empty value`);
+            }
+            return hasValue;
+          })
+          .map(([key, attr]) => {
+            // Convert confidence to 0-1 range
+            let confidence = attr.confidence;
+            if (typeof confidence === 'number') {
+              confidence = confidence > 1 ? confidence / 100 : confidence;
+            } else if (typeof confidence === 'string') {
+              confidence = parseFloat(confidence);
+              confidence = confidence > 1 ? confidence / 100 : confidence;
+            } else {
+              confidence = 0.95; // Default confidence
+            }
+            // Ensure it's within 0-1 range
+            confidence = Math.min(1, Math.max(0, confidence));
+
+            return [
+              key,
+              {
+                ...attr,
+                confidence,
+              },
+            ];
+          })
       ) : {};
 
       const durationMap: Record<string, string> = {
@@ -155,7 +181,7 @@ export function FilesWitnessesScreen() {
         location: screen2.location || null,
         locationLat: screen2.locationLat || null,
         locationLng: screen2.locationLng || null,
-        duration: screen2.duration ? (durationMap[screen2.duration] || screen2.duration) : null,
+        duration: (screen2.duration && screen2.duration.trim()) ? (durationMap[screen2.duration] || screen2.duration) : null,
         questionAnswers: Object.entries(screen2.extraQuestions || {}).map(([id, answer]) => ({
           id,
           question: id,
@@ -201,32 +227,37 @@ export function FilesWitnessesScreen() {
           details: error.details,
           sentData: experienceData,
         });
-        throw new Error(JSON.stringify(error.details) || error.error || 'Failed to publish');
+
+        // Set error state for UI display
+        setPublishError({
+          message: error.error || 'Failed to publish',
+          details: error.details,
+        });
+
+        toast.error(t('toast.publishError'), { id: 'publish' });
+        return; // Exit early instead of throwing
       }
 
       const result = await publishRes.json();
       toast.success(t('toast.publishSuccess'), { id: 'publish' });
-      reset();
-      router.replace(`/experiences/${result.experienceId}`);
 
-      if (result.xpEarned > 0) {
-        setTimeout(() => {
-          toast.success(t('toast.xpEarned', { xp: result.xpEarned }), {
-            description: result.badgesEarned.length > 0
-              ? t('toast.badgesEarned', { badges: result.badgesEarned.join(', ') })
-              : undefined,
-          });
-        }, 500);
-      }
+      // Clear any previous errors
+      setPublishError(null);
 
-      if (result.leveledUp) {
-        setTimeout(() => {
-          toast.success(t('toast.levelUp', { level: result.newLevel }));
-        }, 1000);
-      }
+      // Store publish result in the store for SuccessScreen to use
+      useSubmitFlowStore.setState({ publishResult: result });
+
+      // Go to Success Screen (Step 5) which will handle pattern discovery
+      setCurrentStep(5);
 
     } catch (error: any) {
       console.error('Publish error:', error);
+
+      // Set error state for unexpected errors
+      setPublishError({
+        message: error.message || 'An unexpected error occurred',
+      });
+
       toast.error(t('toast.publishError'), {
         id: 'publish',
         description: error.message || t('toast.tryAgain'),
@@ -243,6 +274,58 @@ export function FilesWitnessesScreen() {
       transition={{ duration: 0.4 }}
       className="space-y-4"
     >
+      {/* Publish Error Alert */}
+      {publishError && (
+        <Alert variant="destructive" className="border-red-500/50 bg-red-950/20">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle className="text-red-400 font-semibold">
+            Publishing Failed
+          </AlertTitle>
+          <AlertDescription className="space-y-3 mt-2">
+            <p className="text-red-300">{publishError.message}</p>
+
+            {/* Validation Errors */}
+            {publishError.details && Object.keys(publishError.details).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-red-300">Validation Errors:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm text-red-200">
+                  {Object.entries(publishError.details).map(([field, errors]) => (
+                    <li key={field}>
+                      <strong className="capitalize">{field.replace(/([A-Z])/g, ' $1').trim()}:</strong>{' '}
+                      {Array.isArray(errors) ? errors.join(', ') : errors}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPublishError(null);
+                  goBack();
+                }}
+                className="bg-slate-900/50 hover:bg-slate-800 border-slate-700"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Go Back & Fix
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPublishError(null)}
+                className="bg-slate-900/50 hover:bg-slate-800 border-slate-700"
+              >
+                Dismiss & Try Again
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -263,9 +346,9 @@ export function FilesWitnessesScreen() {
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Files & Media</span>
             <span className="sm:hidden">Files</span>
-            {screen4.uploadedMedia?.length > 0 && (
+            {(screen4.uploadedMedia?.length ?? 0) > 0 && (
               <Badge variant="secondary" className="ml-1">
-                {screen4.uploadedMedia.length}
+                {screen4.uploadedMedia?.length ?? 0}
               </Badge>
             )}
           </TabsTrigger>

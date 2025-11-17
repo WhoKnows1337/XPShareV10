@@ -59,7 +59,7 @@ export function CorrelationCard({
             </div>
             {percentage && (
               <div className="mt-2 text-center text-sm text-observatory-gold">
-                {percentage}% {t('correlation.lunar.match', 'correlation')}
+                {percentage}% {t('correlation.lunar.match')}
               </div>
             )}
           </div>
@@ -71,7 +71,7 @@ export function CorrelationCard({
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>{t('correlation.solar.kpIndex', 'KP-Index')}</span>
+            <span>{t('correlation.solar.kpIndex')}</span>
             <span>{metric.value}</span>
           </div>
           <div className="relative h-12 bg-slate-900 rounded-lg overflow-hidden">
@@ -87,8 +87,8 @@ export function CorrelationCard({
             </div>
           </div>
           <div className="flex justify-between text-xs text-slate-600">
-            <span>{t('correlation.solar.quiet', 'Quiet')}</span>
-            <span>{t('correlation.solar.storm', 'Storm')}</span>
+            <span>{t('correlation.solar.quiet')}</span>
+            <span>{t('correlation.solar.storm')}</span>
           </div>
         </div>
       );
@@ -98,7 +98,7 @@ export function CorrelationCard({
       return (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>{t('correlation.seismic.magnitude', 'Magnitude')}</span>
+            <span>{t('correlation.seismic.magnitude')}</span>
             <span>{metric.value}</span>
           </div>
           <div className="flex items-center gap-1">
@@ -141,7 +141,7 @@ export function CorrelationCard({
       cta={
         onExplore
           ? {
-              label: t('correlation.cta', 'Explore Connection'),
+              label: t('correlation.cta'),
               onClick: onExplore,
             }
           : undefined
