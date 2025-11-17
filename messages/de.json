@@ -477,6 +477,30 @@
         "uploaded": "Hochgeladene Dateien",
         "info": "Dateien werden sicher gespeichert und können später bearbeitet werden. Maximale Dateigröße: 50 MB pro Datei."
       },
+      "filesWitnesses": {
+        "linksTitle": "Externe Links",
+        "linkPlaceholder": "https://beispiel.com/artikel",
+        "addLink": "Link hinzufügen",
+        "linkSupport": "💡 Füge relevante Artikel, Videos oder Webseiten hinzu, die deine Erfahrung ergänzen",
+        "linkLoading": {
+          "fetching": "Lade Vorschau...",
+          "stillLoading": "Seite wird analysiert...",
+          "almostThere": "Fast fertig..."
+        },
+        "linkError": {
+          "timeout": "⏱️ Zeitüberschreitung beim Laden der Vorschau",
+          "timeoutHint": "Die Webseite antwortet nicht schnell genug. Versuche es erneut oder verwende einen anderen Link.",
+          "networkError": "🌐 Netzwerkfehler beim Laden der Vorschau",
+          "networkHint": "Überprüfe deine Internetverbindung und versuche es erneut.",
+          "security": "🔒 Sicherheitsprüfung fehlgeschlagen",
+          "securityHint": "Diese URL kann nicht hinzugefügt werden. Verwende nur vertrauenswürdige Quellen.",
+          "rateLimit": "⚠️ Zu viele Anfragen",
+          "invalidUrl": "❌ Ungültige URL",
+          "invalidResponse": "❌ Ungültige Antwort vom Server",
+          "unknown": "❌ Unbekannter Fehler beim Laden",
+          "retry": "Erneut versuchen"
+        }
+      },
       "witnesses": {
         "title": "🤝 Augenzeugen & Glaubwürdigkeit",
         "subtitle": "War jemand dabei? Lade Zeugen ein die deine Erfahrung bestätigen können!",
