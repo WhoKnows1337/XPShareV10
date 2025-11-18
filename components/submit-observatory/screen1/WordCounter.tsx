@@ -9,12 +9,12 @@ interface WordCounterProps {
   charCount: number;
 }
 
-// Character Milestones (50 chars minimum)
+// Character Milestones (100 chars minimum ensures embedding generation)
 const MILESTONES = {
-  bronze: { chars: 50, xp: 20, label: '✓ OPTIMAL' },
-  silver: { chars: 150, xp: 50, label: '✓ DETAILED' },
-  gold: { chars: 300, xp: 100, label: '✓ COMPREHENSIVE' },
-  platinum: { chars: 500, xp: 200, label: '✓ EXCEPTIONAL' },
+  bronze: { chars: 100, xp: 20, label: '✓ OPTIMAL' },
+  silver: { chars: 200, xp: 50, label: '✓ DETAILED' },
+  gold: { chars: 400, xp: 100, label: '✓ COMPREHENSIVE' },
+  platinum: { chars: 800, xp: 200, label: '✓ EXCEPTIONAL' },
 };
 
 export function WordCounter({ wordCount, charCount }: WordCounterProps) {
@@ -38,13 +38,13 @@ export function WordCounter({ wordCount, charCount }: WordCounterProps) {
 
   const getStatusMessage = () => {
     if (charCount === 0) return t('start');
-    if (charCount < 50) return t('moreDetail');
+    if (charCount < 100) return t('moreDetail');
     if (currentMilestone) return currentMilestone.label;
     return '';
   };
 
   const getStatusColor = () => {
-    if (charCount < 50) return 'text-warning-soft';
+    if (charCount < 100) return 'text-warning-soft';
     if (currentMilestone) return 'text-success-soft';
     return 'text-text-tertiary';
   };

@@ -239,7 +239,7 @@
         "words": "Wörter",
         "start": "Beginne deine Erfahrung zu schreiben...",
         "moreDetail": "→ MEHR DETAILS EMPFOHLEN",
-        "minimum": "Mindestens 50 Wörter erforderlich",
+        "minimum": "Mindestens 100 Zeichen erforderlich",
         "bronze": "Bronze erreicht! (+20 XP)",
         "silver": "Silber erreicht! (+50 XP)",
         "gold": "Gold erreicht! (+100 XP)",
@@ -289,7 +289,7 @@
       },
       "privacy": "Dein Entwurf wird automatisch alle 30 Sekunden gespeichert.",
       "privacyDetail": "Lokal gesichert • Niemand sieht deine Notizen bis zur Veröffentlichung",
-      "minWordsHint": "⚠️ Mindestens 50 Wörter für bessere Analyse empfohlen",
+      "minWordsHint": "⚠️ Mindestens 100 Zeichen für bessere Analyse empfohlen",
       "aiAnalysisButton": "Zur AI-Analyse →"
     },
     "screen2": {

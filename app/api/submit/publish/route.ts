@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
       ? sanitizedData.enhancedText
       : sanitizedData.text;
 
-    // Generate embedding if text is substantial
+    // Generate embedding for semantic search (minimum 100 chars ensures quality)
+    // Note: Step 1 validation already enforces 100 char minimum, so this should always generate
     let embedding = null;
     if (finalText.length > 100) {
       try {

@@ -655,8 +655,8 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         const state = get();
         switch (state.currentStep) {
           case 1:
-            // Minimum 50 characters required
-            return state.screen1.charCount >= 50;
+            // Minimum 100 characters required (ensures embedding generation)
+            return state.screen1.charCount >= 100;
           case 2:
             // Step 2: Category must be set (questions are optional)
             // User can skip questions and go directly to Step 3

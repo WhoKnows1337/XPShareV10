@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
 
     const { text, category, location }: GenerateTitleRequest = await req.json()
 
-    if (!text || text.length < 50) {
+    if (!text || text.length < 100) {
       return NextResponse.json(
-        { error: 'Text must be at least 50 characters' },
+        { error: 'Text must be at least 100 characters' },
         { status: 400 }
       )
     }

@@ -239,7 +239,7 @@
         "words": "Words",
         "start": "Start writing your experience...",
         "moreDetail": "→ MORE DETAILS RECOMMENDED",
-        "minimum": "Minimum 50 words required",
+        "minimum": "Minimum 100 characters required",
         "bronze": "Bronze reached! (+20 XP)",
         "silver": "Silver reached! (+50 XP)",
         "gold": "Gold reached! (+100 XP)",
@@ -289,7 +289,7 @@
       },
       "privacy": "Your draft is automatically saved every 30 seconds.",
       "privacyDetail": "Saved locally • No one sees your notes until publication",
-      "minWordsHint": "⚠️ Minimum 50 words recommended for better analysis",
+      "minWordsHint": "⚠️ Minimum 100 characters recommended for better analysis",
       "aiAnalysisButton": "To AI Analysis →"
     },
     "screen2": {

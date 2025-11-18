@@ -24,11 +24,11 @@ export async function POST(req: NextRequest) {
 
     const { text, currentAnalysis }: LiveAnalysisRequest = await req.json()
 
-    // Validate minimum text length
-    if (text.length < 50) {
+    // Validate minimum text length (100 chars = embedding generation)
+    if (text.length < 100) {
       return NextResponse.json({
         status: 'too_short',
-        message: 'Text must be at least 50 characters',
+        message: 'Text must be at least 100 characters',
       })
     }
 

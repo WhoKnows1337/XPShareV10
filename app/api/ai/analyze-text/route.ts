@@ -5,9 +5,9 @@ export async function POST(request: NextRequest) {
   try {
     const { text } = await request.json()
 
-    if (!text || text.length < 50) {
+    if (!text || text.length < 100) {
       return NextResponse.json(
-        { error: 'Text must be at least 50 characters' },
+        { error: 'Text must be at least 100 characters' },
         { status: 400 }
       )
     }

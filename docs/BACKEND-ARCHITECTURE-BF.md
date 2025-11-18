@@ -248,7 +248,7 @@ VALUES
 
 ```
 ┌──────────────┐
-│  Step 1      │ User enters text (min 50 chars)
+│  Step 1      │ User enters text (min 100 chars - ensures embedding generation)
 │  Text Input  │
 └──────┬───────┘
        │

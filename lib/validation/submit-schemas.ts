@@ -98,10 +98,11 @@ export const categorySchema = z.enum([
 // ============================================================
 
 // POST /api/submit/analyze - Screen 1 -> 2
+// Minimum 100 chars ensures all published experiences have embeddings for semantic search
 export const analyzeSchema = z.object({
   text: z
     .string()
-    .min(50, "Text must be at least 50 characters")
+    .min(100, "Text must be at least 100 characters")
     .max(50000, "Text cannot exceed 50,000 characters")
     .transform((text) => text.trim()),
   language: z.string().length(2).default('en').optional(),
@@ -142,8 +143,8 @@ export const enrichTextSchema = z.object({
 
 // POST /api/submit/publish - Final submission
 export const publishSchema = z.object({
-  // Screen 1 data
-  text: z.string().min(50).max(50000),
+  // Screen 1 data (min 100 chars = embedding generation guaranteed)
+  text: z.string().min(100).max(50000),
 
   // Screen 2 data
   title: z.string().min(3).max(200),
