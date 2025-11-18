@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 
 /**
@@ -11,11 +11,22 @@ import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 export function useUnsavedChangesWarning() {
   const { isDraft, currentStep } = useSubmitFlowStore();
 
-  useEffect(() => {
-    // Only warn if there's actually draft content
-    const hasUnsavedChanges = isDraft && currentStep > 1;
+  // Use refs to ensure event handler always has current values
+  // This prevents closure issues when isDraft is set to false right before navigation
+  const isDraftRef = useRef(isDraft);
+  const currentStepRef = useRef(currentStep);
 
+  // Update refs whenever state changes
+  useEffect(() => {
+    isDraftRef.current = isDraft;
+    currentStepRef.current = currentStep;
+  }, [isDraft, currentStep]);
+
+  useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Use refs to get live values instead of captured closure values
+      const hasUnsavedChanges = isDraftRef.current && currentStepRef.current > 1;
+
       if (hasUnsavedChanges) {
         // Modern browsers show a generic message, not custom text
         e.preventDefault();
@@ -24,12 +35,10 @@ export function useUnsavedChangesWarning() {
       }
     };
 
-    if (hasUnsavedChanges) {
-      window.addEventListener('beforeunload', handleBeforeUnload);
-    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [isDraft, currentStep]);
+  }, []); // Empty deps: listener is only registered once, but uses refs for live values
 }

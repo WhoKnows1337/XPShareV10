@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -21,6 +21,7 @@ import type { LinkMetadata } from '@/lib/types/link-preview';
 
 export function FilesWitnessesScreen() {
   const t = useTranslations('submit.screen4');
+  const locale = useLocale();
   const router = useRouter();
   const { screen1, screen2, screen3, screen4, goBack, reset, setPublishing, setCurrentStep } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -247,11 +248,26 @@ export function FilesWitnessesScreen() {
       // Clear any previous errors
       setPublishError(null);
 
-      // Store publish result in the store for SuccessScreen to use
+      // Store publish result in the store for potential future use
       useSubmitFlowStore.setState({ publishResult: result });
 
-      // Go to Success Screen (Step 5) which will handle pattern discovery
-      setCurrentStep(5);
+      // ✅ CRITICAL: Clear isDraft flag BEFORE redirect
+      // This prevents the "unsaved changes" warning from blocking navigation
+      useSubmitFlowStore.setState({ isDraft: false });
+
+      // Redirect to new Discovery Reveal success page
+      // Using window.location.href for hard navigation to bypass browser cache
+      // ⚠️ IMPORTANT: Always include locale prefix, even for default locale
+      // Client-side navigation (window.location.href) doesn't go through middleware,
+      // so we need the full path to match the route pattern /[locale]/experiences/...
+      const successUrl = `/${locale}/experiences/submit/success/${result.experienceId}`;
+      console.log('[Publish] Redirecting to:', successUrl, 'locale:', locale);
+
+      // ⚠️ CRITICAL: Add small delay to allow ref update in useUnsavedChangesWarning
+      // Without this, window.location.href triggers beforeunload BEFORE ref is updated
+      setTimeout(() => {
+        window.location.href = successUrl;
+      }, 10);
 
     } catch (error: any) {
       console.error('Publish error:', error);

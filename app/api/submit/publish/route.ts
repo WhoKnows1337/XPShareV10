@@ -317,6 +317,9 @@ export async function POST(request: NextRequest) {
     // ============================================================
     const processingTime = Date.now() - startTime;
 
+    // Extract attribute keys for success page
+    const attributeKeys = attributes.map(attr => attr.key);
+
     return NextResponse.json({
       success: true,
       experienceId: typedResult.experience_id,
@@ -324,7 +327,21 @@ export async function POST(request: NextRequest) {
       badgesEarned: typedResult.badges_earned || [],
       leveledUp: typedResult.leveled_up,
       newLevel: typedResult.new_level,
+      currentLevel: typedResult.current_level || (typedResult.new_level || 1),
       processingTimeMs: processingTime,
+      // Additional data for Discovery Reveal page
+      category: sanitizedData.category,
+      attributes: attributeKeys,
+      location: sanitizedData.location
+        ? {
+            text: sanitizedData.location,
+            lat: sanitizedData.coordinates?.lat,
+            lng: sanitizedData.coordinates?.lng,
+          }
+        : undefined,
+      dateOccurred: data.dateOccurred,
+      mediaCount: data.media?.length || 0,
+      witnessCount: witnesses.length,
     });
 
   } catch (error: any) {

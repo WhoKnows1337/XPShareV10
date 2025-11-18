@@ -62,7 +62,7 @@ export function ConnectedExperiencesGrid({
 
           return (
             <motion.div
-              key={experience.id}
+              key={experience.id || `experience-${index}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.7 + index * 0.1, duration: 0.5 }}

@@ -56,6 +56,27 @@ export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
+  // Set default tool to freedraw when API is ready
+  useEffect(() => {
+    if (!excalidrawAPI) return;
+
+    const timeoutId = setTimeout(() => {
+      excalidrawAPI.updateScene({
+        appState: {
+          activeTool: {
+            type: 'freedraw',
+            customType: null,
+            locked: false,
+            lastActiveTool: null,
+          },
+        },
+      });
+    }, 100);
+
+    // Cleanup: Clear timeout if component unmounts
+    return () => clearTimeout(timeoutId);
+  }, [excalidrawAPI]);
+
   const handleSave = async () => {
     if (!excalidrawAPI) return;
 
@@ -109,21 +130,6 @@ export function SketchModal({ open, onClose, onSave }: SketchModalProps) {
           <Excalidraw
             excalidrawAPI={(api) => {
               setExcalidrawAPI(api);
-              // Set default tool to freedraw (pen) after API is ready
-              if (api) {
-                setTimeout(() => {
-                  api.updateScene({
-                    appState: {
-                      activeTool: {
-                        type: 'freedraw',
-                        customType: null,
-                        locked: false,
-                        lastActiveTool: null,
-                      },
-                    },
-                  });
-                }, 100);
-              }
             }}
             initialData={{
               appState: {

@@ -67,6 +67,8 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
   // ============================================================
   uppy.use(AwsS3, {
     async getUploadParameters(file) {
+      console.log('[Uppy S3] Getting upload parameters for:', file.name);
+
       // 1. Request presigned URL from API (using absolute URL to avoid locale prefix)
       const response = await fetch(getApiUrl('/api/media/presigned-url'), {
         method: 'POST',
@@ -83,6 +85,7 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
 
       if (!response.ok) {
         const error = await response.json();
+        console.error('[Uppy S3] Failed to get presigned URL:', error);
         throw new Error(error.error || 'Failed to get upload URL');
       }
 
@@ -91,14 +94,16 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
       console.log('[Uppy S3] Got presigned URL:', {
         fileName: file.name,
         key: data.key,
+        url: data.uploadUrl?.substring(0, 100) + '...', // Truncate URL for security
         expiresIn: data.expiresIn,
+        contentType: (file.meta.originalMimeType as string) || file.type,
       });
 
       // Store key in file metadata for later confirmation
       uppy.setFileMeta(file.id, { uploadKey: data.key });
 
       // 2. Return upload parameters for S3/R2
-      return {
+      const uploadParams = {
         method: 'PUT' as const,
         url: data.uploadUrl,
         fields: {}, // R2 doesn't need form fields for presigned PUT
@@ -106,6 +111,14 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
           'Content-Type': (file.meta.originalMimeType as string) || file.type || 'application/octet-stream',
         },
       };
+
+      console.log('[Uppy S3] Upload params prepared:', {
+        method: uploadParams.method,
+        hasUrl: !!uploadParams.url,
+        contentType: uploadParams.headers['Content-Type'],
+      });
+
+      return uploadParams;
     },
 
     // Limit concurrent uploads
@@ -113,6 +126,33 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
 
     // Don't use multipart for R2 (simpler presigned URL approach)
     shouldUseMultipart: false,
+
+    // CRITICAL: Add response handler to catch R2 errors
+    async onBeforeRequest(req) {
+      console.log('[Uppy S3] About to upload:', {
+        url: req.url?.substring(0, 100),
+        method: req.method,
+        headers: req.headers,
+      });
+    },
+
+    async onAfterResponse(req, res) {
+      console.log('[Uppy S3] Upload response:', {
+        status: res.status,
+        statusText: res.statusText,
+        ok: res.ok,
+        headers: Object.fromEntries(res.headers.entries()),
+      });
+
+      // If not ok, try to get error details
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('[Uppy S3] Upload failed with body:', text);
+        throw new Error(`R2 upload failed: ${res.status} ${res.statusText} - ${text}`);
+      }
+
+      return res;
+    },
   });
 
   // ============================================================

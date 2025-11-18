@@ -42,10 +42,12 @@ if (typeof setInterval !== 'undefined') {
 }
 
 // Create the next-intl middleware
+// ⚠️ Using 'always' to ensure all locales have prefix (including EN)
+// This ensures consistency with route structure /[locale]/...
 const intlMiddleware = createIntlMiddleware({
   locales,
   defaultLocale: 'en',
-  localePrefix: 'as-needed'
+  localePrefix: 'always'
 })
 
 export async function middleware(request: NextRequest) {

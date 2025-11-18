@@ -54,27 +54,27 @@ export async function GET(
       // 1. Geographic Hotspot (only for first attribute)
       (supabase as any)
         .rpc('get_attribute_geographic_clusters', {
-          attr_key: attributes[0].attribute_key,
-          attr_val: attributes[0].attribute_value,
-          radius_km: 100,
+          p_attribute_key: attributes[0].attribute_key,
+          p_attribute_value: attributes[0].attribute_value,
+          p_min_sightings: 3, // Minimum experiences needed to form a cluster
         })
         .then((res: any) => res.data),
 
       // 2. Temporal Pattern (only for first attribute)
       (supabase as any)
         .rpc('get_attribute_temporal_patterns', {
-          attr_key: attributes[0].attribute_key,
-          attr_val: attributes[0].attribute_value,
+          p_attribute_key: attributes[0].attribute_key,
+          p_attribute_value: attributes[0].attribute_value,
         })
         .then((res: any) => res.data),
 
       // 3. Strongest Correlation (only for first attribute)
       (supabase as any)
         .rpc('get_attribute_correlation', {
-          attr_key: attributes[0].attribute_key,
-          attr_val: attributes[0].attribute_value,
-          min_support: 0.05,
-          min_confidence: 0.5, // Lowered to 50% to get more results
+          p_attribute_key: attributes[0].attribute_key,
+          p_attribute_value: attributes[0].attribute_value,
+          p_min_support: 0.05,
+          p_min_confidence: 0.5, // Lowered to 50% to get more results
         })
         .then((res: any) => res.data),
     ]);
