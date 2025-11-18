@@ -35,11 +35,11 @@ export function DiscoveryLoadingScreen({ steps, onComplete }: DiscoveryLoadingSc
   }, [steps, onComplete]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+    <div className="flex flex-col items-center justify-center gap-6 py-12">
       <div className="w-full max-w-2xl">
         {/* Radar Animation */}
-        <div className="relative mb-12 flex justify-center">
-          <div className="relative w-48 h-48">
+        <div className="relative mb-6 flex justify-center">
+          <div className="relative w-32 h-32">
             {/* Outer rings */}
             {[1, 2, 3].map((ring) => (
               <motion.div
@@ -71,8 +71,8 @@ export function DiscoveryLoadingScreen({ steps, onComplete }: DiscoveryLoadingSc
                 ease: "easeInOut"
               }}
             >
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-observatory-gold/40 to-observatory-accent/40 backdrop-blur-xl flex items-center justify-center">
-                <Globe className="w-12 h-12 text-observatory-gold" />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-observatory-gold/40 to-observatory-accent/40 backdrop-blur-xl flex items-center justify-center">
+                <Globe className="w-8 h-8 text-observatory-gold" />
               </div>
             </motion.div>
 
@@ -97,18 +97,18 @@ export function DiscoveryLoadingScreen({ steps, onComplete }: DiscoveryLoadingSc
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className="text-center mb-4"
         >
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-observatory-gold via-observatory-accent to-observatory-gold bg-clip-text text-transparent mb-2">
+          <h2 className="text-lg font-semibold bg-gradient-to-r from-observatory-gold via-observatory-accent to-observatory-gold bg-clip-text text-transparent mb-2">
             {t('discoveryLoading.title')}
           </h2>
-          <p className="text-slate-400">
+          <p className="text-xs text-slate-400">
             {t('discoveryLoading.description')}
           </p>
         </motion.div>
 
         {/* Steps */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-3 mb-4">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isCompleted = step.status === 'completed';
@@ -121,7 +121,7 @@ export function DiscoveryLoadingScreen({ steps, onComplete }: DiscoveryLoadingSc
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.2 }}
                 className={`
-                  relative p-4 rounded-xl border-2 transition-all
+                  relative p-3 rounded-lg border-2 transition-all
                   ${isActive ? 'border-observatory-gold/60 bg-observatory-gold/5' : ''}
                   ${isCompleted ? 'border-green-500/40 bg-green-500/5' : ''}
                   ${step.status === 'pending' ? 'border-slate-800 bg-slate-900/50' : ''}
@@ -162,7 +162,7 @@ export function DiscoveryLoadingScreen({ steps, onComplete }: DiscoveryLoadingSc
                       )}
                     </div>
                     <span className={`
-                      font-medium
+                      text-sm font-medium
                       ${isCompleted ? 'text-green-400' : ''}
                       ${isActive ? 'text-observatory-gold' : ''}
                       ${step.status === 'pending' ? 'text-slate-500' : ''}
