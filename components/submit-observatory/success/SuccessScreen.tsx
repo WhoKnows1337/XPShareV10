@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useSubmitFlowStore } from '@/lib/stores/submitFlowStore';
 import { useTranslations } from 'next-intl';
-import { CheckCircle, ArrowRight, Share2, Plus, Sparkles, Users, TrendingUp, Globe } from 'lucide-react';
+import { CheckCircle, ArrowRight, Share2, Plus, Sparkles, Users, TrendingUp } from 'lucide-react';
 import { SimilarExperiencesSection } from './SimilarExperiencesSection';
 import { RewardsSection } from './RewardsSection';
 import { DiscoveryLoadingScreen } from './DiscoveryLoadingScreen';
 import { WaveAlertCard } from './WaveAlertCard';
-import { CorrelationCard } from './CorrelationCard';
 import { TemporalPatternCard } from './TemporalPatternCard';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,7 +22,7 @@ interface PublishResult {
 }
 
 interface PatternInsight {
-  type: 'wave' | 'solar' | 'lunar' | 'seismic' | 'temporal';
+  type: 'wave' | 'temporal';
   data: any;
 }
 
@@ -34,7 +33,6 @@ interface DiscoveryStep {
   icon: typeof Users;
   count?: number;
   insights?: number;
-  correlations?: number;
 }
 
 export function SuccessScreen() {
@@ -48,7 +46,7 @@ export function SuccessScreen() {
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoverySteps, setDiscoverySteps] = useState<DiscoveryStep[]>([]);
   const [patternInsights, setPatternInsights] = useState<PatternInsight[]>([]);
-  const [similarCount, setSimilarCount] = useState(0);
+  const [similarExperiences, setSimilarExperiences] = useState<any[]>([]);
 
   useEffect(() => {
     if (publishResult) {
@@ -73,12 +71,6 @@ export function SuccessScreen() {
         status: 'pending',
         icon: TrendingUp,
       },
-      {
-        id: 'events',
-        label: t('discovery.checkingEvents'),
-        status: 'pending',
-        icon: Globe,
-      },
     ];
     setDiscoverySteps(steps);
 
@@ -93,13 +85,11 @@ export function SuccessScreen() {
       if (similarResponse.ok) {
         const similarData = await similarResponse.json();
         const similar = similarData.similar || [];
-        setSimilarCount(similar.length);
+        setSimilarExperiences(similar); // Store for later use
         setDiscoverySteps(prev => prev.map(s =>
           s.id === 'similar'
             ? { ...s, status: 'completed', count: similar.length }
-            : s.id === 'patterns'
-            ? { ...s, status: 'active' }
-            : s
+            : { ...s, status: 'active' }
         ));
       } else {
         console.warn('Failed to find similar experiences:', await similarResponse.text());
@@ -107,171 +97,23 @@ export function SuccessScreen() {
 
       // Step 2: Pattern Analysis
       const patternsResponse = await fetch(`/api/patterns/for-experience/${experienceId}`);
-      let patternCorrelations: Record<string, { strength: number; description: string }> = {};
-      
+
       if (patternsResponse.ok) {
         const patternsData = await patternsResponse.json();
 
-        // Store correlations for later use
-        if (patternsData.insights?.correlations) {
-          patternCorrelations = patternsData.insights.correlations;
-        }
-
-        // Extract insights
-        if (patternsData.insights?.geographic?.length > 0) {
-          const cluster = patternsData.insights.geographic[0];
-          insights.push({
-            type: 'wave',
-            data: {
-              count: cluster.count,
-              location: cluster.attribute || screen2.location,
-              timeframe: '30 days',
-              trend: 200,
-            },
-          });
-        }
-
-        if (patternsData.insights?.temporal?.length > 0) {
-          const temporal = patternsData.insights.temporal[0];
-          insights.push({
-            type: 'temporal',
-            data: {
-              period: temporal.timeOfDay || temporal.dayOfWeek || temporal.season,
-              count: temporal.count,
-              trend: temporal.percentage || 300,
-              comparison: 'vs. previous month',
-            },
+        // New simplified API returns insights directly as array
+        if (patternsData.insights && patternsData.insights.length > 0) {
+          patternsData.insights.forEach((insight: any) => {
+            insights.push({
+              type: insight.type,
+              data: insight,
+            });
           });
         }
 
         setDiscoverySteps(prev => prev.map(s =>
           s.id === 'patterns'
             ? { ...s, status: 'completed', insights: insights.length }
-            : s.id === 'events'
-            ? { ...s, status: 'active' }
-            : s
-        ));
-      }
-
-      // Step 3: External Events (Advanced Pattern Matching)
-      const eventsResponse = await fetch('/api/ai/pattern-matching', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          experienceId,
-          text: screen1.text,
-          category: screen2.category,
-          date: screen2.date,
-          location: screen2.location,
-          lat: screen2.locationLat,
-          lng: screen2.locationLng,
-        }),
-      });
-
-      if (eventsResponse.ok) {
-        const eventsData = await eventsResponse.json();
-        let correlationCount = 0;
-
-        // Solar Activity
-        const solarEvents = eventsData.externalEvents?.filter((e: any) => e.type === 'solar') || [];
-        if (solarEvents.length > 0) {
-          const solar = solarEvents[0];
-          
-          // Calculate percentage from relevance (0-1 scale to percentage)
-          // Or use correlation data from pattern analysis if available
-          let percentage = Math.round(solar.relevance * 100);
-          
-          // Check if we have historical correlation data
-          const solarCorrelation = Object.values(patternCorrelations).find((corr: any) => 
-            corr.description?.toLowerCase().includes('solar') || 
-            corr.description?.toLowerCase().includes('kp')
-          );
-          if (solarCorrelation) {
-            percentage = Math.round(solarCorrelation.strength * 100);
-          }
-
-          insights.push({
-            type: 'solar',
-            data: {
-              kpIndex: solar.data?.flux ? Math.min(9, Math.round(solar.data.flux * 1e5)) : 6,
-              date: solar.timestamp,
-              percentage,
-            },
-          });
-          correlationCount++;
-        }
-
-        // Moon Phase
-        const moonEvents = eventsData.externalEvents?.filter((e: any) => e.type === 'moon') || [];
-        if (moonEvents.length > 0) {
-          const moon = moonEvents[0];
-          
-          // Calculate percentage from relevance
-          let percentage = Math.round(moon.relevance * 100);
-          
-          // Check if we have historical correlation data
-          const lunarCorrelation = Object.values(patternCorrelations).find((corr: any) => 
-            corr.description?.toLowerCase().includes('moon') || 
-            corr.description?.toLowerCase().includes('lunar')
-          );
-          if (lunarCorrelation) {
-            percentage = Math.round(lunarCorrelation.strength * 100);
-          }
-
-          insights.push({
-            type: 'lunar',
-            data: {
-              phase: moon.data?.phase || moon.title,
-              illumination: moon.data?.illumination || 0.9,
-              percentage,
-            },
-          });
-          correlationCount++;
-        }
-
-        // Seismic Activity
-        const earthquakes = eventsData.externalEvents?.filter((e: any) => e.type === 'earthquake') || [];
-        if (earthquakes.length > 0) {
-          const quake = earthquakes[0];
-          
-          // Calculate percentage from relevance
-          let percentage = Math.round(quake.relevance * 100);
-          
-          // Check if we have historical correlation data
-          const seismicCorrelation = Object.values(patternCorrelations).find((corr: any) => 
-            corr.description?.toLowerCase().includes('earthquake') || 
-            corr.description?.toLowerCase().includes('seismic')
-          );
-          if (seismicCorrelation) {
-            percentage = Math.round(seismicCorrelation.strength * 100);
-          }
-
-          // Calculate distance and time from event data
-          const distance = quake.data?.properties?.place ? 
-            parseInt(quake.data.properties.place.match(/\d+/)?.[0] || '50') : 50;
-          
-          const eventTime = new Date(quake.timestamp);
-          const experienceTime = new Date(screen2.date || Date.now());
-          const hoursDiff = Math.abs(experienceTime.getTime() - eventTime.getTime()) / (1000 * 60 * 60);
-          const time = hoursDiff < 24 ? 
-            `${Math.round(hoursDiff)} hours` : 
-            `${Math.round(hoursDiff / 24)} days`;
-
-          insights.push({
-            type: 'seismic',
-            data: {
-              magnitude: quake.data?.properties?.mag || 5.0,
-              distance,
-              time,
-              percentage,
-            },
-          });
-          correlationCount++;
-        }
-
-        setDiscoverySteps(prev => prev.map(s =>
-          s.id === 'events'
-            ? { ...s, status: 'completed', correlations: correlationCount }
             : s
         ));
       }
@@ -414,59 +256,6 @@ export function SuccessScreen() {
                 );
               }
 
-              if (insight.type === 'solar') {
-                return (
-                  <CorrelationCard
-                    key={`solar-${index}`}
-                    type="solar"
-                    title={t('insights.solar.title')}
-                    description={t('insights.solar.description')}
-                    metric={{
-                      value: insight.data.kpIndex,
-                      label: 'KP-Index',
-                    }}
-                    percentage={insight.data.percentage}
-                    onExplore={() => router.push(`/patterns/correlations`)}
-                    delay={index * 0.2}
-                  />
-                );
-              }
-
-              if (insight.type === 'lunar') {
-                return (
-                  <CorrelationCard
-                    key={`lunar-${index}`}
-                    type="lunar"
-                    title={t('insights.lunar.title')}
-                    description={t('insights.lunar.description')}
-                    metric={{
-                      value: `${Math.round(insight.data.illumination * 100)}%`,
-                      label: 'Illumination',
-                    }}
-                    percentage={insight.data.percentage}
-                    onExplore={() => router.push(`/patterns/correlations`)}
-                    delay={index * 0.2}
-                  />
-                );
-              }
-
-              if (insight.type === 'seismic') {
-                return (
-                  <CorrelationCard
-                    key={`seismic-${index}`}
-                    type="seismic"
-                    title={t('insights.seismic.title')}
-                    description={t('insights.seismic.description')}
-                    metric={{
-                      value: insight.data.magnitude,
-                      label: 'Magnitude',
-                    }}
-                    onExplore={() => router.push(`/patterns/correlations`)}
-                    delay={index * 0.2}
-                  />
-                );
-              }
-
               if (insight.type === 'temporal') {
                 return (
                   <TemporalPatternCard
@@ -488,7 +277,10 @@ export function SuccessScreen() {
       )}
 
       {/* Similar Experiences */}
-      <SimilarExperiencesSection experienceId={publishResult.experienceId} />
+      <SimilarExperiencesSection
+        experienceId={publishResult.experienceId}
+        similarData={similarExperiences}
+      />
     </div>
   );
 }

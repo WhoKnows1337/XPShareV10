@@ -6,8 +6,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * Find Similar Experiences API - Pattern matching for similar experiences
- * Uses category, tags, location, duration, and text similarity
+ * Find Similar Experiences API - Hybrid pattern matching
+ * Uses: Text Similarity (pgvector) 40%, Attributes 30%, Category/Tags 20%, Location 10%
  */
 
 export async function GET(request: NextRequest) {
@@ -20,10 +20,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Experience ID required' }, { status: 400 });
     }
 
-    // Get the source experience
+    // Get the source experience with embedding and attributes
     const { data: sourceExp, error: sourceError } = await (supabase as any)
       .from('experiences')
-      .select('*')
+      .select(`
+        *,
+        experience_attributes (
+          key,
+          value,
+          confidence
+        )
+      `)
       .eq('id', experienceId)
       .single();
 
@@ -31,53 +38,129 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Experience not found' }, { status: 404 });
     }
 
-    // Find similar experiences
-    // Strategy: Match by category first, then by tags, then by location proximity
+    // Get source attributes map
+    const sourceAttributes = new Map<string, string>();
+    if (sourceExp.experience_attributes) {
+      sourceExp.experience_attributes.forEach((attr: any) => {
+        sourceAttributes.set(attr.key, attr.value);
+      });
+    }
 
-    const { data: allExperiences, error: fetchError } = await (supabase as any)
-      .from('experiences')
-      .select('id, title, summary, category, tags, date, location, location_lat, location_lng, duration')
-      .neq('id', experienceId)
-      .eq('status', 'published')
-      .limit(50);
+    let candidateExperiences: any[] = [];
 
-    if (fetchError) {
-      console.error('Fetch error:', fetchError);
+    // Step 1: Try pgvector semantic search if embedding exists
+    if (sourceExp.embedding) {
+      const { data: semanticMatches, error: vectorError } = await (supabase as any)
+        .rpc('find_similar_experiences', {
+          query_embedding: sourceExp.embedding,
+          category_filter: null, // Don't filter by category to get diverse results
+          threshold: 0.6, // 60% similarity threshold
+          max_results: 20
+        });
+
+      if (!vectorError && semanticMatches && semanticMatches.length > 0) {
+        candidateExperiences = semanticMatches;
+      }
+    }
+
+    // Step 2: Fallback to manual search if no semantic matches
+    if (candidateExperiences.length === 0) {
+      const { data: manualMatches, error: fetchError } = await (supabase as any)
+        .from('experiences')
+        .select(`
+          id, title, summary, category, tags, date, location, location_lat, location_lng, duration, text,
+          experience_attributes (
+            key,
+            value,
+            confidence
+          )
+        `)
+        .neq('id', experienceId)
+        .eq('status', 'published')
+        .limit(50);
+
+      if (!fetchError && manualMatches) {
+        candidateExperiences = manualMatches;
+      }
+    } else {
+      // Enrich semantic matches with attributes
+      const ids = candidateExperiences.map((e: any) => e.id);
+      const { data: enrichedExp } = await (supabase as any)
+        .from('experiences')
+        .select(`
+          id, title, summary, category, tags, date, location, location_lat, location_lng, duration, text,
+          experience_attributes (
+            key,
+            value,
+            confidence
+          )
+        `)
+        .in('id', ids);
+
+      if (enrichedExp) {
+        candidateExperiences = enrichedExp;
+      }
+    }
+
+    if (!candidateExperiences || candidateExperiences.length === 0) {
       return NextResponse.json({ similar: [] });
     }
 
-    if (!allExperiences || allExperiences.length === 0) {
-      return NextResponse.json({ similar: [] });
-    }
-
-    // Calculate similarity scores
-    const scoredExperiences = allExperiences
+    // Calculate hybrid similarity scores
+    const scoredExperiences = candidateExperiences
       .map((exp: any) => {
         let score = 0;
         const matchReasons: string[] = [];
+        const sharedAttributes: string[] = [];
 
-        // Category match (40% weight)
+        // 1. Semantic Similarity (40% weight) - pgvector
+        const semanticScore = exp.similarity || 0; // From find_similar_experiences RPC
+        if (semanticScore > 0) {
+          score += semanticScore * 0.4;
+          matchReasons.push('Similar description');
+        }
+
+        // 2. Attribute Matching (30% weight)
+        if (exp.experience_attributes) {
+          const expAttributes = new Map<string, string>();
+          exp.experience_attributes.forEach((attr: any) => {
+            expAttributes.set(attr.key, attr.value);
+          });
+
+          // Count shared attributes
+          let sharedCount = 0;
+          sourceAttributes.forEach((value, key) => {
+            if (expAttributes.get(key) === value) {
+              sharedCount++;
+              sharedAttributes.push(`${key}:${value}`);
+            }
+          });
+
+          if (sharedCount > 0) {
+            const maxAttributes = Math.max(sourceAttributes.size, expAttributes.size);
+            const attributeSimilarity = sharedCount / maxAttributes;
+            score += attributeSimilarity * 0.3;
+            matchReasons.push(`${sharedCount} shared attributes`);
+          }
+        }
+
+        // 3. Category & Tags (20% weight)
+        let metadataScore = 0;
         if (exp.category === sourceExp.category) {
-          score += 0.4;
+          metadataScore += 0.5; // 50% of 20% = 10%
           matchReasons.push('Same category');
         }
 
-        // Tag overlap (30% weight)
         const sourceTags = Array.isArray(sourceExp.tags) ? sourceExp.tags : [];
         const expTags = Array.isArray(exp.tags) ? exp.tags : [];
         const tagOverlap = sourceTags.filter((tag: any) => expTags.includes(tag)).length;
         if (tagOverlap > 0) {
-          score += (tagOverlap / Math.max(sourceTags.length, expTags.length)) * 0.3;
+          metadataScore += (tagOverlap / Math.max(sourceTags.length, expTags.length)) * 0.5;
           matchReasons.push(`${tagOverlap} matching tags`);
         }
+        score += metadataScore * 0.2;
 
-        // Duration match (10% weight)
-        if (exp.duration === sourceExp.duration) {
-          score += 0.1;
-          matchReasons.push('Same duration');
-        }
-
-        // Location proximity (20% weight)
+        // 4. Location Proximity (10% weight)
         if (
           sourceExp.location_lat &&
           sourceExp.location_lng &&
@@ -91,20 +174,29 @@ export async function GET(request: NextRequest) {
             exp.location_lng
           );
 
-          // Within 50km
           if (distance < 50) {
-            score += 0.2;
+            score += 0.1;
             matchReasons.push('Nearby location');
           } else if (distance < 200) {
-            score += 0.1;
+            score += 0.05;
             matchReasons.push('Same region');
           }
         }
 
+        // Create preview (first 200 chars of text)
+        const preview = exp.text ? exp.text.substring(0, 200) + (exp.text.length > 200 ? '...' : '') : exp.summary;
+
         return {
-          ...exp,
-          matchScore: score,
+          id: exp.id,
+          title: exp.title,
+          summary: exp.summary,
+          category: exp.category,
+          date: exp.date,
+          location: exp.location,
+          matchScore: Math.round(score * 100) / 100, // Round to 2 decimals
           matchReasons,
+          sharedAttributes,
+          preview,
         };
       })
       .filter((exp: any) => exp.matchScore > 0.2) // Only return experiences with >20% match

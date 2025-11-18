@@ -17,16 +17,20 @@ interface SimilarExperience {
 
 interface SimilarExperiencesSectionProps {
   experienceId: string;
+  similarData?: SimilarExperience[]; // Optional: if provided, skip fetch
 }
 
-export function SimilarExperiencesSection({ experienceId }: SimilarExperiencesSectionProps) {
+export function SimilarExperiencesSection({ experienceId, similarData }: SimilarExperiencesSectionProps) {
   const t = useTranslations('submit.success.similar');
-  const [similar, setSimilar] = useState<SimilarExperience[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [similar, setSimilar] = useState<SimilarExperience[]>(similarData || []);
+  const [isLoading, setIsLoading] = useState(!similarData);
 
   useEffect(() => {
-    fetchSimilarExperiences();
-  }, [experienceId]);
+    // Only fetch if data wasn't provided as prop
+    if (!similarData) {
+      fetchSimilarExperiences();
+    }
+  }, [experienceId, similarData]);
 
   const fetchSimilarExperiences = async () => {
     setIsLoading(true);
