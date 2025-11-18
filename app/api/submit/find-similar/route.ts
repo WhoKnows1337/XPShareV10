@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         experience_attributes (
-          key,
-          value,
+          attribute_key,
+          attribute_value,
           confidence
         )
       `)
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const sourceAttributes = new Map<string, string>();
     if (sourceExp.experience_attributes) {
       sourceExp.experience_attributes.forEach((attr: any) => {
-        sourceAttributes.set(attr.key, attr.value);
+        sourceAttributes.set(attr.attribute_key, attr.attribute_value);
       });
     }
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         .rpc('find_similar_experiences', {
           query_embedding: sourceExp.embedding,
           category_filter: null, // Don't filter by category to get diverse results
-          threshold: 0.6, // 60% similarity threshold
+          similarity_threshold: 0.3, // 30% similarity threshold (lowered for more results)
           max_results: 20
         });
 
@@ -68,15 +68,15 @@ export async function GET(request: NextRequest) {
       const { data: manualMatches, error: fetchError } = await (supabase as any)
         .from('experiences')
         .select(`
-          id, title, summary, category, tags, date, location, location_lat, location_lng, duration, text,
+          id, title, summary, category, tags, date_occurred, location_text, location_lat, location_lng, duration, story_text,
           experience_attributes (
-            key,
-            value,
+            attribute_key,
+            attribute_value,
             confidence
           )
         `)
         .neq('id', experienceId)
-        .eq('status', 'published')
+        .eq('visibility', 'public')
         .limit(50);
 
       if (!fetchError && manualMatches) {
@@ -88,10 +88,10 @@ export async function GET(request: NextRequest) {
       const { data: enrichedExp } = await (supabase as any)
         .from('experiences')
         .select(`
-          id, title, summary, category, tags, date, location, location_lat, location_lng, duration, text,
+          id, title, summary, category, tags, date_occurred, location_text, location_lat, location_lng, duration, story_text,
           experience_attributes (
-            key,
-            value,
+            attribute_key,
+            attribute_value,
             confidence
           )
         `)
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
         if (exp.experience_attributes) {
           const expAttributes = new Map<string, string>();
           exp.experience_attributes.forEach((attr: any) => {
-            expAttributes.set(attr.key, attr.value);
+            expAttributes.set(attr.attribute_key, attr.attribute_value);
           });
 
           // Count shared attributes
@@ -184,22 +184,22 @@ export async function GET(request: NextRequest) {
         }
 
         // Create preview (first 200 chars of text)
-        const preview = exp.text ? exp.text.substring(0, 200) + (exp.text.length > 200 ? '...' : '') : exp.summary;
+        const preview = exp.story_text ? exp.story_text.substring(0, 200) + (exp.story_text.length > 200 ? '...' : '') : exp.summary;
 
         return {
           id: exp.id,
           title: exp.title,
           summary: exp.summary,
           category: exp.category,
-          date: exp.date,
-          location: exp.location,
+          date: exp.date_occurred,
+          location: exp.location_text,
           matchScore: Math.round(score * 100) / 100, // Round to 2 decimals
           matchReasons,
           sharedAttributes,
           preview,
         };
       })
-      .filter((exp: any) => exp.matchScore > 0.2) // Only return experiences with >20% match
+      .filter((exp: any) => exp.matchScore > 0.1) // Only return experiences with >10% match (lowered for more results)
       .sort((a: any, b: any) => b.matchScore - a.matchScore)
       .slice(0, 5); // Top 5 matches
 

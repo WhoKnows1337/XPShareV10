@@ -22,7 +22,7 @@ export async function GET(
     // Verify experience exists and get its attributes
     const { data: experience, error: expError } = await supabase
       .from('experiences')
-      .select('id, category, location')
+      .select('id, category, location_text')
       .eq('id', id)
       .single();
 
@@ -87,9 +87,9 @@ export async function GET(
       if (largestCluster.cluster_count >= 10) {
         insights.push({
           type: 'wave',
-          title: `${experience.location || 'Regional'} Hotspot`,
+          title: `${experience.location_text || 'Regional'} Hotspot`,
           count: largestCluster.cluster_count,
-          location: experience.location || 'Regional',
+          location: experience.location_text || 'Regional',
           timeframe: '30 days',
           trend: 200, // Mock trend for now
           attribute: attributes[0].attribute_key,
