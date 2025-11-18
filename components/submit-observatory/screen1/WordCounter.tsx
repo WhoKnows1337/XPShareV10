@@ -38,7 +38,10 @@ export function WordCounter({ wordCount, charCount }: WordCounterProps) {
 
   const getStatusMessage = () => {
     if (charCount === 0) return t('start');
-    if (charCount < 100) return t('moreDetail');
+    if (charCount < 100) {
+      const remaining = 100 - charCount;
+      return `→ ${remaining} ${t('charactersRemaining')}`;
+    }
     if (currentMilestone) return currentMilestone.label;
     return '';
   };
