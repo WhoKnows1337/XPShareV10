@@ -126,33 +126,6 @@ export function createUppyInstance(options: UppyConfigOptions = {}) {
 
     // Don't use multipart for R2 (simpler presigned URL approach)
     shouldUseMultipart: false,
-
-    // CRITICAL: Add response handler to catch R2 errors
-    async onBeforeRequest(req) {
-      console.log('[Uppy S3] About to upload:', {
-        url: req.url?.substring(0, 100),
-        method: req.method,
-        headers: req.headers,
-      });
-    },
-
-    async onAfterResponse(req, res) {
-      console.log('[Uppy S3] Upload response:', {
-        status: res.status,
-        statusText: res.statusText,
-        ok: res.ok,
-        headers: Object.fromEntries(res.headers.entries()),
-      });
-
-      // If not ok, try to get error details
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('[Uppy S3] Upload failed with body:', text);
-        throw new Error(`R2 upload failed: ${res.status} ${res.statusText} - ${text}`);
-      }
-
-      return res;
-    },
   });
 
   // ============================================================
