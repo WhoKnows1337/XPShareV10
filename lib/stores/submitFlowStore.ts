@@ -201,6 +201,9 @@ export interface SubmitFlowState {
 
   // Reset
   reset: () => void;
+
+  // Validation Helper
+  hasMeaningfulData: () => boolean;
 }
 
 const initialScreen1: Screen1Data = {
@@ -629,12 +632,7 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
       },
 
       clearDraft: () => {
-        // Explicitly clear localStorage to prevent auto-loading old drafts
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('submit-flow-storage');
-        }
-
-        // Clear Zustand state
+        // Clear Zustand state first
         set({
           screen1: initialScreen1,
           screen2: initialScreen2,
@@ -645,6 +643,11 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           lastSaved: null,
           isDraft: false,
         });
+
+        // Then clear persisted storage using official Zustand API
+        if (typeof window !== 'undefined') {
+          useSubmitFlowStore.persist.clearStorage();
+        }
       },
 
       // Navigation
@@ -701,14 +704,21 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         }
       },
 
+      // Validation Helper
+      hasMeaningfulData: () => {
+        const state = get();
+        return (
+          state.screen1.text.trim().length > 10 ||
+          state.screen2.category !== '' ||
+          Object.keys(state.screen2.attributes).length > 0 ||
+          state.screen4.uploadedMedia.length > 0 ||
+          state.screen4.witnesses.length > 0
+        );
+      },
+
       // Reset
       reset: () => {
-        // Explicitly clear localStorage to prevent auto-loading old drafts
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('submit-flow-storage');
-        }
-
-        // Clear Zustand state
+        // Clear Zustand state first
         set({
           screen1: initialScreen1,
           screen2: initialScreen2,
@@ -724,6 +734,12 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
           isDraft: false,
           publishResult: null,
         });
+
+        // Then clear persisted storage using official Zustand API
+        // This prevents the persist middleware from re-saving the state
+        if (typeof window !== 'undefined') {
+          useSubmitFlowStore.persist.clearStorage();
+        }
       },
     }),
     {
@@ -791,6 +807,36 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
         }
 
         return persistedState;
+      },
+      // Auto-cleanup: Delete old or invalid drafts on page load
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+
+        const MAX_DRAFT_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+        // Check if draft is too old
+        if (state.lastSaved) {
+          const draftAge = Date.now() - new Date(state.lastSaved).getTime();
+          if (draftAge > MAX_DRAFT_AGE_MS) {
+            console.log('[Draft Auto-Cleanup] Draft is older than 7 days, clearing...');
+            useSubmitFlowStore.persist.clearStorage();
+            return;
+          }
+        }
+
+        // Check if draft has meaningful data
+        const hasMeaningfulData =
+          state.screen1.text.trim().length > 10 ||
+          state.screen2.category !== '' ||
+          Object.keys(state.screen2.attributes).length > 0 ||
+          state.screen4.uploadedMedia.length > 0 ||
+          state.screen4.witnesses.length > 0;
+
+        if (state.isDraft && !hasMeaningfulData) {
+          console.log('[Draft Auto-Cleanup] Draft has no meaningful data, clearing...');
+          useSubmitFlowStore.persist.clearStorage();
+          return;
+        }
       },
     }
   )

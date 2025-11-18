@@ -10,11 +10,11 @@ import { de } from 'date-fns/locale';
 import { UnsavedChangesModal } from './UnsavedChangesModal';
 
 export function ResumeDraftBanner() {
-  const { isDraft, currentStep, lastSaved, reset } = useSubmitFlowStore();
+  const { isDraft, currentStep, lastSaved, reset, hasMeaningfulData } = useSubmitFlowStore();
   const [showResetModal, setShowResetModal] = useState(false);
 
-  // Only show if there's a draft and we're not on step 1
-  if (!isDraft || currentStep === 1 || !lastSaved) return null;
+  // Only show if there's a draft with meaningful data and we're not on step 1
+  if (!isDraft || currentStep === 1 || !lastSaved || !hasMeaningfulData()) return null;
 
   const timeAgo = formatDistanceToNow(new Date(lastSaved), {
     addSuffix: true,
