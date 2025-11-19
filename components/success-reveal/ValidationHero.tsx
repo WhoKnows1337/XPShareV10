@@ -87,7 +87,7 @@ export function ValidationHero({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${theme.gradient} p-12 text-center backdrop-blur-sm border ${theme.borderColor}`}
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${theme.gradient} p-6 text-center backdrop-blur-sm border ${theme.borderColor}`}
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
@@ -101,7 +101,7 @@ export function ValidationHero({
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5, type: 'spring', stiffness: 200 }}
-          className="mb-6 text-8xl"
+          className="mb-4 text-4xl"
         >
           {theme.heroEmoji}
         </motion.div>
@@ -111,7 +111,7 @@ export function ValidationHero({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mb-4 text-4xl font-bold text-white"
+          className="mb-3 text-2xl font-bold text-white"
         >
           Deine Erfahrung ist jetzt live
         </motion.h1>

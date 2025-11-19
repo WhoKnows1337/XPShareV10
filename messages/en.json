@@ -913,11 +913,15 @@
         "regularUsers": "Regular Users ({count})"
       },
       "roles": {
+        "super_admin": "🔴 Super Admin",
         "superAdmin": "🔴 Super Admin",
+        "content_manager": "🟡 Content Manager",
         "contentManager": "🟡 Content Manager",
         "analyst": "🟢 Analyst"
       },
       "list": {
+        "search": "Search users...",
+        "viewActivity": "View Activity",
         "noUsers": "No users found",
         "experiences": "experiences",
         "comments": "comments",
@@ -933,6 +937,7 @@
         "title": "Change User Role",
         "user": "User",
         "role": "Role",
+        "save": "Save",
         "regularUser": "Regular User (No Admin Access)",
         "superAdmin": "🔴 Super Admin (Full Access)",
         "contentManager": "🟡 Content Manager (Edit Content)",

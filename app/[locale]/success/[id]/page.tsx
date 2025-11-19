@@ -3,16 +3,12 @@ import Link from 'next/link'
 import { ArrowRight, Eye, Share2, PlusCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { ValidationHero } from '@/components/success-reveal/ValidationHero'
-import { DiscoveryPanel } from '@/components/success-reveal/DiscoveryPanel'
-import { PatternRevealSection } from '@/components/success-reveal/PatternRevealSection'
-import { ConcreteImpactSummary } from '@/components/success-reveal/ConcreteImpactSummary'
-import { ConnectedExperiencesGrid } from '@/components/success-reveal/ConnectedExperiencesGrid'
+import { QuickStatsBar } from '@/components/success-reveal/QuickStatsBar'
+import { SuccessPageClient } from '@/components/success-reveal/SuccessPageClient'
 import { RewardsCompact } from '@/components/success-reveal/RewardsCompact'
 import { FollowUpActions } from '@/components/success-reveal/FollowUpActions'
 import { SmartNextSteps } from '@/components/success-reveal/SmartNextSteps'
-import { InteractiveExperienceMap } from '@/components/success-reveal/InteractiveExperienceMap'
-import { TemporalTimeline } from '@/components/success-reveal/TemporalTimeline'
-import { calculateContribution, getCategoryContextMessage } from '@/lib/utils/contribution-calculator'
+import { calculateContribution, getCategoryContextMessage, generateMatchReasons } from '@/lib/utils/contribution-calculator'
 
 interface PageProps {
   params: Promise<{ id: string; locale: string }>
@@ -86,21 +82,47 @@ export default async function SuccessRevealPage({ params }: PageProps) {
     .limit(6)
 
   const similarExperiences =
-    similarData?.map((exp: any) => ({
-      id: exp.id,
-      title: exp.title,
-      summary: exp.summary,
-      category: exp.category,
-      date: exp.date_occurred || exp.created_at || new Date().toISOString(), // Fallback to now
-      location: exp.location_text
+    similarData?.map((exp: any) => {
+      const expLocation = exp.location_text
         ? {
             city: exp.location_text.split(',')[0]?.trim(),
             country: exp.location_text.split(',')[1]?.trim(),
           }
-        : undefined,
-      matchScore: exp.similarity_score || 0.8,
-      matchReasons: exp.match_reasons || [],
-    })) || []
+        : undefined
+
+      // Generate match reasons if none provided by RPC
+      const matchReasons = exp.match_reasons && exp.match_reasons.length > 0
+        ? exp.match_reasons
+        : generateMatchReasons(
+            {
+              category: experience.category,
+              location: experience.location_text
+                ? {
+                    city: experience.location_text.split(',')[0]?.trim(),
+                    country: experience.location_text.split(',')[1]?.trim(),
+                  }
+                : undefined,
+              attributes,
+            },
+            {
+              category: exp.category,
+              location: expLocation,
+              sharedAttributesCount: exp.shared_attributes_count,
+              similarityScore: exp.similarity_score,
+            }
+          )
+
+      return {
+        id: exp.id,
+        title: exp.title,
+        summary: exp.summary,
+        category: exp.category,
+        date: exp.date_occurred || exp.created_at || new Date().toISOString(),
+        location: expLocation,
+        matchScore: exp.similarity_score || 0.8,
+        matchReasons,
+      }
+    }) || []
 
   // Fetch pattern insights (use relative URL to ensure we hit the same server)
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -183,13 +205,19 @@ export default async function SuccessRevealPage({ params }: PageProps) {
   // Category context message
   const contextMessage = getCategoryContextMessage(experience.category, contributionMetrics)
 
-  // Calculate recent count (similar experiences in last 7 days)
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  // Calculate recent count (similar experiences in last 30 days)
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const recentCount = similarExperiences.filter((exp) => {
     const expDate = new Date(exp.date || new Date())
-    return expDate >= sevenDaysAgo
+    return expDate >= thirtyDaysAgo
   }).length
+
+  // Calculate stats for QuickStatsBar
+  const uniqueCities = [...new Set(similarExperiences.map(exp => exp.location?.city).filter(Boolean))]
+  const avgMatchScore = similarExperiences.length > 0
+    ? Math.round(similarExperiences.reduce((sum, exp) => sum + (exp.matchScore || 0), 0) / similarExperiences.length)
+    : 0
 
   // Check if first in location
   const isFirstInLocation = experience.location_text ? similarExperiences.filter((exp) => {
@@ -279,67 +307,37 @@ export default async function SuccessRevealPage({ params }: PageProps) {
             geographicBreakdown={geographicBreakdown}
           />
 
-          {/* Discovery Panel */}
-          <DiscoveryPanel
+          {/* Quick Stats Bar */}
+          <QuickStatsBar
+            similarCount={similarExperiences.length}
+            citiesCount={uniqueCities.length}
+            recentCount={recentCount}
+            avgMatch={avgMatchScore}
+          />
+
+          {/* Tab-Based Interface */}
+          <SuccessPageClient
             category={experience.category}
+            experienceId={id}
+            userExperienceDate={experience.date_occurred || experience.created_at || new Date().toISOString()}
+            hasLocation={!!experience.location_lat && !!experience.location_lng}
+            centerLat={experience.location_lat || undefined}
+            centerLng={experience.location_lng || undefined}
+            mapData={mapData}
+            timelineEvents={timelineEvents}
+            similarExperiences={similarExperiences}
+            patternData={patternData}
             attributes={attributes}
-            aiConfidence={95} // This could come from AI analysis confidence
-            location={
-              experience.location_text
-                ? {
-                    city: experience.location_text.split(',')[0]?.trim(),
-                    country: experience.location_text.split(',')[1]?.trim(),
-                  }
-                : undefined
-            }
+            aiConfidence={95}
+            location={experience.location_text ? {
+              city: experience.location_text.split(',')[0]?.trim(),
+              country: experience.location_text.split(',')[1]?.trim(),
+            } : undefined}
             dateOccurred={experience.date_occurred || experience.created_at || new Date().toISOString()}
+            contributionMetrics={contributionMetrics}
+            patterns={patterns}
+            isFirstInLocation={isFirstInLocation}
           />
-
-          {/* Pattern Reveal (if patterns exist) */}
-          {patternData.length > 0 && (
-            <PatternRevealSection
-              category={experience.category}
-              patterns={patternData}
-              similarCount={similarExperiences.length}
-            />
-          )}
-
-          {/* Concrete Impact Summary */}
-          <ConcreteImpactSummary
-            category={experience.category}
-            metrics={{
-              similarExperiencesCount: similarExperiences.length,
-              geographicRank: experience.location_text ? {
-                position: similarExperiences.filter((exp) => {
-                  const city = experience.location_text?.split(',')[0]?.trim()
-                  return exp.location?.city === city
-                }).length + 1,
-                location: experience.location_text?.split(',')[0]?.trim() || 'Unknown',
-                totalInLocation: similarExperiences.filter((exp) => {
-                  const city = experience.location_text?.split(',')[0]?.trim()
-                  return exp.location?.city === city
-                }).length + 1,
-              } : undefined,
-              patternContributions: patterns.map((p) => ({
-                type: p.type,
-                impact: `${p.count || 0} ${p.type} pattern connections`,
-              })),
-              uniqueAttributes: attributes.filter((attr) => {
-                // Check if this attribute is unique compared to similar experiences
-                return true // For now, show all attributes as potentially unique
-              }),
-              isFirstInLocation,
-            }}
-          />
-
-          {/* Connected Experiences */}
-          {similarExperiences.length > 0 && (
-            <ConnectedExperiencesGrid
-              category={experience.category}
-              experiences={similarExperiences}
-              maxDisplay={3}
-            />
-          )}
 
           {/* Rewards */}
           <RewardsCompact
@@ -349,27 +347,6 @@ export default async function SuccessRevealPage({ params }: PageProps) {
             leveledUp={false} // Can't determine without previous XP snapshot
             currentLevel={currentLevel}
           />
-
-          {/* Interactive Map (if location exists) */}
-          {experience.location_lat && experience.location_lng && mapData.length > 0 && (
-            <InteractiveExperienceMap
-              category={experience.category}
-              centerLat={experience.location_lat}
-              centerLng={experience.location_lng}
-              similarExperiences={mapData}
-              radius={50}
-            />
-          )}
-
-          {/* Temporal Timeline */}
-          {timelineEvents.length > 0 && (
-            <TemporalTimeline
-              category={experience.category}
-              userExperienceDate={experience.date_occurred || experience.created_at || new Date().toISOString()}
-              similarExperiences={timelineEvents}
-              showPrediction={true}
-            />
-          )}
 
           {/* Follow-Up Actions */}
           <div id="follow-up-actions">

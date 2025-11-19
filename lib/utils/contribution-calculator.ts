@@ -258,3 +258,48 @@ export function getCategoryContextMessage(
 
   return `Your ${category} experience is now part of the global consciousness network.`
 }
+
+/**
+ * Generate match reasons for similar experiences based on available data
+ */
+export function generateMatchReasons(
+  userExp: {
+    category: string
+    location?: { city?: string; country?: string }
+    attributes?: string[]
+  },
+  similarExp: {
+    category: string
+    location?: { city?: string; country?: string }
+    sharedAttributesCount?: number
+    similarityScore?: number
+  }
+): string[] {
+  const reasons: string[] = []
+
+  // Category match
+  if (userExp.category === similarExp.category) {
+    reasons.push('Same category')
+  }
+
+  // Location match
+  if (userExp.location?.city && similarExp.location?.city) {
+    if (userExp.location.city === similarExp.location.city) {
+      reasons.push(`Same city: ${userExp.location.city}`)
+    } else if (userExp.location.country === similarExp.location.country) {
+      reasons.push(`Same country: ${userExp.location.country}`)
+    }
+  }
+
+  // Shared attributes (if available)
+  if (similarExp.sharedAttributesCount && similarExp.sharedAttributesCount > 0) {
+    reasons.push(`${similarExp.sharedAttributesCount} shared attributes`)
+  }
+
+  // High similarity score
+  if (similarExp.similarityScore && similarExp.similarityScore >= 0.9) {
+    reasons.push('Very high match')
+  }
+
+  return reasons.slice(0, 3) // Max 3 reasons
+}
