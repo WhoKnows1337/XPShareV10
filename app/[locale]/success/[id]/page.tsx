@@ -124,8 +124,11 @@ export default async function SuccessRevealPage({ params }: PageProps) {
       }
     }) || []
 
-  // Fetch pattern insights (use relative URL to ensure we hit the same server)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  // Fetch pattern insights
+  // Use absolute URL only in production, relative URL in development to avoid port mismatch
+  const isDev = process.env.NODE_ENV === 'development'
+  const baseUrl = isDev ? 'http://localhost:3001' : (process.env.NEXT_PUBLIC_APP_URL || '')
+
   const patternsResponse = await fetch(
     `${baseUrl}/api/patterns/for-experience/${id}`,
     {

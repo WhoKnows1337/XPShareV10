@@ -106,7 +106,7 @@ export function EnhancedListTab({ experiences, userLocation }: EnhancedListTabPr
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sortedExperiences.map((experience, index) => (
             <EnhancedExperienceCard
-              key={experience.id}
+              key={`experience-${experience.id}-${index}`}
               experience={experience}
               index={index}
               isClient={isClient}

@@ -114,9 +114,9 @@ export function EnhancedExperienceCard({
         {/* Match Reasons (Always Visible) */}
         {experience.matchReasons && experience.matchReasons.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5 border-t border-white/10 pt-3">
-            {experience.matchReasons.slice(0, 3).map((reason, i) => (
+            {experience.matchReasons.slice(0, 3).map((reason) => (
               <span
-                key={i}
+                key={`${experience.id}-reason-${reason}`}
                 className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70"
               >
                 <CheckCircle2 className="h-3 w-3 text-emerald-400" />
@@ -156,9 +156,9 @@ export function EnhancedExperienceCard({
                   <div>
                     <span className="font-semibold text-white/90">Additional Matches:</span>
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {experience.matchReasons.slice(3).map((reason, i) => (
+                      {experience.matchReasons.slice(3).map((reason) => (
                         <span
-                          key={i}
+                          key={`${experience.id}-additional-${reason}`}
                           className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-white/60"
                         >
                           {reason}
