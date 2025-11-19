@@ -31,9 +31,10 @@ export function RewardsCompact({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 2.0, duration: 0.6 }}
       className="space-y-4"
+      suppressHydrationWarning
     >
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3" suppressHydrationWarning>
         <Trophy className={`h-6 w-6 ${theme.accentColor}`} />
         <h2 className="text-2xl font-bold text-white">Rewards Earned</h2>
       </div>

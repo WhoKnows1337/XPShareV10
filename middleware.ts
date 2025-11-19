@@ -2,9 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import createIntlMiddleware from 'next-intl/middleware'
 import { locales } from './i18n'
+import { checkRateLimit } from '@/lib/rate-limit/vercel-kv-limiter'
 
 // ============================================================
-// RATE LIMITING CONFIGURATION
+// FEATURE FLAGS
+// ============================================================
+const USE_VERCEL_KV = process.env.KV_REST_API_URL !== undefined
+
+// ============================================================
+// RATE LIMITING CONFIGURATION (FALLBACK FOR IN-MEMORY)
 // ============================================================
 const RATE_LIMITS = {
   // Submit endpoints - stricter limits
@@ -23,14 +29,14 @@ const RATE_LIMITS = {
   default: { windowMs: 1 * 60 * 1000, max: 100 },
 };
 
-// In-memory store for rate limiting (replace with Redis/Vercel KV in production)
+// In-memory store for rate limiting (FALLBACK only - used when KV unavailable)
 const rateLimitStore = new Map<string, {
   count: number;
   resetTime: number;
 }>();
 
-// Clean up old entries periodically
-if (typeof setInterval !== 'undefined') {
+// Clean up old entries periodically (in-memory only)
+if (typeof setInterval !== 'undefined' && !USE_VERCEL_KV) {
   setInterval(() => {
     const now = Date.now();
     for (const [key, value] of rateLimitStore.entries()) {
@@ -78,63 +84,63 @@ export async function middleware(request: NextRequest) {
     apiResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
     apiResponse.headers.delete('X-Powered-By')
 
-    // Rate limiting
-    const clientIdentifier = getClientIdentifier(request)
-    const rateLimitConfig = getRateLimitConfig(requestPathname)
-    const rateLimitKey = `${clientIdentifier}:${requestPathname}`
-    const now = Date.now()
-    const rateLimit = rateLimitStore.get(rateLimitKey)
+    // Rate limiting - USE VERCEL KV IF AVAILABLE
+    const clientIP = getClientIP(request)
 
-    if (rateLimit) {
-      if (now < rateLimit.resetTime) {
-        if (rateLimit.count >= rateLimitConfig.max) {
-          // Rate limit exceeded
-          const retryAfter = Math.ceil((rateLimit.resetTime - now) / 1000)
-
-          return new NextResponse(
-            JSON.stringify({
-              error: 'Too many requests',
-              retryAfter,
-            }),
-            {
-              status: 429,
-              headers: {
-                'Content-Type': 'application/json',
-                'Retry-After': retryAfter.toString(),
-                'X-RateLimit-Limit': rateLimitConfig.max.toString(),
-                'X-RateLimit-Remaining': '0',
-                'X-RateLimit-Reset': new Date(rateLimit.resetTime).toISOString(),
-              },
-            }
-          )
-        }
-        rateLimit.count++
-      } else {
-        // Reset window
-        rateLimitStore.set(rateLimitKey, {
-          count: 1,
-          resetTime: now + rateLimitConfig.windowMs,
-        })
-      }
-    } else {
-      // First request
-      rateLimitStore.set(rateLimitKey, {
-        count: 1,
-        resetTime: now + rateLimitConfig.windowMs,
-      })
+    let rateLimitResult: {
+      allowed: boolean;
+      remaining: number;
+      reset: number;
+      limit: number;
     }
 
-    // Add rate limit headers
-    const currentLimit = rateLimitStore.get(rateLimitKey)!
-    apiResponse.headers.set('X-RateLimit-Limit', rateLimitConfig.max.toString())
-    apiResponse.headers.set(
-      'X-RateLimit-Remaining',
-      Math.max(0, rateLimitConfig.max - currentLimit.count).toString()
-    )
-    apiResponse.headers.set(
-      'X-RateLimit-Reset',
-      new Date(currentLimit.resetTime).toISOString()
-    )
+    if (USE_VERCEL_KV) {
+      // ✅ PRODUCTION: Use Vercel KV (persistent, distributed)
+      try {
+        rateLimitResult = await checkRateLimit(clientIP, requestPathname)
+      } catch (error) {
+        console.error('[Middleware] KV rate limit error, falling back to in-memory:', error)
+        // Fallback to in-memory if KV fails
+        rateLimitResult = await checkRateLimitInMemory(
+          getClientIdentifier(request),
+          requestPathname
+        )
+      }
+    } else {
+      // ⚠️ FALLBACK: Use in-memory store (not production-ready)
+      rateLimitResult = await checkRateLimitInMemory(
+        getClientIdentifier(request),
+        requestPathname
+      )
+    }
+
+    // Check if rate limit exceeded
+    if (!rateLimitResult.allowed) {
+      const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+
+      return new NextResponse(
+        JSON.stringify({
+          error: 'Too many requests',
+          retryAfter,
+          message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': retryAfter.toString(),
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString(),
+          },
+        }
+      )
+    }
+
+    // Add rate limit headers to successful responses
+    apiResponse.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString())
+    apiResponse.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString())
+    apiResponse.headers.set('X-RateLimit-Reset', new Date(rateLimitResult.reset).toISOString())
 
     // Check for suspicious patterns in API requests (check pathname only, not full URL)
     const suspiciousPatterns = [
@@ -275,6 +281,70 @@ export async function middleware(request: NextRequest) {
 // ============================================================
 // HELPER FUNCTIONS FOR RATE LIMITING
 // ============================================================
+
+/**
+ * In-memory rate limiting (FALLBACK ONLY)
+ * Used when Vercel KV is not available
+ */
+async function checkRateLimitInMemory(
+  clientIdentifier: string,
+  pathname: string
+): Promise<{
+  allowed: boolean;
+  remaining: number;
+  reset: number;
+  limit: number;
+}> {
+  const rateLimitConfig = getRateLimitConfig(pathname)
+  const rateLimitKey = `${clientIdentifier}:${pathname}`
+  const now = Date.now()
+  const rateLimit = rateLimitStore.get(rateLimitKey)
+
+  if (rateLimit) {
+    if (now < rateLimit.resetTime) {
+      if (rateLimit.count >= rateLimitConfig.max) {
+        // Rate limit exceeded
+        return {
+          allowed: false,
+          remaining: 0,
+          reset: rateLimit.resetTime,
+          limit: rateLimitConfig.max,
+        }
+      }
+      rateLimit.count++
+      return {
+        allowed: true,
+        remaining: Math.max(0, rateLimitConfig.max - rateLimit.count),
+        reset: rateLimit.resetTime,
+        limit: rateLimitConfig.max,
+      }
+    } else {
+      // Reset window
+      rateLimitStore.set(rateLimitKey, {
+        count: 1,
+        resetTime: now + rateLimitConfig.windowMs,
+      })
+      return {
+        allowed: true,
+        remaining: rateLimitConfig.max - 1,
+        reset: now + rateLimitConfig.windowMs,
+        limit: rateLimitConfig.max,
+      }
+    }
+  } else {
+    // First request
+    rateLimitStore.set(rateLimitKey, {
+      count: 1,
+      resetTime: now + rateLimitConfig.windowMs,
+    })
+    return {
+      allowed: true,
+      remaining: rateLimitConfig.max - 1,
+      reset: now + rateLimitConfig.windowMs,
+      limit: rateLimitConfig.max,
+    }
+  }
+}
 
 /**
  * Get client identifier for rate limiting

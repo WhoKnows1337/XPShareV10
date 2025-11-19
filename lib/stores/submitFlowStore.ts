@@ -287,7 +287,7 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
 
       setText: (text) => {
         const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
-        const charCount = text.length;
+        const charCount = text.trim().length;
         set((state) => ({
           screen1: { ...state.screen1, text, wordCount, charCount },
           isDraft: true,
@@ -653,6 +653,18 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
       // Navigation
       canGoNext: () => {
         const state = get();
+
+        // DEBUG: Log validation state for troubleshooting
+        if (typeof window !== 'undefined' && state.currentStep === 1) {
+          console.log('[canGoNext Debug] Step 1:', {
+            charCount: state.screen1.charCount,
+            text: state.screen1.text.substring(0, 100) + '...',
+            textLength: state.screen1.text.length,
+            trimmedLength: state.screen1.text.trim().length,
+            canProceed: state.screen1.charCount >= 100,
+          });
+        }
+
         switch (state.currentStep) {
           case 1:
             // Minimum 100 characters required (ensures embedding generation)
@@ -821,6 +833,26 @@ export const useSubmitFlowStore = create<SubmitFlowState>()(
             console.log('[Draft Auto-Cleanup] Draft is older than 7 days, clearing...');
             useSubmitFlowStore.persist.clearStorage();
             return;
+          }
+        }
+
+        // FIX: Recalculate charCount and wordCount from text to ensure consistency
+        // This prevents bugs where localStorage has stale counts
+        if (state.screen1?.text !== undefined) {
+          const text = state.screen1.text;
+          const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+          const charCount = text.trim().length;
+
+          // Update if counts don't match
+          if (state.screen1.charCount !== charCount || state.screen1.wordCount !== wordCount) {
+            console.log('[Draft Auto-Cleanup] Recalculating charCount/wordCount', {
+              oldCharCount: state.screen1.charCount,
+              newCharCount: charCount,
+              oldWordCount: state.screen1.wordCount,
+              newWordCount: wordCount,
+            });
+            state.screen1.charCount = charCount;
+            state.screen1.wordCount = wordCount;
           }
         }
 

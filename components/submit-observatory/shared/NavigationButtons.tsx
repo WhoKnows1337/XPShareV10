@@ -27,7 +27,7 @@ export function NavigationButtons({
   onNext,
   onReset,
   canGoBack = true,
-  canGoNext = true,
+  canGoNext = false, // Default to false to prevent hydration mismatch
   nextLabel,
   backLabel,
   nextLoading = false,

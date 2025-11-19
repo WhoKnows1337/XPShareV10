@@ -23,7 +23,7 @@ export function FilesWitnessesScreen() {
   const t = useTranslations('submit.screen4');
   const locale = useLocale();
   const router = useRouter();
-  const { screen1, screen2, screen3, screen4, goBack, reset, setPublishing, setCurrentStep } = useSubmitFlowStore();
+  const { screen1, screen2, screen3, screen4, goBack, reset, setPublishing, setCurrentStep, isPublishing } = useSubmitFlowStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const uppyRef = useRef<UppyFileUploadRef | null>(null);
   const [externalLinks, setExternalLinks] = useState<LinkMetadata[]>([]);
@@ -259,8 +259,8 @@ export function FilesWitnessesScreen() {
       // Using window.location.href for hard navigation to bypass browser cache
       // ⚠️ IMPORTANT: Always include locale prefix, even for default locale
       // Client-side navigation (window.location.href) doesn't go through middleware,
-      // so we need the full path to match the route pattern /[locale]/experiences/...
-      const successUrl = `/${locale}/experiences/submit/success/${result.experienceId}`;
+      // so we need the full path to match the route pattern /[locale]/success/...
+      const successUrl = `/${locale}/success/${result.experienceId}`;
       console.log('[Publish] Redirecting to:', successUrl, 'locale:', locale);
 
       // ⚠️ CRITICAL: Add small delay to allow ref update in useUnsavedChangesWarning
@@ -285,6 +285,71 @@ export function FilesWitnessesScreen() {
       setPublishing(false);
     }
   };
+
+  // Full-Screen Publishing Overlay
+  if (isPublishing) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md"
+      >
+        <div className="flex flex-col items-center gap-6 text-center px-4">
+          {/* Animated Spinner */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            className="h-16 w-16 rounded-full border-4 border-cyan-500/20 border-t-cyan-500"
+          />
+
+          {/* Publishing Text */}
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-white">Publishing Your Experience</h2>
+            <p className="text-white/60 max-w-md">
+              Generating embeddings, processing media, and connecting to the global network...
+            </p>
+          </div>
+
+          {/* Progress Indicators */}
+          <div className="space-y-2 text-sm text-white/40">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              ✓ Analyzing your experience
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5 }}
+            >
+              ⏳ Generating AI embeddings
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 3 }}
+            >
+              ⏳ Processing media files
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 5 }}
+            >
+              ⏳ Detecting patterns
+            </motion.p>
+          </div>
+
+          {/* Subtle hint about wait time */}
+          <p className="text-xs text-white/30 mt-4">This may take up to 30 seconds...</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

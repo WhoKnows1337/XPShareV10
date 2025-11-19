@@ -2,12 +2,28 @@
 
 import { motion } from 'framer-motion'
 import { TrendingUp, Activity } from 'lucide-react'
-import { WaveAlertCard } from '@/components/submit-observatory/success/WaveAlertCard'
-import { TemporalPatternCard } from '@/components/submit-observatory/success/TemporalPatternCard'
+import { WitnessNetworkCard } from './WitnessNetworkCard'
+import { SequentialPatternCard } from './SequentialPatternCard'
+import { UserConnectionCard } from './UserConnectionCard'
+import { LocationChainCard } from './LocationChainCard'
+import { TemporalWaveCard } from './TemporalWaveCard'
+import { TagSequenceCard } from './TagSequenceCard'
+import { TagNetworkCard } from './TagNetworkCard'
+import { CrossCategoryCard } from './CrossCategoryCard'
 import { getCategoryTheme } from '@/lib/config/category-themes'
 
 interface PatternData {
-  type: 'wave' | 'temporal' | 'correlation'
+  type:
+    | 'geographic'
+    | 'temporal'
+    | 'tag_network'
+    | 'cross_category'
+    | 'witness_network'
+    | 'sequential'
+    | 'user_connection'
+    | 'location_chain'
+    | 'temporal_wave'
+    | 'tag_sequence'
   data: any
 }
 
@@ -26,8 +42,95 @@ export function PatternRevealSection({
 
   if (patterns.length === 0) return null
 
-  const wavePattern = patterns.find((p) => p.type === 'wave')
-  const temporalPattern = patterns.find((p) => p.type === 'temporal')
+  // Render pattern card based on type
+  const renderPatternCard = (pattern: PatternData, index: number) => {
+    const baseDelay = 1.2 + index * 0.2
+    const xOffset = index % 2 === 0 ? -20 : 20
+
+    const cardProps = {
+      initial: { opacity: 0, x: xOffset },
+      animate: { opacity: 1, x: 0 },
+      transition: { delay: baseDelay, duration: 0.5 },
+    }
+
+    switch (pattern.type) {
+      case 'geographic':
+        // Use LocationChainCard as fallback for geographic patterns
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <LocationChainCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'temporal':
+        // Use TemporalWaveCard for temporal patterns
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <TemporalWaveCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'tag_network':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <TagNetworkCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'cross_category':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <CrossCategoryCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'witness_network':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <WitnessNetworkCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'sequential':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <SequentialPatternCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'user_connection':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <UserConnectionCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'location_chain':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <LocationChainCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'temporal_wave':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <TemporalWaveCard {...pattern.data} />
+          </motion.div>
+        )
+      case 'tag_sequence':
+        return (
+          <motion.div key={`${pattern.type}-${index}`} {...cardProps}>
+            <TagSequenceCard {...pattern.data} />
+          </motion.div>
+        )
+      default:
+        return null
+    }
+  }
+
+  // Count total patterns across all types
+  const totalPatternCount = patterns.reduce((sum, p) => sum + (p.data?.count || 0), 0)
+
+  // Scroll to follow-up actions section
+  const handleExplorePattern = () => {
+    const followUpSection = document.getElementById('follow-up-actions')
+    if (followUpSection) {
+      followUpSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   return (
     <motion.div
@@ -60,37 +163,17 @@ export function PatternRevealSection({
         transition={{ delay: 1.0, duration: 0.5 }}
         className="text-white/70"
       >
-        Your experience matches a pattern of {similarCount} similar{' '}
-        {similarCount === 1 ? 'sighting' : 'sightings'} across the network.
+        Your experience matches <span className="font-bold text-white">{patterns.length}</span>{' '}
+        {patterns.length === 1 ? 'pattern' : 'patterns'} across the network.
       </motion.p>
 
       {/* Pattern Cards Grid */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Wave/Geographic Pattern */}
-        {wavePattern && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
-          >
-            <WaveAlertCard {...wavePattern.data} />
-          </motion.div>
-        )}
-
-        {/* Temporal Pattern */}
-        {temporalPattern && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.4, duration: 0.5 }}
-          >
-            <TemporalPatternCard {...temporalPattern.data} />
-          </motion.div>
-        )}
+        {patterns.map((pattern, index) => renderPatternCard(pattern, index))}
       </div>
 
       {/* Pattern Stats Summary */}
-      {similarCount > 0 && (
+      {totalPatternCount > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -98,29 +181,25 @@ export function PatternRevealSection({
           className={`mt-6 rounded-xl border ${theme.borderColor} bg-gradient-to-br ${theme.gradient} p-6`}
         >
           <div className="grid gap-4 sm:grid-cols-3">
-            {/* Total Count */}
+            {/* Total Patterns */}
             <div className="text-center">
-              <div className="mb-1 text-3xl font-bold text-white">{similarCount}</div>
-              <div className="text-sm text-white/60">Total in Pattern</div>
+              <div className="mb-1 text-3xl font-bold text-white">{patterns.length}</div>
+              <div className="text-sm text-white/60">Pattern Types</div>
             </div>
 
-            {/* Location Cluster */}
-            {wavePattern?.data?.location && (
-              <div className="text-center">
-                <div className="mb-1 text-3xl font-bold text-white">
-                  {wavePattern.data.count}
-                </div>
-                <div className="text-sm text-white/60">{wavePattern.data.location}</div>
-              </div>
-            )}
+            {/* Total Connections */}
+            <div className="text-center">
+              <div className="mb-1 text-3xl font-bold text-white">{totalPatternCount}</div>
+              <div className="text-sm text-white/60">Total Connections</div>
+            </div>
 
-            {/* Temporal Peak */}
-            {temporalPattern?.data?.period && (
+            {/* Similarity */}
+            {similarCount > 0 && (
               <div className="text-center">
                 <div className={`mb-1 text-3xl font-bold ${theme.accentColor}`}>
-                  {temporalPattern.data.period}
+                  {similarCount}
                 </div>
-                <div className="text-sm text-white/60">Peak Activity</div>
+                <div className="text-sm text-white/60">Similar Experiences</div>
               </div>
             )}
           </div>
@@ -135,7 +214,8 @@ export function PatternRevealSection({
         className="flex justify-center pt-4"
       >
         <button
-          className={`group flex items-center gap-2 rounded-full border ${theme.borderColor} bg-white/5 px-6 py-3 font-medium text-white transition-all hover:bg-white/10 hover:${theme.glowColor}`}
+          onClick={handleExplorePattern}
+          className={`group flex items-center gap-2 rounded-full border ${theme.borderColor} bg-white/5 px-6 py-3 font-medium text-white transition-all hover:bg-white/10 hover:shadow-lg hover:shadow-${theme.accentColor}/20`}
         >
           <TrendingUp className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           Explore Full Pattern

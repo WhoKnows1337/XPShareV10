@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, MapPin, Calendar } from 'lucide-react'
@@ -34,6 +35,11 @@ export function ConnectedExperiencesGrid({
 }: ConnectedExperiencesGridProps) {
   const theme = getCategoryTheme(category)
   const displayExperiences = experiences.slice(0, maxDisplay)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   if (displayExperiences.length === 0) return null
 
@@ -112,9 +118,11 @@ export function ConnectedExperiencesGrid({
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>
-                      {isValidDate
+                      {isClient && isValidDate
                         ? formatDistanceToNow(experienceDate, { addSuffix: true })
-                        : 'Date unknown'}
+                        : isClient
+                        ? 'Date unknown'
+                        : '...'}
                     </span>
                   </div>
                 </div>

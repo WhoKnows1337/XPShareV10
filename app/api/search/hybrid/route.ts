@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateEmbedding } from '@/lib/openai/client'
+import { rerankResults, type SearchResult } from '@/lib/search/reranker'
+import { featureFlags } from '@/lib/config/feature-flags'
 
 /**
- * Hybrid Search API - Combines Vector Similarity + Full-Text Search
+ * Hybrid Search API - Combines Vector Similarity + Full-Text Search + Optional Re-Ranking
  *
  * Uses Reciprocal Rank Fusion (RRF) to merge results from:
  * - Vector similarity search (semantic understanding)
  * - PostgreSQL full-text search (exact keyword matching)
+ *
+ * Optional Cross-Encoder Re-Ranking:
+ * - Fetches 100 candidates from hybrid search (fast)
+ * - Re-ranks using AI cross-encoder model (slow but precise)
+ * - Returns top K results sorted by relevance
  *
  * POST /api/search/hybrid
  * Body: {
@@ -15,7 +22,8 @@ import { generateEmbedding } from '@/lib/openai/client'
  *   language?: 'de' | 'en' | 'fr' | 'es',
  *   vectorWeight?: number (0-1, default 0.6),
  *   category?: string,
- *   limit?: number
+ *   limit?: number,
+ *   enableReranking?: boolean (default: false)
  * }
  */
 
@@ -30,6 +38,7 @@ export async function POST(req: NextRequest) {
       vectorWeight = 0.6,
       category = null,
       limit = 20,
+      enableReranking = false,
     } = body
 
     // Validation
@@ -48,6 +57,10 @@ export async function POST(req: NextRequest) {
     }
 
     const ftsWeight = 1 - vectorWeight
+
+    // Re-ranking configuration
+    const shouldRerank = enableReranking && featureFlags.crossEncoderReranking
+    const candidateLimit = shouldRerank ? 100 : limit // Fetch 100 candidates for re-ranking
 
     // Step 1: Generate embedding for the query
     let queryEmbedding: number[]
@@ -72,7 +85,7 @@ export async function POST(req: NextRequest) {
       p_vector_weight: vectorWeight,
       p_fts_weight: ftsWeight,
       p_category: category,
-      p_limit: limit,
+      p_limit: candidateLimit, // Use candidateLimit instead of limit
     })
 
     if (searchError) {
@@ -80,25 +93,8 @@ export async function POST(req: NextRequest) {
       throw searchError
     }
 
-    const executionTime = Date.now() - startTime
-
-    // Step 3: Track search analytics
+    // Step 3: Track search analytics (preliminary, will update after re-ranking)
     const { data: { user } } = await (supabase as any).auth.getUser()
-
-    try {
-      await (supabase as any).rpc('track_search', {
-        p_query_text: query,
-        p_user_id: user?.id || null,
-        p_result_count: results?.length || 0,
-        p_search_type: 'hybrid',
-        p_filters: { category, vectorWeight },
-        p_language: language,
-        p_execution_time_ms: executionTime,
-      })
-    } catch (trackError) {
-      // Non-critical error, just log it
-      console.warn('Failed to track search:', trackError)
-    }
 
     // Step 4: Enrich results with user profiles if needed
     const experienceIds = results?.map((r: any) => r.id) || []
@@ -118,9 +114,72 @@ export async function POST(req: NextRequest) {
       }))
     }
 
+    // Step 5: Apply re-ranking if enabled
+    let finalResults = enrichedResults || []
+    let reranked = false
+    let rerankingTime = 0
+
+    if (shouldRerank && finalResults.length > 0) {
+      const rerankStartTime = Date.now()
+      console.log(`[Hybrid Search] Re-ranking ${finalResults.length} candidates...`)
+
+      try {
+        // Map results to SearchResult format for re-ranking
+        const searchResults: SearchResult[] = finalResults.map((exp: any) => ({
+          id: exp.id,
+          title: exp.title || '',
+          content: exp.description || '',
+          category: exp.category_name,
+          score: exp.rank_score, // Original hybrid search score
+        }))
+
+        // Re-rank using cross-encoder
+        const rerankedResults = await rerankResults(query, searchResults, limit)
+
+        // Map back to original format with re-rank scores
+        finalResults = rerankedResults.map((reranked) => {
+          const original = finalResults.find((exp: any) => exp.id === reranked.id)
+          return {
+            ...original,
+            rerank_score: reranked.rerankScore,
+            rank_score: reranked.score, // Keep original score for comparison
+          }
+        })
+
+        reranked = true
+        rerankingTime = Date.now() - rerankStartTime
+        console.log(`[Hybrid Search] ✅ Re-ranking completed in ${rerankingTime}ms`)
+      } catch (rerankError) {
+        console.error('[Hybrid Search] Re-ranking failed, using original results:', rerankError)
+        // Fallback to original results without re-ranking
+        finalResults = finalResults.slice(0, limit)
+      }
+    } else {
+      // No re-ranking, just slice to limit
+      finalResults = finalResults.slice(0, limit)
+    }
+
+    const executionTime = Date.now() - startTime
+
+    // Step 6: Track search analytics with final results
+    try {
+      await (supabase as any).rpc('track_search', {
+        p_query_text: query,
+        p_user_id: user?.id || null,
+        p_result_count: finalResults.length,
+        p_search_type: reranked ? 'hybrid+reranking' : 'hybrid',
+        p_filters: { category, vectorWeight, reranked },
+        p_language: language,
+        p_execution_time_ms: executionTime,
+      })
+    } catch (trackError) {
+      // Non-critical error, just log it
+      console.warn('Failed to track search:', trackError)
+    }
+
     return NextResponse.json({
-      results: enrichedResults || [],
-      total: enrichedResults?.length || 0,
+      results: finalResults,
+      total: finalResults.length,
       meta: {
         query,
         language,
@@ -128,7 +187,10 @@ export async function POST(req: NextRequest) {
         ftsWeight,
         category,
         executionTime,
-        searchType: 'hybrid',
+        searchType: reranked ? 'hybrid+reranking' : 'hybrid',
+        reranked,
+        rerankingTime: reranked ? rerankingTime : undefined,
+        candidateCount: reranked ? enrichedResults.length : undefined,
       },
     })
 
