@@ -27,6 +27,13 @@ import { featureFlags } from '@/lib/config/feature-flags'
  * }
  */
 
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST.' },
+    { status: 405 }
+  )
+}
+
 export async function POST(req: NextRequest) {
   const startTime = Date.now()
 
