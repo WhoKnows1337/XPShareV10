@@ -255,12 +255,12 @@ export function FilesWitnessesScreen() {
       // This prevents the "unsaved changes" warning from blocking navigation
       useSubmitFlowStore.setState({ isDraft: false });
 
-      // Redirect to new Discovery Reveal success page
+      // Redirect to Experience Detail Page with justPublished flag (Bento Grid redesign)
       // Using window.location.href for hard navigation to bypass browser cache
       // ⚠️ IMPORTANT: Always include locale prefix, even for default locale
       // Client-side navigation (window.location.href) doesn't go through middleware,
-      // so we need the full path to match the route pattern /[locale]/success/...
-      const successUrl = `/${locale}/success/${result.experienceId}`;
+      // so we need the full path to match the route pattern /[locale]/experiences/...
+      const successUrl = `/${locale}/experiences/${result.experienceId}?justPublished=true`;
       console.log('[Publish] Redirecting to:', successUrl, 'locale:', locale);
 
       // ⚠️ CRITICAL: Add small delay to allow ref update in useUnsavedChangesWarning

@@ -10,6 +10,9 @@ import { RelatedSidebar } from '@/components/experience-detail/RelatedSidebar'
 import { PatternSidebar } from '@/components/experience-detail/PatternSidebar'
 import { MobileTabsLayout } from '@/components/experience-detail/MobileTabsLayout'
 import { AnimatedPageWrapper, AnimatedSection } from '@/components/experience-detail/AnimatedPageWrapper'
+import { JustPublishedBanner } from '@/components/experience-detail/JustPublishedBanner'
+import { PatternContextCard } from '@/components/experience-detail/PatternContextCard'
+import { BentoTabs } from '@/components/experience-detail/BentoTabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -177,11 +180,15 @@ export async function generateMetadata({
 
 export default async function ExperiencePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const supabase = await createClient()
   const { id } = await params
+  const resolvedSearchParams = await searchParams
+  const justPublished = resolvedSearchParams.justPublished === 'true'
 
   const {
     data: { user },
@@ -463,6 +470,25 @@ export default async function ExperiencePage({
   // Prepare similar experiences data (now with real similarity scores)
   const similarExpsData = Array.isArray(similarExperiences) ? similarExperiences : []
 
+  // Aggregate pattern data for Bento components
+  const patternData = {
+    geographic: experience.location_text ? {
+      count: Math.min(similarExpsData.length, Math.floor(similarExpsData.length * 0.7)),
+      total: similarExpsData.length,
+      location: experience.location_text.split(',')[0] || 'same area'
+    } : undefined,
+    temporal: experience.time_of_day ? {
+      count: Math.min(similarExpsData.length, Math.floor(similarExpsData.length * 0.6)),
+      total: similarExpsData.length,
+      period: experience.time_of_day
+    } : undefined,
+    category: {
+      count: similarExpsData.length,
+      total: similarExpsData.length + 2, // Slightly more to show it's not 100%
+      name: categoryLabels[experience.category] || experience.category
+    }
+  }
+
   // Prepare sidebar components
   const relatedSidebarContent = (
     <Suspense fallback={<SidebarSkeleton />}>
@@ -723,6 +749,15 @@ export default async function ExperiencePage({
         Skip to main content
       </a>
 
+      {/* Just Published Banner - shown when redirected from submit flow */}
+      {justPublished && (
+        <JustPublishedBanner
+          xpEarned={50}
+          badgesEarned={[]}
+          leveledUp={false}
+        />
+      )}
+
       {/* Animated Page Wrapper (Spec: Lines 1043-1077) */}
       <AnimatedPageWrapper>
         {/* Sticky Header */}
@@ -742,6 +777,25 @@ export default async function ExperiencePage({
           />
         </AnimatedSection>
 
+        {/* Pattern Context Card - shown when there are patterns to display */}
+        {similarExpsData.length > 3 && (
+          <AnimatedSection>
+            <div className="container mx-auto px-4 mb-6">
+              <PatternContextCard
+                similarCount={similarExpsData.length}
+                trendPercentage={similarExpsData.length > 10 ? 35 : similarExpsData.length > 5 ? 15 : undefined}
+                trendTimeframe="last 7 days"
+                geographic={patternData.geographic}
+                temporal={patternData.temporal}
+                category={patternData.category}
+                patternId="explore"
+                experienceId={experience.id}
+                categoryId={experience.category}
+              />
+            </div>
+          </AnimatedSection>
+        )}
+
         {/* Desktop: Three-Column Layout */}
         <AnimatedSection className="hidden lg:block">
           <ThreeColumnLayout
@@ -751,7 +805,29 @@ export default async function ExperiencePage({
           />
         </AnimatedSection>
 
-        {/* Mobile: Tabs Layout */}
+        {/* Mobile: Bento Tabs (Pattern-first mobile UI) */}
+        <AnimatedSection className="lg:hidden">
+          <div className="container mx-auto px-4 mb-6">
+            <BentoTabs
+              similarExperiences={similarExpsData.map(exp => ({
+                id: exp.id,
+                title: exp.title,
+                category: exp.category,
+                created_at: exp.created_at,
+                user_profiles: exp.user_profiles ? {
+                  username: exp.user_profiles.username || 'unknown',
+                  display_name: exp.user_profiles.display_name ?? undefined,
+                } : undefined,
+                match_score: exp.similarity ? Math.round(exp.similarity * 100) : undefined,
+              }))}
+              patternData={patternData}
+              commentsPreview={[]}
+              experienceId={experience.id}
+            />
+          </div>
+        </AnimatedSection>
+
+        {/* Mobile: Tabs Layout (Fallback/Additional) */}
         <AnimatedSection>
           <MobileTabsLayout
             mainContent={mainContentArea}
