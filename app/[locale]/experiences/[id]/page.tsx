@@ -492,19 +492,37 @@ export default async function ExperiencePage({
   // Prepare sidebar components
   const relatedSidebarContent = (
     <Suspense fallback={<SidebarSkeleton />}>
-      <RelatedSidebar
-        user={userData}
-        similarExperiences={similarExpsData}
-        currentUserId={user?.id}
-        isFollowing={isFollowing}
-        authorTimeline={(authorExperiences || [])
-          .filter((exp) => experience.created_at !== null)
-          .map((exp) => ({
-            created_at: experience.created_at!,
-            date_occurred: experience.date_occurred ?? undefined,
-          }))}
-        experienceId={experience.id}
-      />
+      <div className="space-y-6">
+        {/* Pattern Context Card - shown when similar experiences exist */}
+        {similarExpsData.length > 0 && (
+          <PatternContextCard
+            similarCount={similarExpsData.length}
+            trendPercentage={similarExpsData.length > 10 ? 35 : similarExpsData.length > 5 ? 15 : undefined}
+            trendTimeframe="last 7 days"
+            geographic={patternData.geographic}
+            temporal={patternData.temporal}
+            category={patternData.category}
+            patternId="explore"
+            experienceId={experience.id}
+            categoryId={experience.category}
+          />
+        )}
+
+        {/* Related Sidebar with User Profile and Similar Experiences */}
+        <RelatedSidebar
+          user={userData}
+          similarExperiences={similarExpsData}
+          currentUserId={user?.id}
+          isFollowing={isFollowing}
+          authorTimeline={(authorExperiences || [])
+            .filter((exp) => experience.created_at !== null)
+            .map((exp) => ({
+              created_at: experience.created_at!,
+              date_occurred: experience.date_occurred ?? undefined,
+            }))}
+          experienceId={experience.id}
+        />
+      </div>
     </Suspense>
   )
 
@@ -777,27 +795,8 @@ export default async function ExperiencePage({
           />
         </AnimatedSection>
 
-        {/* Pattern Context Card - shown when there are patterns to display */}
-        {similarExpsData.length > 0 && (
-          <AnimatedSection>
-            <div className="container mx-auto px-4 mb-6">
-              <PatternContextCard
-                similarCount={similarExpsData.length}
-                trendPercentage={similarExpsData.length > 10 ? 35 : similarExpsData.length > 5 ? 15 : undefined}
-                trendTimeframe="last 7 days"
-                geographic={patternData.geographic}
-                temporal={patternData.temporal}
-                category={patternData.category}
-                patternId="explore"
-                experienceId={experience.id}
-                categoryId={experience.category}
-              />
-            </div>
-          </AnimatedSection>
-        )}
-
-        {/* Desktop: Three-Column Layout (OLD DESIGN - HIDDEN, replaced by Bento Grid) */}
-        <AnimatedSection className="hidden">
+        {/* Desktop: Three-Column Layout with Glassmorphic Cards */}
+        <AnimatedSection className="hidden lg:block">
           <ThreeColumnLayout
             leftSidebar={relatedSidebarContent}
             mainContent={mainContentArea}
@@ -805,33 +804,13 @@ export default async function ExperiencePage({
           />
         </AnimatedSection>
 
-        {/* Bento Tabs (Pattern-first UI for all screen sizes) */}
-        <AnimatedSection>
-          <div className="container mx-auto px-4 mb-6">
-            <BentoTabs
-              similarExperiences={similarExpsData.map(exp => ({
-                id: exp.id,
-                title: exp.title,
-                category: exp.category,
-                created_at: exp.created_at,
-                user_profiles: exp.user_profiles ? {
-                  username: exp.user_profiles.username || 'unknown',
-                  display_name: exp.user_profiles.display_name ?? undefined,
-                } : undefined,
-                match_score: exp.similarity ? Math.round(exp.similarity * 100) : undefined,
-              }))}
-              patternData={patternData}
-              commentsPreview={[]}
-              experienceId={experience.id}
-            />
-          </div>
-        </AnimatedSection>
-
-        {/* Main Content Area - shown below Bento Tabs */}
-        <AnimatedSection>
-          <div className="container mx-auto px-4">
-            {mainContentArea}
-          </div>
+        {/* Mobile: Tabs Layout */}
+        <AnimatedSection className="lg:hidden">
+          <MobileTabsLayout
+            mainContent={mainContentArea}
+            relatedSidebar={relatedSidebarContent}
+            patternSidebar={patternSidebarContent}
+          />
         </AnimatedSection>
       </AnimatedPageWrapper>
     </>
