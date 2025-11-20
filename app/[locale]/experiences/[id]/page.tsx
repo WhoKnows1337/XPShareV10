@@ -778,7 +778,7 @@ export default async function ExperiencePage({
         </AnimatedSection>
 
         {/* Pattern Context Card - shown when there are patterns to display */}
-        {similarExpsData.length > 3 && (
+        {similarExpsData.length > 0 && (
           <AnimatedSection>
             <div className="container mx-auto px-4 mb-6">
               <PatternContextCard
@@ -796,8 +796,8 @@ export default async function ExperiencePage({
           </AnimatedSection>
         )}
 
-        {/* Desktop: Three-Column Layout */}
-        <AnimatedSection className="hidden lg:block">
+        {/* Desktop: Three-Column Layout (OLD DESIGN - HIDDEN, replaced by Bento Grid) */}
+        <AnimatedSection className="hidden">
           <ThreeColumnLayout
             leftSidebar={relatedSidebarContent}
             mainContent={mainContentArea}
@@ -805,8 +805,8 @@ export default async function ExperiencePage({
           />
         </AnimatedSection>
 
-        {/* Mobile: Bento Tabs (Pattern-first mobile UI) */}
-        <AnimatedSection className="lg:hidden">
+        {/* Bento Tabs (Pattern-first UI for all screen sizes) */}
+        <AnimatedSection>
           <div className="container mx-auto px-4 mb-6">
             <BentoTabs
               similarExperiences={similarExpsData.map(exp => ({
@@ -827,13 +827,11 @@ export default async function ExperiencePage({
           </div>
         </AnimatedSection>
 
-        {/* Mobile: Tabs Layout (Fallback/Additional) */}
+        {/* Main Content Area - shown below Bento Tabs */}
         <AnimatedSection>
-          <MobileTabsLayout
-            mainContent={mainContentArea}
-            relatedSidebar={relatedSidebarContent}
-            patternSidebar={patternSidebarContent}
-          />
+          <div className="container mx-auto px-4">
+            {mainContentArea}
+          </div>
         </AnimatedSection>
       </AnimatedPageWrapper>
     </>

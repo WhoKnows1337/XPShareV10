@@ -59,7 +59,7 @@ export function BentoTabs({
   ];
 
   return (
-    <div className="lg:hidden space-y-3">
+    <div className="space-y-3">
       {/* Tab Buttons */}
       <div className="flex gap-2 p-1 glass-card">
         {tabs.map((tab) => {
