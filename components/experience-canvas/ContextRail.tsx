@@ -4,10 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, MapPin, Clock, Tag, User } from 'lucide-react';
+import { Calendar, MapPin, Clock, Tag, User, Activity, Sun, Moon, CloudRain } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 
 interface ContextRailProps {
   // Author Info
@@ -38,6 +38,28 @@ interface ContextRailProps {
   isFollowing?: boolean;
   currentUserId?: string;
   isAuthor?: boolean;
+
+  // New: Activity Timeline
+  authorTimeline?: Array<{
+    created_at: string;
+    date_occurred?: string;
+  }>;
+
+  // New: Environmental Data
+  environmentalData?: {
+    solar?: {
+      activity: string;
+      flares?: number;
+    };
+    lunar?: {
+      phase: string;
+      illumination?: number;
+    };
+    weather?: {
+      condition: string;
+      temp?: number;
+    };
+  };
 }
 
 export function ContextRail({
@@ -51,6 +73,8 @@ export function ContextRail({
   isFollowing = false,
   currentUserId,
   isAuthor = false,
+  authorTimeline,
+  environmentalData,
 }: ContextRailProps) {
   return (
     <div className="space-y-4">
@@ -64,6 +88,54 @@ export function ContextRail({
                 <AvatarImage src={author.avatar_url} alt={author.display_name || author.username} />
                 <AvatarFallback>
                   {(author.display_name || author.username).charAt(0).toUpperCase()}
+
+      {/* Quick Links Card */}
+      <Card className="glass-card">
+        <CardContent className="pt-4 space-y-2">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase mb-3">Quick Actions</h4>
+          
+          <div className="space-y-1.5">
+            {isAuthor && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sm"
+                asChild
+              >
+                <Link href={`/experiences/${currentUserId}/edit`}>
+                  Edit Post
+                </Link>
+              </Button>
+            )}
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-sm"
+            >
+              Share
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-sm text-muted-foreground"
+            >
+              Report
+            </Button>
+            
+            {!isAuthor && currentUserId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sm"
+              >
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
                 </AvatarFallback>
               </Avatar>
             </Link>
@@ -213,6 +285,141 @@ export function ContextRail({
           </CardContent>
         </Card>
       )}
+
+      {/* Activity Timeline */}
+      {authorTimeline && authorTimeline.length > 0 && (
+        <Card className="glass-card border-blue-500/20">
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+              <Activity className="w-3 h-3 text-blue-400" />
+              <span>Activity Timeline</span>
+            </div>
+
+            {/* Mini Activity Chart */}
+            <div className="h-16 w-full">
+              <svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="activityGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0.1" />
+                  </linearGradient>
+                </defs>
+
+                {/* Generate path from timeline data */}
+                <path
+                  d={generateTimelinePath(authorTimeline)}
+                  fill="url(#activityGradient)"
+                  stroke="rgb(59, 130, 246)"
+                  strokeWidth="0.5"
+                />
+              </svg>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{authorTimeline.length} experiences</span>
+              <span>Last {Math.floor((Date.now() - new Date(authorTimeline[0]?.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24))}d</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Environmental Context */}
+      {environmentalData && (
+        <Card className="glass-card border-orange-500/20">
+          <CardContent className="pt-4 space-y-3">
+            <h4 className="text-xs font-medium text-muted-foreground">Environmental Context</h4>
+
+            {/* Solar Activity */}
+            {environmentalData.solar && (
+              <div className="flex items-center gap-2 text-sm">
+                <Sun className="w-4 h-4 text-orange-400" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground">Solar Activity</p>
+                  <p className="font-medium text-xs capitalize">{environmentalData.solar.activity}</p>
+                </div>
+                {environmentalData.solar.flares !== undefined && (
+                  <Badge variant="outline" className="text-xs">
+                    {environmentalData.solar.flares} flares
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Lunar Phase */}
+            {environmentalData.lunar && (
+              <div className="flex items-center gap-2 text-sm">
+                <Moon className="w-4 h-4 text-blue-300" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground">Moon Phase</p>
+                  <p className="font-medium text-xs capitalize">{environmentalData.lunar.phase}</p>
+                </div>
+                {environmentalData.lunar.illumination !== undefined && (
+                  <Badge variant="outline" className="text-xs">
+                    {Math.round(environmentalData.lunar.illumination)}%
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Weather */}
+            {environmentalData.weather && (
+              <div className="flex items-center gap-2 text-sm">
+                <CloudRain className="w-4 h-4 text-blue-400" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground">Weather</p>
+                  <p className="font-medium text-xs capitalize">{environmentalData.weather.condition}</p>
+                </div>
+                {environmentalData.weather.temp !== undefined && (
+                  <Badge variant="outline" className="text-xs">
+                    {Math.round(environmentalData.weather.temp)}°
+                  </Badge>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
+}
+
+// Helper function to generate SVG path from timeline data
+function generateTimelinePath(timeline: Array<{ created_at: string; date_occurred?: string }>): string {
+  if (timeline.length === 0) return '';
+  if (timeline.length === 1) return 'M0,20 L100,20 L100,40 L0,40 Z';
+
+  // Sort by date (most recent first)
+  const sorted = [...timeline].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  // Take last 10 for chart
+  const data = sorted.slice(0, 10).reverse();
+
+  // Create monthly buckets
+  const buckets = new Map<string, number>();
+  data.forEach(item => {
+    const month = format(new Date(item.created_at), 'yyyy-MM');
+    buckets.set(month, (buckets.get(month) || 0) + 1);
+  });
+
+  const points = Array.from(buckets.entries()).map(([month, count], index, arr) => {
+    const x = (index / (arr.length - 1 || 1)) * 100;
+    const maxCount = Math.max(...Array.from(buckets.values()));
+    const y = 40 - ((count / maxCount) * 30);
+    return { x, y };
+  });
+
+  if (points.length === 0) return '';
+
+  // Build SVG path
+  let path = `M0,40 L${points[0].x},40 L${points[0].x},${points[0].y}`;
+
+  for (let i = 1; i < points.length; i++) {
+    path += ` L${points[i].x},${points[i].y}`;
+  }
+
+  path += ` L${points[points.length - 1].x},40 L100,40 Z`;
+
+  return path;
 }

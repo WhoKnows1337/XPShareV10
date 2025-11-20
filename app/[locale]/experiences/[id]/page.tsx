@@ -8,15 +8,16 @@ import { ExperienceHeader } from '@/components/experience-detail/ExperienceHeade
 import { ExperienceContent } from '@/components/experience-detail/ExperienceContent'
 import { RelatedSidebar } from '@/components/experience-detail/RelatedSidebar'
 import { PatternSidebar } from '@/components/experience-detail/PatternSidebar'
-import { MobileTabsLayout } from '@/components/experience-detail/MobileTabsLayout'
 import { AnimatedPageWrapper, AnimatedSection } from '@/components/experience-detail/AnimatedPageWrapper'
 import { JustPublishedBanner } from '@/components/experience-detail/JustPublishedBanner'
 import { PatternContextCard } from '@/components/experience-detail/PatternContextCard'
-import { BentoTabs } from '@/components/experience-detail/BentoTabs'
 import { PatternAlertBar } from '@/components/experience-canvas/PatternAlertBar'
 import { ContextRail } from '@/components/experience-canvas/ContextRail'
 import { DiscoveryRail } from '@/components/experience-canvas/DiscoveryRail'
 import { MobileSwipeableCards } from '@/components/experience-canvas/MobileSwipeableCards'
+import { ExperienceHeaderBar } from '@/components/experience-detail/ExperienceHeaderBar'
+import { MediaTabs } from '@/components/experience-detail/MediaTabs'
+import { AIInsightsInline } from '@/components/experience-detail/AIInsightsInline'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -27,6 +28,7 @@ import {
 } from '@/lib/api/experiences'
 import { getImageBlurDataURL } from '@/lib/utils/image-blur'
 import type { Database } from '@/lib/supabase/database.types'
+import { AIInsightsRibbon } from '@/components/experience-canvas/AIInsightsRibbon'
 
 type ExperienceWithProfile = Database['public']['Tables']['experiences']['Row'] & {
   user_profiles: {
@@ -37,44 +39,12 @@ type ExperienceWithProfile = Database['public']['Tables']['experiences']['Row'] 
   } | null
 }
 
-// Dynamic imports for heavy components
-const CommentsSection = dynamic(
-  () => import('@/components/interactions/comments-section').then((mod) => ({ default: mod.CommentsSection })),
-  {
-    loading: () => (
-      <Card>
-        <CardContent className="p-8">
-          <Skeleton className="h-20 w-full" />
-        </CardContent>
-      </Card>
-    ),
-  }
-)
-
-const CrossCategoryInsights = dynamic(
-  () => import('@/components/experience-detail/CrossCategoryInsights').then((mod) => ({ default: mod.CrossCategoryInsights })),
-  {
-    loading: () => <Skeleton className="h-32 w-full" />,
-  }
-)
-
-const MapboxMiniMap = dynamic(
-  () => import('@/components/experience-detail/MapboxMiniMap').then((mod) => ({ default: mod.MapboxMiniMap })),
-  {
-    loading: () => <Skeleton className="aspect-square w-full" />,
-  }
-)
-
-const GraphVisualization = dynamic(
-  () => import('@/components/experience-detail/GraphVisualization').then((mod) => ({ default: mod.GraphVisualization })),
-  {
-    loading: () => <Skeleton className="aspect-square w-full" />,
-  }
-)
-
-const LiveRegion = dynamic(
-  () => import('@/components/accessibility/LiveRegion').then((mod) => ({ default: mod.LiveRegion }))
-)
+// Regular imports instead of dynamic (to avoid RSC streaming issues)
+import { CommentsSection } from '@/components/interactions/comments-section'
+import { CrossCategoryInsights } from '@/components/experience-detail/CrossCategoryInsights'
+import { MapboxMiniMap } from '@/components/experience-detail/MapboxMiniMap'
+import { GraphVisualization } from '@/components/experience-detail/GraphVisualization'
+import { LiveRegion } from '@/components/accessibility/LiveRegion'
 
 const categoryLabels: Record<string, string> = {
   ufo: 'UFO Sighting',
@@ -252,27 +222,32 @@ export default async function ExperiencePage({
   const similarExperiences = await getSimilarExperiences(id, 12)
 
   // Fetch external events (Solar, Moon, Weather)
-  const externalEvents = await getEnvironmentalData(
-    experience.date_occurred || '',
-    experience.location_lat ?? undefined,
-    experience.location_lng ?? undefined
-  )
+  // TEMPORARILY DISABLED for debugging - this may be causing timeout
+  // const externalEvents = await getEnvironmentalData(
+  //   experience.date_occurred || '',
+  //   experience.location_lat ?? undefined,
+  //   experience.location_lng ?? undefined
+  // )
+  const externalEvents: any[] = [] // Fallback empty array
 
   // Fetch cross-category insights (Aha-Moment #9)
-  const crossCategoryInsightsRaw = await getCrossCategoryInsights(experience.category)
-  const crossCategoryInsights = Array.isArray(crossCategoryInsightsRaw) ? crossCategoryInsightsRaw : []
+  // TEMPORARILY DISABLED for debugging
+  // const crossCategoryInsightsRaw = await getCrossCategoryInsights(experience.category)
+  // const crossCategoryInsights = Array.isArray(crossCategoryInsightsRaw) ? crossCategoryInsightsRaw : []
+  const crossCategoryInsights: any[] = [] // Fallback empty array
 
   // Fetch nearby experiences if location is available
+  // TEMPORARILY DISABLED for debugging
   let nearbyCount = 0
-  if (experience.location_lat && experience.location_lng) {
-    const nearbyExperiences = await getNearbyExperiences(
-      experience.location_lat,
-      experience.location_lng,
-      50, // 50km radius
-      20 // limit
-    )
-    nearbyCount = Array.isArray(nearbyExperiences) ? nearbyExperiences.length : 0
-  }
+  // if (experience.location_lat && experience.location_lng) {
+  //   const nearbyExperiences = await getNearbyExperiences(
+  //     experience.location_lat,
+  //     experience.location_lng,
+  //     50, // 50km radius
+  //     20 // limit
+  //   )
+  //   nearbyCount = Array.isArray(nearbyExperiences) ? nearbyExperiences.length : 0
+  // }
 
   // Fetch author's experiences for timeline
   const { data: authorExperiencesRaw } = await supabase
@@ -331,15 +306,16 @@ export default async function ExperiencePage({
   const mediaItems: MediaItem[] | null = mediaItemsRaw
 
   // Get hero image (first image) for blur placeholder
+  // TEMPORARILY DISABLED for debugging - image processing may be slow
   const heroImage = mediaItems?.find((item) => item.type === 'photo' || item.type === 'image')
   let heroImageBlur = ''
-  if (heroImage?.url) {
-    try {
-      heroImageBlur = await getImageBlurDataURL(heroImage.url)
-    } catch (error) {
-      console.error('Failed to generate blur placeholder:', error)
-    }
-  }
+  // if (heroImage?.url) {
+  //   try {
+  //     heroImageBlur = await getImageBlurDataURL(heroImage.url)
+  //   } catch (error) {
+  //     console.error('Failed to generate blur placeholder:', error)
+  //   }
+  // }
 
   // Fetch witnesses
   const { data: witnessesRaw } = await supabase
@@ -665,22 +641,15 @@ export default async function ExperiencePage({
       hasActiveWave={hasActiveWave}
       patternStrength={patternStrength}
       viewCount={experience.view_count || 0}
+      // Add "You" tab data: impact metrics (moved from YouTabContent)
+      impactMetrics={isAuthor ? {
+        totalViews: experience.view_count || 0,
+        totalLikes: experience.upvote_count || 0,
+        totalComments: experience.comment_count || 0,
+        contributionScore: similarExpsData.length, // Connections count as contribution
+      } : undefined}
     />
   )
-
-  // Prepare Mobile Swipeable Cards
-  const mobileSwipeableCardsData = [
-    {
-      id: 'context',
-      title: 'About',
-      content: contextRailContent,
-    },
-    {
-      id: 'discovery',
-      title: 'Patterns',
-      content: discoveryRailContent,
-    },
-  ]
 
   // Transform data for ExperienceContent
   const formattedDynamicAnswers = (dynamicAnswers || []).map((answer) => ({
@@ -780,6 +749,7 @@ export default async function ExperiencePage({
     } : undefined,
   }))
 
+  // Main Content Area - Restructured with AI Insights Inline + Media Tabs (so.md mockup)
   const mainContentArea = (
     <div className="space-y-8" id="main-content">
       {/* Main Experience Content */}
@@ -811,20 +781,142 @@ export default async function ExperiencePage({
         externalLinks={formattedLinks}
       />
 
-      {/* Comments Section */}
-      <Suspense
-        fallback={
-          <Card>
-            <CardContent className="p-8">
-              <Skeleton className="h-20 w-full" />
+      {/* AI Insights Inline - After Story Text (so.md Lines 163-166) */}
+      {similarExpsData.length > 0 && (
+        <AIInsightsInline
+          patternStrength={patternStrength}
+          categoryMatches={categoryMatches}
+          locationMatches={locationMatches}
+          temporalMatches={temporalMatches}
+        />
+      )}
+
+      {/* Media Tabs - Photos, Videos, Audio, Links (so.md Lines 172-174) */}
+      <MediaTabs
+        photos={formattedPhotos}
+        videos={formattedVideos}
+        audio={formattedAudio}
+        externalLinks={formattedLinks}
+      />
+
+      {/* Map Section - Integrated from MapTabContent */}
+      {experience.location_lat && experience.location_lng && (
+        <section id="map-section" className="scroll-mt-20">
+          <h2 className="text-2xl font-bold mb-4">Geographic Context</h2>
+          <Suspense fallback={<Skeleton className="aspect-video w-full rounded-lg" />}>
+            <MapboxMiniMap
+              lat={experience.location_lat}
+              lng={experience.location_lng}
+              locationText={experience.location_text ?? undefined}
+              nearbyCount={nearbyCount}
+            />
+          </Suspense>
+          {nearbyCount > 0 && (
+            <p className="text-sm text-muted-foreground mt-3">
+              {nearbyCount} similar experiences within 50km
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* Timeline Section - Placeholder for future timeline visualization */}
+      {authorExperiences && authorExperiences.length > 1 && (
+        <section id="timeline-section" className="scroll-mt-20">
+          <h2 className="text-2xl font-bold mb-4">Author's Timeline</h2>
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <p className="text-sm text-muted-foreground">
+                {userData.display_name || userData.username} has shared {authorExperiences.length} experiences over time.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Timeline visualization coming soon...
+              </p>
             </CardContent>
           </Card>
-        }
-      >
-        <CommentsSection experienceId={experience.id} currentUserId={user?.id} />
-      </Suspense>
+        </section>
+      )}
+
+      {/* Comments Section */}
+      <section id="comments-section" className="scroll-mt-20">
+        <Suspense
+          fallback={
+            <Card>
+              <CardContent className="p-8">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          }
+        >
+          <CommentsSection experienceId={experience.id} currentUserId={user?.id} />
+        </Suspense>
+      </section>
     </div>
   )
+
+  // Prepare Mobile Swipeable Cards - Expanded to 5 cards
+  const mobileSwipeableCardsData = [
+    {
+      id: 'story',
+      title: 'Story',
+      content: mainContentArea,
+    },
+    {
+      id: 'discovery',
+      title: 'Patterns',
+      content: discoveryRailContent,
+    },
+    {
+      id: 'map',
+      title: 'Map',
+      content: experience.location_lat && experience.location_lng ? (
+        <div className="p-4">
+          <Suspense fallback={<Skeleton className="aspect-video w-full rounded-lg" />}>
+            <MapboxMiniMap
+              lat={experience.location_lat}
+              lng={experience.location_lng}
+              locationText={experience.location_text ?? undefined}
+              nearbyCount={nearbyCount}
+            />
+          </Suspense>
+          {nearbyCount > 0 && (
+            <p className="text-sm text-muted-foreground mt-3 text-center">
+              {nearbyCount} similar experiences nearby
+            </p>
+          )}
+        </div>
+      ) : (
+        <Card className="glass-card">
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">No location data available</p>
+          </CardContent>
+        </Card>
+      ),
+    },
+    {
+      id: 'comments',
+      title: 'Comments',
+      content: (
+        <div className="p-4">
+          <Suspense
+            fallback={
+              <Card>
+                <CardContent className="p-8">
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            }
+          >
+            <CommentsSection experienceId={experience.id} currentUserId={user?.id} />
+          </Suspense>
+        </div>
+      ),
+    },
+    {
+      id: 'author',
+      title: 'Author',
+      content: contextRailContent,
+    },
+  ]
 
   // JSON-LD Structured Data for SEO
   const jsonLd = {
@@ -895,63 +987,36 @@ export default async function ExperiencePage({
         />
       )}
 
-      {/* Pattern Alert Bar - Shows key pattern insights */}
-      {similarExpsData.length > 0 && (
-        <PatternAlertBar
-          similarCount={similarExpsData.length}
-          hasActiveWave={hasActiveWave}
-          categoryMatches={categoryMatches}
-          locationMatches={locationMatches}
-          temporalMatches={temporalMatches}
-          patternStrength={patternStrength}
-          category={categoryLabels[experience.category]}
-          locationText={experience.location_text ?? undefined}
-        />
-      )}
+      {/* Experience Header Bar - Sticky Header with Breadcrumbs, Pattern Alert, Quick Info */}
+      <ExperienceHeaderBar
+        category={categoryLabels[experience.category]}
+        categorySlug={experience.category}
+        hasActiveWave={hasActiveWave}
+        patternCount={similarExpsData.length}
+        patternStrength={patternStrength}
+        experienceId={id}
+        author={{
+          username: userData.username,
+          display_name: userData.display_name ?? undefined,
+        }}
+        locationText={experience.location_text ?? undefined}
+        createdAt={experience.created_at}
+        commentCount={experience.comment_count ?? 0}
+        upvoteCount={experience.upvote_count ?? 0}
+        viewCount={experience.view_count ?? 0}
+      />
 
-      {/* Animated Page Wrapper (Spec: Lines 1043-1077) */}
-      <AnimatedPageWrapper>
-        {/* Sticky Header */}
-        <AnimatedSection>
-          <ExperienceHeader
-            id={experience.id}
-            title={experience.title}
-            user={userData}
-            category={experience.category}
-            occurredAt={experience.date_occurred ?? undefined}
-            viewCount={experience.view_count || 0}
-            likeCount={experience.upvote_count || 0}
-            commentCount={experience.comment_count || 0}
-            isAuthor={isAuthor}
-            currentUserId={user?.id}
-            initialIsLiked={isLiked}
-          />
-        </AnimatedSection>
+      {/* THREE-COLUMN LAYOUT - Discovery Canvas (so.md Lines 129-143) */}
+      <ThreeColumnLayout
+        leftSidebar={contextRailContent}
+        mainContent={mainContentArea}
+        rightPanel={discoveryRailContent}
+      />
 
-        {/* Desktop: Three-Column Layout with Glassmorphic Cards */}
-        <AnimatedSection className="hidden lg:block">
-          <ThreeColumnLayout
-            leftSidebar={contextRailContent}
-            mainContent={mainContentArea}
-            rightPanel={discoveryRailContent}
-          />
-        </AnimatedSection>
-
-        {/* Mobile: Main Content + Swipeable Cards */}
-        <AnimatedSection className="lg:hidden">
-          <div className="space-y-6">
-            {/* Main Content First */}
-            <div className="px-4">
-              {mainContentArea}
-            </div>
-
-            {/* Swipeable Cards for Sidebars */}
-            <div className="px-2">
-              <MobileSwipeableCards cards={mobileSwipeableCardsData} />
-            </div>
-          </div>
-        </AnimatedSection>
-      </AnimatedPageWrapper>
+      {/* MOBILE: Swipeable Cards (so.md Lines 189-205) */}
+      <div className="lg:hidden mt-6">
+        <MobileSwipeableCards cards={mobileSwipeableCardsData} />
+      </div>
     </>
   )
 }
@@ -976,3 +1041,4 @@ function SidebarSkeleton() {
     </div>
   )
 }
+

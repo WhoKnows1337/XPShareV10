@@ -36,7 +36,7 @@ export async function generateDiscoveryEvents(experienceId: string): Promise<Dis
 
   // Event 4: Find similar experiences
   const { data: similarExperiences } = await supabase.rpc(
-    'get_similar_experiences_by_embedding',
+    'get_similar_experiences_by_attributes',
     {
       p_experience_id: experienceId,
       p_limit: 50,
@@ -125,7 +125,7 @@ export async function getDiscoveryResult(experienceId: string): Promise<Discover
 
   // Get similar experiences
   const { data: similarExperiences } = await supabase.rpc(
-    'get_similar_experiences_by_embedding',
+    'get_similar_experiences_by_attributes',
     {
       p_experience_id: experienceId,
       p_limit: 50,

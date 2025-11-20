@@ -79,10 +79,10 @@ export const getSimilarExperiences = cache(async (experienceId: string, limit: n
     query_embedding: experience.embedding,
     match_threshold: 0.6,
     match_count: limit,
-    p_experience_id: experienceId,
   })
 
-  return data || []
+  // Filter out the current experience from results
+  return (data || []).filter((exp: any) => exp.id !== experienceId)
 })
 
 /**
