@@ -13,6 +13,10 @@ import { AnimatedPageWrapper, AnimatedSection } from '@/components/experience-de
 import { JustPublishedBanner } from '@/components/experience-detail/JustPublishedBanner'
 import { PatternContextCard } from '@/components/experience-detail/PatternContextCard'
 import { BentoTabs } from '@/components/experience-detail/BentoTabs'
+import { PatternAlertBar } from '@/components/experience-canvas/PatternAlertBar'
+import { ContextRail } from '@/components/experience-canvas/ContextRail'
+import { DiscoveryRail } from '@/components/experience-canvas/DiscoveryRail'
+import { MobileSwipeableCards } from '@/components/experience-canvas/MobileSwipeableCards'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -470,6 +474,74 @@ export default async function ExperiencePage({
   // Prepare similar experiences data (now with real similarity scores)
   const similarExpsData = Array.isArray(similarExperiences) ? similarExperiences : []
 
+  // Calculate pattern metrics for PatternAlertBar
+  const categoryMatches = similarExpsData.filter(
+    (exp: any) => exp.category === experience.category
+  ).length
+
+  const locationMatches = experience.location_text
+    ? similarExpsData.filter((exp: any) => {
+        const expLocation = exp.location_text?.split(',')[0]?.trim()
+        const currentLocation = experience.location_text?.split(',')[0]?.trim()
+        return expLocation === currentLocation
+      }).length
+    : 0
+
+  const temporalMatches = experience.time_of_day
+    ? similarExpsData.filter((exp: any) => exp.time_of_day === experience.time_of_day).length
+    : 0
+
+  // Check for active wave (recent similar experiences)
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const recentCount = similarExpsData.filter((exp: any) => {
+    const createdAt = new Date(exp.created_at)
+    return createdAt >= sevenDaysAgo
+  }).length
+  const hasActiveWave = recentCount > 5
+
+  // Calculate pattern strength (0-100)
+  const patternStrength = Math.min(
+    100,
+    Math.round(
+      (categoryMatches / Math.max(similarExpsData.length, 1)) * 40 +
+        (locationMatches / Math.max(similarExpsData.length, 1)) * 30 +
+        (temporalMatches / Math.max(similarExpsData.length, 1)) * 20 +
+        (hasActiveWave ? 10 : 0)
+    )
+  )
+
+  // Prepare pattern matches for DiscoveryRail
+  const patternMatches = [
+    categoryMatches > 0 && {
+      type: 'category' as const,
+      strength: Math.min(100, (categoryMatches / similarExpsData.length) * 100),
+      count: categoryMatches,
+      label: categoryLabels[experience.category] || experience.category,
+      description: `Similar ${categoryLabels[experience.category]?.toLowerCase()} experiences`,
+    },
+    locationMatches > 0 && {
+      type: 'location' as const,
+      strength: Math.min(100, (locationMatches / similarExpsData.length) * 100),
+      count: locationMatches,
+      label: experience.location_text?.split(',')[0] || 'Same location',
+      description: 'Experiences from same area',
+    },
+    temporalMatches > 0 && {
+      type: 'temporal' as const,
+      strength: Math.min(100, (temporalMatches / similarExpsData.length) * 100),
+      count: temporalMatches,
+      label: experience.time_of_day || 'Same time',
+      description: 'Similar timing pattern',
+    },
+  ].filter(Boolean) as Array<{
+    type: 'category' | 'location' | 'temporal' | 'semantic'
+    strength: number
+    count: number
+    label: string
+    description?: string
+  }>
+
   // Aggregate pattern data for Bento components
   const patternData = {
     geographic: experience.location_text ? {
@@ -562,6 +634,53 @@ export default async function ExperiencePage({
       </div>
     </Suspense>
   )
+
+  // New Canvas Sidebar Contents
+  const contextRailContent = (
+    <ContextRail
+      author={userData}
+      category={experience.category}
+      dateOccurred={experience.date_occurred ?? undefined}
+      timeOfDay={experience.time_of_day ?? undefined}
+      locationText={experience.location_text ?? undefined}
+      tags={experience.tags || []}
+      createdAt={experience.created_at ?? undefined}
+      isFollowing={isFollowing}
+      currentUserId={user?.id}
+      isAuthor={isAuthor}
+    />
+  )
+
+  const discoveryRailContent = (
+    <DiscoveryRail
+      similarCount={similarExpsData.length}
+      patternMatches={patternMatches}
+      similarExperiences={similarExpsData.slice(0, 10).map((exp: any) => ({
+        id: exp.id,
+        title: exp.title,
+        category: exp.category,
+        similarity_score: exp.similarity_score,
+        user_profiles: exp.user_profiles,
+      }))}
+      hasActiveWave={hasActiveWave}
+      patternStrength={patternStrength}
+      viewCount={experience.view_count || 0}
+    />
+  )
+
+  // Prepare Mobile Swipeable Cards
+  const mobileSwipeableCardsData = [
+    {
+      id: 'context',
+      title: 'About',
+      content: contextRailContent,
+    },
+    {
+      id: 'discovery',
+      title: 'Patterns',
+      content: discoveryRailContent,
+    },
+  ]
 
   // Transform data for ExperienceContent
   const formattedDynamicAnswers = (dynamicAnswers || []).map((answer) => ({
@@ -776,6 +895,20 @@ export default async function ExperiencePage({
         />
       )}
 
+      {/* Pattern Alert Bar - Shows key pattern insights */}
+      {similarExpsData.length > 0 && (
+        <PatternAlertBar
+          similarCount={similarExpsData.length}
+          hasActiveWave={hasActiveWave}
+          categoryMatches={categoryMatches}
+          locationMatches={locationMatches}
+          temporalMatches={temporalMatches}
+          patternStrength={patternStrength}
+          category={categoryLabels[experience.category]}
+          locationText={experience.location_text ?? undefined}
+        />
+      )}
+
       {/* Animated Page Wrapper (Spec: Lines 1043-1077) */}
       <AnimatedPageWrapper>
         {/* Sticky Header */}
@@ -798,19 +931,25 @@ export default async function ExperiencePage({
         {/* Desktop: Three-Column Layout with Glassmorphic Cards */}
         <AnimatedSection className="hidden lg:block">
           <ThreeColumnLayout
-            leftSidebar={relatedSidebarContent}
+            leftSidebar={contextRailContent}
             mainContent={mainContentArea}
-            rightPanel={patternSidebarContent}
+            rightPanel={discoveryRailContent}
           />
         </AnimatedSection>
 
-        {/* Mobile: Tabs Layout */}
+        {/* Mobile: Main Content + Swipeable Cards */}
         <AnimatedSection className="lg:hidden">
-          <MobileTabsLayout
-            mainContent={mainContentArea}
-            relatedSidebar={relatedSidebarContent}
-            patternSidebar={patternSidebarContent}
-          />
+          <div className="space-y-6">
+            {/* Main Content First */}
+            <div className="px-4">
+              {mainContentArea}
+            </div>
+
+            {/* Swipeable Cards for Sidebars */}
+            <div className="px-2">
+              <MobileSwipeableCards cards={mobileSwipeableCardsData} />
+            </div>
+          </div>
         </AnimatedSection>
       </AnimatedPageWrapper>
     </>

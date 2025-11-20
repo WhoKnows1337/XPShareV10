@@ -562,8 +562,10 @@
       "description": "Analyzing your experience across time and space"
     },
     "success": {
-      "title": "Experience Published!",
+      "title": "Experience Shared",
       "subtitle": "Your experience has been successfully saved and can be viewed by others.",
+      "isLive": "is now live",
+      "untitled": "Untitled Experience",
       "publishing": "Publishing experience...",
       "publishingDesc": "Your experience is being saved and compared with similar patterns.",
       "error": "Error publishing",
@@ -572,11 +574,49 @@
       "share": "Share Link",
       "submitAnother": "Submit Another",
       "discovery": {
+        "title": "Discovery",
+        "similarFound": "Similar Experiences Found",
+        "viewAll": "View All",
+        "noSimilar": "No similar experiences found yet",
+        "firstOfKind": "Your experience appears to be unique!",
         "findingSimilar": "Finding similar experiences",
         "detectingPatterns": "Detecting patterns",
         "checkingEvents": "Checking external events",
         "error": "Pattern discovery failed",
-        "errorDesc": "Some insights may be missing. Your experience was published successfully."
+        "errorDesc": "Some insights may be missing. Your experience was published successfully.",
+        "filters": {
+          "location": "Location",
+          "time": "Time Period",
+          "category": "Category"
+        }
+      },
+      "patterns": {
+        "title": "Pattern Analysis",
+        "geographic": "Geographic Cluster",
+        "temporal": "Time Pattern",
+        "category": "Category Match",
+        "in": "in",
+        "during": "during",
+        "mostActive": "Most active"
+      },
+      "actions": {
+        "followPattern": {
+          "title": "Follow Pattern",
+          "desc": "Get notified on new matches",
+          "success": "Pattern followed!",
+          "successDesc": "You'll receive notifications when similar experiences are reported",
+          "error": "Failed to follow pattern",
+          "noPattern": "No pattern available to follow",
+          "following": "Following"
+        },
+        "exploreMap": {
+          "title": "Explore Map",
+          "desc": "See geographic distribution"
+        },
+        "joinDiscussion": {
+          "title": "Join Discussion",
+          "desc": "Share theories & insights"
+        }
       },
       "insights": {
         "title": "Discovered Connections",
@@ -594,10 +634,10 @@
         }
       },
       "rewards": {
-        "title": "🎁 Your Rewards",
+        "title": "Rewards",
         "xpEarned": "XP Earned",
         "xpSubtext": "💪 You're getting stronger!",
-        "levelUp": "🎉 Level Up!",
+        "levelUp": "Level Up!",
         "newLevel": "Level",
         "levelUpSubtext": "New abilities unlocked!",
         "badgeEarned": "New Badges",
