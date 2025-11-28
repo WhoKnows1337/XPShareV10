@@ -3,6 +3,44 @@ import { cache } from 'react'
 import { getExternalEvents } from './external-events'
 
 /**
+ * Type for RPC match_experiences response (actual fields from the RPC)
+ */
+interface MatchExperienceResult {
+  id: string
+  title: string
+  category: string
+  date_occurred?: string
+  location_text?: string
+  story_text?: string
+  tags?: string[]
+  exact_match?: boolean
+  similarity: number
+}
+
+/**
+ * Type for attribute-based similarity match
+ */
+interface AttributeMatchResult {
+  experience_id: string
+  similarity_score: number
+}
+
+/**
+ * Type for similar experience with match score
+ */
+export interface SimilarExperienceResult {
+  id: string
+  title: string
+  category: string
+  created_at: string
+  user_profiles?: {
+    username: string
+    display_name?: string
+  } | null
+  match_score: number
+}
+
+/**
  * Get experience by ID with all related data
  */
 export const getExperience = cache(async (id: string) => {
@@ -41,9 +79,9 @@ export const getExperience = cache(async (id: string) => {
 
 /**
  * Get similar experiences using vector similarity search
- * Requires pgvector extension and embedding column
+ * Uses pgvector for semantic similarity - NO FAKE SCORES
  */
-export const getSimilarExperiences = cache(async (experienceId: string, limit: number = 12) => {
+export const getSimilarExperiences = cache(async (experienceId: string, limit: number = 12): Promise<SimilarExperienceResult[]> => {
   const supabase = await createClient()
 
   // First get the current experience's embedding
@@ -53,36 +91,91 @@ export const getSimilarExperiences = cache(async (experienceId: string, limit: n
     .eq('id', experienceId)
     .single()
 
-  if (!experience?.embedding) {
-    // Fallback: Get experiences from same category
-    const { data } = await supabase
-      .from('experiences')
-      .select(`
-        id,
-        title,
-        category,
-        created_at,
-        user_profiles (username, display_name)
-      `)
-      .eq('category', experience?.category || 'other')
-      .neq('id', experienceId)
-      .limit(limit)
+  // Strategy 1: pgvector semantic search (preferred)
+  if (experience?.embedding) {
+    const { data, error } = await supabase.rpc('match_experiences', {
+      query_embedding: experience.embedding,
+      match_threshold: 0.5,
+      match_count: limit + 1, // +1 because we filter out self
+    })
 
-    return data?.map((exp: any) => ({
-      ...exp,
-      match_score: Math.floor(Math.random() * 30) + 60, // 60-90% for same category
-    })) || []
+    if (!error && data && data.length > 0) {
+      // Filter out self and convert similarity 0-1 → 0-100
+      const filtered = (data as MatchExperienceResult[])
+        .filter((m) => m.id !== experienceId)
+        .slice(0, limit)
+        .map((m): SimilarExperienceResult => ({
+          id: m.id,
+          title: m.title,
+          category: m.category,
+          created_at: m.date_occurred || new Date().toISOString(),
+          user_profiles: null, // RPC doesn't return user_profiles, will be hydrated on display
+          match_score: Math.round(m.similarity * 100),
+        }))
+
+      if (filtered.length > 0) {
+        return filtered
+      }
+    }
   }
 
-  // Use RPC function for vector similarity search
-  const { data } = await (supabase as any).rpc('match_experiences', {
-    query_embedding: experience.embedding,
-    match_threshold: 0.6,
-    match_count: limit,
+  // Strategy 2: Attribute-based similarity
+  const { data: attrMatches } = await supabase.rpc('find_experiences_by_shared_attributes', {
     p_experience_id: experienceId,
+    p_threshold: 0.3,
+    p_limit: limit,
   })
 
-  return data || []
+  if (attrMatches && attrMatches.length > 0) {
+    // Fetch full experience details
+    const matchIds = (attrMatches as AttributeMatchResult[]).map((m) => m.experience_id)
+    const { data: fullExperiences } = await supabase
+      .from('experiences')
+      .select(`
+        id, title, category, created_at,
+        user_profiles!experiences_user_id_fkey (username, display_name)
+      `)
+      .in('id', matchIds)
+      .eq('visibility', 'public')
+
+    type FullExpType = { id: string; title: string; category: string; created_at: string; user_profiles: { username: string; display_name?: string } | null }
+    const expMap = new Map<string, FullExpType>((fullExperiences as FullExpType[] | null)?.map((e) => [e.id, e]) || [])
+
+    return (attrMatches as AttributeMatchResult[]).map((match): SimilarExperienceResult => {
+      const exp = expMap.get(match.experience_id)
+      return {
+        id: exp?.id || match.experience_id,
+        title: exp?.title || '',
+        category: exp?.category || '',
+        created_at: exp?.created_at || '',
+        user_profiles: exp?.user_profiles,
+        match_score: Math.round(match.similarity_score * 100),
+      }
+    }).filter((e) => e.title) // Filter out experiences we couldn't find
+  }
+
+  // Strategy 3: Same category fallback (honest scores, no random)
+  const { data } = await supabase
+    .from('experiences')
+    .select(`
+      id, title, category, created_at,
+      user_profiles!experiences_user_id_fkey (username, display_name)
+    `)
+    .eq('category', experience?.category || 'other')
+    .neq('id', experienceId)
+    .eq('visibility', 'public')
+    .limit(limit)
+
+  type FallbackExpType = { id: string; title: string; category: string; created_at: string; user_profiles: { username: string; display_name?: string } | null }
+  // Honest score: 40% base for same category (no random!)
+  return (data as FallbackExpType[] | null)?.map((exp): SimilarExperienceResult => ({
+    id: exp.id,
+    title: exp.title,
+    category: exp.category,
+    created_at: exp.created_at,
+    user_profiles: exp.user_profiles,
+    match_score: 40, // Honest: same category only = 40%
+  })) || []
 })
 
 /**

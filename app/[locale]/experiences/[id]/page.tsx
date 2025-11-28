@@ -12,7 +12,7 @@ import { MobileTabsLayout } from '@/components/experience-detail/MobileTabsLayou
 import { AnimatedPageWrapper, AnimatedSection } from '@/components/experience-detail/AnimatedPageWrapper'
 import { JustPublishedBanner } from '@/components/experience-detail/JustPublishedBanner'
 import { PatternContextCard } from '@/components/experience-detail/PatternContextCard'
-import { BentoTabs } from '@/components/experience-detail/BentoTabs'
+// BentoTabs moved to dynamic import (contains nested ssr:false for GeographicHeatmap)
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -54,22 +54,28 @@ const CrossCategoryInsights = dynamic(
   }
 )
 
-const MapboxMiniMap = dynamic(
-  () => import('@/components/experience-detail/MapboxMiniMap').then((mod) => ({ default: mod.MapboxMiniMap })),
+// MapboxMiniMap uses a client wrapper to handle ssr: false (not allowed in Server Components)
+const MapboxMiniMapWrapper = dynamic(
+  () => import('@/components/experience-detail/MapboxMiniMapWrapper').then((mod) => ({ default: mod.MapboxMiniMapWrapper })),
   {
     loading: () => <Skeleton className="aspect-square w-full" />,
   }
 )
 
-const GraphVisualization = dynamic(
-  () => import('@/components/experience-detail/GraphVisualization').then((mod) => ({ default: mod.GraphVisualization })),
-  {
-    loading: () => <Skeleton className="aspect-square w-full" />,
-  }
-)
+// GraphVisualization removed - was causing webpack hydration error (imports graphology/sigma browser-only libs)
+// Will be re-added when needed with proper SSR handling
 
 const LiveRegion = dynamic(
   () => import('@/components/accessibility/LiveRegion').then((mod) => ({ default: mod.LiveRegion }))
+)
+
+// BentoTabs contains nested ssr:false dynamic import for GeographicHeatmap (react-leaflet)
+// Uses client wrapper to handle ssr: false (not allowed in Server Components)
+const BentoTabsWrapper = dynamic(
+  () => import('@/components/experience-detail/BentoTabsWrapper').then((mod) => ({ default: mod.BentoTabsWrapper })),
+  {
+    loading: () => <Skeleton className="h-40 w-full" />,
+  }
 )
 
 const categoryLabels: Record<string, string> = {
@@ -534,7 +540,7 @@ export default async function ExperiencePage({
           currentCategory={experience.category}
         />
         {experience.location_lat && experience.location_lng && (
-          <MapboxMiniMap
+          <MapboxMiniMapWrapper
             lat={experience.location_lat}
             lng={experience.location_lng}
             locationText={experience.location_text ?? undefined}
@@ -808,7 +814,7 @@ export default async function ExperiencePage({
         {/* Bento Tabs (Pattern-first UI for all screen sizes) */}
         <AnimatedSection>
           <div className="container mx-auto px-4 mb-6">
-            <BentoTabs
+            <BentoTabsWrapper
               similarExperiences={similarExpsData.map(exp => ({
                 id: exp.id,
                 title: exp.title,
@@ -818,7 +824,7 @@ export default async function ExperiencePage({
                   username: exp.user_profiles.username || 'unknown',
                   display_name: exp.user_profiles.display_name ?? undefined,
                 } : undefined,
-                match_score: exp.similarity ? Math.round(exp.similarity * 100) : undefined,
+                match_score: exp.match_score,
               }))}
               patternData={patternData}
               commentsPreview={[]}

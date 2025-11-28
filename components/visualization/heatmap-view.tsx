@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Map, { Marker, Popup, Layer, Source } from 'react-map-gl'
+import Map, { Marker, Popup, Layer, Source } from 'react-map-gl/mapbox'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

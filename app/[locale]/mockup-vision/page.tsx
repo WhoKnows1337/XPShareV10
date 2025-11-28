@@ -11179,6 +11179,7 @@ function Version19({ showAnnotations }: { showAnnotations: boolean }) {
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const [reactions, setReactions] = useState({ goosebumps: 89, relatable: 134, interesting: 67, skeptical: 12 })
   const [animatedStats, setAnimatedStats] = useState({ views: 0, comments: 0, similar: 0 })
+  const [storyMode, setStoryMode] = useState<'original' | 'withQuestions'>('withQuestions')
 
   // Scroll progress tracking
   useEffect(() => {
@@ -11463,6 +11464,29 @@ function Version19({ showAnnotations }: { showAnnotations: boolean }) {
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <h3 className="font-medium">Die vollständige Geschichte</h3>
             <div className="flex items-center gap-3">
+              {/* Toggle Original / Mit Fragen */}
+              <div className="flex bg-gray-800 rounded-lg p-0.5">
+                <button
+                  onClick={() => setStoryMode('original')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                    storyMode === 'original'
+                      ? 'bg-amber-600 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  📝 Original
+                </button>
+                <button
+                  onClick={() => setStoryMode('withQuestions')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                    storyMode === 'withQuestions'
+                      ? 'bg-emerald-600 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  💡 Mit Fragen
+                </button>
+              </div>
               <button
                 onClick={() => setShowAudioPlayer(true)}
                 className="text-sm text-purple-400 hover:text-purple-300 transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 hover:bg-purple-500/20"
@@ -11479,41 +11503,150 @@ function Version19({ showAnnotations }: { showAnnotations: boolean }) {
           </div>
 
           <div className="p-6 space-y-4 text-gray-300 leading-relaxed">
-            <p>
-              Es war kurz vor Mitternacht. Ich konnte nicht schlafen – zu viele Gedanken.
-              Also beschloss ich, auf den Dachboden zu gehen, um alte Fotoalben zu suchen.
-              Vielleicht würde mich das ablenken.
-            </p>
-            <p>
-              Die Holztreppe knarrte unter meinen Füßen. Oben war es stockdunkel, nur das
-              schwache Mondlicht fiel durch das kleine Fenster. Ich tastete nach dem
-              Lichtschalter...
-            </p>
+            {storyMode === 'original' ? (
+              <>
+                {/* ORIGINAL TEXT - Roher Text ohne Fragen */}
+                <p>
+                  Es war kurz vor Mitternacht. Ich konnte nicht schlafen – zu viele Gedanken.
+                  Also beschloss ich, auf den Dachboden zu gehen, um alte Fotoalben zu suchen.
+                  Vielleicht würde mich das ablenken. Das Haus war still, meine Familie schlief
+                  schon seit Stunden. Ich schlich mich leise durch den Flur, um niemanden zu wecken.
+                </p>
+                <p>
+                  Die Holztreppe knarrte unter meinen Füßen. Oben war es stockdunkel, nur das
+                  schwache Mondlicht fiel durch das kleine Fenster. Ich tastete nach dem
+                  Lichtschalter, aber er funktionierte nicht – die Glühbirne war wohl durchgebrannt.
+                  Ich überlegte kurz, ob ich eine Taschenlampe holen sollte, aber dann dachte ich mir,
+                  das Mondlicht würde reichen.
+                </p>
+                <p>
+                  Ich ging ein paar Schritte in den Raum hinein. Es roch nach altem Holz und Staub,
+                  so wie immer auf unserem Dachboden. Die Kartons stapelten sich an den Wänden,
+                  alte Möbel standen herum, Erinnerungen aus Jahrzehnten. Irgendwo hier mussten die
+                  Alben sein, in denen Fotos von meiner Großmutter waren.
+                </p>
+                <p>
+                  Dann sah ich es. Eine Gestalt. Direkt vor mir, vielleicht drei Meter entfernt.
+                  Sie stand einfach da, völlig reglos. Komplett schwarz. Nicht wie ein Schatten –
+                  schwärzer als die Dunkelheit um sie herum. Es war, als würde sie das Licht
+                  verschlucken. Keine Gesichtszüge, keine Details, keine erkennbare Form außer
+                  einer vage menschlichen Silhouette. Aber ich wusste, dass sie mich ansah.
+                  Ich konnte es fühlen – dieser Blick, der durch mich hindurchging.
+                </p>
+                <p>
+                  Mein erster Instinkt war zu schreien, aber kein Laut kam heraus. Ich stand wie
+                  eingefroren. Mein Herz hämmerte so laut, dass ich dachte, es würde aus meiner
+                  Brust springen. Meine Beine wollten sich nicht bewegen. Der Schweiß lief mir
+                  den Rücken hinunter, obwohl es auf dem Dachboden kühl war.
+                </p>
+                <p>
+                  Wir standen so vielleicht fünf Sekunden – oder waren es fünf Minuten? Die Zeit
+                  schien stillzustehen. Ich konnte meinen eigenen Atem hören, laut und zittrig.
+                  Dann, ganz plötzlich, löste sich die Gestalt einfach auf. Wie Rauch, der sich
+                  verflüchtigt. Wie schwarzer Nebel, der in der Dunkelheit verschwindet.
+                  Einen Moment war sie noch da, im nächsten war sie einfach... weg.
+                </p>
+                <p>
+                  Ich weiß nicht mehr, wie ich die Treppe hinuntergekommen bin. Ich erinnere mich
+                  nur, dass ich plötzlich in meinem Zimmer war, die Tür verriegelt, das Licht an,
+                  unter meiner Decke zitternd wie ein kleines Kind. Ich habe in dieser Nacht kein
+                  Auge mehr zugemacht. Bei jedem Geräusch zuckte ich zusammen.
+                </p>
+                <p>
+                  Am nächsten Morgen ging ich wieder hoch. Bei Tageslicht. Da war nichts. Keine
+                  Spuren, nichts Ungewöhnliches. Nur Staub und alte Kartons. Ich habe die Alben
+                  gefunden und bin sofort wieder runter. Seither meide ich den Dachboden nach
+                  Einbruch der Dunkelheit.
+                </p>
+                <p>
+                  Bis heute habe ich niemandem davon erzählt. Ich dachte, man würde mich für
+                  verrückt halten. Aber ich weiß, was ich gesehen habe. Es war real. So real wie
+                  diese Worte, die ich jetzt schreibe.
+                </p>
+              </>
+            ) : (
+              <>
+                {/* MIT FRAGEN - Die Antworten auf KI-Fragen sind nahtlos in den Text eingeflossen */}
+                <p>
+                  Es war kurz vor Mitternacht. Ich konnte nicht schlafen – zu viele Gedanken.
+                  Also beschloss ich, auf den Dachboden zu gehen, um alte Fotoalben zu suchen.
+                  Vielleicht würde mich das ablenken. Das Haus war still, meine Familie schlief
+                  schon seit Stunden. Ich schlich mich leise durch den Flur, um niemanden zu wecken.
+                </p>
+                <p>
+                  <span className="bg-emerald-500/20 text-emerald-300 px-1 rounded">Vorher hatte ich nie seltsame Erfahrungen auf dem Dachboden gemacht.</span> Er
+                  war für mich immer ein ganz normaler Ort – ich war als Kind oft dort oben zum
+                  Spielen, zwischen den alten Kartons und verstaubten Möbeln.
+                </p>
+                <p>
+                  Die Holztreppe knarrte unter meinen Füßen. Oben war es stockdunkel, nur das
+                  schwache Mondlicht fiel durch das kleine Fenster. Ich tastete nach dem
+                  Lichtschalter, aber er funktionierte nicht – die Glühbirne war wohl durchgebrannt.
+                  Ich überlegte kurz, ob ich eine Taschenlampe holen sollte, aber dann dachte ich mir,
+                  das Mondlicht würde reichen.
+                </p>
+                <p>
+                  Ich ging ein paar Schritte in den Raum hinein. Es roch nach altem Holz und Staub,
+                  so wie immer auf unserem Dachboden. Die Kartons stapelten sich an den Wänden,
+                  alte Möbel standen herum, Erinnerungen aus Jahrzehnten.
+                </p>
 
-            {/* Pull Quote */}
-            <div className="my-6 pl-6 border-l-4 border-pink-500">
-              <p className="text-xl text-white font-medium">
-                „Dann sah ich es. Eine Gestalt. Direkt vor mir."
-              </p>
-            </div>
+                {/* Pull Quote */}
+                <div className="my-6 pl-6 border-l-4 border-pink-500">
+                  <p className="text-xl text-white font-medium">
+                    „Dann sah ich es. Eine Gestalt. Direkt vor mir."
+                  </p>
+                </div>
 
-            <p>
-              Komplett schwarz. Nicht wie ein Schatten – <em>schwärzer</em> als die Dunkelheit
-              um sie herum. Keine Gesichtszüge, keine Details. Aber ich <strong>wusste</strong>,
-              dass sie mich ansah. Ich konnte es fühlen.
-            </p>
-            <p>
-              Ich stand wie eingefroren. Mein Herz hämmerte. Dann, nach vielleicht 5 Sekunden,
-              löste sich die Gestalt einfach auf. Wie Rauch, der sich verflüchtigt.
-            </p>
-            <p>
-              Ich rannte die Treppe hinunter und habe in dieser Nacht kein Auge mehr zugemacht.
-              Bis heute habe ich niemandem davon erzählt. Ich dachte, man würde mich für verrückt halten.
-            </p>
+                <p>
+                  Komplett schwarz. Nicht wie ein Schatten – <em>schwärzer</em> als die Dunkelheit
+                  um sie herum. Es war, als würde sie das Licht verschlucken. Keine Gesichtszüge,
+                  keine Details, keine erkennbare Form außer einer vage menschlichen Silhouette.
+                  Aber ich <strong>wusste</strong>, dass sie mich ansah. Ich konnte es fühlen –
+                  dieser Blick, der durch mich hindurchging.
+                </p>
+                <p>
+                  <span className="bg-emerald-500/20 text-emerald-300 px-1 rounded">Das Gefühl beobachtet zu werden war nicht direkt bedrohlich, eher... neutral.</span> Aber
+                  unglaublich intensiv. Als ob dieses Ding mich bis in meine Seele sehen konnte.
+                  Das war das Verstörende – nicht Aggression, sondern dieses absolute Wissen.
+                </p>
+                <p>
+                  Mein erster Instinkt war zu schreien, aber kein Laut kam heraus. Ich stand wie
+                  eingefroren. Mein Herz hämmerte so laut, dass ich dachte, es würde aus meiner
+                  Brust springen. Meine Beine wollten sich nicht bewegen. Der Schweiß lief mir
+                  den Rücken hinunter, obwohl es auf dem Dachboden kühl war.
+                </p>
+                <p>
+                  Wir standen so vielleicht fünf Sekunden – oder waren es fünf Minuten? Die Zeit
+                  schien stillzustehen. Dann, ganz plötzlich, löste sich die Gestalt einfach auf.
+                  Wie Rauch, der sich verflüchtigt. Wie schwarzer Nebel, der in der Dunkelheit
+                  verschwindet.
+                </p>
+                <p>
+                  Ich weiß nicht mehr, wie ich die Treppe hinuntergekommen bin. Ich erinnere mich
+                  nur, dass ich plötzlich in meinem Zimmer war, die Tür verriegelt, das Licht an,
+                  unter meiner Decke zitternd wie ein kleines Kind. Ich habe in dieser Nacht kein
+                  Auge mehr zugemacht.
+                </p>
+                <p>
+                  <span className="bg-emerald-500/20 text-emerald-300 px-1 rounded">Am nächsten Morgen bin ich bei Tageslicht wieder hochgegangen.</span> Da
+                  war absolut nichts. Keine Spuren, nichts Ungewöhnliches. Nur Staub und alte
+                  Kartons. Das macht es ja so verrückt – kein Beweis, außer meiner eigenen
+                  Erinnerung. Seither meide ich den Dachboden nach Einbruch der Dunkelheit.
+                </p>
+                <p>
+                  Bis heute habe ich niemandem davon erzählt. Ich dachte, man würde mich für
+                  verrückt halten. Aber ich weiß, was ich gesehen habe. Es war real.
+                </p>
+              </>
+            )}
 
             <div className="pt-4 border-t border-white/10 flex flex-wrap gap-4 text-sm text-gray-500">
               <span>📅 Ereignis: 15. Nov 2019, 23:45</span>
               <span>📝 Geteilt: 20. März 2024</span>
+              {storyMode === 'withQuestions' && (
+                <span className="text-emerald-500">✨ Durch Fragen angereichert</span>
+              )}
             </div>
           </div>
         </div>
@@ -11569,144 +11702,362 @@ function Version19({ showAnnotations }: { showAnnotations: boolean }) {
       </section>
 
       {/* ============================================ */}
-      {/* SECTION 5: VALIDATION + MICRO-REACTIONS     */}
+      {/* SECTION 5: ÄHNLICHE ERFAHRUNGEN (CAROUSEL)  */}
       {/* ============================================ */}
-      <section className="px-6 py-12 max-w-4xl mx-auto">
+      <section className="px-6 py-8 max-w-4xl mx-auto">
         {showAnnotations && (
           <Annotation color="emerald">
-            <strong>Validation + Micro-Reactions:</strong> NEU: Quick-Reactions ohne Kommentar.
-            Match-Cards zeigen explizit GLEICH/ANDERS.
+            <strong>247 ähnliche XP's:</strong> Horizontales Carousel mit Swipe/Scroll.
+            Gelbes Highlighting zeigt Gemeinsamkeiten. Info-Tooltip erklärt Matching.
           </Annotation>
         )}
 
-        {/* Main Validation Card */}
-        <div
-          className="relative rounded-2xl overflow-hidden mb-8"
-          style={{
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 50%, rgba(245, 158, 11, 0.05) 100%)',
-            boxShadow: '0 0 60px rgba(236, 72, 153, 0.2)',
-          }}
-        >
-          <div className="absolute inset-0 rounded-2xl border border-pink-500/30" />
-
-          <div className="relative p-8 text-center">
-            <p className="text-sm text-pink-300 mb-2 tracking-wider">✧ VERBINDUNGEN ✧</p>
-
-            <div className="py-8">
-              <p className="text-6xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
-                247 Menschen
-              </p>
-              <p className="text-xl text-gray-300">hatten ähnliche Erfahrungen</p>
-            </div>
-
-            {/* Match Bar */}
-            <div className="max-w-md mx-auto mb-6">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">Durchschnittliche Übereinstimmung</span>
-                <span className="text-emerald-400 font-medium">78%</span>
-              </div>
-              <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500"
-                  style={{ width: '78%' }}
-                />
+        {/* Header with count and info tooltip */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-medium flex items-center gap-2">
+              <span>👥</span>
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400 bg-clip-text text-transparent font-bold">247</span>
+              <span>ähnliche XP's</span>
+            </h3>
+            {/* Info Tooltip */}
+            <div className="relative group">
+              <button className="w-5 h-5 rounded-full bg-white/10 text-gray-400 text-xs flex items-center justify-center hover:bg-white/20 transition">
+                i
+              </button>
+              <div className="absolute left-0 top-full mt-2 w-64 p-3 rounded-lg bg-gray-900 border border-white/20 text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                Ähnliche Berichte werden anhand des <strong className="text-white">Inhalts</strong> gefunden –
+                nicht nur nach Kategorie. Die KI versteht den Sinn der Erfahrung und findet bedeutungsähnliche Berichte.
               </div>
             </div>
-
-            {/* MICRO-REACTIONS - NEU! */}
-            <div className="mb-6 p-4 rounded-xl bg-black/30 border border-white/10">
-              <p className="text-sm text-gray-400 mb-3">Wie reagierst du auf diese Geschichte?</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  onClick={() => handleReaction('goosebumps')}
-                  className="px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 transition flex items-center gap-2"
-                >
-                  😱 Gänsehaut! <span className="text-xs opacity-70">{reactions.goosebumps}</span>
-                </button>
-                <button
-                  onClick={() => handleReaction('relatable')}
-                  className="px-4 py-2 rounded-lg bg-pink-500/20 border border-pink-500/40 text-pink-300 hover:bg-pink-500/30 transition flex items-center gap-2"
-                >
-                  🤝 Kenne ich! <span className="text-xs opacity-70">{reactions.relatable}</span>
-                </button>
-                <button
-                  onClick={() => handleReaction('interesting')}
-                  className="px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition flex items-center gap-2"
-                >
-                  🔬 Interessant <span className="text-xs opacity-70">{reactions.interesting}</span>
-                </button>
-                <button
-                  onClick={() => handleReaction('skeptical')}
-                  className="px-4 py-2 rounded-lg bg-gray-500/20 border border-gray-500/40 text-gray-300 hover:bg-gray-500/30 transition flex items-center gap-2"
-                >
-                  ❓ Skeptisch <span className="text-xs opacity-70">{reactions.skeptical}</span>
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">{Object.values(reactions).reduce((a, b) => a + b, 0)} Reaktionen</p>
-            </div>
-
-            <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-600 hover:from-purple-500 hover:via-pink-500 hover:to-amber-500 font-medium transition">
-              Alle ähnlichen Erfahrungen ansehen →
-            </button>
           </div>
+          <button className="text-sm text-pink-400 hover:text-pink-300 transition flex items-center gap-1">
+            Alle ansehen <span>→</span>
+          </button>
         </div>
 
-        {/* Similar Experience Cards with DIFF */}
-        <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-          <span>💬</span> „Das habe ich auch erlebt"
-        </h3>
+        {/* Carousel Container - Horizontally Scrollable */}
+        <div className="relative group/carousel">
+          {/* Navigation Arrows - show on hover */}
+          <button className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-10 h-10 rounded-full bg-gray-800/90 border border-white/20 text-white flex items-center justify-center hover:bg-gray-700 transition z-10 opacity-0 group-hover/carousel:opacity-100 shadow-lg backdrop-blur-sm">
+            ◀
+          </button>
+          <button className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 w-10 h-10 rounded-full bg-gray-800/90 border border-white/20 text-white flex items-center justify-center hover:bg-gray-700 transition z-10 opacity-0 group-hover/carousel:opacity-100 shadow-lg backdrop-blur-sm">
+            ▶
+          </button>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Card 1 - with DIFF */}
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
-            <div className="flex items-center justify-between mb-3">
-              <span className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-400 text-xs font-medium">
-                92% Match
-              </span>
-              <div className="flex items-center gap-2">
-                <img src="https://i.pravatar.cc/100?img=12" className="w-6 h-6 rounded-full" alt="" />
-                <span className="text-sm text-gray-400">Stefan M.</span>
-                <span className="text-xs text-gray-500">• Wien</span>
+          {/* Horizontal Scroll Container */}
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent" style={{ scrollbarWidth: 'thin' }}>
+            {/* Card 1 - 92% Match */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <span className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                  92% Match
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src="https://i.pravatar.cc/100?img=12" className="w-6 h-6 rounded-full" alt="" />
+                  <span className="text-sm text-gray-400">Stefan M.</span>
+                  <span className="text-xs text-gray-500">• Wien</span>
+                </div>
               </div>
+              <p className="text-gray-300 text-sm mb-3">
+                „Im Keller, exakt dieselbe Beschreibung – keine Gesichtszüge,
+                aber man <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">WEISS</mark> dass es einen <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">ansieht</mark>..."
+              </p>
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <p className="text-xs text-emerald-400">✓ GLEICH: Nachtzeit, Schatten-Gestalt, Alleinsein</p>
+                <p className="text-xs text-amber-400">✗ ANDERS: Ort (Keller vs Dachboden)</p>
+              </div>
+              <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
+                Mehr lesen →
+              </p>
             </div>
-            <p className="text-gray-300 text-sm mb-3">
-              „Im Keller, exakt dieselbe Beschreibung – keine Gesichtszüge,
-              aber man <strong className="text-white">WEISS</strong> dass es einen ansieht..."
-            </p>
-            {/* DIFF Section - NEU! */}
-            <div className="pt-3 border-t border-white/10 space-y-1">
-              <p className="text-xs text-emerald-400">✓ GLEICH: Nachtzeit, Schatten-Gestalt, Alleinsein, "Wissen"</p>
-              <p className="text-xs text-amber-400">✗ ANDERS: Ort (Keller vs Dachboden)</p>
+
+            {/* Card 2 - 85% Match */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <span className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                  85% Match
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src="https://i.pravatar.cc/100?img=23" className="w-6 h-6 rounded-full" alt="" />
+                  <span className="text-sm text-gray-400">Lisa T.</span>
+                  <span className="text-xs text-gray-500">• München</span>
+                </div>
+              </div>
+              <p className="text-gray-300 text-sm mb-3">
+                „Vor 3 Jahren, auch <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">nachts</mark>. Ich dachte ich werde verrückt bis ich diese
+                Seite fand. Es ist so erleichternd zu <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">wissen</mark>..."
+              </p>
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <p className="text-xs text-emerald-400">✓ GLEICH: Nachtzeit, Beobachtungsgefühl, Angst</p>
+                <p className="text-xs text-amber-400">✗ ANDERS: Keine visuelle Form, nur Präsenz</p>
+              </div>
+              <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
+                Mehr lesen →
+              </p>
             </div>
-            <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
-              Mehr lesen →
-            </p>
+
+            {/* Card 3 - 79% Match */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <span className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                  79% Match
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src="https://i.pravatar.cc/100?img=45" className="w-6 h-6 rounded-full" alt="" />
+                  <span className="text-sm text-gray-400">Thomas K.</span>
+                  <span className="text-xs text-gray-500">• Berlin</span>
+                </div>
+              </div>
+              <p className="text-gray-300 text-sm mb-3">
+                „Als Kind oft erlebt, immer im <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">Dunkeln</mark>. Die Gestalt stand einfach da, wie ein
+                <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">Schatten</mark> der nicht dazugehört..."
+              </p>
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <p className="text-xs text-emerald-400">✓ GLEICH: Dunkelheit, Schatten-Erscheinung</p>
+                <p className="text-xs text-amber-400">✗ ANDERS: Kindheit, mehrfaches Erleben</p>
+              </div>
+              <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
+                Mehr lesen →
+              </p>
+            </div>
+
+            {/* Card 4 - 76% Match */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <span className="px-2 py-1 rounded-md bg-yellow-500/20 text-yellow-400 text-xs font-medium">
+                  76% Match
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src="https://i.pravatar.cc/100?img=33" className="w-6 h-6 rounded-full" alt="" />
+                  <span className="text-sm text-gray-400">Sarah W.</span>
+                  <span className="text-xs text-gray-500">• Hamburg</span>
+                </div>
+              </div>
+              <p className="text-gray-300 text-sm mb-3">
+                „Die Präsenz war da, obwohl ich nichts <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">sehen</mark> konnte. Wie wenn jemand
+                hinter dir steht und du es einfach <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">weißt</mark>..."
+              </p>
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <p className="text-xs text-emerald-400">✓ GLEICH: Präsenz-Gefühl, intuitives Wissen</p>
+                <p className="text-xs text-amber-400">✗ ANDERS: Unsichtbar, nur spürbar</p>
+              </div>
+              <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
+                Mehr lesen →
+              </p>
+            </div>
+
+            {/* Card 5 - 72% Match */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <span className="px-2 py-1 rounded-md bg-yellow-500/20 text-yellow-400 text-xs font-medium">
+                  72% Match
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src="https://i.pravatar.cc/100?img=52" className="w-6 h-6 rounded-full" alt="" />
+                  <span className="text-sm text-gray-400">Michael B.</span>
+                  <span className="text-xs text-gray-500">• Zürich</span>
+                </div>
+              </div>
+              <p className="text-gray-300 text-sm mb-3">
+                „Beim Campen im Wald. Die <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">Stille</mark> wurde plötzlich anders, dichter.
+                Dann diese <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">Silhouette</mark> zwischen den Bäumen..."
+              </p>
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <p className="text-xs text-emerald-400">✓ GLEICH: Nacht, Silhouette, Stille</p>
+                <p className="text-xs text-amber-400">✗ ANDERS: Outdoor, Wald-Setting</p>
+              </div>
+              <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
+                Mehr lesen →
+              </p>
+            </div>
+
+            {/* Card 6 - 68% Match */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <span className="px-2 py-1 rounded-md bg-yellow-500/20 text-yellow-400 text-xs font-medium">
+                  68% Match
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src="https://i.pravatar.cc/100?img=8" className="w-6 h-6 rounded-full" alt="" />
+                  <span className="text-sm text-gray-400">Julia R.</span>
+                  <span className="text-xs text-gray-500">• Graz</span>
+                </div>
+              </div>
+              <p className="text-gray-300 text-sm mb-3">
+                „Nach dem Tod meiner Oma. <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">Nachts</mark> in meinem alten Zimmer. Es fühlte sich
+                aber nicht <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">bedrohlich</mark> an, eher beschützend..."
+              </p>
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <p className="text-xs text-emerald-400">✓ GLEICH: Nacht, Präsenz im Zimmer</p>
+                <p className="text-xs text-amber-400">✗ ANDERS: Positive Energie, Trauer-Kontext</p>
+              </div>
+              <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
+                Mehr lesen →
+              </p>
+            </div>
+
+            {/* Card 7 - 65% Match */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <span className="px-2 py-1 rounded-md bg-gray-500/30 text-gray-400 text-xs font-medium">
+                  65% Match
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src="https://i.pravatar.cc/100?img=17" className="w-6 h-6 rounded-full" alt="" />
+                  <span className="text-sm text-gray-400">Peter H.</span>
+                  <span className="text-xs text-gray-500">• Linz</span>
+                </div>
+              </div>
+              <p className="text-gray-300 text-sm mb-3">
+                „Im Hotel auf Geschäftsreise. Das Zimmer fühlte sich von Anfang an <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">falsch</mark> an.
+                Um 3 Uhr <mark className="bg-yellow-500/30 text-yellow-200 px-1 rounded">nachts</mark> dann diese Bewegung..."
+              </p>
+              <div className="pt-3 border-t border-white/10 space-y-1">
+                <p className="text-xs text-emerald-400">✓ GLEICH: Nacht, unbehagliches Gefühl</p>
+                <p className="text-xs text-amber-400">✗ ANDERS: Hotel, fremder Ort</p>
+              </div>
+              <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
+                Mehr lesen →
+              </p>
+            </div>
+
+            {/* Load More Card */}
+            <div className="flex-shrink-0 w-80 snap-start rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-white/10 p-4 flex flex-col items-center justify-center cursor-pointer hover:border-purple-500/50 transition">
+              <div className="text-4xl mb-3">→</div>
+              <p className="text-lg font-medium text-white">+240 weitere</p>
+              <p className="text-sm text-gray-400">ähnliche Erfahrungen</p>
+              <button className="mt-4 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm font-medium transition">
+                Alle anzeigen
+              </button>
+            </div>
           </div>
 
-          {/* Card 2 - with DIFF */}
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4 hover:border-emerald-500/50 transition cursor-pointer group">
-            <div className="flex items-center justify-between mb-3">
-              <span className="px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-400 text-xs font-medium">
-                85% Match
-              </span>
-              <div className="flex items-center gap-2">
-                <img src="https://i.pravatar.cc/100?img=23" className="w-6 h-6 rounded-full" alt="" />
-                <span className="text-sm text-gray-400">Lisa T.</span>
-                <span className="text-xs text-gray-500">• München</span>
+          {/* Scroll Indicator */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <span className="text-xs text-gray-500">← Scroll für mehr →</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================ */}
+      {/* SECTION 5b: WIE REAGIERST DU? (REACTIONS)   */}
+      {/* ============================================ */}
+      <section className="px-6 py-8 max-w-4xl mx-auto">
+        {showAnnotations && (
+          <Annotation color="pink">
+            <strong>Wie reagierst du?:</strong> Eigener Bereich für User-Interaktion.
+            Reactions + Kommentare getrennt von ähnlichen Erfahrungen.
+          </Annotation>
+        )}
+
+        <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+          {/* Header */}
+          <div className="p-6 border-b border-white/10">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <span>💬</span> Wie reagierst du auf diese Geschichte?
+            </h3>
+          </div>
+
+          {/* Reactions */}
+          <div className="p-6">
+            <div className="flex flex-wrap gap-3 mb-6">
+              <button
+                onClick={() => handleReaction('goosebumps')}
+                className="px-5 py-3 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 transition flex items-center gap-2"
+              >
+                <span className="text-xl">😱</span>
+                <span>Gänsehaut!</span>
+                <span className="text-sm opacity-70 ml-1">{reactions.goosebumps}</span>
+              </button>
+              <button
+                onClick={() => handleReaction('relatable')}
+                className="px-5 py-3 rounded-xl bg-pink-500/20 border border-pink-500/40 text-pink-300 hover:bg-pink-500/30 transition flex items-center gap-2"
+              >
+                <span className="text-xl">🤝</span>
+                <span>Kenne ich!</span>
+                <span className="text-sm opacity-70 ml-1">{reactions.relatable}</span>
+              </button>
+              <button
+                onClick={() => handleReaction('interesting')}
+                className="px-5 py-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition flex items-center gap-2"
+              >
+                <span className="text-xl">🔬</span>
+                <span>Interessant</span>
+                <span className="text-sm opacity-70 ml-1">{reactions.interesting}</span>
+              </button>
+              <button
+                onClick={() => handleReaction('skeptical')}
+                className="px-5 py-3 rounded-xl bg-gray-500/20 border border-gray-500/40 text-gray-300 hover:bg-gray-500/30 transition flex items-center gap-2"
+              >
+                <span className="text-xl">🤔</span>
+                <span>Hmm...</span>
+                <span className="text-sm opacity-70 ml-1">{reactions.skeptical}</span>
+              </button>
+            </div>
+
+            {/* Comment Input */}
+            <div className="mb-6">
+              <div className="flex gap-3">
+                <img src="https://i.pravatar.cc/100?img=5" className="w-10 h-10 rounded-full" alt="" />
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Schreib einen Kommentar..."
+                    className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500/50 transition"
+                  />
+                </div>
               </div>
             </div>
-            <p className="text-gray-300 text-sm mb-3">
-              „Vor 3 Jahren, auch nachts. Ich dachte ich werde verrückt bis ich diese
-              Seite fand. Es ist so erleichternd zu wissen..."
-            </p>
-            {/* DIFF Section - NEU! */}
-            <div className="pt-3 border-t border-white/10 space-y-1">
-              <p className="text-xs text-emerald-400">✓ GLEICH: Nachtzeit, Beobachtungsgefühl, Angst</p>
-              <p className="text-xs text-amber-400">✗ ANDERS: Keine visuelle Form, nur Präsenz</p>
+
+            {/* Comments Section */}
+            <div className="border-t border-white/10 pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-gray-400">💬 12 Kommentare</span>
+                <select className="bg-transparent text-sm text-gray-400 border-none outline-none cursor-pointer">
+                  <option>Neueste</option>
+                  <option>Beliebteste</option>
+                </select>
+              </div>
+
+              {/* Sample Comments */}
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <img src="https://i.pravatar.cc/100?img=32" className="w-8 h-8 rounded-full" alt="" />
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium">Anna K.</span>
+                      <span className="text-xs text-gray-500">vor 2 Std</span>
+                    </div>
+                    <p className="text-sm text-gray-300">Danke fürs Teilen! Bei mir war es ganz ähnlich, nur im Schlafzimmer. Das Gefühl beobachtet zu werden vergisst man nie...</p>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <button className="hover:text-white transition">❤️ 8</button>
+                      <button className="hover:text-white transition">Antworten</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <img src="https://i.pravatar.cc/100?img=15" className="w-8 h-8 rounded-full" alt="" />
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium">Max R.</span>
+                      <span className="text-xs text-gray-500">vor 5 Std</span>
+                    </div>
+                    <p className="text-sm text-gray-300">Interessant, dass das so viele nachts erleben. Gibt es dazu wissenschaftliche Erklärungen?</p>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <button className="hover:text-white transition">❤️ 3</button>
+                      <button className="hover:text-white transition">Antworten</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-white transition">
+                Alle 12 Kommentare anzeigen
+              </button>
             </div>
-            <p className="text-sm text-pink-400 mt-3 opacity-0 group-hover:opacity-100 transition">
-              Mehr lesen →
-            </p>
           </div>
         </div>
       </section>

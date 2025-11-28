@@ -40,12 +40,12 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // Fix for Next.js 15 RSC Bundler with Mapbox GL in streamUI
-  serverExternalPackages: ['mapbox-gl', 'react-map-gl'],
+  // Fix for Next.js 15 RSC Bundler with map libraries that require browser APIs
+  serverExternalPackages: ['mapbox-gl', 'react-map-gl', 'leaflet', 'react-leaflet'],
 
   // Experimental features for better performance
   experimental: {
-    optimizePackageImports: ['@ai-sdk/openai', '@ai-sdk/react', 'recharts', 'lucide-react'],
+    optimizePackageImports: ['@ai-sdk/openai', '@ai-sdk/react', 'recharts', 'lucide-react', 'framer-motion'],
   },
 };
 

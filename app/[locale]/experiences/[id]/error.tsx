@@ -31,11 +31,11 @@ export default function Error({
             </p>
           </div>
 
-          {error.digest && (
-            <p className="text-xs text-muted-foreground font-mono">
-              Error ID: {error.digest}
-            </p>
-          )}
+          {/* Show error details for debugging */}
+          <div className="text-left bg-destructive/5 p-4 rounded-lg text-xs font-mono overflow-auto max-h-40">
+            <p className="font-bold text-destructive mb-2">{error.name}: {error.message}</p>
+            {error.digest && <p className="text-muted-foreground">Digest: {error.digest}</p>}
+          </div>
 
           <div className="flex gap-2 justify-center pt-2">
             <Button onClick={reset} variant="default">

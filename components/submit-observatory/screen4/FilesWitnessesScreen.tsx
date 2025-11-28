@@ -251,23 +251,37 @@ export function FilesWitnessesScreen() {
       // Store publish result in the store for potential future use
       useSubmitFlowStore.setState({ publishResult: result });
 
-      // ✅ CRITICAL: Clear isDraft flag BEFORE redirect
-      // This prevents the "unsaved changes" warning from blocking navigation
-      useSubmitFlowStore.setState({ isDraft: false });
+      // ✅ CRITICAL: Clear draft BEFORE redirect
+      // This prevents the "Willkommen zurück" banner from showing on next visit
+      // clearDraft() also calls persist.clearStorage() to remove localStorage data
+      useSubmitFlowStore.getState().clearDraft();
+
+      // ✅ PHASE 1 - Task 1.1.1: Store publishResult in sessionStorage for page refresh
+      // This allows the banner to persist if user refreshes the page
+      sessionStorage.setItem('lastPublishResult', JSON.stringify(result));
+
+      // ✅ PHASE 1 - Task 1.1.1: Encode publishResult data in URL query params
+      // This passes all gamification data to the Experience Detail Page
+      const params = new URLSearchParams({
+        justPublished: 'true',
+        xp: result.xpEarned.toString(),
+        badges: JSON.stringify(result.badgesEarned || []),
+        levelUp: result.leveledUp.toString(),
+        newLevel: result.newLevel?.toString() || '',
+        // oldLevel for level-up animation (currentLevel - 1 if leveled up)
+        oldLevel: result.leveledUp && result.newLevel
+          ? (result.newLevel - 1).toString()
+          : (result.currentLevel?.toString() || ''),
+      });
 
       // Redirect to Experience Detail Page with justPublished flag (Bento Grid redesign)
-      // Using window.location.href for hard navigation to bypass browser cache
       // ⚠️ IMPORTANT: Always include locale prefix, even for default locale
-      // Client-side navigation (window.location.href) doesn't go through middleware,
-      // so we need the full path to match the route pattern /[locale]/experiences/...
-      const successUrl = `/${locale}/experiences/${result.experienceId}?justPublished=true`;
-      console.log('[Publish] Redirecting to:', successUrl, 'locale:', locale);
+      const successUrl = `/${locale}/experiences/${result.experienceId}?${params.toString()}`;
+      console.log('[Publish] Redirecting to:', successUrl, 'locale:', locale, 'publishResult:', result);
 
-      // ⚠️ CRITICAL: Add small delay to allow ref update in useUnsavedChangesWarning
-      // Without this, window.location.href triggers beforeunload BEFORE ref is updated
-      setTimeout(() => {
-        window.location.href = successUrl;
-      }, 10);
+      // ✅ FIX: Use Next.js router instead of window.location.href
+      // Since useUnsavedChangesWarning hook is now disabled, we can use client-side navigation
+      router.push(successUrl);
 
     } catch (error: any) {
       console.error('Publish error:', error);

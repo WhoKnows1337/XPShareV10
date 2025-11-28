@@ -7,15 +7,22 @@ interface RouteContext {
   }>
 }
 
+/**
+ * Similar Experiences API - Uses REAL pgvector semantic similarity
+ *
+ * Priority order:
+ * 1. pgvector semantic search (if embedding exists)
+ * 2. Attribute-based Jaccard similarity (fallback)
+ */
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const supabase = await createClient()
     const { id } = await context.params
 
-    // Get the source experience
+    // Get the source experience WITH embedding
     const { data: sourceExperience, error: sourceError } = await supabase
       .from('experiences')
-      .select('category, tags, location_lat, location_lng, story_text')
+      .select('id, embedding, category, tags, location_lat, location_lng, story_text')
       .eq('id', id)
       .single()
 
@@ -26,114 +33,143 @@ export async function GET(request: NextRequest, context: RouteContext) {
       )
     }
 
-    // Find similar experiences using multiple criteria
-    const { data: similarExperiences, error: similarError } = await supabase
-      .from('experiences')
-      .select(`
-        id,
-        title,
-        category,
-        tags,
-        location_text,
-        location_lat,
-        location_lng,
-        story_text,
-        date_occurred,
-        created_at,
-        user_profiles!experiences_user_id_fkey (
-          username,
-          display_name,
-          avatar_url
-        )
-      `)
-      .eq('category', sourceExperience.category)
-      .neq('id', id)
-      .eq('visibility', 'public')
-      .limit(20)
+    let similar: SimilarExperience[] = []
+    let matchMethod: 'semantic' | 'attribute' | 'category' = 'category'
 
-    if (similarError) {
-      console.error('Similar experiences query error:', similarError)
-      return NextResponse.json(
-        { error: 'Failed to find similar experiences' },
-        { status: 500 }
-      )
+    // Strategy 1: pgvector semantic search (preferred)
+    if (sourceExperience.embedding) {
+      const { data: semanticMatches, error: rpcError } = await supabase.rpc('match_experiences', {
+        query_embedding: sourceExperience.embedding,
+        match_threshold: 0.5, // 50% minimum similarity (0-1 scale)
+        match_count: 10,
+        // Note: No p_experience_id param - we filter manually below
+      })
+
+      if (!rpcError && semanticMatches && semanticMatches.length > 0) {
+        // Filter out self and convert similarity 0-1 → 0-100
+        const filtered = semanticMatches
+          .filter((match: PgVectorMatch) => match.id !== id)
+          .slice(0, 8)
+
+        if (filtered.length > 0) {
+          matchMethod = 'semantic'
+          similar = filtered.map((match: PgVectorMatch) => {
+            const matchScore = Math.round(match.similarity * 100)
+            return {
+              id: match.id,
+              title: match.title,
+              category: match.category,
+              date: match.date_occurred || null,
+              teaser: match.story_text?.substring(0, 200) + '...' || '',
+              user: null, // RPC doesn't return user profiles
+              matchScore,
+              matchReasons: [`${matchScore}% semantische Ähnlichkeit`],
+            }
+          })
+        }
+      }
     }
 
-    // Calculate match scores for each experience
-    const scoredExperiences = (similarExperiences || []).map((exp) => {
-      let score = 50 // Base score for same category
+    // Strategy 2: Attribute-based similarity (fallback)
+    if (similar.length === 0) {
+      const { data: attrMatches, error: attrError } = await supabase.rpc('find_experiences_by_shared_attributes', {
+        p_experience_id: id,
+        p_threshold: 0.3, // 30% minimum Jaccard similarity
+        p_limit: 8,
+      })
 
-      // Tag overlap (up to 30 points)
-      const sourceTags = sourceExperience.tags || []
-      const expTags = exp.tags || []
-      const commonTags = sourceTags.filter((tag) => expTags.includes(tag))
-      score += Math.min(commonTags.length * 10, 30)
+      if (!attrError && attrMatches && attrMatches.length > 0) {
+        matchMethod = 'attribute'
 
-      // Location proximity (up to 20 points)
-      if (
-        sourceExperience.location_lat &&
-        sourceExperience.location_lng &&
-        exp.location_lat &&
-        exp.location_lng
-      ) {
-        const distance = calculateDistance(
-          sourceExperience.location_lat,
-          sourceExperience.location_lng,
-          exp.location_lat,
-          exp.location_lng
-        )
+        // Fetch full details for matched experiences
+        const matchIds = attrMatches.map((m: AttributeMatch) => m.experience_id)
+        const { data: fullExperiences } = await supabase
+          .from('experiences')
+          .select(`
+            id, title, category, date_occurred, story_text,
+            user_profiles!experiences_user_id_fkey (username, display_name, avatar_url)
+          `)
+          .in('id', matchIds)
+          .eq('visibility', 'public')
 
-        // Within 50km = 20 points, linear decay to 500km
-        if (distance < 50) score += 20
-        else if (distance < 500) score += Math.floor(20 * (1 - distance / 500))
+        const expMap = new Map(fullExperiences?.map((e: FullExperience) => [e.id, e]) || [])
+
+        similar = attrMatches.map((match: AttributeMatch) => {
+          const exp = expMap.get(match.experience_id) as FullExperience | undefined
+          const score = Math.round(match.similarity_score * 100)
+          return {
+            id: match.experience_id,
+            title: exp?.title || 'Untitled',
+            category: exp?.category || sourceExperience.category,
+            date: exp?.date_occurred || null,
+            teaser: exp?.story_text?.substring(0, 200) + '...' || '',
+            user: exp?.user_profiles || null,
+            matchScore: score,
+            matchReasons: [
+              `${match.shared_count} gemeinsame Attribute`,
+              `${score}% Attribut-Ähnlichkeit`,
+            ],
+          }
+        })
       }
+    }
 
-      // Determine match reasons
-      const reasons: string[] = []
-      if (commonTags.length > 0) {
-        reasons.push(`${commonTags.length} gemeinsame Tags`)
-      }
-      if (exp.location_text) {
-        reasons.push(`Ähnlicher Ort`)
-      }
-      reasons.push(`Gleiche Kategorie: ${exp.category}`)
+    // Strategy 3: Same category (last resort - honest, no fake scores)
+    if (similar.length === 0) {
+      const { data: categoryMatches } = await supabase
+        .from('experiences')
+        .select(`
+          id, title, category, date_occurred, story_text, tags,
+          user_profiles!experiences_user_id_fkey (username, display_name, avatar_url)
+        `)
+        .eq('category', sourceExperience.category)
+        .neq('id', id)
+        .eq('visibility', 'public')
+        .limit(5)
 
-      return {
-        id: exp.id,
-        title: exp.title,
-        category: exp.category,
-        location: exp.location_text,
-        date: exp.date_occurred,
-        teaser: exp.story_text?.substring(0, 200) + '...' || '',
-        user: exp.user_profiles,
-        matchScore: Math.min(score, 100), // Cap at 100
-        matchReasons: reasons,
+      if (categoryMatches && categoryMatches.length > 0) {
+        matchMethod = 'category'
+        similar = categoryMatches.map((exp) => {
+          // Calculate honest tag overlap score
+          const sourceTags = sourceExperience.tags || []
+          const expTags = exp.tags || []
+          const commonTags = sourceTags.filter((tag: string) => expTags.includes(tag))
+          const tagScore = sourceTags.length > 0
+            ? Math.round((commonTags.length / Math.max(sourceTags.length, expTags.length)) * 50)
+            : 0
+
+          return {
+            id: exp.id,
+            title: exp.title,
+            category: exp.category,
+            date: exp.date_occurred,
+            teaser: exp.story_text?.substring(0, 200) + '...' || '',
+            user: exp.user_profiles,
+            matchScore: 40 + tagScore, // 40 base for same category + tag bonus
+            matchReasons: [
+              `Gleiche Kategorie: ${exp.category}`,
+              commonTags.length > 0 ? `${commonTags.length} gemeinsame Tags` : null,
+            ].filter(Boolean) as string[],
+          }
+        })
       }
-    })
+    }
 
     // Sort by match score
-    scoredExperiences.sort((a, b) => b.matchScore - a.matchScore)
-
-    // Get top 5
-    const topMatches = scoredExperiences.slice(0, 5)
+    similar.sort((a, b) => b.matchScore - a.matchScore)
 
     // Calculate stats
     const stats = {
-      totalSimilar: scoredExperiences.length,
-      globalCategoryCount: await getGlobalCategoryCount(
-        supabase,
-        sourceExperience.category
-      ),
-      averageMatchScore: topMatches.length
-        ? Math.floor(
-            topMatches.reduce((sum, exp) => sum + exp.matchScore, 0) /
-              topMatches.length
-          )
+      totalSimilar: similar.length,
+      globalCategoryCount: await getGlobalCategoryCount(supabase, sourceExperience.category),
+      averageMatchScore: similar.length
+        ? Math.floor(similar.reduce((sum, exp) => sum + exp.matchScore, 0) / similar.length)
         : 0,
+      matchMethod,
     }
 
     return NextResponse.json({
-      similar: topMatches,
+      similar: similar.slice(0, 5),
       stats,
     })
   } catch (error) {
@@ -148,35 +184,56 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 }
 
-// Helper: Calculate distance between two coordinates (Haversine formula)
-function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371 // Earth's radius in km
-  const dLat = toRad(lat2 - lat1)
-  const dLon = toRad(lon2 - lon1)
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2)
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
+// Types
+interface SimilarExperience {
+  id: string
+  title: string
+  category: string
+  date: string | null
+  teaser: string
+  user: UserProfile | null
+  matchScore: number
+  matchReasons: string[]
 }
 
-function toRad(degrees: number): number {
-  return degrees * (Math.PI / 180)
+interface UserProfile {
+  username: string
+  display_name: string | null
+  avatar_url?: string | null
+}
+
+interface PgVectorMatch {
+  id: string
+  title: string
+  story_text: string | null
+  category: string
+  date_occurred: string | null
+  location_text: string | null
+  tags: string[]
+  similarity: number // 0-1 scale
+  exact_match: boolean
+}
+
+interface AttributeMatch {
+  experience_id: string
+  similarity_score: number
+  shared_attributes: unknown // Json type from Supabase
+  shared_count: number
+  total_attributes: number
+}
+
+interface FullExperience {
+  id: string
+  title: string
+  category: string
+  date_occurred: string | null
+  story_text: string | null
+  user_profiles: UserProfile | null
 }
 
 // Helper: Get global count for category
 async function getGlobalCategoryCount(
-  supabase: any,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   category: string
 ): Promise<number> {
   const { count, error } = await supabase
@@ -193,5 +250,6 @@ async function getGlobalCategoryCount(
   return count || 0
 }
 
-export const runtime = 'edge'
+// Use nodejs runtime for Supabase cookies() compatibility
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

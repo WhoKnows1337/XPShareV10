@@ -610,6 +610,14 @@
     border-color: rgba(139, 157, 195, 0.15);
   }
 
+  /* Disable hover transform on AlertDialog/Dialog modals to prevent shift on hover */
+  [role="alertdialog"] .glass-card:hover,
+  [role="dialog"] .glass-card:hover,
+  .glass-card[role="alertdialog"]:hover,
+  .glass-card[role="dialog"]:hover {
+    transform: none;
+  }
+
   /* Success Glass Card - Just Published Banner */
   .glass-card-success {
     background: rgba(16, 185, 129, 0.08);

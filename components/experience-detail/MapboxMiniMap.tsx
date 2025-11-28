@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
+// Note: mapbox-gl CSS is loaded dynamically in useEffect to avoid webpack bundling issues with RSC
 
 interface MapboxMiniMapProps {
   lat: number
@@ -33,6 +33,9 @@ export function MapboxMiniMap({ lat, lng, locationText, nearbyCount = 0 }: Mapbo
 
     const initMap = async () => {
       try {
+        // Dynamically import Mapbox CSS on client side only to avoid RSC webpack bundling issues
+        await import('mapbox-gl/dist/mapbox-gl.css')
+
         const response = await fetch('/api/mapbox-token')
         const data = await response.json()
 

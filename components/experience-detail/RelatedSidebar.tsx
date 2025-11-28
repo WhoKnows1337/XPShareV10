@@ -50,7 +50,7 @@ interface SimilarExperience {
   user_profiles?: {
     username: string
     display_name?: string
-  }
+  } | null
   match_score?: number
 }
 
@@ -303,7 +303,7 @@ export function RelatedSidebar({
                           {exp.title}
                         </p>
                         <div id={`exp-meta-${exp.id}`} className="sr-only">
-                          Von {exp.user_profiles?.display_name || exp.user_profiles?.username}, {formatDistanceToNow(new Date(exp.created_at), { addSuffix: true, locale: de })}
+                          Von {exp.user_profiles?.display_name || exp.user_profiles?.username}, {exp.created_at && !isNaN(new Date(exp.created_at).getTime()) ? formatDistanceToNow(new Date(exp.created_at), { addSuffix: true, locale: de }) : 'kürzlich'}
                           {exp.match_score && `, ${exp.match_score}% Match`}
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -331,10 +331,12 @@ export function RelatedSidebar({
                     )}
 
                     <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(exp.created_at), {
-                        addSuffix: true,
-                        locale: de,
-                      })}
+                      {exp.created_at && !isNaN(new Date(exp.created_at).getTime())
+                        ? formatDistanceToNow(new Date(exp.created_at), {
+                            addSuffix: true,
+                            locale: de,
+                          })
+                        : 'kürzlich'}
                     </p>
                   </div>
                 </Link>

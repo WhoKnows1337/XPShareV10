@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import Map, { Marker, Popup, NavigationControl, Source, Layer } from 'react-map-gl'
+import Map, { Marker, Popup, NavigationControl, Source, Layer } from 'react-map-gl/mapbox'
 import Supercluster from 'supercluster'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
